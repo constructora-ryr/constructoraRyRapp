@@ -48,17 +48,17 @@ const styles = {
 
   // Badges de estado
   badge: {
-    base: 'inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold whitespace-nowrap',
+    base: 'inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-semibold whitespace-nowrap border',
     interesado:
-      'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md shadow-blue-500/30',
+      'border-blue-300 text-blue-700 dark:border-blue-700 dark:text-blue-400',
     activo:
-      'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md shadow-emerald-500/30',
+      'border-emerald-300 text-emerald-700 dark:border-emerald-700 dark:text-emerald-400',
     renuncio:
-      'bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-md shadow-red-500/30', // ⭐ NUEVO
+      'border-red-300 text-red-600 dark:border-red-700 dark:text-red-400',
     inactivo:
-      'bg-gradient-to-r from-gray-500 to-slate-500 text-white shadow-md shadow-gray-500/30',
+      'border-gray-300 text-gray-500 dark:border-gray-600 dark:text-gray-400',
     propietario:
-      'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md shadow-purple-500/30',
+      'border-purple-300 text-purple-700 dark:border-purple-700 dark:text-purple-400',
   },
 
   // Badge de origen (cyan/blue del módulo)
@@ -142,11 +142,9 @@ export function ClientesTabla({
       header: 'Documento',
       size: 110,
       cell: ({ row }) => (
-        <div className={styles.cell.center}>
-          <span className={styles.cell.textCompact}>
-            CC {row.original.numero_documento}
-          </span>
-        </div>
+        <span className='font-mono text-xs text-gray-600 dark:text-gray-400'>
+          CC {row.original.numero_documento}
+        </span>
       ),
     },
 
@@ -344,7 +342,7 @@ export function ClientesTabla({
           return (
             <div className='flex flex-col items-center gap-0.5 py-0.5'>
               <span
-                className={`text-xs font-bold leading-tight ${
+                className={`font-mono text-xs font-bold leading-tight ${
                   pagadoCompleto
                     ? 'text-emerald-600 dark:text-emerald-400'
                     : 'text-red-500 dark:text-red-400'
@@ -352,7 +350,7 @@ export function ClientesTabla({
               >
                 {pagadoCompleto ? '✓ Pagado' : fmt(saldo)}
               </span>
-              <span className='text-[10px] leading-none text-gray-400 dark:text-gray-500'>
+              <span className='font-mono text-[10px] leading-none text-gray-400 dark:text-gray-500'>
                 de {fmt(valorTotal)}
               </span>
             </div>

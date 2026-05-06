@@ -95,11 +95,13 @@ export function AbonoFila({
             ? `Mz.${abono.vivienda.manzana.identificador} Casa No. ${abono.vivienda.numero}`
             : `N°${abono.vivienda.numero}`}
         </p>
-        <div className='mt-1 flex items-center gap-1.5'>
-          <span className='text-xs text-gray-400 dark:text-gray-500'>
+        <div className='mt-1.5 flex items-center gap-1.5'>
+          <span className='text-[11px] text-gray-400 dark:text-gray-500'>
             {abono.proyecto.nombre}
           </span>
-          <span className='text-gray-300 dark:text-gray-600'>·</span>
+          <span className='text-[10px] text-gray-300 dark:text-gray-700'>
+            /
+          </span>
           <span className={s.fila.fuentePill}>{abono.fuente_pago.tipo}</span>
         </div>
       </td>

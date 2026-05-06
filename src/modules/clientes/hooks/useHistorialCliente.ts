@@ -65,7 +65,7 @@ export function useHistorialCliente({
     queryFn: () => notasHistorialService.obtenerNotasCliente(clienteId),
     enabled: habilitado && !!clienteId,
     refetchOnWindowFocus: false,
-    staleTime: 0, // Sin cache - siempre fresh
+    staleTime: 1000 * 60 * 5, // 5 minutos - optimizado
   })
 
   // ========== HUMANIZAR EVENTOS + CONVERTIR NOTAS ==========

@@ -115,7 +115,12 @@ export async function POST(request: NextRequest) {
     // 2. Convertir fecha usando utilidad centralizada
     const fechaAbonoDB = formatDateForDB(fecha_abono)
 
-    // 3. Registrar el abono (numero_recibo se asigna automáticamente por secuencia BD)
+    // 3. Obtener usuario actual para guardarlo en el abono
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    // 4. Registrar el abono (numero_recibo se asigna automáticamente por secuencia BD)
     const { data: nuevoAbono, error: abonoError } = await supabase
       .from('abonos_historial')
       .insert({
@@ -128,6 +133,7 @@ export async function POST(request: NextRequest) {
         numero_referencia: numero_referencia || null,
         comprobante_url: comprobante_path,
         notas: notas || null,
+        usuario_registro: user?.id ?? null,
       })
       .select()
       .single()
@@ -151,27 +157,21 @@ export async function POST(request: NextRequest) {
     //    El cliente_id en metadata es CRÍTICO para que el historial del cliente lo muestre.
     void (async () => {
       try {
-        const [
-          {
-            data: { user },
-          },
-          { data: fuenteActualizada },
-          { data: contexto },
-        ] = await Promise.all([
-          supabase.auth.getUser(),
-          supabase
-            .from('fuentes_pago')
-            .select('monto_recibido, saldo_pendiente')
-            .eq('id', fuente_pago_id)
-            .single(),
-          supabase
-            .from('negociaciones')
-            .select(
-              'id, cliente_id, saldo_pendiente, valor_total_pagar, clientes(id, nombres, apellidos), viviendas!negociaciones_vivienda_id_fkey(numero, manzanas(nombre, proyectos(nombre)))'
-            )
-            .eq('id', negociacion_id)
-            .single(),
-        ])
+        const [{ data: fuenteActualizada }, { data: contexto }] =
+          await Promise.all([
+            supabase
+              .from('fuentes_pago')
+              .select('monto_recibido, saldo_pendiente')
+              .eq('id', fuente_pago_id)
+              .single(),
+            supabase
+              .from('negociaciones')
+              .select(
+                'id, cliente_id, saldo_pendiente, valor_total_pagar, clientes(id, nombres, apellidos), viviendas!negociaciones_vivienda_id_fkey(numero, manzanas(nombre, proyectos(nombre)))'
+              )
+              .eq('id', negociacion_id)
+              .single(),
+          ])
 
         // Extraer datos anidados con type assertion segura
         const cliente = contexto?.clientes as

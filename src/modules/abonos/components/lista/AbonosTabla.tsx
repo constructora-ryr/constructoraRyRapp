@@ -45,7 +45,7 @@ export function AbonosTabla({
           <tr className={s.tabla.thead}>
             <th className={`w-36 ${s.tabla.th}`}>Recibo</th>
             <th className={s.tabla.th}>Cliente</th>
-            <th className={s.tabla.th}>Vivienda · Proyecto</th>
+            <th className={s.tabla.th}>Vivienda</th>
             <th className={`w-36 ${s.tabla.th}`}>Método</th>
             <th className={`w-40 ${s.tabla.thRight}`}>Monto</th>
             {canEdit || canAnular ? <th className='w-20 px-4 py-3' /> : null}

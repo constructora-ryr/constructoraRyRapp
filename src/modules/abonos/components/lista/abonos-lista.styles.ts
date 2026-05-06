@@ -77,7 +77,7 @@ export const abonosListaStyles = {
     renuncia:
       'border-l-amber-400 bg-amber-50/30 hover:bg-amber-50/60 dark:bg-amber-950/10 dark:hover:bg-amber-950/20',
     reciboBadge:
-      'inline-flex items-center rounded-full bg-violet-100 px-2.5 py-1 font-mono text-xs font-bold text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
+      'inline-flex items-center rounded-md border border-violet-300/70 px-2 py-0.5 font-mono text-xs font-semibold text-violet-600 dark:border-violet-700/60 dark:text-violet-400',
     fecha: 'mt-1.5 text-xs text-gray-400 dark:text-gray-500',
     clienteNombre:
       'font-semibold leading-tight text-gray-900 dark:text-gray-100',
@@ -89,19 +89,20 @@ export const abonosListaStyles = {
     viviendaNombreAnulado:
       'font-medium leading-tight text-gray-400 dark:text-gray-500',
     fuentePill:
-      'mt-1 inline-flex items-center rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-medium text-violet-700 dark:bg-violet-900/30 dark:text-violet-300',
+      'inline-flex items-center rounded border border-slate-200 px-1.5 py-px text-[10px] font-medium text-slate-500 dark:border-slate-700 dark:text-slate-400',
     metodoCell: 'px-4 py-3',
     metodoBadge:
-      'inline-flex items-center gap-1.5 rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+      'inline-flex items-center gap-1.5 rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-600 dark:border-slate-700 dark:text-slate-400',
     montoActivo:
-      'text-base font-bold tabular-nums text-violet-700 dark:text-violet-400',
+      'font-mono text-base font-bold tabular-nums text-violet-700 dark:text-violet-400',
     montoAnuladoLabel:
       'block text-[10px] font-bold uppercase tracking-widest text-red-500 dark:text-red-400',
     montoAnulado:
-      'font-bold tabular-nums text-gray-300 line-through dark:text-gray-600',
+      'font-mono font-bold tabular-nums text-gray-300 line-through dark:text-gray-600',
     montoRenunciaLabel:
       'block text-[10px] font-bold uppercase tracking-widest text-amber-500 dark:text-amber-400',
-    montoRenuncia: 'font-bold tabular-nums text-gray-500 dark:text-gray-400',
+    montoRenuncia:
+      'font-mono font-bold tabular-nums text-gray-500 dark:text-gray-400',
     actionBtn:
       'inline-flex h-7 w-7 items-center justify-center rounded-lg bg-gray-100 text-gray-400 transition-colors dark:bg-gray-700/50',
     editBtn:

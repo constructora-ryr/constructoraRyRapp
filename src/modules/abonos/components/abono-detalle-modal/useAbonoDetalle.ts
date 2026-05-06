@@ -19,6 +19,7 @@ export interface AbonoParaDetalle {
   comprobante_url: string | null
   notas: string | null
   fecha_creacion: string
+  registrado_por_nombre?: string | null
   // Campos de anulación (opcionales: datos previos a la migración no los tienen)
   estado?: 'Activo' | 'Anulado'
   motivo_categoria?: string | null
@@ -127,6 +128,8 @@ export function useAbonoDetalle({
     document.body.removeChild(link)
   }, [abono])
 
+  const { perfil } = useAuth()
+
   // Generar y descargar el recibo PDF (lazy import para no aumentar bundle)
   const handleGenerarRecibo = useCallback(async () => {
     if (!abono) return
@@ -139,6 +142,10 @@ export function useAbonoDetalle({
         valorTotal: negociacionFinancials?.valorTotal,
         totalAbonado: negociacionFinancials?.totalAbonado,
         saldoPendiente: negociacionFinancials?.saldoPendiente,
+        emisorNombre: perfil
+          ? `${perfil.nombres} ${perfil.apellidos}`.trim()
+          : undefined,
+        emisorCargo: perfil?.rol ?? undefined,
       })
     } catch {
       toast.error('No se pudo generar el recibo PDF', {
@@ -147,14 +154,13 @@ export function useAbonoDetalle({
     } finally {
       setGenerandoRecibo(false)
     }
-  }, [abono, negociacionFinancials])
+  }, [abono, negociacionFinancials, perfil])
 
   // Callback invocado por ModalAnularAbono cuando los datos cambian
   const handleAbonoAnulado = useCallback(() => {
     onAnulado?.()
   }, [onAnulado])
 
-  const { perfil } = useAuth()
   const esAdmin = perfil?.rol === 'Administrador'
   const esNegociacionActiva = abono?.negociacion.estado === 'Activa'
   const estaAnulado = abono?.estado === 'Anulado'

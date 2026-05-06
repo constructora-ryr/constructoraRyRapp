@@ -10,9 +10,10 @@ import {
   Receipt,
   StickyNote,
   User,
+  UserCheck,
 } from 'lucide-react'
 
-import { formatDateCompact, formatDateForDisplay } from '@/lib/utils/date.utils'
+import { formatDateForDisplay } from '@/lib/utils/date.utils'
 import { formatCurrency } from '@/lib/utils/format.utils'
 import { formatNombreCompleto } from '@/lib/utils/string.utils'
 
@@ -142,6 +143,33 @@ export function AbonoDetalleSidebarPanel({
           </div>
         </div>
       </div>
+
+      {/* Registrado por */}
+      {abono.registrado_por_nombre ? (
+        <>
+          <div className={s.sidebar.divider} />
+          <div className={s.sidebar.section}>
+            <p className={s.sidebar.sectionTitle}>
+              <UserCheck className='h-3 w-3' />
+              Trazabilidad
+            </p>
+            <div className={s.sidebar.row}>
+              <UserCheck
+                className={`${s.sidebar.rowIcon} h-4 w-4 text-slate-400`}
+              />
+              <div>
+                <p className={s.sidebar.rowLabel}>Pago registrado por</p>
+                <p className={s.sidebar.rowValue}>
+                  {abono.registrado_por_nombre}
+                </p>
+                <p className={s.sidebar.rowValueSub}>
+                  {formatDateForDisplay(abono.fecha_creacion)}
+                </p>
+              </div>
+            </div>
+          </div>
+        </>
+      ) : null}
 
       {/* Notas */}
       {abono.notas ? (

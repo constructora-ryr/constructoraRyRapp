@@ -45,6 +45,7 @@ export interface AbonoCompletoRow {
   fecha_creacion: string
   fecha_actualizacion: string
   usuario_registro: string | null
+  registrado_por_nombre: string | null
   estado: 'Activo' | 'Anulado'
   motivo_categoria: string | null
   motivo_detalle: string | null
@@ -88,6 +89,7 @@ export interface AbonoConInfo {
   fecha_creacion: string
   fecha_actualizacion: string
   usuario_registro: string | null
+  registrado_por_nombre?: string | null
   estado: 'Activo' | 'Anulado'
   motivo_categoria: string | null
   motivo_detalle: string | null
@@ -154,6 +156,7 @@ function transformarFila(row: AbonoCompletoRow): AbonoConInfo {
     fecha_creacion: row.fecha_creacion,
     fecha_actualizacion: row.fecha_actualizacion,
     usuario_registro: row.usuario_registro,
+    registrado_por_nombre: row.registrado_por_nombre ?? null,
     estado: (row.estado ?? 'Activo') as 'Activo' | 'Anulado',
     motivo_categoria: row.motivo_categoria ?? null,
     motivo_detalle: row.motivo_detalle ?? null,

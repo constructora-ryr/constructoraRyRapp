@@ -152,9 +152,9 @@ export function useNegociacionesQuery({
       return data as NegociacionDetalle[]
     },
     enabled: enabled && !!clienteId,
-    staleTime: 1000 * 30, // 30 segundos — dato crítico, debe estar fresco
+    staleTime: 1000 * 60 * 2, // 2 minutos - optimizado para reducir refetches innecesarios
     gcTime: 1000 * 60 * 10, // 10 minutos de cache
-    refetchOnMount: true, // Siempre refetch si stale al montar
+    refetchOnMount: false, // No refetch si datos están en cache reciente
     refetchOnWindowFocus: true, // Refetch cuando el usuario vuelve a la ventana
   })
 

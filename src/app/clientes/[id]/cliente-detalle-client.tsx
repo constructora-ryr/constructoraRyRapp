@@ -9,7 +9,7 @@
  * - Este componente SOLO orquesta la UI
  */
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 import { AnimatePresence, motion } from 'framer-motion'
 import {
@@ -139,6 +139,19 @@ export default function ClienteDetalleClient({
     recargarCliente,
     irATabDocumentos: _irATabDocumentos,
   } = useClienteDetalle({ clienteId })
+
+  // Mount-once: mantiene tabs visitados en el DOM (ocultos con `hidden`) para evitar re-fetches
+  const [visitedTabs, setVisitedTabs] = useState<Set<string>>(
+    new Set(['general'])
+  )
+  useEffect(() => {
+    setVisitedTabs(prev => {
+      if (prev.has(activeTab)) return prev
+      const next = new Set(prev)
+      next.add(activeTab)
+      return next
+    })
+  }, [activeTab])
 
   const handleEditar = () => {
     router.push(`/clientes/${clienteId}/editar`)
@@ -603,38 +616,69 @@ export default function ClienteDetalleClient({
             </nav>
           </motion.div>
 
-          {/* Contenido de Tabs - Componentes Modulares */}
-          <div
-            role='tabpanel'
-            id={`panel-${activeTab}`}
-            aria-labelledby={activeTab}
-          >
-            {activeTab === 'general' && (
+          <div>
+            {/* General — siempre montado (import estático) */}
+            <div
+              role='tabpanel'
+              id='panel-general'
+              className={activeTab !== 'general' ? 'hidden' : ''}
+            >
               <GeneralTab
                 cliente={cliente}
                 canMostrarBannerDocumentos={
                   canVerDocumentos && canSubirDocumentos
                 }
               />
+            </div>
+
+            {(activeTab === 'intereses' || visitedTabs.has('intereses')) && (
+              <div
+                role='tabpanel'
+                id='panel-intereses'
+                className={activeTab !== 'intereses' ? 'hidden' : ''}
+              >
+                <InteresesTab
+                  cliente={cliente}
+                  onRegistrarInteres={handleRegistrarInteres}
+                />
+              </div>
             )}
-            {activeTab === 'intereses' && (
-              <InteresesTab
-                cliente={cliente}
-                onRegistrarInteres={handleRegistrarInteres}
-              />
+
+            {(activeTab === 'negociacion' ||
+              visitedTabs.has('negociacion')) && (
+              <div
+                role='tabpanel'
+                id='panel-negociacion'
+                className={activeTab !== 'negociacion' ? 'hidden' : ''}
+              >
+                <NegociacionTab
+                  cliente={cliente}
+                  onIrADocumentos={() => cambiarTab('documentos')}
+                />
+              </div>
             )}
-            {activeTab === 'negociacion' && (
-              <NegociacionTab
-                cliente={cliente}
-                onIrADocumentos={() => cambiarTab('documentos')}
-              />
+
+            {(activeTab === 'documentos' || visitedTabs.has('documentos')) && (
+              <div
+                role='tabpanel'
+                id='panel-documentos'
+                className={activeTab !== 'documentos' ? 'hidden' : ''}
+              >
+                <DocumentosTab cliente={cliente} />
+              </div>
             )}
-            {activeTab === 'documentos' && <DocumentosTab cliente={cliente} />}
-            {activeTab === 'historial' && (
-              <HistorialTab
-                clienteId={clienteUUID || ''}
-                clienteNombre={`${cliente.nombres} ${cliente.apellidos}`}
-              />
+
+            {(activeTab === 'historial' || visitedTabs.has('historial')) && (
+              <div
+                role='tabpanel'
+                id='panel-historial'
+                className={activeTab !== 'historial' ? 'hidden' : ''}
+              >
+                <HistorialTab
+                  clienteId={clienteUUID || ''}
+                  clienteNombre={`${cliente.nombres} ${cliente.apellidos}`}
+                />
+              </div>
             )}
           </div>
         </div>
