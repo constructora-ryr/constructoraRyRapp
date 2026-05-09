@@ -534,6 +534,16 @@ function buildReciboHtml(
 
   </div>
 
+  <script>
+    window.addEventListener('load', function () {
+      var paper = document.querySelector('.paper')
+      if (!paper) return
+      var pageH = 1123
+      if (paper.scrollHeight > pageH + 5) {
+        paper.style.zoom = String(pageH / paper.scrollHeight)
+      }
+    })
+  </script>
 </body>
 </html>`
 }

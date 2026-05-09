@@ -146,12 +146,46 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 4. Los triggers de la DB actualizarán automáticamente:
-    // - fuentes_pago.monto_recibido
-    // - fuentes_pago.saldo_pendiente
-    // - negociaciones.total_abonado
-    // - negociaciones.saldo_pendiente
-    // - negociaciones.porcentaje_pagado
+    // 4. Los triggers de la DB ya actualizaron saldo_pendiente y totales.
+    //    Re-consultamos la negociación para detectar si se completó el pago.
+    const { data: negActualizada } = await supabase
+      .from('negociaciones')
+      .select('id, estado, saldo_pendiente, cliente_id')
+      .eq('id', negociacion_id)
+      .single()
+
+    let negociacionCompletada = false
+    let clienteNombre: string | null = null
+
+    if (
+      negActualizada &&
+      negActualizada.estado === 'Activa' &&
+      (negActualizada.saldo_pendiente ?? 1) <= 0
+    ) {
+      const hoy = formatDateForDB(new Date().toISOString().slice(0, 10))
+
+      // Completar negociación
+      await supabase
+        .from('negociaciones')
+        .update({ estado: 'Completada', fecha_completada: hoy })
+        .eq('id', negociacion_id)
+
+      // Promover cliente a Propietario
+      if (negActualizada.cliente_id) {
+        const { data: clienteRow } = await supabase
+          .from('clientes')
+          .update({ estado: 'Propietario' })
+          .eq('id', negActualizada.cliente_id)
+          .select('nombres, apellidos')
+          .single()
+
+        clienteNombre = clienteRow
+          ? `${clienteRow.nombres} ${clienteRow.apellidos}`.trim()
+          : null
+      }
+
+      negociacionCompletada = true
+    }
 
     // 5. Registrar en audit_log con metadata enriquecida (fire-and-forget)
     //    El cliente_id en metadata es CRÍTICO para que el historial del cliente lo muestre.
@@ -243,6 +277,8 @@ export async function POST(request: NextRequest) {
       success: true,
       abono: nuevoAbono,
       message: 'Abono registrado exitosamente',
+      negociacion_completada: negociacionCompletada,
+      cliente_nombre: clienteNombre,
     })
   } catch (error: unknown) {
     const message =

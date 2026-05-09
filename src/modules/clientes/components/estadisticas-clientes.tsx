@@ -6,7 +6,14 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { UserCheck, UserMinus, UserPlus, Users, UserX } from 'lucide-react'
+import {
+  Star,
+  UserCheck,
+  UserMinus,
+  UserPlus,
+  Users,
+  UserX,
+} from 'lucide-react'
 
 import {
   metricasClientesColors,
@@ -19,13 +26,15 @@ interface EstadisticasClientesProps {
   activos: number
   inactivos: number
   renunciaron: number
+  propietarios?: number
 }
 
 const STATS_SECUNDARIAS = (
   interesados: number,
   activos: number,
   inactivos: number,
-  renunciaron: number
+  renunciaron: number,
+  propietarios: number
 ) => [
   {
     label: 'Interesados',
@@ -51,6 +60,12 @@ const STATS_SECUNDARIAS = (
     icon: UserX,
     colors: metricasClientesColors.inactivos,
   },
+  {
+    label: 'Propietarios',
+    value: propietarios,
+    icon: Star,
+    colors: metricasClientesColors.propietarios,
+  },
 ]
 
 export function EstadisticasClientes({
@@ -59,12 +74,14 @@ export function EstadisticasClientes({
   activos,
   inactivos,
   renunciaron,
+  propietarios = 0,
 }: EstadisticasClientesProps) {
   const secundarias = STATS_SECUNDARIAS(
     interesados,
     activos,
     inactivos,
-    renunciaron
+    renunciaron,
+    propietarios
   )
 
   return (
@@ -72,7 +89,7 @@ export function EstadisticasClientes({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.1 }}
-      className='grid grid-cols-5 gap-3'
+      className='grid grid-cols-3 gap-3 sm:grid-cols-6'
     >
       {/* Total Clientes */}
       <motion.div

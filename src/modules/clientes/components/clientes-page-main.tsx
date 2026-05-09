@@ -149,6 +149,9 @@ export function ClientesPageMain({
           activos={estadisticas.activos}
           inactivos={estadisticas.inactivos}
           renunciaron={estadisticas.renunciaron}
+          propietarios={
+            (estadisticas as Record<string, number>).propietarios ?? 0
+          }
         />
 
         <FiltrosClientes

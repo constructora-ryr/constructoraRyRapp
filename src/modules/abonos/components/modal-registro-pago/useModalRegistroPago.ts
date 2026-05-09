@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
+import { toast } from 'sonner'
+
 import { formatDateCompact, getTodayDateString } from '@/lib/utils/date.utils'
 import { getCreditoByFuente } from '@/modules/fuentes-pago/services/creditos-constructora.service'
 import { esCreditoConstructora } from '@/shared/constants/fuentes-pago.constants'
@@ -239,6 +241,19 @@ export function useModalRegistroPago({
       // Capturar datos del abono registrado para mostrar pantalla de éxito
       if (respuestaJson?.abono) {
         setAbonoRegistrado(respuestaJson.abono as typeof abonoRegistrado)
+      }
+
+      // Celebrar cuando la negociación queda completada
+      if (respuestaJson?.negociacion_completada) {
+        const nombre = respuestaJson.cliente_nombre
+        toast.success(
+          nombre ? `${nombre} completó el pago` : 'Pago completado',
+          {
+            description:
+              'La negociación fue marcada como Completada y el cliente ascendió a Propietario.',
+            duration: 6000,
+          }
+        )
       }
     } catch {
       setFaseLoading('idle')

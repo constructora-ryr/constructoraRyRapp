@@ -209,6 +209,7 @@ export default function AbonosDetalleClient({
               handleRegistrarAbono(negociacion.fuentes_pago[0])
             }
             canCreate={canRegistrar}
+            canVerCliente={esAdmin || puede('clientes', 'ver')}
           />
         </div>
 

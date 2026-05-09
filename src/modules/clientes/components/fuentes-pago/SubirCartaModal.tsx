@@ -327,7 +327,7 @@ export function SubirCartaModal({
                         Subiendo...
                       </span>
                     ) : (
-                      'Subir Carta'
+                      'Subir Documento'
                     )}
                   </button>
                 </div>

@@ -185,6 +185,13 @@ export function DocumentosTab({ cliente }: DocumentosTabProps) {
             return (
               <BannerDocumentoRequerido
                 variant={tieneNegociacion ? 'advertencia' : 'bloqueante'}
+                onSubirDocumento={
+                  tieneNegociacion
+                    ? undefined
+                    : canCreate
+                      ? () => mostrarUpload(true)
+                      : undefined
+                }
               />
             )
           })()}
@@ -195,11 +202,9 @@ export function DocumentosTab({ cliente }: DocumentosTabProps) {
         <SeccionDocumentosPendientes
           clienteId={cliente.id}
           onSubirDocumento={(pendienteId, tipoDocumento, metadata) => {
-            // ✅ Solo abrir SubirCartaModal para cartas de aprobación específicas
-            const esCarta = tipoDocumento
-              .toLowerCase()
-              .includes('carta de aprobaci')
-            if (metadata.fuente_pago_id && esCarta) {
+            // Cualquier documento vinculado a una fuente de pago usa el modal especializado.
+            // El uploader genérico solo se usa para documentos sin fuente (cédula, etc.).
+            if (metadata.fuente_pago_id) {
               setFuenteParaCarta({
                 id: metadata.fuente_pago_id as string,
                 tipo: metadata.tipo_fuente as string,

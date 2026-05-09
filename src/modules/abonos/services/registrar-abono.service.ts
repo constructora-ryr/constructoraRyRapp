@@ -22,7 +22,11 @@ export interface RegistrarAbonoPayload {
  */
 export async function registrarAbonoApi(
   payload: RegistrarAbonoPayload
-): Promise<{ abono: Record<string, unknown> }> {
+): Promise<{
+  abono: Record<string, unknown>
+  negociacion_completada?: boolean
+  cliente_nombre?: string | null
+}> {
   const response = await fetch('/api/abonos/registrar', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

@@ -30,10 +30,9 @@ interface AbonoDetalleModalProps {
   onClose: () => void
   onEditar?: (abono: AbonoParaDetalle) => void
   onAnulado?: () => void
-  /** Permiso explícito para editar (cuando no es admin, pero tiene abonos.editar) */
   canEditar?: boolean
-  /** Permiso explícito para anular (cuando no es admin, pero tiene abonos.anular) */
   canAnular?: boolean
+  canVerCliente?: boolean
   /** Datos financieros de la negociacion (del parent — evita fetch redundante) */
   negociacionFinancials?: {
     valorTotal: number
@@ -50,6 +49,7 @@ export function AbonoDetalleModal({
   onAnulado,
   canEditar,
   canAnular,
+  canVerCliente,
   negociacionFinancials,
 }: AbonoDetalleModalProps) {
   const {
@@ -228,6 +228,7 @@ export function AbonoDetalleModal({
                 abono={abono}
                 estaAnulado={estaAnulado}
                 viviendaLabel={viviendaLabel}
+                canVerCliente={canVerCliente}
               />
             </div>
 

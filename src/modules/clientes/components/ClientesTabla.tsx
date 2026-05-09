@@ -14,6 +14,7 @@ import {
   Building2,
   Edit2,
   Heart,
+  Star,
   Trash2,
   User,
   UserCheck,
@@ -58,7 +59,7 @@ const styles = {
     inactivo:
       'border-gray-300 text-gray-500 dark:border-gray-600 dark:text-gray-400',
     propietario:
-      'border-purple-300 text-purple-700 dark:border-purple-700 dark:text-purple-400',
+      'border-amber-400 bg-amber-50 text-amber-700 dark:border-amber-600 dark:bg-amber-900/20 dark:text-amber-300',
   },
 
   // Badge de origen (cyan/blue del módulo)
@@ -104,23 +105,31 @@ export function ClientesTabla({
         )
         const estado = row.original.estado
         const isActivo = estado === 'Activo'
-        const isRenuncio = estado === 'Renunció' // ⭐ NUEVO
+        const isRenuncio = estado === 'Renunció'
+        const isPropietario =
+          estado === 'Propietario' ||
+          (estado === 'Activo' &&
+            (row.original.vivienda?.saldo_pendiente ?? 1) === 0)
 
         return (
           <div className={styles.iconCell.container}>
             <div
               className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg ${
-                isActivo
-                  ? 'bg-gradient-to-br from-green-500 to-emerald-600'
-                  : isRenuncio
-                    ? 'bg-gradient-to-br from-red-500 to-rose-600' // ⭐ NUEVO - Rojo para renunció
-                    : 'bg-gradient-to-br from-cyan-500 to-blue-600'
+                isPropietario
+                  ? 'bg-gradient-to-br from-amber-500 to-orange-600'
+                  : isActivo
+                    ? 'bg-gradient-to-br from-green-500 to-emerald-600'
+                    : isRenuncio
+                      ? 'bg-gradient-to-br from-red-500 to-rose-600'
+                      : 'bg-gradient-to-br from-cyan-500 to-blue-600'
               }`}
             >
-              {isActivo ? (
+              {isPropietario ? (
+                <Star className='h-3.5 w-3.5 fill-white text-white' />
+              ) : isActivo ? (
                 <UserCheck className='h-3.5 w-3.5 text-white' />
               ) : isRenuncio ? (
-                <UserX className='h-3.5 w-3.5 text-white' /> // ⭐ Usuario con X rojo
+                <UserX className='h-3.5 w-3.5 text-white' />
               ) : (
                 <User className='h-3.5 w-3.5 text-white' />
               )}
@@ -155,19 +164,22 @@ export function ClientesTabla({
       size: 120,
       cell: ({ row }) => {
         const estado = row.original.estado
+        const pagadoCompleto =
+          estado === 'Propietario' ||
+          (estado === 'Activo' &&
+            (row.original.vivienda?.saldo_pendiente ?? 1) === 0)
         const isInteresado = estado === 'Interesado'
-        const isActivo = estado === 'Activo'
-        const isRenuncio = estado === 'Renunció' // ⭐ NUEVO
+        const isActivo = estado === 'Activo' && !pagadoCompleto
+        const isRenuncio = estado === 'Renunció'
         const isInactivo = estado === 'Inactivo'
-        const isPropietario = estado === 'Propietario'
 
-        const Icon = isInteresado
-          ? Heart
-          : isActivo
-            ? UserCheck
-            : isRenuncio
-              ? UserX // ⭐ Usuario con X (igual que UserCheck pero rojo)
-              : isInactivo
+        const Icon = pagadoCompleto
+          ? Star
+          : isInteresado
+            ? Heart
+            : isActivo
+              ? UserCheck
+              : isRenuncio || isInactivo
                 ? UserX
                 : Users
 
@@ -176,15 +188,17 @@ export function ClientesTabla({
             <div
               className={cn(
                 styles.badge.base,
+                pagadoCompleto && styles.badge.propietario,
                 isInteresado && styles.badge.interesado,
                 isActivo && styles.badge.activo,
-                isRenuncio && styles.badge.renuncio, // ⭐ NUEVO
-                isInactivo && styles.badge.inactivo,
-                isPropietario && styles.badge.propietario
+                isRenuncio && styles.badge.renuncio,
+                isInactivo && styles.badge.inactivo
               )}
             >
-              <Icon className='h-3 w-3 flex-shrink-0' />
-              <span>{estado}</span>
+              <Icon
+                className={`h-3 w-3 flex-shrink-0 ${pagadoCompleto ? 'fill-amber-500 dark:fill-amber-400' : ''}`}
+              />
+              <span>{pagadoCompleto ? 'Propietario' : estado}</span>
             </div>
           </div>
         )
@@ -199,7 +213,7 @@ export function ClientesTabla({
       cell: ({ row }) => {
         const cliente = row.original
         const proyecto =
-          cliente.estado === 'Activo'
+          cliente.estado === 'Activo' || cliente.estado === 'Propietario'
             ? cliente.vivienda?.nombre_proyecto
             : cliente.estado === 'Interesado'
               ? cliente.interes?.nombre_proyecto
@@ -235,7 +249,10 @@ export function ClientesTabla({
       enableSorting: true,
       // AccessorFn para que TanStack Table reconozca el valor
       accessorFn: row => {
-        if (row.estado === 'Activo' && row.vivienda) {
+        if (
+          (row.estado === 'Activo' || row.estado === 'Propietario') &&
+          row.vivienda
+        ) {
           const manzana = row.vivienda.nombre_manzana || ''
           const numero = row.vivienda.numero_vivienda || ''
           return `${manzana}${numero}`
@@ -252,7 +269,10 @@ export function ClientesTabla({
 
         // Obtener identificador de vivienda (manzana + numero)
         const getViviendaId = (cliente: ClienteResumen) => {
-          if (cliente.estado === 'Activo' && cliente.vivienda) {
+          if (
+            (cliente.estado === 'Activo' || cliente.estado === 'Propietario') &&
+            cliente.vivienda
+          ) {
             const manzana = cliente.vivienda.nombre_manzana || ''
             const numero = cliente.vivienda.numero_vivienda || ''
             return `${manzana}${numero}`
@@ -279,8 +299,15 @@ export function ClientesTabla({
         const cliente = row.original
         let viviendaCompacta = null
         let esInteres = false
+        const esPropietarioVivienda =
+          cliente.estado === 'Propietario' ||
+          (cliente.estado === 'Activo' &&
+            (cliente.vivienda?.saldo_pendiente ?? 1) === 0)
 
-        if (cliente.estado === 'Activo' && cliente.vivienda) {
+        if (
+          (cliente.estado === 'Activo' || cliente.estado === 'Propietario') &&
+          cliente.vivienda
+        ) {
           const manzana = cliente.vivienda.nombre_manzana || ''
           const numero = cliente.vivienda.numero_vivienda || ''
           viviendaCompacta = `${manzana}${numero}`
@@ -295,9 +322,14 @@ export function ClientesTabla({
         return viviendaCompacta ? (
           <div className='flex h-full items-center justify-center'>
             {esInteres ? (
-              // Badge azul con icono corazón para INTERESADO
               <span className='inline-flex items-center gap-1.5 rounded-lg border border-blue-300 bg-blue-100 px-2.5 py-1.5 text-xs font-bold text-blue-700 shadow-sm dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-300'>
                 <Heart className='h-3.5 w-3.5' />
+                {viviendaCompacta}
+              </span>
+            ) : esPropietarioVivienda ? (
+              // Badge dorado para PROPIETARIO
+              <span className='inline-flex items-center gap-1.5 rounded-lg border border-amber-400 bg-amber-50 px-2.5 py-1.5 text-xs font-bold text-amber-700 shadow-sm dark:border-amber-600 dark:bg-amber-900/20 dark:text-amber-300'>
+                <Star className='h-3.5 w-3.5 fill-amber-500 dark:fill-amber-400' />
                 {viviendaCompacta}
               </span>
             ) : (
@@ -323,7 +355,10 @@ export function ClientesTabla({
       size: 155,
       cell: ({ row }) => {
         const cliente = row.original
-        if (cliente.estado === 'Activo' && cliente.vivienda) {
+        if (
+          (cliente.estado === 'Activo' || cliente.estado === 'Propietario') &&
+          cliente.vivienda
+        ) {
           const valorTotal =
             cliente.vivienda.valor_total_pagar ||
             cliente.vivienda.valor_total ||
@@ -371,18 +406,22 @@ export function ClientesTabla({
       size: 72,
       cell: ({ row }) => {
         const cliente = row.original
-        if (cliente.estado === 'Activo' && cliente.vivienda) {
+        if (
+          (cliente.estado === 'Activo' || cliente.estado === 'Propietario') &&
+          cliente.vivienda
+        ) {
           const valorTotal =
             cliente.vivienda.valor_total_pagar ||
             cliente.vivienda.valor_total ||
             0
           const totalAbonado = cliente.vivienda.total_abonado || 0
           const saldo = cliente.vivienda.saldo_pendiente || 0
-          const porcentaje =
-            valorTotal > 0
+          const pagadoCompleto = saldo === 0 && valorTotal > 0
+          const porcentaje = pagadoCompleto
+            ? 100
+            : valorTotal > 0
               ? Math.min(Math.round((totalAbonado / valorTotal) * 100), 100)
               : 0
-          const pagadoCompleto = saldo === 0 && valorTotal > 0
           const CIRCUNFERENCIA = 87.96
           const strokeDash = (porcentaje / 100) * CIRCUNFERENCIA
           const ringColor = pagadoCompleto

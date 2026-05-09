@@ -567,7 +567,7 @@ class ClientesService {
    */
   async cambiarEstado(
     id: string,
-    nuevoEstado: 'Interesado' | 'Activo' | 'Inactivo'
+    nuevoEstado: 'Interesado' | 'Activo' | 'Inactivo' | 'Propietario'
   ): Promise<Cliente> {
     return this.actualizarCliente(id, { estado: nuevoEstado })
   }
@@ -586,6 +586,7 @@ class ClientesService {
       activos: data?.filter(c => c.estado === 'Activo').length || 0,
       inactivos: data?.filter(c => c.estado === 'Inactivo').length || 0,
       renunciaron: data?.filter(c => c.estado === 'Renunció').length || 0,
+      propietarios: data?.filter(c => c.estado === 'Propietario').length || 0,
     }
 
     return stats

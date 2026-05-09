@@ -70,44 +70,34 @@ export function useSubirCartaModal({
   // =====================================================
 
   const tituloSugerido = useMemo(() => {
-    // Parte principal: "Carta de Aprobación [Tipo de Fuente]"
-    let titulo = `Carta de Aprobación ${fuente.tipo}`
+    // Usar el tipo exacto del documento si está disponible, si no, el tipo de fuente
+    const base =
+      fuente.tipo_documento_sistema || `Carta de Aprobación ${fuente.tipo}`
 
-    // Agregar vivienda y cliente con separador " - "
     const extras: string[] = []
-
     if (fuente.vivienda) {
       extras.push(`${fuente.vivienda.manzana}${fuente.vivienda.numero}`)
     }
-
     if (fuente.cliente) {
-      // ✅ Formatear nombre con capitalización
       extras.push(formatNombreCompleto(fuente.cliente.nombre_completo))
     }
 
-    if (extras.length > 0) {
-      titulo += ` - ${extras.join(' ')}`
-    }
-
-    return titulo
+    return extras.length > 0 ? `${base} - ${extras.join(' ')}` : base
   }, [fuente])
 
   // Título para el header del modal (más corto)
   const tituloHeader = useMemo(() => {
-    const extras: string[] = []
+    const base = fuente.tipo_documento_sistema || 'Carta de Aprobación'
 
+    const extras: string[] = []
     if (fuente.vivienda) {
       extras.push(`${fuente.vivienda.manzana}${fuente.vivienda.numero}`)
     }
-
     if (fuente.cliente) {
-      // ✅ Formatear nombre con capitalización
       extras.push(formatNombreCompleto(fuente.cliente.nombre_completo))
     }
 
-    return extras.length > 0
-      ? `Carta de Aprobación - ${extras.join(' ')}`
-      : 'Carta de Aprobación'
+    return extras.length > 0 ? `${base} - ${extras.join(' ')}` : base
   }, [fuente])
 
   // Inicializar título cuando se abre el modal o cambia la fuente

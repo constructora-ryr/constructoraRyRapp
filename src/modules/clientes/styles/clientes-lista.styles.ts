@@ -215,4 +215,9 @@ export const metricasClientesColors = {
     textGradient: 'from-red-600 via-rose-600 to-pink-600',
     glowColor: 'from-red-500/20 to-rose-500/20',
   },
+  propietarios: {
+    gradient: 'from-amber-500 to-orange-600',
+    textGradient: 'from-amber-600 via-orange-600 to-yellow-600',
+    glowColor: 'from-amber-500/20 to-orange-500/20',
+  },
 }

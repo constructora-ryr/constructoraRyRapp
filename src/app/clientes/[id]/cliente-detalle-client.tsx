@@ -338,6 +338,13 @@ export default function ClienteDetalleClient({
     )
   }
 
+  // Checks DB estado OR completed/zeroed negotiation (covers stale data where DB wasn't updated)
+  const negCompletada = cliente.negociaciones?.find(
+    n => n.estado === 'Completada' || n.saldo_pendiente <= 0
+  )
+  const esPropietario = cliente.estado === 'Propietario' || !!negCompletada
+  const estadoDisplay = esPropietario ? 'Propietario' : cliente.estado
+
   const tabs = [
     {
       id: 'general' as const,
@@ -406,8 +413,9 @@ export default function ClienteDetalleClient({
             transition={{ delay: 0.1 }}
             className={styles.headerClasses.container}
             style={{
-              background:
-                'linear-gradient(135deg, #0891b2 0%, #2563eb 50%, #1e40af 100%)',
+              background: esPropietario
+                ? 'linear-gradient(135deg, #78350f 0%, #92400e 40%, #b45309 100%)'
+                : 'linear-gradient(135deg, #0891b2 0%, #2563eb 50%, #1e40af 100%)',
             }}
           >
             {/* Patrón de fondo */}
@@ -453,7 +461,7 @@ export default function ClienteDetalleClient({
                     <h1 className={styles.headerClasses.title}>
                       {formatNombreCompleto(cliente.nombre_completo)}
                     </h1>
-                    <EstadoBadge estado={cliente.estado} />
+                    <EstadoBadge estado={estadoDisplay} />
                   </div>
 
                   {/* Documento pegado al nombre (sin ícono, compacto) */}
@@ -461,11 +469,11 @@ export default function ClienteDetalleClient({
                     {cliente.tipo_documento} {cliente.numero_documento}
                   </p>
 
-                  {/* Chip compacto de vivienda asignada — usa negociación ACTIVA */}
-                  {cliente.estado === 'Activo' &&
+                  {/* Chip compacto de vivienda asignada — usa negociación ACTIVA o COMPLETADA */}
+                  {(esPropietario || cliente.estado === 'Activo') &&
                     (() => {
                       const neg = cliente.negociaciones?.find(
-                        n => n.estado === 'Activa'
+                        n => n.estado === 'Activa' || n.estado === 'Completada'
                       )
                       if (!neg) return null
                       const proyecto =

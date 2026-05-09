@@ -49,26 +49,31 @@ export function useResumenNegociacion({
     return Math.max(0, totalComprometido - valorVivienda)
   }, [fuentesPago, totalComprometido, valorVivienda])
 
-  // Total abonado (desde la negociación — campo calculado por trigger)
-  const totalAbonado = negociacion.total_abonado ?? 0
+  // Total abonado para mostrar en UI.
+  // Cuando hay intereses del crédito constructora, total_abonado en DB solo suma capital
+  // (el trigger excluye mora_incluida). El valor real pagado = baseTotal - saldo.
+  // Para eso necesitamos baseTotal primero (calculado abajo), así que usamos un helper:
+  const totalAbonadoDB = negociacion.total_abonado ?? 0
 
   // Base para saldo y % — incluye intereses cuando corresponde
   const baseTotal = interesesTotales > 0 ? totalComprometido : valorVivienda
 
-  // Saldo (mismo cálculo que negociacion-tab.tsx)
+  // Saldo — usar siempre el campo calculado por el trigger de BD.
   const saldo =
-    interesesTotales > 0
-      ? baseTotal - totalAbonado
-      : (negociacion.saldo_pendiente ?? valorVivienda - totalAbonado)
+    negociacion.saldo_pendiente ?? Math.max(0, baseTotal - totalAbonadoDB)
 
-  // Porcentaje pagado (mismo cálculo que negociacion-tab.tsx)
+  // totalAbonado para display: cuando hay intereses, el DB solo suma capital.
+  // El real = baseTotal - saldo (lo que falta para llegar al total comprometido).
+  const totalAbonado =
+    interesesTotales > 0 ? Math.max(0, baseTotal - saldo) : totalAbonadoDB
+
+  // Porcentaje pagado — usar siempre el campo de BD cuando está disponible
   const pctPagado =
     negociacion.porcentaje_pagado !== null &&
-    negociacion.porcentaje_pagado !== undefined &&
-    interesesTotales === 0
+    negociacion.porcentaje_pagado !== undefined
       ? negociacion.porcentaje_pagado
       : baseTotal > 0
-        ? (totalAbonado / baseTotal) * 100
+        ? Math.max(0, ((baseTotal - saldo) / baseTotal) * 100)
         : 0
 
   return {

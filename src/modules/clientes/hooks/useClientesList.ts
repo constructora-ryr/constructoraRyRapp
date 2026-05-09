@@ -144,9 +144,16 @@ export function useClientesList() {
     return {
       total: clientes.length,
       interesados: clientes.filter(c => c.estado === 'Interesado').length,
-      activos: clientes.filter(c => c.estado === 'Activo').length,
+      activos: clientes.filter(
+        c => c.estado === 'Activo' && (c.vivienda?.saldo_pendiente ?? 1) > 0
+      ).length,
       inactivos: clientes.filter(c => c.estado === 'Inactivo').length,
       renunciaron: clientes.filter(c => c.estado === 'Renunci\u00f3').length,
+      propietarios: clientes.filter(
+        c =>
+          c.estado === 'Propietario' ||
+          (c.estado === 'Activo' && (c.vivienda?.saldo_pendiente ?? 1) === 0)
+      ).length,
     }
   }, [clientes, estadisticas])
 

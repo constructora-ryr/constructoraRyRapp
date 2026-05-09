@@ -5,6 +5,7 @@ import {
   Building2,
   Calendar,
   CreditCard,
+  ExternalLink,
   FileText,
   Home,
   Receipt,
@@ -13,8 +14,11 @@ import {
   UserCheck,
 } from 'lucide-react'
 
+import Link from 'next/link'
+
 import { formatDateForDisplay } from '@/lib/utils/date.utils'
 import { formatCurrency } from '@/lib/utils/format.utils'
+import { construirURLCliente } from '@/lib/utils/slug.utils'
 import { formatNombreCompleto } from '@/lib/utils/string.utils'
 
 import { formatearNumeroRecibo } from '../../utils/formato-recibo'
@@ -26,13 +30,20 @@ interface AbonoDetalleSidebarPanelProps {
   abono: AbonoParaDetalle
   estaAnulado: boolean
   viviendaLabel: string
+  canVerCliente?: boolean
 }
 
 export function AbonoDetalleSidebarPanel({
   abono,
   estaAnulado,
   viviendaLabel,
+  canVerCliente = false,
 }: AbonoDetalleSidebarPanelProps) {
+  const clienteUrl = construirURLCliente({
+    id: abono.cliente.id,
+    nombres: abono.cliente.nombres,
+    apellidos: abono.cliente.apellidos,
+  })
   return (
     <div className={s.sidebar.container}>
       {/* Pago */}
@@ -112,13 +123,27 @@ export function AbonoDetalleSidebarPanel({
         </p>
         <div className={s.sidebar.row}>
           <User className={`${s.sidebar.rowIcon} h-4 w-4 text-blue-500`} />
-          <div>
+          <div className='min-w-0 flex-1'>
             <p className={s.sidebar.rowLabel}>Nombre</p>
-            <p className={s.sidebar.rowValue}>
-              {formatNombreCompleto(
-                `${abono.cliente.nombres} ${abono.cliente.apellidos}`
-              )}
-            </p>
+            {canVerCliente ? (
+              <Link
+                href={clienteUrl}
+                className='group inline-flex items-center gap-1.5 transition-colors'
+              >
+                <span className='text-sm font-semibold text-gray-900 group-hover:text-blue-600 dark:text-gray-100 dark:group-hover:text-blue-400'>
+                  {formatNombreCompleto(
+                    `${abono.cliente.nombres} ${abono.cliente.apellidos}`
+                  )}
+                </span>
+                <ExternalLink className='h-3 w-3 text-gray-400 group-hover:text-blue-500' />
+              </Link>
+            ) : (
+              <p className={s.sidebar.rowValue}>
+                {formatNombreCompleto(
+                  `${abono.cliente.nombres} ${abono.cliente.apellidos}`
+                )}
+              </p>
+            )}
             <p className={s.sidebar.rowValueSub}>
               CC {abono.cliente.numero_documento}
             </p>
@@ -225,7 +250,7 @@ export function AbonoDetalleSidebarPanel({
                 <div>
                   <p className={s.sidebar.rowLabel}>Fecha de anulación</p>
                   <p className='text-xs text-red-800 dark:text-red-300'>
-                    {formatDateCompact(abono.fecha_anulacion)}
+                    {formatDateForDisplay(abono.fecha_anulacion)}
                   </p>
                 </div>
               ) : null}

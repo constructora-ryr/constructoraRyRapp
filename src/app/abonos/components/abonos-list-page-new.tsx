@@ -30,6 +30,7 @@ export function AbonosListPage({
   canCreate = false,
   canEdit = false,
   canDelete = false,
+  canView = false,
   isAdmin = false,
 }: AbonosListPageProps = {}) {
   const router = useRouter()
@@ -175,6 +176,7 @@ export function AbonosListPage({
         abono={abonoSeleccionado}
         isOpen={modalDetalleOpen}
         onClose={handleCerrarDetalle}
+        canVerCliente={isAdmin || canView}
         onAnulado={() => {
           handleCerrarDetalle()
           refetch()

@@ -184,19 +184,22 @@ export function NegociacionTab({
   const numero = vivienda?.numero
   const valorEscritura = negociacion.valor_escritura_publica ?? 0
   const notasNeg = negociacion.notas ?? ''
-  // Cuando hay crédito constructora, el saldo y el % deben basarse en el total real
+  // Saldo y % — usar siempre los campos calculados por el trigger de BD.
+  // total_abonado solo suma capital (sin mora/intereses del crédito constructora),
+  // así que computar totalComprometido - totalAbonado genera un saldo fantasma.
   const baseTotal = interesesTotales > 0 ? totalComprometido : valorVivienda
   const saldo =
-    interesesTotales > 0
-      ? baseTotal - totalAbonado
-      : (negociacion.saldo_pendiente ?? valorVivienda - totalAbonado)
+    negociacion.saldo_pendiente ?? Math.max(0, baseTotal - totalAbonado)
+  // Abonado para display: cuando hay intereses el DB excluye mora de total_abonado.
+  // El real = baseTotal - saldo (totalComprometido - lo que falta).
+  const totalAbonadoDisplay =
+    interesesTotales > 0 ? Math.max(0, baseTotal - saldo) : totalAbonado
   const pctPagado =
     negociacion.porcentaje_pagado !== null &&
-    negociacion.porcentaje_pagado !== undefined &&
-    interesesTotales === 0
+    negociacion.porcentaje_pagado !== undefined
       ? negociacion.porcentaje_pagado
       : baseTotal > 0
-        ? (totalAbonado / baseTotal) * 100
+        ? Math.max(0, ((baseTotal - saldo) / baseTotal) * 100)
         : 0
   const descuento = negociacion.descuento_aplicado ?? 0
   const pctDescuento = negociacion.porcentaje_descuento ?? 0
@@ -404,7 +407,7 @@ export function NegociacionTab({
               </span>
             </div>
             <p className='text-sm font-bold tabular-nums text-emerald-600 dark:text-emerald-400'>
-              {formatCurrency(totalAbonado)}
+              {formatCurrency(totalAbonadoDisplay)}
             </p>
           </div>
           <div className='px-4 py-2.5'>

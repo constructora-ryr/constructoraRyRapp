@@ -12,10 +12,10 @@
  */
 
 import { motion } from 'framer-motion'
-import { AlertTriangle, ArrowUpRight } from 'lucide-react'
+import { AlertTriangle, IdCard } from 'lucide-react'
 
 interface BannerDocumentoRequeridoProps {
-  /** Ya no se usa, mantenido por compatibilidad */
+  /** Abre el formulario de subida de cédula directamente */
   onSubirDocumento?: () => void
 
   /**
@@ -26,6 +26,7 @@ interface BannerDocumentoRequeridoProps {
 }
 
 export function BannerDocumentoRequerido({
+  onSubirDocumento,
   variant = 'bloqueante',
 }: BannerDocumentoRequeridoProps) {
   if (variant === 'advertencia') {
@@ -70,56 +71,25 @@ export function BannerDocumentoRequerido({
         </div>
 
         {/* Contenido */}
-        <div className='flex-1'>
-          <h3 className='mb-1.5 text-base font-bold'>
-            📋 Documento de Identidad Requerido
-          </h3>
-          <p className='mb-3 text-sm leading-relaxed text-white/95'>
-            Para poder asignar una vivienda a este cliente, primero debes subir
-            su cédula o documento de identidad.
-          </p>
-
-          {/* Pasos ordenados */}
-          <div className='space-y-2'>
-            {/* Paso 1 */}
-            <div className='flex items-start gap-2'>
-              <span className='flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-white text-[10px] font-bold text-orange-600'>
-                1
-              </span>
-              <div className='flex flex-1 items-center gap-2'>
-                <ArrowUpRight className='h-3.5 w-3.5 flex-shrink-0 text-white' />
-                <p className='text-xs font-medium text-white'>
-                  Presiona el botón naranja{' '}
-                  <span className='rounded bg-white px-1.5 py-0.5 font-bold text-orange-600'>
-                    📄 Subir Cédula/Pasaporte
-                  </span>{' '}
-                  en la esquina superior
-                </p>
-              </div>
-            </div>
-
-            {/* Paso 2 */}
-            <div className='flex items-start gap-2'>
-              <span className='flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-white text-[10px] font-bold text-orange-600'>
-                2
-              </span>
-              <p className='flex-1 text-xs font-medium text-white'>
-                Selecciona el archivo escaneado, completa el formulario y
-                presiona <strong>&quot;Subir documento&quot;</strong>
-              </p>
-            </div>
-
-            {/* Paso 3 */}
-            <div className='flex items-start gap-2'>
-              <span className='flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white'>
-                ✓
-              </span>
-              <p className='flex-1 text-xs font-medium text-white'>
-                ¡Listo! El botón <strong>&quot;Asignar Vivienda&quot;</strong>{' '}
-                del header se habilitará automáticamente
-              </p>
-            </div>
+        <div className='flex flex-1 flex-wrap items-center justify-between gap-3'>
+          <div>
+            <h3 className='mb-0.5 text-base font-bold'>
+              Documento de Identidad Requerido
+            </h3>
+            <p className='text-sm leading-relaxed text-white/90'>
+              Para asignar una vivienda a este cliente primero debes subir su
+              cédula o pasaporte.
+            </p>
           </div>
+          {onSubirDocumento && (
+            <button
+              onClick={onSubirDocumento}
+              className='inline-flex flex-shrink-0 items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-bold text-orange-600 shadow-lg transition-all hover:bg-orange-50 hover:shadow-xl active:scale-95'
+            >
+              <IdCard className='h-4 w-4' />
+              Subir Cédula / Pasaporte
+            </button>
+          )}
         </div>
       </div>
     </motion.div>

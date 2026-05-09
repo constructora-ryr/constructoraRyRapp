@@ -202,7 +202,7 @@ export function ResumenNegociacion({
             {formatCurrency(saldoPendiente)}
           </p>
           <p className='mt-0.5 text-[10px] text-gray-400 dark:text-gray-500'>
-            Resta por pagar
+            {estaCompleta ? 'Pagado completamente' : 'Resta por pagar'}
           </p>
         </div>
       </div>

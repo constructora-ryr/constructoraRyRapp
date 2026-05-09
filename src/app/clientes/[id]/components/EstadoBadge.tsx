@@ -1,3 +1,5 @@
+import { Star } from 'lucide-react'
+
 import * as styles from '../cliente-detalle.styles'
 
 const ESTADO_CONFIG = {
@@ -28,6 +30,17 @@ interface EstadoBadgeProps {
 }
 
 export function EstadoBadge({ estado }: EstadoBadgeProps) {
+  if (estado === 'Propietario') {
+    return (
+      <span
+        className={`inline-flex items-center gap-1.5 rounded-full bg-amber-400/25 px-3 py-1.5 backdrop-blur-xl ${styles.headerClasses.statusBadge}`}
+      >
+        <Star className='h-3 w-3 fill-amber-300 text-amber-300' />
+        <span className='text-xs font-bold text-amber-200'>Propietario</span>
+      </span>
+    )
+  }
+
   const { bg, text, dot } =
     ESTADO_CONFIG[estado as keyof typeof ESTADO_CONFIG] ||
     ESTADO_CONFIG.Interesado

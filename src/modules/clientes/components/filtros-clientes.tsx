@@ -69,9 +69,9 @@ const ESTADOS: Array<{
     value: 'Propietario',
     label: 'Propietarios',
     color:
-      'border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400 hover:border-purple-400 dark:hover:border-purple-600',
+      'border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-400 hover:border-amber-500 dark:hover:border-amber-500',
     activeColor:
-      'border-purple-500 bg-purple-500 text-white shadow-sm shadow-purple-500/30',
+      'border-amber-500 bg-amber-500 text-white shadow-sm shadow-amber-500/30',
   },
 ]
 
