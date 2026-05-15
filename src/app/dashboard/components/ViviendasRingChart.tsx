@@ -13,21 +13,24 @@ const SEG_CONFIG = [
   { key: 'disponibles' as const, label: 'Disponibles', color: '#10b981' },
   { key: 'asignadas' as const, label: 'Asignadas', color: '#f59e0b' },
   { key: 'entregadas' as const, label: 'Entregadas', color: '#64748b' },
+  { key: 'propietario' as const, label: 'Propietario', color: '#8b5cf6' },
 ]
 
 interface ViviendasRingChartProps {
   disponibles: number
   asignadas: number
   entregadas: number
+  propietario: number
 }
 
 export function ViviendasRingChart({
   disponibles,
   asignadas,
   entregadas,
+  propietario,
 }: ViviendasRingChartProps) {
-  const values = { disponibles, asignadas, entregadas }
-  const total = disponibles + asignadas + entregadas
+  const values = { disponibles, asignadas, entregadas, propietario }
+  const total = disponibles + asignadas + entregadas + propietario
 
   const activeConfigs = SEG_CONFIG.filter(s => values[s.key] > 0)
   const usableCirc = CIRC - activeConfigs.length * GAP

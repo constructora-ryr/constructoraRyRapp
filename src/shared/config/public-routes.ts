@@ -9,6 +9,7 @@ export const PUBLIC_UI_ROUTES = [
   '/login',
   '/registro',
   '/reset-password',
+  '/bienvenida',
 ] as const
 
 /**

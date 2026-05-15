@@ -13,7 +13,9 @@ import {
   ArrowLeft,
   CheckCircle,
   Loader2,
+  Mail,
   Save,
+  Send,
   UserPlus,
 } from 'lucide-react'
 
@@ -27,6 +29,7 @@ export function NuevoUsuarioView() {
     errores,
     cargando,
     passwordTemporal,
+    invitacionEnviada,
     handleChange,
     handleSubmit,
     handleVolver,
@@ -92,6 +95,78 @@ export function NuevoUsuarioView() {
               >
                 <CheckCircle className={s.submitIcon} />
                 Entendido, ir al listado
+              </motion.button>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Estado éxito: invitación enviada ────────────────────────────────────
+  if (invitacionEnviada) {
+    return (
+      <div className={s.page}>
+        <div className={s.content}>
+          <motion.div
+            initial={{ opacity: 0, y: -16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className={s.header}
+          >
+            <div className={s.headerPattern} />
+            <div className={s.headerContent}>
+              <div className={s.headerIcon}>
+                <Send className={s.headerIconInner} />
+              </div>
+              <div>
+                <h1 className={s.headerTitle}>¡Invitación enviada!</h1>
+                <p className={s.headerSubtitle}>
+                  El usuario recibirá un email para configurar su contraseña
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+            className={s.card}
+          >
+            <div className='flex flex-col items-center gap-4 py-4 text-center'>
+              <div className='flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30'>
+                <CheckCircle className='h-8 w-8 text-green-600 dark:text-green-400' />
+              </div>
+              <div>
+                <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+                  Se envió un email a
+                </p>
+                <p className='mt-0.5 text-base font-semibold text-gray-900 dark:text-white'>
+                  {invitacionEnviada}
+                </p>
+              </div>
+              <div className='w-full rounded-lg border border-blue-100 bg-blue-50 p-3 text-left dark:border-blue-800/50 dark:bg-blue-900/20'>
+                <div className='flex items-start gap-2'>
+                  <Mail className='mt-0.5 h-4 w-4 flex-shrink-0 text-blue-500' />
+                  <p className='text-xs text-blue-700 dark:text-blue-400'>
+                    El enlace vence en <strong>24 horas</strong>. Si no lo
+                    recibe, revisa la carpeta de spam o re-envía la invitación
+                    desde la lista de usuarios.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className={`${s.footer} mt-2`}>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handlePasswordConfirmado}
+                className={s.submitButton}
+              >
+                <CheckCircle className={s.submitIcon} />
+                Ir al listado de usuarios
               </motion.button>
             </div>
           </motion.div>
@@ -254,20 +329,14 @@ export function NuevoUsuarioView() {
               </div>
             </div>
 
-            {/* Checkbox: enviar invitación */}
-            <div className={s.checkboxRow}>
-              <input
-                id='enviar_invitacion'
-                type='checkbox'
-                checked={form.enviar_invitacion}
-                onChange={e =>
-                  handleChange('enviar_invitacion', e.target.checked)
-                }
-                className={s.checkbox}
-              />
-              <label htmlFor='enviar_invitacion' className={s.checkboxLabel}>
-                Enviar email de invitación al usuario
-              </label>
+            {/* Aviso: invitación siempre se envía */}
+            <div className='flex items-start gap-2 rounded-lg border border-blue-100 bg-blue-50 p-3 dark:border-blue-800/50 dark:bg-blue-900/20'>
+              <Mail className='mt-0.5 h-4 w-4 flex-shrink-0 text-blue-500' />
+              <p className='text-xs text-blue-700 dark:text-blue-400'>
+                Se enviará un email de invitación al usuario para que establezca
+                su propia contraseña. El enlace vence en{' '}
+                <strong>24 horas</strong>.
+              </p>
             </div>
 
             {/* Footer */}

@@ -87,7 +87,13 @@ export default function DashboardContent(_props: DashboardContentProps) {
 
   const s = stats ?? {
     proyectos: { total: 0, activos: 0, completados: 0, list: [] },
-    viviendas: { total: 0, disponibles: 0, asignadas: 0, entregadas: 0 },
+    viviendas: {
+      total: 0,
+      disponibles: 0,
+      asignadas: 0,
+      entregadas: 0,
+      propietario: 0,
+    },
     clientes: {
       total: 0,
       activos: 0,

@@ -48,6 +48,9 @@ export function useNuevoUsuario() {
 
   const [errores, setErrores] = useState<FormErrores>({})
   const [passwordTemporal, setPasswordTemporal] = useState<string | null>(null)
+  const [invitacionEnviada, setInvitacionEnviada] = useState<string | null>(
+    null
+  )
 
   // ── Validación ──────────────────────────────────────────────────────────
 
@@ -98,6 +101,8 @@ export function useNuevoUsuario() {
       onSuccess: respuesta => {
         if (respuesta.password_temporal) {
           setPasswordTemporal(respuesta.password_temporal)
+        } else if (respuesta.invitacion_enviada) {
+          setInvitacionEnviada(datos.email)
         } else {
           router.push('/usuarios')
         }
@@ -119,6 +124,7 @@ export function useNuevoUsuario() {
     errores,
     cargando: crearMutation.isPending,
     passwordTemporal,
+    invitacionEnviada,
     handleChange,
     handleSubmit,
     handleVolver,

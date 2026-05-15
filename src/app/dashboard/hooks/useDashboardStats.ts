@@ -25,6 +25,7 @@ export interface DashboardStatsData {
     disponibles: number
     asignadas: number
     entregadas: number
+    propietario: number
   }
   clientes: {
     total: number
@@ -70,6 +71,7 @@ export function useDashboardStats() {
           disponibles: viviendas.filter(v => v.estado === 'Disponible').length,
           asignadas: viviendas.filter(v => v.estado === 'Asignada').length,
           entregadas: viviendas.filter(v => v.estado === 'Entregada').length,
+          propietario: viviendas.filter(v => v.estado === 'Propietario').length,
         },
         clientes: clientesStats,
       }

@@ -1,0 +1,24 @@
+project_id = "swyjhwgvkfcfdtemkyad"
+
+[auth]
+site_url = "https://constructora-ryr-app.vercel.app"
+additional_redirect_urls = [
+  "http://localhost:3000/**",
+  "https://constructora-ryr-app.vercel.app/**"
+]
+enable_signup = false
+enable_manual_linking = false
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = true
+max_frequency = "1m0s"
+
+[auth.email.template.invite]
+subject = "Te invitaron a RyR Constructora"
+content_path = "./supabase/templates/invite.html"
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true

@@ -68,6 +68,7 @@ function ViviendasCardComponent({
             disponibles={viviendas.disponibles}
             asignadas={viviendas.asignadas}
             entregadas={viviendas.entregadas}
+            propietario={viviendas.propietario}
           />
         )}
       </div>
