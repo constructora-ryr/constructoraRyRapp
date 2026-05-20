@@ -181,75 +181,35 @@ export function showSessionExpiringToast({
 // ============================================
 
 export function showSessionClosedToast() {
-  // ✅ ID único para evitar duplicados
   const toastId = 'session-closed-toast'
-
-  // ✅ Dismiss toast previo si existe
   toast.dismiss(toastId)
 
   toast.custom(
     _t => (
       <motion.div
-        initial={{ opacity: 0, y: -20, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: -20, scale: 0.95 }}
-        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-        className='relative overflow-hidden rounded-2xl bg-gradient-to-br from-red-500 via-rose-500 to-pink-600 p-[2px] shadow-2xl shadow-red-500/50'
+        initial={{ opacity: 0, x: 100 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: 100 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
+        className='flex min-w-[300px] items-center gap-3 rounded-xl border border-amber-500/30 bg-black/25 py-3 pl-3 pr-4 shadow-lg shadow-black/20 backdrop-blur-md'
       >
-        {/* Fondo animado */}
-        <div className='absolute inset-0 animate-pulse bg-gradient-to-r from-red-400/20 via-rose-400/20 to-pink-400/20' />
-
-        {/* Patrón */}
-        <div className='bg-grid-white/5 absolute inset-0 [mask-image:radial-gradient(white,transparent_70%)]' />
-
-        {/* Contenido */}
-        <div className='relative min-w-[400px] rounded-2xl bg-white/95 p-4 backdrop-blur-xl dark:bg-gray-900/95'>
-          <div className='flex items-start gap-4'>
-            {/* Icono */}
-            <motion.div
-              initial={{ rotate: -90, scale: 0 }}
-              animate={{ rotate: 0, scale: 1 }}
-              transition={{ type: 'spring', stiffness: 200 }}
-              className='flex-shrink-0'
-            >
-              <div className='relative'>
-                <div className='absolute inset-0 animate-pulse rounded-full bg-red-500 opacity-50 blur-xl' />
-                <div className='relative flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-red-400 to-rose-600 shadow-lg'>
-                  <LogOut className='h-6 w-6 text-white' strokeWidth={2.5} />
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Texto */}
-            <div className='min-w-0 flex-1'>
-              <motion.div
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 }}
-              >
-                <div className='mb-1 flex items-center gap-2'>
-                  <XCircle
-                    className='h-5 w-5 text-red-600 dark:text-red-400'
-                    strokeWidth={2.5}
-                  />
-                  <h3 className='bg-gradient-to-r from-red-600 via-rose-600 to-pink-600 bg-clip-text text-lg font-bold text-transparent'>
-                    Sesión cerrada
-                  </h3>
-                </div>
-                <p className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                  Por seguridad, tu sesión se cerró automáticamente
-                </p>
-                <p className='mt-0.5 text-xs text-gray-500 dark:text-gray-400'>
-                  Detectamos inactividad prolongada • Vuelve a iniciar sesión
-                </p>
-              </motion.div>
-            </div>
-          </div>
+        <div className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-amber-500/20 ring-1 ring-amber-500/40'>
+          <LogOut className='h-4 w-4 text-amber-400' strokeWidth={2.5} />
         </div>
+        <div className='min-w-0 flex-1'>
+          <h3 className='text-sm font-semibold text-white'>Sesión cerrada</h3>
+          <p className='mt-0.5 text-xs text-white/60'>
+            Inactividad prolongada detectada
+          </p>
+        </div>
+        <XCircle
+          className='h-4 w-4 flex-shrink-0 text-amber-400'
+          strokeWidth={2.5}
+        />
       </motion.div>
     ),
     {
-      id: toastId, // ✅ ID único para evitar duplicados
+      id: toastId,
       duration: 5000,
       position: 'top-right',
     }
@@ -264,36 +224,28 @@ export function showSessionKeptAliveToast() {
   toast.custom(
     _t => (
       <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        transition={{ duration: 0.2 }}
-        className='relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 p-[2px] shadow-xl shadow-blue-500/50'
+        initial={{ opacity: 0, x: 100 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: 100 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
+        className='flex min-w-[300px] items-center gap-3 rounded-xl border border-emerald-500/30 bg-black/25 py-3 pl-3 pr-4 shadow-lg shadow-black/20 backdrop-blur-md'
       >
-        <div className='relative min-w-[300px] rounded-xl bg-white/95 p-3 backdrop-blur-xl dark:bg-gray-900/95'>
-          <div className='flex items-center gap-3'>
-            <motion.div
-              initial={{ scale: 0, rotate: -180 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ type: 'spring', stiffness: 300 }}
-            >
-              <div className='flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-indigo-600'>
-                <CheckCircle2
-                  className='h-5 w-5 text-white'
-                  strokeWidth={2.5}
-                />
-              </div>
-            </motion.div>
-            <div className='flex-1'>
-              <p className='text-sm font-bold text-gray-900 dark:text-white'>
-                ✅ Sesión mantenida activa
-              </p>
-              <p className='text-xs text-gray-600 dark:text-gray-400'>
-                Temporizador reiniciado correctamente
-              </p>
-            </div>
-          </div>
+        <div className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-500/20 ring-1 ring-emerald-500/40'>
+          <CheckCircle2
+            className='h-4 w-4 text-emerald-400'
+            strokeWidth={2.5}
+          />
         </div>
+        <div className='min-w-0 flex-1'>
+          <h3 className='text-sm font-semibold text-white'>Sesión activa</h3>
+          <p className='mt-0.5 text-xs text-white/60'>
+            Temporizador reiniciado correctamente
+          </p>
+        </div>
+        <CheckCircle2
+          className='h-4 w-4 flex-shrink-0 text-emerald-400'
+          strokeWidth={2.5}
+        />
       </motion.div>
     ),
     {
@@ -316,97 +268,47 @@ export function showLoggingOutToast() {
   return toast.custom(
     _t => (
       <motion.div
-        initial={{ opacity: 0, y: -20, scale: 0.9 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: -10, scale: 0.95 }}
-        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-        className='relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-600 via-gray-700 to-gray-800 p-[2px] shadow-2xl shadow-gray-900/50'
+        initial={{ opacity: 0, x: 100 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: 100 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
+        className='flex min-w-[300px] items-center gap-3 rounded-xl border border-blue-500/30 bg-black/25 py-3 pl-3 pr-4 shadow-lg shadow-black/20 backdrop-blur-md'
       >
-        {/* Gradiente animado de fondo */}
-        <div className='absolute inset-0 animate-pulse bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20' />
-
-        {/* Patrón de grid sutil */}
-        <div className='bg-grid-white/5 absolute inset-0 [mask-image:radial-gradient(white,transparent_70%)]' />
-
-        {/* Contenido */}
-        <div className='relative min-w-[340px] rounded-2xl bg-white/95 p-4 backdrop-blur-xl dark:bg-gray-900/95'>
-          <div className='flex items-center gap-3'>
-            {/* Spinner animado con efecto de salida */}
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+          className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-blue-500/20 ring-1 ring-blue-500/40'
+        >
+          <LogOut className='h-4 w-4 text-blue-400' strokeWidth={2.5} />
+        </motion.div>
+        <div className='min-w-0 flex-1'>
+          <h3 className='text-sm font-semibold text-white'>
+            Cerrando sesión...
+          </h3>
+          <p className='mt-0.5 text-xs text-white/60'>
+            Finalizando tu sesión de forma segura
+          </p>
+        </div>
+        <div className='flex gap-1'>
+          {[0, 1, 2].map(i => (
             <motion.div
-              animate={{
-                rotate: 360,
-              }}
+              key={i}
+              animate={{ scale: [1, 1.3, 1], opacity: [0.4, 1, 0.4] }}
               transition={{
-                duration: 1,
+                duration: 1.5,
                 repeat: Infinity,
-                ease: 'linear',
+                delay: i * 0.2,
+                ease: 'easeInOut',
               }}
-              className='flex-shrink-0'
-            >
-              <div className='relative'>
-                {/* Glow effect */}
-                <div className='absolute inset-0 animate-pulse rounded-full bg-blue-500 opacity-40 blur-xl' />
-
-                {/* Icono con gradiente */}
-                <div className='relative flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 via-blue-500 to-indigo-600 shadow-lg'>
-                  <motion.div
-                    animate={{
-                      scale: [1, 1.1, 1],
-                    }}
-                    transition={{
-                      duration: 1.5,
-                      repeat: Infinity,
-                      ease: 'easeInOut',
-                    }}
-                  >
-                    <LogOut className='h-6 w-6 text-white' strokeWidth={2.5} />
-                  </motion.div>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Texto con animación */}
-            <div className='min-w-0 flex-1'>
-              <motion.div
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 }}
-              >
-                <h3 className='bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-base font-bold text-transparent'>
-                  Cerrando sesión...
-                </h3>
-                <p className='mt-0.5 text-sm text-gray-700 dark:text-gray-300'>
-                  Finalizando tu sesión de forma segura
-                </p>
-              </motion.div>
-            </div>
-
-            {/* Dots animados */}
-            <div className='flex gap-1'>
-              {[0, 1, 2].map(i => (
-                <motion.div
-                  key={i}
-                  animate={{
-                    scale: [1, 1.3, 1],
-                    opacity: [0.4, 1, 0.4],
-                  }}
-                  transition={{
-                    duration: 1.5,
-                    repeat: Infinity,
-                    delay: i * 0.2,
-                    ease: 'easeInOut',
-                  }}
-                  className='h-2 w-2 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600'
-                />
-              ))}
-            </div>
-          </div>
+              className='h-1.5 w-1.5 rounded-full bg-blue-400'
+            />
+          ))}
         </div>
       </motion.div>
     ),
     {
-      duration: Infinity, // Se dismisses manualmente
-      position: 'top-center',
+      duration: Infinity,
+      position: 'top-right',
     }
   )
 }
@@ -422,73 +324,28 @@ export function showLogoutToast() {
   toast.custom(
     _t => (
       <motion.div
-        initial={{ opacity: 0, y: 20, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-        className='relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-700 via-blue-700 to-indigo-700 p-[2px] shadow-2xl shadow-blue-500/30'
+        initial={{ opacity: 0, x: 100 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: 100 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
+        className='flex min-w-[300px] items-center gap-3 rounded-xl border border-blue-500/30 bg-black/25 py-3 pl-3 pr-4 shadow-lg shadow-black/20 backdrop-blur-md'
       >
-        {/* Fondo animado */}
-        <div className='absolute inset-0 animate-pulse bg-gradient-to-r from-blue-400/20 via-indigo-400/20 to-purple-400/20' />
-
-        {/* Patrón de grid */}
-        <div className='bg-grid-white/10 absolute inset-0 [mask-image:radial-gradient(white,transparent_70%)]' />
-
-        {/* Contenido */}
-        <div className='relative min-w-[360px] rounded-2xl bg-white/95 p-4 backdrop-blur-xl dark:bg-gray-900/95'>
-          <div className='flex items-start gap-3'>
-            {/* Icono animado con rotación */}
-            <motion.div
-              initial={{ rotate: 0, scale: 0 }}
-              animate={{ rotate: [0, -10, 10, -10, 0], scale: 1 }}
-              transition={{
-                rotate: { duration: 0.5 },
-                scale: { type: 'spring', stiffness: 200 },
-              }}
-              className='flex-shrink-0'
-            >
-              <div className='relative'>
-                <div className='absolute inset-0 animate-pulse rounded-full bg-blue-500 opacity-50 blur-xl' />
-                <div className='relative flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 shadow-lg'>
-                  <LogOut className='h-5 w-5 text-white' strokeWidth={2.5} />
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Texto */}
-            <div className='min-w-0 flex-1'>
-              <motion.div
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 }}
-              >
-                <h3 className='bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-base font-bold text-transparent'>
-                  Sesión cerrada
-                </h3>
-                <p className='mt-0.5 text-sm text-gray-700 dark:text-gray-300'>
-                  ¡Hasta pronto! 👋
-                </p>
-              </motion.div>
-            </div>
-
-            {/* Check animado */}
-            <motion.div
-              initial={{ scale: 0, rotate: -180 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ delay: 0.15, type: 'spring', stiffness: 200 }}
-            >
-              <CheckCircle2
-                className='h-5 w-5 text-blue-600 dark:text-blue-400'
-                strokeWidth={2.5}
-              />
-            </motion.div>
-          </div>
+        <div className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-blue-500/20 ring-1 ring-blue-500/40'>
+          <LogOut className='h-4 w-4 text-blue-400' strokeWidth={2.5} />
         </div>
+        <div className='min-w-0 flex-1'>
+          <h3 className='text-sm font-semibold text-white'>Sesión cerrada</h3>
+          <p className='mt-0.5 text-xs text-white/60'>¡Hasta pronto!</p>
+        </div>
+        <CheckCircle2
+          className='h-4 w-4 flex-shrink-0 text-blue-400'
+          strokeWidth={2.5}
+        />
       </motion.div>
     ),
     {
       duration: 3000,
-      position: 'top-center',
+      position: 'top-right',
     }
   )
 }
@@ -504,46 +361,32 @@ export function showLogoutErrorToast() {
   toast.custom(
     _t => (
       <motion.div
-        initial={{ opacity: 0, y: 20, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        transition={{ duration: 0.3 }}
-        className='relative overflow-hidden rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 p-[2px] shadow-2xl shadow-red-500/50'
+        initial={{ opacity: 0, x: 100 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: 100 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
+        className='flex min-w-[300px] items-center gap-3 rounded-xl border border-red-500/30 bg-black/25 py-3 pl-3 pr-4 shadow-lg shadow-black/20 backdrop-blur-md'
       >
-        {/* Contenido */}
-        <div className='relative min-w-[340px] rounded-2xl bg-white/95 p-4 backdrop-blur-xl dark:bg-gray-900/95'>
-          <div className='flex items-start gap-3'>
-            {/* Icono de error */}
-            <motion.div
-              initial={{ scale: 0, rotate: -90 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ type: 'spring', stiffness: 200 }}
-              className='flex-shrink-0'
-            >
-              <div className='relative'>
-                <div className='absolute inset-0 rounded-full bg-red-500 opacity-50 blur-xl' />
-                <div className='relative flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-red-400 to-rose-600 shadow-lg'>
-                  <XCircle className='h-5 w-5 text-white' strokeWidth={2.5} />
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Texto */}
-            <div className='min-w-0 flex-1'>
-              <h3 className='text-base font-bold text-red-600 dark:text-red-400'>
-                Error al cerrar sesión
-              </h3>
-              <p className='mt-0.5 text-sm text-gray-700 dark:text-gray-300'>
-                Intenta nuevamente o recarga la página
-              </p>
-            </div>
-          </div>
+        <div className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-red-500/20 ring-1 ring-red-500/40'>
+          <XCircle className='h-4 w-4 text-red-400' strokeWidth={2.5} />
         </div>
+        <div className='min-w-0 flex-1'>
+          <h3 className='text-sm font-semibold text-white'>
+            Error al cerrar sesión
+          </h3>
+          <p className='mt-0.5 text-xs text-white/60'>
+            Intenta nuevamente o recarga la página
+          </p>
+        </div>
+        <XCircle
+          className='h-4 w-4 flex-shrink-0 text-red-400'
+          strokeWidth={2.5}
+        />
       </motion.div>
     ),
     {
       duration: 4000,
-      position: 'top-center',
+      position: 'top-right',
     }
   )
 }
