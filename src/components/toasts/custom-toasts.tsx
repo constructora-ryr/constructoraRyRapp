@@ -38,7 +38,7 @@ export function showLoginSuccessToast() {
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: 100 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
-        className='flex min-w-[300px] items-center gap-3 rounded-xl border border-emerald-500/30 bg-black/25 py-3 pl-3 pr-4 shadow-lg shadow-black/20 backdrop-blur-md'
+        className='flex min-w-[300px] items-center gap-3 rounded-xl border border-emerald-500/30 bg-black/75 py-3 pl-3 pr-4 shadow-lg shadow-black/20 backdrop-blur-md'
       >
         <div className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-500/20 ring-1 ring-emerald-500/40'>
           <LogIn className='h-4 w-4 text-emerald-400' strokeWidth={2.5} />
@@ -191,7 +191,7 @@ export function showSessionClosedToast() {
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: 100 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
-        className='flex min-w-[300px] items-center gap-3 rounded-xl border border-amber-500/30 bg-black/25 py-3 pl-3 pr-4 shadow-lg shadow-black/20 backdrop-blur-md'
+        className='flex min-w-[300px] items-center gap-3 rounded-xl border border-amber-500/30 bg-black/75 py-3 pl-3 pr-4 shadow-lg shadow-black/20 backdrop-blur-md'
       >
         <div className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-amber-500/20 ring-1 ring-amber-500/40'>
           <LogOut className='h-4 w-4 text-amber-400' strokeWidth={2.5} />
@@ -228,7 +228,7 @@ export function showSessionKeptAliveToast() {
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: 100 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
-        className='flex min-w-[300px] items-center gap-3 rounded-xl border border-emerald-500/30 bg-black/25 py-3 pl-3 pr-4 shadow-lg shadow-black/20 backdrop-blur-md'
+        className='flex min-w-[300px] items-center gap-3 rounded-xl border border-emerald-500/30 bg-black/75 py-3 pl-3 pr-4 shadow-lg shadow-black/20 backdrop-blur-md'
       >
         <div className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-500/20 ring-1 ring-emerald-500/40'>
           <CheckCircle2
@@ -272,7 +272,7 @@ export function showLoggingOutToast() {
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: 100 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
-        className='flex min-w-[300px] items-center gap-3 rounded-xl border border-blue-500/30 bg-black/25 py-3 pl-3 pr-4 shadow-lg shadow-black/20 backdrop-blur-md'
+        className='flex min-w-[300px] items-center gap-3 rounded-xl border border-blue-500/30 bg-black/75 py-3 pl-3 pr-4 shadow-lg shadow-black/20 backdrop-blur-md'
       >
         <motion.div
           animate={{ rotate: 360 }}
@@ -328,7 +328,7 @@ export function showLogoutToast() {
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: 100 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
-        className='flex min-w-[300px] items-center gap-3 rounded-xl border border-blue-500/30 bg-black/25 py-3 pl-3 pr-4 shadow-lg shadow-black/20 backdrop-blur-md'
+        className='flex min-w-[300px] items-center gap-3 rounded-xl border border-blue-500/30 bg-black/75 py-3 pl-3 pr-4 shadow-lg shadow-black/20 backdrop-blur-md'
       >
         <div className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-blue-500/20 ring-1 ring-blue-500/40'>
           <LogOut className='h-4 w-4 text-blue-400' strokeWidth={2.5} />
@@ -365,7 +365,7 @@ export function showLogoutErrorToast() {
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: 100 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
-        className='flex min-w-[300px] items-center gap-3 rounded-xl border border-red-500/30 bg-black/25 py-3 pl-3 pr-4 shadow-lg shadow-black/20 backdrop-blur-md'
+        className='flex min-w-[300px] items-center gap-3 rounded-xl border border-red-500/30 bg-black/75 py-3 pl-3 pr-4 shadow-lg shadow-black/20 backdrop-blur-md'
       >
         <div className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-red-500/20 ring-1 ring-red-500/40'>
           <XCircle className='h-4 w-4 text-red-400' strokeWidth={2.5} />
@@ -413,7 +413,7 @@ export function showEntitySuccessToast({
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: 100 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
-        className='flex min-w-[320px] items-center gap-3 rounded-xl border border-emerald-500/30 bg-black/25 py-3 pl-3 pr-4 shadow-lg shadow-black/20 backdrop-blur-md'
+        className='flex min-w-[320px] items-center gap-3 rounded-xl border border-emerald-500/30 bg-black/75 py-3 pl-3 pr-4 shadow-lg shadow-black/20 backdrop-blur-md'
       >
         <div className='flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-500/20 ring-1 ring-emerald-500/40'>
           <CheckCircle2
