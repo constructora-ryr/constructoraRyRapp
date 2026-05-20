@@ -16,6 +16,7 @@ import Link from 'next/link'
 
 import { formatDateCompact } from '@/lib/utils/date.utils'
 import { formatearNumeroRecibo } from '@/modules/abonos/utils/formato-recibo'
+import { usePermisosQuery } from '@/modules/usuarios/hooks'
 import { useAbonosViviendaTab } from '@/modules/viviendas/hooks/useAbonosViviendaTab'
 import type { Vivienda } from '@/modules/viviendas/types'
 import { formatCurrency } from '@/shared/utils'
@@ -30,6 +31,8 @@ interface AbonosTabProps {
  * Muestra los abonos activos de la negociacion activa en curso
  */
 export function AbonosTab({ vivienda }: AbonosTabProps) {
+  const { puede, esAdmin } = usePermisosQuery()
+  const canViewAbonos = esAdmin || puede('abonos', 'ver')
   const { abonos, totalAbonado, cargando } = useAbonosViviendaTab(vivienda.id)
 
   const saldoPendiente =
@@ -113,7 +116,7 @@ export function AbonosTab({ vivienda }: AbonosTabProps) {
               </p>
             </div>
           </div>
-          {vivienda.clientes && (
+          {vivienda.clientes && canViewAbonos && (
             <Link
               href={`/abonos/${vivienda.clientes.id}`}
               className='inline-flex items-center gap-1.5 rounded-lg border border-orange-200 bg-orange-50 px-3 py-1.5 text-xs font-medium text-orange-700 transition-colors hover:bg-orange-100 dark:border-orange-800 dark:bg-orange-950/30 dark:text-orange-400 dark:hover:bg-orange-950/50'
@@ -200,17 +203,20 @@ export function AbonosTab({ vivienda }: AbonosTabProps) {
         )}
 
         {/* Footer con link si hay abonos */}
-        {!cargando && abonos.length > 0 && vivienda.clientes && (
-          <div className='border-t border-gray-100 bg-gray-50/50 px-4 py-3 dark:border-gray-700/50 dark:bg-gray-900/30'>
-            <Link
-              href={`/abonos/${vivienda.clientes.id}`}
-              className='inline-flex items-center gap-1.5 text-xs font-medium text-orange-600 transition-colors hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300'
-            >
-              Ver detalle completo en Abonos
-              <ArrowUpRight className='h-3.5 w-3.5' />
-            </Link>
-          </div>
-        )}
+        {!cargando &&
+          abonos.length > 0 &&
+          vivienda.clientes &&
+          canViewAbonos && (
+            <div className='border-t border-gray-100 bg-gray-50/50 px-4 py-3 dark:border-gray-700/50 dark:bg-gray-900/30'>
+              <Link
+                href={`/abonos/${vivienda.clientes.id}`}
+                className='inline-flex items-center gap-1.5 text-xs font-medium text-orange-600 transition-colors hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300'
+              >
+                Ver detalle completo en Abonos
+                <ArrowUpRight className='h-3.5 w-3.5' />
+              </Link>
+            </div>
+          )}
       </div>
     </div>
   )

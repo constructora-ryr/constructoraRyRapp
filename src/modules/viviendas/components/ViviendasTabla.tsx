@@ -158,6 +158,7 @@ export function ViviendasTabla({
         const esDisponible = estado === 'Disponible'
         const esAsignada = estado === 'Asignada'
         const esEntregada = estado === 'Entregada'
+        const esPropietario = estado === 'Propietario'
 
         return (
           <div className={styles.cell.center}>
@@ -166,10 +167,11 @@ export function ViviendasTabla({
                 styles.badge.base,
                 esDisponible && styles.badge.disponible,
                 esAsignada && styles.badge.asignada,
-                esEntregada && styles.badge.entregada,
+                (esEntregada || esPropietario) && styles.badge.entregada,
                 !esDisponible &&
                   !esAsignada &&
                   !esEntregada &&
+                  !esPropietario &&
                   styles.badge.default
               )}
             >
@@ -177,7 +179,7 @@ export function ViviendasTabla({
                 <CheckCircle2 className='h-3 w-3 flex-shrink-0' />
               ) : esAsignada ? (
                 <Clock className='h-3 w-3 flex-shrink-0' />
-              ) : esEntregada ? (
+              ) : esEntregada || esPropietario ? (
                 <CheckCircle2 className='h-3 w-3 flex-shrink-0' />
               ) : null}
               <span>{estado}</span>
@@ -197,7 +199,8 @@ export function ViviendasTabla({
       cell: ({ row }) => {
         const estaAsignada =
           row.original.estado === 'Asignada' ||
-          row.original.estado === 'Entregada'
+          row.original.estado === 'Entregada' ||
+          row.original.estado === 'Propietario'
         if (!estaAsignada) {
           return (
             <div className={styles.cell.center}>
@@ -217,8 +220,9 @@ export function ViviendasTabla({
           )
         }
         const valorTotal = row.original.valor_total || 0
+        const valorRef = row.original.valor_negociado || valorTotal
         const saldo = row.original.saldo_pendiente || 0
-        const pagadoCompleto = saldo === 0 && valorTotal > 0
+        const pagadoCompleto = saldo === 0 && valorRef > 0
         const fmt = (v: number) =>
           new Intl.NumberFormat('es-CO', {
             style: 'currency',
@@ -240,7 +244,7 @@ export function ViviendasTabla({
               {pagadoCompleto ? '✓ Pagado' : fmt(saldo)}
             </span>
             <span className='text-[10px] leading-none text-gray-400 dark:text-gray-500'>
-              de {fmt(valorTotal)}
+              de {fmt(valorRef)}
             </span>
           </div>
         )
@@ -260,7 +264,8 @@ export function ViviendasTabla({
       cell: ({ row }) => {
         const estaAsignada =
           row.original.estado === 'Asignada' ||
-          row.original.estado === 'Entregada'
+          row.original.estado === 'Entregada' ||
+          row.original.estado === 'Propietario'
         if (!estaAsignada) {
           return (
             <div className={styles.cell.center}>
@@ -271,9 +276,10 @@ export function ViviendasTabla({
           )
         }
         const valorTotal = row.original.valor_total || 0
+        const valorRef = row.original.valor_negociado || valorTotal
         const saldo = row.original.saldo_pendiente || 0
         const porcentaje = Math.min(row.original.porcentaje_pagado || 0, 100)
-        const pagadoCompleto = saldo === 0 && valorTotal > 0
+        const pagadoCompleto = saldo === 0 && valorRef > 0
         const CIRCUNFERENCIA = 87.96
         const strokeDash = (porcentaje / 100) * CIRCUNFERENCIA
         const ringColor = pagadoCompleto

@@ -14,11 +14,24 @@ interface GeneralTabProps {
 }
 
 export function GeneralTab({ proyecto }: GeneralTabProps) {
-  // Calcular total de viviendas
-  const totalViviendas = proyecto.manzanas.reduce(
-    (acc, manzana) => acc + (manzana.totalViviendas || 0),
+  const totalCreadas = proyecto.manzanas.reduce(
+    (acc, m) => acc + (m.viviendasCreadas ?? m.totalViviendas ?? 0),
     0
   )
+  const totalDisponibles = proyecto.manzanas.reduce(
+    (acc, m) => acc + (m.viviendasDisponibles ?? 0),
+    0
+  )
+  const totalAsignadas = proyecto.manzanas.reduce(
+    (acc, m) => acc + (m.viviendasAsignadas ?? 0),
+    0
+  )
+  const totalVendidas = proyecto.manzanas.reduce(
+    (acc, m) => acc + (m.viviendasVendidas ?? 0),
+    0
+  )
+  const porcentajeVentas =
+    totalCreadas > 0 ? Math.round((totalVendidas / totalCreadas) * 100) : 0
 
   return (
     <motion.div
@@ -45,7 +58,9 @@ export function GeneralTab({ proyecto }: GeneralTabProps) {
             </div>
           </div>
           <div className={styles.progressClasses.rightSection}>
-            <p className={styles.progressClasses.percentage}>0%</p>
+            <p className={styles.progressClasses.percentage}>
+              {porcentajeVentas}%
+            </p>
             <p className={styles.progressClasses.percentageLabel}>Vendidas</p>
           </div>
         </div>
@@ -55,7 +70,7 @@ export function GeneralTab({ proyecto }: GeneralTabProps) {
           <motion.div
             className={styles.progressClasses.barFill}
             initial={{ width: 0 }}
-            animate={{ width: '0%' }}
+            animate={{ width: `${porcentajeVentas}%` }}
             transition={{ duration: 1.5, ease: 'easeOut', delay: 0.1 }}
           >
             <div
@@ -68,26 +83,30 @@ export function GeneralTab({ proyecto }: GeneralTabProps) {
         <div className={styles.progressClasses.milestones}>
           <div className={styles.progressClasses.milestone}>
             <div className={styles.progressClasses.milestoneValue}>
-              {totalViviendas}
+              {totalCreadas}
             </div>
-            <div className={styles.progressClasses.milestoneLabel}>Total</div>
+            <div className={styles.progressClasses.milestoneLabel}>Creadas</div>
           </div>
           <div className={styles.progressClasses.milestone}>
             <div className={styles.progressClasses.milestoneValue}>
-              {totalViviendas}
+              {totalDisponibles}
             </div>
             <div className={styles.progressClasses.milestoneLabel}>
               Disponibles
             </div>
           </div>
           <div className={styles.progressClasses.milestone}>
-            <div className={styles.progressClasses.milestoneValue}>0</div>
+            <div className={styles.progressClasses.milestoneValue}>
+              {totalAsignadas}
+            </div>
             <div className={styles.progressClasses.milestoneLabel}>
               Asignadas
             </div>
           </div>
           <div className={styles.progressClasses.milestone}>
-            <div className={styles.progressClasses.milestoneValue}>0</div>
+            <div className={styles.progressClasses.milestoneValue}>
+              {totalVendidas}
+            </div>
             <div className={styles.progressClasses.milestoneLabel}>
               Vendidas
             </div>
@@ -205,14 +224,12 @@ export function GeneralTab({ proyecto }: GeneralTabProps) {
         )}
       >
         {proyecto.manzanas.map((manzana, index) => {
-          // Calcular estadísticas de viviendas
-          const vendidas = manzana.viviendasVendidas || 0
-          const asignadas = 0 // TODO: Obtener de BD cuando esté disponible
-          const disponibles = manzana.totalViviendas - vendidas - asignadas
+          const creadas = manzana.viviendasCreadas ?? 0
+          const disponibles = manzana.viviendasDisponibles ?? 0
+          const asignadas = manzana.viviendasAsignadas ?? 0
+          const vendidas = manzana.viviendasVendidas ?? 0
           const porcentajeVendido =
-            manzana.totalViviendas > 0
-              ? Math.round((vendidas / manzana.totalViviendas) * 100)
-              : 0
+            creadas > 0 ? Math.round((vendidas / creadas) * 100) : 0
 
           return (
             <motion.div
@@ -239,10 +256,10 @@ export function GeneralTab({ proyecto }: GeneralTabProps) {
                 <div className='space-y-1.5 text-xs'>
                   <div className='flex items-center justify-between'>
                     <span className='text-gray-600 dark:text-gray-400'>
-                      Total
+                      Creadas
                     </span>
                     <span className='font-bold text-gray-900 dark:text-white'>
-                      {manzana.totalViviendas}
+                      {creadas}
                     </span>
                   </div>
                   <div className='flex items-center justify-between'>

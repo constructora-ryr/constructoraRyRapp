@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
     //    Re-consultamos la negociación para detectar si se completó el pago.
     const { data: negActualizada } = await supabase
       .from('negociaciones')
-      .select('id, estado, saldo_pendiente, cliente_id')
+      .select('id, estado, saldo_pendiente, cliente_id, vivienda_id')
       .eq('id', negociacion_id)
       .single()
 
@@ -164,11 +164,19 @@ export async function POST(request: NextRequest) {
     ) {
       const hoy = formatDateForDB(new Date().toISOString().slice(0, 10))
 
-      // Completar negociación
-      await supabase
-        .from('negociaciones')
-        .update({ estado: 'Completada', fecha_completada: hoy })
-        .eq('id', negociacion_id)
+      // Completar negociación + actualizar vivienda en paralelo
+      await Promise.all([
+        supabase
+          .from('negociaciones')
+          .update({ estado: 'Completada', fecha_completada: hoy })
+          .eq('id', negociacion_id),
+        negActualizada.vivienda_id
+          ? supabase
+              .from('viviendas')
+              .update({ estado: 'Propietario' })
+              .eq('id', negActualizada.vivienda_id)
+          : Promise.resolve(),
+      ])
 
       // Promover cliente a Propietario
       if (negActualizada.cliente_id) {

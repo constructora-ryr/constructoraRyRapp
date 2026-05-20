@@ -23,44 +23,6 @@ import type {
 } from '../types'
 
 // ============================================
-// HELPERS INTERNOS
-// ============================================
-
-/**
- * Genera una contraseña temporal criptográficamente segura (12 chars).
- * Garantiza al menos 1 mayúscula, 1 minúscula, 1 número y 1 especial.
- */
-function generarPasswordTemporal(): string {
-  const length = 12
-  const charset =
-    'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*'
-
-  const randomIndex = (max: number): number => {
-    const buf = new Uint32Array(1)
-    crypto.getRandomValues(buf)
-    return buf[0] % max
-  }
-
-  let password =
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[randomIndex(26)] +
-    'abcdefghijklmnopqrstuvwxyz'[randomIndex(26)] +
-    '0123456789'[randomIndex(10)] +
-    '!@#$%^&*'[randomIndex(8)]
-
-  for (let i = password.length; i < length; i++) {
-    password += charset[randomIndex(charset.length)]
-  }
-
-  // Fisher-Yates shuffle con crypto
-  const chars = password.split('')
-  for (let i = chars.length - 1; i > 0; i--) {
-    const j = randomIndex(i + 1)
-    ;[chars[i], chars[j]] = [chars[j], chars[i]]
-  }
-  return chars.join('')
-}
-
-// ============================================
 // QUERIES
 // ============================================
 
@@ -160,89 +122,35 @@ export async function obtenerEstadisticasUsuarios(): Promise<EstadisticasUsuario
 // ============================================
 
 /**
- * Crea un nuevo usuario en auth + perfil.
+ * Invita a un nuevo usuario vía email.
+ * El usuario recibirá un link para establecer su propia contraseña.
  * Requiere que el usuario actual sea Administrador.
  */
 export async function crearUsuario(
   datos: CrearUsuarioData
 ): Promise<CrearUsuarioRespuesta> {
-  const passwordTemporal = datos.password ?? generarPasswordTemporal()
-  const passwordProporcionado = !!datos.password
-
-  // Verificar que el usuario actual es administrador
-  const {
-    data: { user: adminUser },
-  } = await supabase.auth.getUser()
-
-  if (!adminUser) {
-    throw new Error('No autenticado')
-  }
-
-  const { data: adminPerfil, error: adminError } = await supabase
-    .from('usuarios')
-    .select('rol, estado')
-    .eq('id', adminUser.id)
-    .single()
-
-  if (
-    adminError ||
-    adminPerfil?.rol !== 'Administrador' ||
-    adminPerfil?.estado !== 'Activo'
-  ) {
-    throw new Error('No tienes permisos para crear usuarios')
-  }
-
-  // Crear en auth
-  const { data: authData, error: authError } = await supabase.auth.signUp({
-    email: datos.email,
-    password: passwordTemporal,
-    options: {
-      data: {
-        nombres: datos.nombres,
-        apellidos: datos.apellidos,
-        rol: datos.rol,
-      },
-      emailRedirectTo: undefined,
-    },
+  const response = await fetch('/api/usuarios/invitar', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: datos.email,
+      nombres: datos.nombres,
+      apellidos: datos.apellidos,
+      telefono: datos.telefono,
+      rol: datos.rol,
+    }),
   })
 
-  if (authError || !authData.user) {
-    logger.error('❌ [USUARIOS] Error creando usuario en auth:', authError)
-    throw new Error(
-      `Error al crear usuario: ${authError?.message ?? 'Sin respuesta de auth'}`
-    )
-  }
+  const body = await response.json()
 
-  // Esperar al trigger handle_new_user (crea perfil automáticamente)
-  await new Promise(resolve => setTimeout(resolve, 500))
-
-  // Actualizar datos adicionales del perfil
-  const { error: updateError } = await supabase
-    .from('usuarios')
-    .update({
-      telefono: datos.telefono ?? null,
-      creado_por: adminUser.id,
-      debe_cambiar_password: !passwordProporcionado,
-    })
-    .eq('id', authData.user.id)
-
-  if (updateError) {
-    logger.error(
-      '⚠️ [USUARIOS] Error actualizando perfil (no crítico):',
-      updateError
-    )
-  }
-
-  const usuarioCreado = await obtenerUsuarioPorId(authData.user.id)
-
-  if (!usuarioCreado) {
-    throw new Error('Usuario creado pero no se pudo obtener el perfil')
+  if (!response.ok) {
+    logger.error('❌ [USUARIOS] Error invitando usuario:', body)
+    throw new Error(body.error ?? 'Error al enviar invitación')
   }
 
   return {
-    usuario: usuarioCreado,
-    password_temporal: passwordProporcionado ? undefined : passwordTemporal,
-    invitacion_enviada: datos.enviar_invitacion ?? false,
+    usuario: body.usuario,
+    invitacion_enviada: true,
   }
 }
 

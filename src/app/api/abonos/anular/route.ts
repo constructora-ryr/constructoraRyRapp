@@ -176,6 +176,41 @@ export async function PATCH(request: NextRequest) {
     )
   }
 
+  // 5b. Si la negociación estaba Completada y ahora el saldo volvió a > 0,
+  //     revertir negociación → Activa, vivienda → Asignada, cliente → Activo.
+  const { data: negPost } = await supabaseAdmin
+    .from('negociaciones')
+    .select('id, estado, saldo_pendiente, vivienda_id, cliente_id')
+    .eq('id', abono.negociacion_id)
+    .single()
+
+  if (
+    negPost &&
+    (negPost.saldo_pendiente ?? 0) > 0 &&
+    negPost.estado === 'Completada'
+  ) {
+    await supabaseAdmin
+      .from('negociaciones')
+      .update({ estado: 'Activa', fecha_completada: null })
+      .eq('id', abono.negociacion_id)
+
+    if (negPost.vivienda_id) {
+      await supabaseAdmin
+        .from('viviendas')
+        .update({ estado: 'Asignada' })
+        .eq('id', negPost.vivienda_id)
+        .eq('estado', 'Propietario')
+    }
+
+    if (negPost.cliente_id) {
+      await supabaseAdmin
+        .from('clientes')
+        .update({ estado: 'Activo' })
+        .eq('id', negPost.cliente_id)
+        .eq('estado', 'Propietario')
+    }
+  }
+
   // 6. Registrar en audit_log con metadata completa (mismos nombres de campo que el renderer)
   await supabaseAdmin
     .from('audit_log')

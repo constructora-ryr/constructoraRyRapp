@@ -11,9 +11,13 @@ import { viviendasStyles as styles } from '../styles/viviendas.styles'
 
 interface ViviendasHeaderProps {
   totalViviendas: number
+  canCreate?: boolean
 }
 
-export function ViviendasHeader({ totalViviendas }: ViviendasHeaderProps) {
+export function ViviendasHeader({
+  totalViviendas,
+  canCreate = false,
+}: ViviendasHeaderProps) {
   const router = useRouter()
 
   const handleNuevaVivienda = () => {
@@ -57,15 +61,17 @@ export function ViviendasHeader({ totalViviendas }: ViviendasHeaderProps) {
               <Home className='h-3.5 w-3.5' />
               {totalViviendas} Viviendas
             </span>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleNuevaVivienda}
-              className={styles.header.button}
-            >
-              <Plus className='h-4 w-4' />
-              Nueva Vivienda
-            </motion.button>
+            {canCreate && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleNuevaVivienda}
+                className={styles.header.button}
+              >
+                <Plus className='h-4 w-4' />
+                Nueva Vivienda
+              </motion.button>
+            )}
           </div>
         </div>
       </div>

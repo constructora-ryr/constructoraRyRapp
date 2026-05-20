@@ -45,7 +45,7 @@ export async function obtenerProyectos(
 }
 
 /**
- * Obtiene un proyecto específico por su ID
+ * Obtiene un proyecto específico por su ID con conteos reales de viviendas por manzana
  */
 export async function obtenerProyecto(id: string): Promise<Proyecto | null> {
   const { data, error } = await supabase
@@ -71,7 +71,55 @@ export async function obtenerProyecto(id: string): Promise<Proyecto | null> {
     throw new Error(`Error al obtener proyecto: ${error.message}`)
   }
 
-  return transformarProyectoDeDB(data as unknown as ProyectoConManzanasDB)
+  const proyecto = transformarProyectoDeDB(
+    data as unknown as ProyectoConManzanasDB
+  )
+
+  // Batch-fetch real vivienda counts per manzana
+  const manzanaIds = proyecto.manzanas.map(m => m.id)
+  if (manzanaIds.length > 0) {
+    const { data: viviendas } = await supabase
+      .from('viviendas')
+      .select('manzana_id, estado')
+      .in('manzana_id', manzanaIds)
+
+    if (viviendas) {
+      type ConteoManzana = {
+        creadas: number
+        disponibles: number
+        asignadas: number
+        vendidas: number
+      }
+      const conteos = new Map<string, ConteoManzana>()
+      for (const v of viviendas) {
+        if (!conteos.has(v.manzana_id)) {
+          conteos.set(v.manzana_id, {
+            creadas: 0,
+            disponibles: 0,
+            asignadas: 0,
+            vendidas: 0,
+          })
+        }
+        const c = conteos.get(v.manzana_id)
+        if (!c) continue
+        c.creadas++
+        if (v.estado === 'Disponible') c.disponibles++
+        else if (v.estado === 'Asignada') c.asignadas++
+        else if (v.estado === 'Entregada' || v.estado === 'Propietario')
+          c.vendidas++
+      }
+
+      proyecto.manzanas = proyecto.manzanas.map(m => ({
+        ...m,
+        viviendasCreadas: conteos.get(m.id)?.creadas ?? 0,
+        viviendasDisponibles: conteos.get(m.id)?.disponibles ?? 0,
+        viviendasAsignadas: conteos.get(m.id)?.asignadas ?? 0,
+        viviendasVendidas: conteos.get(m.id)?.vendidas ?? 0,
+      }))
+    }
+  }
+
+  return proyecto
 }
 
 /**

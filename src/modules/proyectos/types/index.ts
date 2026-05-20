@@ -33,6 +33,10 @@ export interface Manzana {
   ubicacion?: string
   estado: EstadoManzana
   fechaCreacion: string
+  // Real counts from viviendas table
+  viviendasCreadas?: number
+  viviendasDisponibles?: number
+  viviendasAsignadas?: number
 }
 
 export interface Documento {

@@ -53,15 +53,12 @@ interface ViviendaDetalleClientProps {
 
 type TabType = 'info' | 'documentos' | 'abonos'
 
-const estadoColors = {
-  Disponible:
-    'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border border-green-200 dark:border-green-700',
-  Reservada:
-    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-700',
-  Asignada:
-    'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-700',
-  Vendida:
-    'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border border-purple-200 dark:border-purple-700',
+const estadoBadgeConfig: Record<string, { dot: string; text: string }> = {
+  Disponible: { dot: 'bg-emerald-500', text: 'text-emerald-700' },
+  Asignada: { dot: 'bg-blue-500', text: 'text-blue-700' },
+  Propietario: { dot: 'bg-violet-500', text: 'text-violet-700' },
+  Entregada: { dot: 'bg-teal-500', text: 'text-teal-700' },
+  Reservada: { dot: 'bg-amber-500', text: 'text-amber-700' },
 }
 
 export default function ViviendaDetalleClient({
@@ -71,6 +68,7 @@ export default function ViviendaDetalleClient({
   const { puede, esAdmin } = usePermisosQuery()
   const canEdit = esAdmin || puede('viviendas', 'editar')
   const canDelete = esAdmin || puede('viviendas', 'eliminar')
+  const canViewAbonos = esAdmin || puede('abonos', 'ver')
 
   // React Query hook (igual que proyectos)
   const { vivienda, loading, error } = useViviendaQuery(viviendaId)
@@ -171,12 +169,16 @@ export default function ViviendaDetalleClient({
       icon: FileText,
       count: null,
     },
-    {
-      id: 'abonos' as const,
-      label: 'Abonos',
-      icon: DollarSign,
-      count: vivienda.cantidad_abonos || 0,
-    },
+    ...(canViewAbonos
+      ? [
+          {
+            id: 'abonos' as const,
+            label: 'Abonos',
+            icon: DollarSign,
+            count: vivienda.cantidad_abonos || 0,
+          },
+        ]
+      : []),
   ]
 
   return (
@@ -245,15 +247,21 @@ export default function ViviendaDetalleClient({
                       Mz. {vivienda.manzanas?.nombre || '?'} Casa{' '}
                       {vivienda.numero}
                     </h1>
-                    <span
-                      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
-                        estadoColors[
-                          vivienda.estado as keyof typeof estadoColors
-                        ] || estadoColors.Disponible
-                      }`}
-                    >
-                      {vivienda.estado}
-                    </span>
+                    {(() => {
+                      const cfg =
+                        estadoBadgeConfig[vivienda.estado] ??
+                        estadoBadgeConfig.Disponible
+                      return (
+                        <span
+                          className={`inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold shadow-sm ${cfg.text}`}
+                        >
+                          <span
+                            className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`}
+                          />
+                          {vivienda.estado}
+                        </span>
+                      )
+                    })()}
                   </div>
                   <div className={styles.headerClasses.location}>
                     <Building2 className={styles.headerClasses.locationIcon} />

@@ -254,11 +254,28 @@ export async function obtenerVivienda(id: string): Promise<Vivienda> {
     }
 
     if (vivienda.negociacion_id) {
-      const { data: abonosData, error: abonosError } = await supabase
-        .from('abonos_historial' as unknown as 'abonos_historial')
-        .select('monto')
-        .eq('negociacion_id', vivienda.negociacion_id)
-        .eq('estado', 'Activo')
+      const [{ data: abonosData, error: abonosError }, { data: negData }] =
+        await Promise.all([
+          supabase
+            .from('abonos_historial' as unknown as 'abonos_historial')
+            .select('monto')
+            .eq('negociacion_id', vivienda.negociacion_id)
+            .eq('estado', 'Activo'),
+          supabase
+            .from('negociaciones')
+            .select('valor_total_pagar')
+            .eq('id', vivienda.negociacion_id)
+            .single(),
+        ])
+
+      const valorBase =
+        Number(
+          (negData as { valor_total_pagar?: number } | null)?.valor_total_pagar
+        ) || vivienda.valor_total
+      vivienda.valor_negociado =
+        Number(
+          (negData as { valor_total_pagar?: number } | null)?.valor_total_pagar
+        ) || undefined
 
       if (!abonosError && abonosData) {
         const totalAbonado = (abonosData as Array<{ monto: number }>).reduce(
@@ -266,16 +283,15 @@ export async function obtenerVivienda(id: string): Promise<Vivienda> {
           0
         )
         vivienda.total_abonado = totalAbonado
-        vivienda.saldo_pendiente = vivienda.valor_total - totalAbonado
+        vivienda.saldo_pendiente = Math.max(0, valorBase - totalAbonado)
         vivienda.porcentaje_pagado =
-          vivienda.valor_total > 0
-            ? Math.round((totalAbonado / vivienda.valor_total) * 100 * 100) /
-              100
+          valorBase > 0
+            ? Math.round((totalAbonado / valorBase) * 100 * 100) / 100
             : 0
         vivienda.cantidad_abonos = abonosData.length
       } else {
         vivienda.total_abonado = 0
-        vivienda.saldo_pendiente = vivienda.valor_total
+        vivienda.saldo_pendiente = valorBase
         vivienda.porcentaje_pagado = 0
         vivienda.cantidad_abonos = 0
       }
@@ -348,8 +364,12 @@ export async function listar(filtros?: FiltrosViviendas): Promise<Vivienda[]> {
       : {}),
     total_abonado: Number(row.total_abonado) || 0,
     cantidad_abonos: Number(row.cantidad_abonos) || 0,
+    valor_negociado: Number(row.valor_total_pagar) || undefined,
     porcentaje_pagado: Number(row.porcentaje_pagado) || 0,
-    saldo_pendiente: Number(row.saldo_pendiente) || (row.valor_total as number),
+    saldo_pendiente:
+      row.saldo_pendiente != null
+        ? Number(row.saldo_pendiente)
+        : Number(row.valor_total) || 0,
   })) as Vivienda[]
 
   viviendas.sort((a, b) => {

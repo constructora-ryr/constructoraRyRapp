@@ -25,7 +25,13 @@ import { debugLog, errorLog } from '@/lib/utils/logger'
 // ============================================
 
 /** Rutas públicas que NO requieren autenticación */
-const PUBLIC_ROUTES = ['/login', '/reset-password', '/update-password']
+const PUBLIC_ROUTES = [
+  '/login',
+  '/reset-password',
+  '/update-password',
+  '/auth/callback',
+  '/bienvenida',
+]
 
 /**
  * Mapeo de rutas a módulo+acción de permisos

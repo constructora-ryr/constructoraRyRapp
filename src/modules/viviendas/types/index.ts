@@ -32,6 +32,7 @@ export interface Vivienda {
   recargo_esquinera: number
   gastos_notariales: number
   valor_total: number // Calculado autom�ticamente en DB
+  valor_negociado?: number // Precio negociado (base real para c�lculo de saldo)
 
   // Asignaci�n de Cliente
   cliente_id?: string
@@ -166,7 +167,11 @@ export interface ViviendaFormData {
  * ? ELIMINADOS: 'Pagada'
  * ? ACTUALIZADOS: 'Reservada' ? 'Asignada', 'Vendida' ? 'Entregada'
  */
-export type ViviendaEstado = 'Disponible' | 'Asignada' | 'Entregada'
+export type ViviendaEstado =
+  | 'Disponible'
+  | 'Asignada'
+  | 'Entregada'
+  | 'Propietario'
 
 export type TipoVivienda = 'Regular' | 'Irregular'
 

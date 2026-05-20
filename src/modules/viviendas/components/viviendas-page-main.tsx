@@ -51,7 +51,7 @@ interface ViviendasPageMainProps {
  * - Solo maneja UI y lógica de negocio
  */
 export function ViviendasPageMain({
-  canCreate: _canCreate = false,
+  canCreate = false,
   canEdit = false,
   canDelete = false,
   canView: _canView = true,
@@ -123,7 +123,10 @@ export function ViviendasPageMain({
         className={styles.container.content}
       >
         {/* Header - Navegación a vista dedicada */}
-        <ViviendasHeader totalViviendas={estadisticas.total} />
+        <ViviendasHeader
+          totalViviendas={estadisticas.total}
+          canCreate={canCreate}
+        />
 
         {/* Estadísticas */}
         <ViviendasStats

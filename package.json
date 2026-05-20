@@ -24,6 +24,7 @@
     "clean:cache": "rm -rf .next/cache node_modules/.cache",
     "clean:all": "rm -rf .next out node_modules/.cache node_modules && npm install",
     "analyze": "cross-env ANALYZE=true next build",
+    "audit": "node scripts/audit-performance.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
