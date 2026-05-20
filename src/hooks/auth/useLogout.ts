@@ -21,10 +21,7 @@
 
 import { useCallback, useState } from 'react'
 
-import { toast } from 'sonner'
-
 import {
-  showLoggingOutToast,
   showLogoutErrorToast,
   showLogoutToast,
 } from '@/components/toasts/custom-toasts'
@@ -124,29 +121,16 @@ export function useLogout(options: UseLogoutOptions = {}): UseLogoutReturn {
         await onBeforeLogout()
       }
 
-      // Toast de loading (solo si showToast está habilitado)
-      let loadingToastId: string | number | undefined
-      if (showToast) {
-        loadingToastId = showLoggingOutToast()
-      }
-
-      // ✅ ORDEN CORRECTO:
       // 1. Logout en Supabase (limpia cookies del servidor)
       debugLog('🔐 Ejecutando signOut en Supabase...')
       await logoutMutation.mutateAsync()
-      // El mutation ya hace queryClient.clear() en onSuccess
 
       // 2. Limpiar almacenamiento local
       debugLog('🧹 Limpiando localStorage y sessionStorage...')
       localStorage.removeItem('supabase.auth.token')
       sessionStorage.clear()
 
-      // Limpiar toast de loading
-      if (loadingToastId) {
-        toast.dismiss(loadingToastId)
-      }
-
-      // Toast de éxito (despedida)
+      // Toast de despedida — visible antes del redirect
       if (showToast) {
         showLogoutToast()
       }
@@ -159,11 +143,10 @@ export function useLogout(options: UseLogoutOptions = {}): UseLogoutReturn {
         onAfterLogout()
       }
 
-      // Navegación (usar replace para evitar volver atrás)
-      debugLog(`🧭 Redirigiendo a ${redirectTo} (replace)...`)
+      // Delay para que el toast sea visible antes de redirigir
+      await new Promise(resolve => setTimeout(resolve, 1200))
 
-      // ✅ SOLUCIÓN DEFINITIVA: Hard reload para garantizar estado limpio
-      // window.location.href fuerza recarga completa, limpiando TODO el estado de React
+      debugLog(`🧭 Redirigiendo a ${redirectTo} (replace)...`)
       window.location.href = redirectTo
     } catch (error) {
       errorLog('logout-hook', error)
