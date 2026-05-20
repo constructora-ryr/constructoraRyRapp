@@ -33,7 +33,7 @@ import type { EditarAbonoPayload } from '../types/editar-abono.types'
 /** Fila plana tal como viene de la vista SQL */
 export interface AbonoCompletoRow {
   id: string
-  numero_recibo: number
+  numero_recibo: string
   negociacion_id: string
   fuente_pago_id: string
   monto: number
@@ -77,7 +77,7 @@ export interface AbonoCompletoRow {
 /** Estructura anidada para consumo en componentes */
 export interface AbonoConInfo {
   id: string
-  numero_recibo: number
+  numero_recibo: string
   negociacion_id: string
   fuente_pago_id: string
   monto: number

@@ -100,17 +100,12 @@ export function useAbonosList() {
         const nombreCompleto =
           `${abono.cliente.nombres} ${abono.cliente.apellidos}`.toLowerCase()
         const documento = abono.cliente.numero_documento.toLowerCase()
-        const recibo = `ryr-${String(abono.numero_recibo).padStart(4, '0')}`
+        const recibo = abono.numero_recibo.toLowerCase()
         // Vivienda: acepta "A17", "17", "a", "mz.a casa 17"…
         const viviendaRef =
           `${abono.vivienda.manzana.identificador}${abono.vivienda.numero}`.toLowerCase()
         const proyectoNombre = abono.proyecto.nombre.toLowerCase()
-        // Manejo inteligente de recibo: "ryr-15" → número 15 → recibo 0015
-        const reciboMatch = (() => {
-          if (recibo.includes(termino)) return true
-          const m = termino.match(/^ryr-(\d+)$/)
-          return m !== null && abono.numero_recibo === parseInt(m[1], 10)
-        })()
+        const reciboMatch = recibo.includes(termino)
         return (
           nombreCompleto.includes(termino) ||
           documento.includes(termino) ||

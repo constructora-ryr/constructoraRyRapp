@@ -97,7 +97,7 @@ export function useModalRegistroPago({
   const [faseLoading, setFaseLoading] = useState<FaseLoading>('idle')
   const [abonoRegistrado, setAbonoRegistrado] = useState<{
     id: string
-    numero_recibo: number
+    numero_recibo: string
     monto: number
     fecha_abono: string
     metodo_pago: string

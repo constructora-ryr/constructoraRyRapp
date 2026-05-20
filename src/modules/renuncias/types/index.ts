@@ -240,7 +240,7 @@ export interface ResumenFinanciero {
 
 export interface AbonoExpediente {
   id: string
-  numero_recibo: number | null
+  numero_recibo: string | null
   fecha_abono: string
   monto: number
   metodo_pago: string | null

@@ -11,7 +11,7 @@ import { formatearNumeroRecibo } from '../../utils/formato-recibo'
 // ─── Tipo local compatible con AbonoConInfo de useAbonosList ─────────────────
 export interface AbonoParaDetalle {
   id: string
-  numero_recibo: number
+  numero_recibo: string
   monto: number
   fecha_abono: string
   metodo_pago: string

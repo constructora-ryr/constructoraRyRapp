@@ -33,7 +33,7 @@ export type Database = {
           motivo_detalle: string | null
           negociacion_id: string
           notas: string | null
-          numero_recibo: number
+          numero_recibo: string
           numero_referencia: string | null
           trasladado_desde_negociacion_id: string | null
           usuario_registro: string | null
@@ -56,7 +56,7 @@ export type Database = {
           motivo_detalle?: string | null
           negociacion_id: string
           notas?: string | null
-          numero_recibo?: number
+          numero_recibo?: string
           numero_referencia?: string | null
           trasladado_desde_negociacion_id?: string | null
           usuario_registro?: string | null
@@ -79,7 +79,7 @@ export type Database = {
           motivo_detalle?: string | null
           negociacion_id?: string
           notas?: string | null
-          numero_recibo?: number
+          numero_recibo?: string
           numero_referencia?: string | null
           trasladado_desde_negociacion_id?: string | null
           usuario_registro?: string | null
@@ -2844,7 +2844,7 @@ export type Database = {
           negociacion_total_abonado: number | null
           negociacion_valor_total: number | null
           notas: string | null
-          numero_recibo: number | null
+          numero_recibo: string | null
           numero_referencia: string | null
           proyecto_id: string | null
           proyecto_nombre: string | null

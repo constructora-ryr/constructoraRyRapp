@@ -250,7 +250,7 @@ export function generarTextos(
         (datos_nuevos?.monto as number | undefined)
       const montoStr = montoVal ? `$${montoVal.toLocaleString('es-CO')}` : 'N/A'
       const consecutivo = metadata?.abono_numero_recibo
-        ? formatearNumeroRecibo(Number(metadata.abono_numero_recibo))
+        ? formatearNumeroRecibo(String(metadata.abono_numero_recibo))
         : null
       const fuente = metadata?.fuente_tipo ? String(metadata.fuente_tipo) : null
       const metodo = metadata?.abono_metodo_pago
@@ -274,7 +274,7 @@ export function generarTextos(
         ? String(metadata.motivo_edicion)
         : null
       const numeroRecibo = metadata?.abono_numero_recibo
-        ? formatearNumeroRecibo(Number(metadata.abono_numero_recibo))
+        ? formatearNumeroRecibo(String(metadata.abono_numero_recibo))
         : null
       const partes = [
         numeroRecibo ? `Recibo: ${numeroRecibo}` : null,
@@ -295,7 +295,7 @@ export function generarTextos(
         (datos_anteriores?.monto as number | undefined)
       const montoStr = montoVal ? `$${montoVal.toLocaleString('es-CO')}` : 'N/A'
       const consecutivo = metadata?.abono_numero_recibo
-        ? formatearNumeroRecibo(Number(metadata.abono_numero_recibo))
+        ? formatearNumeroRecibo(String(metadata.abono_numero_recibo))
         : null
       const motivo = metadata?.motivo_categoria
         ? String(metadata.motivo_categoria)

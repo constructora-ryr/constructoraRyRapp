@@ -33,8 +33,9 @@ function formatFecha(fechaISO: string): string {
   }
 }
 
-function formatNumeroRecibo(n: number): string {
-  return `RYR-${String(n).padStart(4, '0')}`
+function formatNumeroRecibo(n: string | number): string {
+  if (typeof n === 'number') return `RYR-${String(n).padStart(4, '0')}`
+  return n
 }
 
 function esc(s: string | null | undefined): string {
