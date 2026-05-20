@@ -198,19 +198,16 @@
 }
 
 /* ── TOASTS CUSTOM (frosted glass) ──────────
-   Sin wrapper: solo el contenido que renderizan.
+   data-styled='false' = toast.custom() sin wrapper de Sonner.
    ─────────────────────────────────────────── */
-[data-sonner-toast][data-type='custom'] {
-  all: unset !important;
-  display: block !important;
-  position: relative !important;
+[data-sonner-toast][data-styled='false'] {
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
   padding: 0 !important;
 }
 
-[data-sonner-toast][data-type='custom']:hover {
+[data-sonner-toast][data-styled='false']:hover {
   transform: none !important;
   box-shadow: none !important;
 }
@@ -219,7 +216,7 @@
    all: unset limpia los defaults de Sonner.
    Reconstruimos el layout completo desde cero.
    ─────────────────────────────────────────── */
-[data-sonner-toast]:not([data-type='custom']) {
+[data-sonner-toast][data-styled='true'] {
   all: unset !important;
 
   /* Layout */
@@ -253,7 +250,7 @@
     box-shadow 0.2s ease !important;
 }
 
-.dark [data-sonner-toast]:not([data-type='custom']) {
+.dark [data-sonner-toast][data-styled='true'] {
   background: #1a1d2e !important;
   border-color: rgba(255, 255, 255, 0.08) !important;
   border-left-color: #475569 !important;
@@ -262,14 +259,14 @@
     0 10px 32px -4px rgba(0, 0, 0, 0.55) !important;
 }
 
-[data-sonner-toast]:not([data-type='custom']):hover {
+[data-sonner-toast][data-styled='true']:hover {
   transform: translateY(-2px) !important;
   box-shadow:
     0 8px 12px -2px rgba(0, 0, 0, 0.1),
     0 20px 40px -4px rgba(0, 0, 0, 0.15) !important;
 }
 
-.dark [data-sonner-toast]:not([data-type='custom']):hover {
+.dark [data-sonner-toast][data-styled='true']:hover {
   box-shadow:
     0 8px 12px -2px rgba(0, 0, 0, 0.45),
     0 20px 48px -4px rgba(0, 0, 0, 0.65) !important;
