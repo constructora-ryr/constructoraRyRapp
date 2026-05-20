@@ -38,33 +38,28 @@ export function showLoginSuccessToast() {
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: 100 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
-        className='overflow-hidden rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 p-[2px] shadow-xl shadow-emerald-500/20'
+        className='flex min-w-[300px] items-center gap-3 rounded-xl border border-emerald-500/30 bg-black/25 py-3 pl-3 pr-4 shadow-lg shadow-black/20 backdrop-blur-md'
       >
-        <div className='flex min-w-[320px] items-center gap-3 rounded-xl bg-white/95 py-3.5 pl-3 pr-4 backdrop-blur-xl dark:bg-gray-900/95'>
-          <div className='flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-500/15 ring-1 ring-emerald-500/30 dark:bg-emerald-500/20'>
-            <LogIn
-              className='h-5 w-5 text-emerald-600 dark:text-emerald-400'
-              strokeWidth={2.5}
-            />
-          </div>
-
-          <div className='min-w-0 flex-1'>
-            <div className='flex items-center gap-1.5'>
-              <h3 className='text-sm font-bold text-gray-900 dark:text-white'>
-                ¡Bienvenido de nuevo!
-              </h3>
-              <Sparkles className='h-3.5 w-3.5 flex-shrink-0 text-yellow-500 dark:text-yellow-400' />
-            </div>
-            <p className='mt-0.5 text-xs text-gray-500 dark:text-gray-400'>
-              Redirigiendo al dashboard...
-            </p>
-          </div>
-
-          <CheckCircle2
-            className='h-5 w-5 flex-shrink-0 text-emerald-600 dark:text-emerald-400'
-            strokeWidth={2.5}
-          />
+        <div className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-500/20 ring-1 ring-emerald-500/40'>
+          <LogIn className='h-4 w-4 text-emerald-400' strokeWidth={2.5} />
         </div>
+
+        <div className='min-w-0 flex-1'>
+          <div className='flex items-center gap-1.5'>
+            <h3 className='text-sm font-semibold text-white'>
+              ¡Bienvenido de nuevo!
+            </h3>
+            <Sparkles className='h-3 w-3 flex-shrink-0 text-yellow-400' />
+          </div>
+          <p className='mt-0.5 text-xs text-white/60'>
+            Redirigiendo al dashboard...
+          </p>
+        </div>
+
+        <CheckCircle2
+          className='h-4 w-4 flex-shrink-0 text-emerald-400'
+          strokeWidth={2.5}
+        />
       </motion.div>
     ),
     {
@@ -575,37 +570,35 @@ export function showEntitySuccessToast({
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: 100 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
-        className='overflow-hidden rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 p-[2px] shadow-xl shadow-emerald-500/20'
+        className='flex min-w-[320px] items-center gap-3 rounded-xl border border-emerald-500/30 bg-black/25 py-3 pl-3 pr-4 shadow-lg shadow-black/20 backdrop-blur-md'
       >
-        <div className='flex min-w-[340px] items-center gap-3 rounded-xl bg-white/95 py-3.5 pl-3 pr-4 backdrop-blur-xl dark:bg-gray-900/95'>
-          <div className='flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-500/15 ring-1 ring-emerald-500/30 dark:bg-emerald-500/20'>
-            <CheckCircle2
-              className='h-5 w-5 text-emerald-600 dark:text-emerald-400'
-              strokeWidth={2.5}
-            />
-          </div>
-
-          <div className='min-w-0 flex-1'>
-            <div className='flex items-center gap-1.5'>
-              <h3 className='text-sm font-bold text-gray-900 dark:text-white'>
-                {isCreated ? 'Creado exitosamente' : 'Cambios guardados'}
-              </h3>
-              {isCreated && (
-                <Sparkles className='h-3.5 w-3.5 flex-shrink-0 text-yellow-500 dark:text-yellow-400' />
-              )}
-            </div>
-            <p className='mt-0.5 text-xs text-gray-500 dark:text-gray-400'>
-              {isCreated
-                ? `${entityName} ya está disponible`
-                : `${entityName} se actualizó correctamente`}
-            </p>
-          </div>
-
+        <div className='flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-500/20 ring-1 ring-emerald-500/40'>
           <CheckCircle2
-            className='h-5 w-5 flex-shrink-0 text-emerald-600 dark:text-emerald-400'
+            className='h-5 w-5 text-emerald-400'
             strokeWidth={2.5}
           />
         </div>
+
+        <div className='min-w-0 flex-1'>
+          <div className='flex items-center gap-1.5'>
+            <h3 className='text-sm font-semibold text-white'>
+              {isCreated ? 'Creado exitosamente' : 'Cambios guardados'}
+            </h3>
+            {isCreated && (
+              <Sparkles className='h-3.5 w-3.5 flex-shrink-0 text-yellow-400' />
+            )}
+          </div>
+          <p className='mt-0.5 text-xs text-white/60'>
+            {isCreated
+              ? `${entityName} ya está disponible`
+              : `${entityName} se actualizó correctamente`}
+          </p>
+        </div>
+
+        <CheckCircle2
+          className='h-5 w-5 flex-shrink-0 text-emerald-400'
+          strokeWidth={2.5}
+        />
       </motion.div>
     ),
     {
