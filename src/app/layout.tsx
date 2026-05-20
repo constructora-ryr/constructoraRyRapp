@@ -94,17 +94,7 @@ export default function RootLayout({
                       </div>
                     </ProtectedApp>
 
-                    <Toaster
-                      position='bottom-right'
-                      duration={4000}
-                      gap={8}
-                      toastOptions={{
-                        unstyled: true,
-                        classNames: {
-                          toast: 'bg-transparent border-0 shadow-none p-0',
-                        },
-                      }}
-                    />
+                    <Toaster position='bottom-right' duration={4000} gap={8} />
 
                     {/* Modales globales */}
                     <ConfirmModal />
