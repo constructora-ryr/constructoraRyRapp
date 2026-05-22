@@ -125,9 +125,8 @@ export function useLogout(options: UseLogoutOptions = {}): UseLogoutReturn {
       debugLog('🔐 Ejecutando signOut en Supabase...')
       await logoutMutation.mutateAsync()
 
-      // 2. Limpiar almacenamiento local
-      debugLog('🧹 Limpiando localStorage y sessionStorage...')
-      localStorage.removeItem('supabase.auth.token')
+      // 2. Limpiar sessionStorage (Supabase v2 usa cookies httpOnly, no localStorage)
+      debugLog('🧹 Limpiando sessionStorage...')
       sessionStorage.clear()
 
       // Toast de despedida — visible antes del redirect

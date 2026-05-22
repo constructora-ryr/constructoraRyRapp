@@ -9,10 +9,41 @@ import { logger } from '@/lib/utils/logger'
  * API Route: POST /api/abonos/registrar
  * Registra un nuevo abono para una fuente de pago específica
  */
+const ROLES_PERMITIDOS_ABONOS = ['Administrador', 'Contabilidad'] as const
+
 export async function POST(request: NextRequest) {
   try {
     // Crear cliente con contexto de autenticación (dentro del try para capturar errores de sesión)
     const supabase = await createRouteClient()
+
+    // 0. Verificar autenticación y rol antes de procesar el body
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+    }
+
+    const { data: perfil } = await supabase
+      .from('usuarios')
+      .select('rol, estado')
+      .eq('id', user.id)
+      .single()
+
+    if (
+      !perfil ||
+      perfil.estado !== 'Activo' ||
+      !ROLES_PERMITIDOS_ABONOS.includes(
+        perfil.rol as (typeof ROLES_PERMITIDOS_ABONOS)[number]
+      )
+    ) {
+      return NextResponse.json(
+        { error: 'No tienes permisos para registrar abonos' },
+        { status: 403 }
+      )
+    }
 
     const body = await request.json()
     const {
@@ -114,11 +145,6 @@ export async function POST(request: NextRequest) {
 
     // 2. Convertir fecha usando utilidad centralizada
     const fechaAbonoDB = formatDateForDB(fecha_abono)
-
-    // 3. Obtener usuario actual para guardarlo en el abono
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
 
     // 4. Registrar el abono (numero_recibo se asigna automáticamente por secuencia BD)
     const { data: nuevoAbono, error: abonoError } = await supabase
