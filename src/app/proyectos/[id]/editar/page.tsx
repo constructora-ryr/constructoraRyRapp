@@ -1,4 +1,4 @@
-import { forbidden } from 'next/navigation'
+import { forbidden, notFound } from 'next/navigation'
 
 import { getServerPermissions } from '@/lib/auth/server'
 import { resolverSlugProyectoServer } from '@/lib/utils/slug.server'
@@ -21,11 +21,7 @@ export default async function EditarProyectoPage({ params }: PageProps) {
   const proyectoUUID = await resolverSlugProyectoServer(id)
 
   if (!proyectoUUID) {
-    return (
-      <div className='flex min-h-screen items-center justify-center text-gray-500'>
-        Proyecto no encontrado
-      </div>
-    )
+    notFound()
   }
 
   return (

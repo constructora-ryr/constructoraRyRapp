@@ -153,6 +153,16 @@ export async function actualizar(
 ): Promise<Vivienda> {
   const formDataSanitizada = sanitizeViviendaUpdate(formData)
 
+  // Bloquear cambios financieros en viviendas ya entregadas (invariante de negocio)
+  if (formDataSanitizada.valor_base !== undefined) {
+    const viviendaActual = await obtenerPorId(id)
+    if (viviendaActual?.estado === 'Entregada') {
+      throw new Error(
+        'No se puede modificar el valor base de una vivienda ya entregada'
+      )
+    }
+  }
+
   if (formDataSanitizada.matricula_inmobiliaria !== undefined) {
     const resultado = await verificarMatriculaUnica(
       formDataSanitizada.matricula_inmobiliaria,

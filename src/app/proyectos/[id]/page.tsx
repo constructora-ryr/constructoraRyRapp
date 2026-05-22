@@ -1,3 +1,5 @@
+import { notFound } from 'next/navigation'
+
 import { resolverSlugProyectoServer } from '@/lib/utils/slug.server'
 
 import ProyectoDetalleClient from './proyecto-detalle-client'
@@ -14,8 +16,7 @@ export default async function ProyectoDetallePage({ params }: PageProps) {
   const proyectoUUID = await resolverSlugProyectoServer(id)
 
   if (!proyectoUUID) {
-    // TODO: Página 404
-    return <div>Proyecto no encontrado</div>
+    notFound()
   }
 
   return <ProyectoDetalleClient proyectoId={proyectoUUID} />
