@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+import { getServerPermissions } from '@/lib/auth/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import type { Json, TablesUpdate } from '@/lib/supabase/database.types'
 import { createRouteClient } from '@/lib/supabase/server-route'
@@ -41,18 +42,17 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-    // 2. Verificar rol Administrador
-    const { data: usuarioPerfil, error: perfilError } = await supabase
+    // 2. Verificar permiso de editar abonos según permisos_rol
+    const { data: usuarioPerfil } = await supabase
       .from('usuarios')
       .select('rol')
       .eq('id', user.id)
       .single()
 
-    if (perfilError || usuarioPerfil?.rol !== 'Administrador') {
+    const permisos = await getServerPermissions('abonos')
+    if (!permisos.canEdit) {
       return NextResponse.json(
-        {
-          error: 'Acceso denegado. Solo administradores pueden editar abonos.',
-        },
+        { error: 'Acceso denegado. No tienes permisos para editar abonos.' },
         { status: 403 }
       )
     }
@@ -99,7 +99,7 @@ export async function PATCH(request: NextRequest) {
     // disponible en metadata del audit_log (no depende de joins async)
     const { data: negociacion, error: negError } = await supabase
       .from('negociaciones')
-      .select('estado, cliente_id')
+      .select('estado, cliente_id, fecha_negociacion')
       .eq('id', abono.negociacion_id)
       .single()
 
@@ -147,7 +147,20 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
-    // 7. Validar metodo_pago (si cambia)
+    // 7. Validar fecha_abono (si cambia): no puede ser anterior al inicio de la negociación
+    if (body.fecha_abono !== undefined && negociacion.fecha_negociacion) {
+      const fechaNeg = negociacion.fecha_negociacion.slice(0, 10)
+      if (String(body.fecha_abono) < fechaNeg) {
+        return NextResponse.json(
+          {
+            error: `La fecha del abono no puede ser anterior al inicio de la negociación (${fechaNeg})`,
+          },
+          { status: 400 }
+        )
+      }
+    }
+
+    // 8b. Validar metodo_pago (si cambia)
     if (body.metodo_pago !== undefined && body.metodo_pago !== null) {
       if (
         typeof body.metodo_pago !== 'string' ||
@@ -292,7 +305,7 @@ export async function PATCH(request: NextRequest) {
           registro_id: abonoId,
           usuario_id: user.id,
           usuario_email: user.email ?? '',
-          usuario_rol: usuarioPerfil.rol,
+          usuario_rol: usuarioPerfil?.rol ?? null,
           datos_anteriores: {
             monto: abono.monto,
             fecha_abono: abono.fecha_abono,

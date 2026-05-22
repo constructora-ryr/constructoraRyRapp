@@ -189,26 +189,35 @@ export async function PATCH(request: NextRequest) {
     (negPost.saldo_pendiente ?? 0) > 0 &&
     negPost.estado === 'Completada'
   ) {
-    await supabaseAdmin
-      .from('negociaciones')
-      .update({ estado: 'Activa', fecha_completada: null })
-      .eq('id', abono.negociacion_id)
+    const revertOps = [
+      supabaseAdmin
+        .from('negociaciones')
+        .update({ estado: 'Activa', fecha_completada: null })
+        .eq('id', abono.negociacion_id),
+      negPost.vivienda_id
+        ? supabaseAdmin
+            .from('viviendas')
+            .update({ estado: 'Asignada' })
+            .eq('id', negPost.vivienda_id)
+            .eq('estado', 'Propietario')
+        : Promise.resolve({ error: null }),
+      negPost.cliente_id
+        ? supabaseAdmin
+            .from('clientes')
+            .update({ estado: 'Activo' })
+            .eq('id', negPost.cliente_id)
+            .eq('estado', 'Propietario')
+        : Promise.resolve({ error: null }),
+    ]
 
-    if (negPost.vivienda_id) {
-      await supabaseAdmin
-        .from('viviendas')
-        .update({ estado: 'Asignada' })
-        .eq('id', negPost.vivienda_id)
-        .eq('estado', 'Propietario')
-    }
-
-    if (negPost.cliente_id) {
-      await supabaseAdmin
-        .from('clientes')
-        .update({ estado: 'Activo' })
-        .eq('id', negPost.cliente_id)
-        .eq('estado', 'Propietario')
-    }
+    const revertResults = await Promise.all(revertOps)
+    revertResults.forEach(({ error }, i) => {
+      if (error)
+        logger.error(
+          `⚠️ Error revirtiendo estado tras anulación (op ${i}):`,
+          error.message
+        )
+    })
   }
 
   // 6. Registrar en audit_log con metadata completa (mismos nombres de campo que el renderer)

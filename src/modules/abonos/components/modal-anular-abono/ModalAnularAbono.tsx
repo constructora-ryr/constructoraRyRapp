@@ -116,7 +116,7 @@ const TextareaDetalle = memo(function TextareaDetalle({
 interface ModalAnularAbonoProps {
   abono: {
     id: string
-    numero_recibo: number
+    numero_recibo: string | number
     monto: number
     fecha_abono: string
     /** Nombre completo del cliente (opcional, para confirmación visual) */

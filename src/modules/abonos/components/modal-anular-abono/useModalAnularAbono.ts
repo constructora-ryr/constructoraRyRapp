@@ -14,7 +14,10 @@ const DETALLE_MAX_CHARS = 300
 const CELEBRATION_DELAY_MS = 1800
 
 export interface UseModalAnularAbonoProps {
-  abono: Pick<AbonoHistorial, 'id' | 'numero_recibo' | 'monto' | 'fecha_abono'>
+  abono: Omit<
+    Pick<AbonoHistorial, 'id' | 'numero_recibo' | 'monto' | 'fecha_abono'>,
+    'numero_recibo'
+  > & { numero_recibo: string | number }
   /** Callback automático ~2s después de anulación exitosa. Debe cerrar el modal y refrescar datos. */
   onAnulacionExitosa?: () => void
 }

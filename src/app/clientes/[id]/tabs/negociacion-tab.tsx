@@ -211,7 +211,7 @@ export function NegociacionTab({
 
   const abonosParaUI = abonos as Array<{
     id: string
-    numero_recibo?: number | null
+    numero_recibo?: string | number | null
     negociacion_id?: string
     fuente_pago_id?: string
     monto: number

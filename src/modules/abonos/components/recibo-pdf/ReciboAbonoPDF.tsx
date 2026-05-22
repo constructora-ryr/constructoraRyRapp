@@ -415,7 +415,8 @@ function formatFechaPDF(fechaISO: string): string {
   }
 }
 
-function formatNumeroRecibo(n: number): string {
+function formatNumeroRecibo(n: string | number): string {
+  if (typeof n === 'string') return n
   return `RYR-${String(n).padStart(4, '0')}`
 }
 

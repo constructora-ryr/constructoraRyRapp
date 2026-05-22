@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+import { getServerPermissions } from '@/lib/auth/server'
 import type { Json } from '@/lib/supabase/database.types'
 import { createRouteClient } from '@/lib/supabase/server-route'
 import { formatDateForDB } from '@/lib/utils/date.utils'
@@ -9,14 +10,12 @@ import { logger } from '@/lib/utils/logger'
  * API Route: POST /api/abonos/registrar
  * Registra un nuevo abono para una fuente de pago específica
  */
-const ROLES_PERMITIDOS_ABONOS = ['Administrador', 'Contabilidad'] as const
-
 export async function POST(request: NextRequest) {
   try {
     // Crear cliente con contexto de autenticación (dentro del try para capturar errores de sesión)
     const supabase = await createRouteClient()
 
-    // 0. Verificar autenticación y rol antes de procesar el body
+    // 0. Verificar autenticación
     const {
       data: { user },
       error: authError,
@@ -26,19 +25,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
     }
 
-    const { data: perfil } = await supabase
-      .from('usuarios')
-      .select('rol, estado')
-      .eq('id', user.id)
-      .single()
-
-    if (
-      !perfil ||
-      perfil.estado !== 'Activo' ||
-      !ROLES_PERMITIDOS_ABONOS.includes(
-        perfil.rol as (typeof ROLES_PERMITIDOS_ABONOS)[number]
-      )
-    ) {
+    // 0b. Verificar permiso de registrar abonos según permisos_rol
+    const permisos = await getServerPermissions('abonos')
+    if (!permisos.canCreate) {
       return NextResponse.json(
         { error: 'No tienes permisos para registrar abonos' },
         { status: 403 }
