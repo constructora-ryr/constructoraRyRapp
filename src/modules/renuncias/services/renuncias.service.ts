@@ -196,8 +196,10 @@ export async function validarPuedeRenunciar(
 // =====================================================
 
 export async function registrarRenuncia(dto: RegistrarRenunciaDTO) {
-  const { data: session } = await supabase.auth.getSession()
-  const userId = session?.session?.user?.id ?? null
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  const userId = user?.id ?? null
 
   const { data, error } = await supabase.rpc('registrar_renuncia_completa', {
     p_negociacion_id: dto.negociacion_id,
@@ -224,9 +226,11 @@ export async function procesarDevolucion(
   renunciaId: string,
   dto: ProcesarDevolucionDTO
 ) {
-  const { data: session } = await supabase.auth.getSession()
-  const userId = session?.session?.user?.id ?? null
-  const userEmail = session?.session?.user?.email ?? ''
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  const userId = user?.id ?? null
+  const userEmail = user?.email ?? ''
 
   // Resolver nombre + rol del usuario (mismo formato que registrar_renuncia_completa en DB)
   let usuarioCierreLabel: string | null = userId

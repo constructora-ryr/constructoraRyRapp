@@ -46,9 +46,18 @@ export async function POST(request: Request) {
     // 3. Validar body
     const { rol } = await request.json()
 
-    if (!rol) {
+    const ROLES_VALIDOS: Rol[] = [
+      'Administrador',
+      'Contabilidad',
+      'Administrador de Obra',
+      'Gerencia',
+    ]
+
+    if (!rol || !ROLES_VALIDOS.includes(rol as Rol)) {
       return NextResponse.json(
-        { error: 'Falta parámetro: rol es requerido' },
+        {
+          error: `Rol inválido o ausente. Valores permitidos: ${ROLES_VALIDOS.join(', ')}`,
+        },
         { status: 400 }
       )
     }

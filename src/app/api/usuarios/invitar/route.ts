@@ -52,6 +52,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const ROLES_VALIDOS: Rol[] = [
+      'Administrador',
+      'Contabilidad',
+      'Administrador de Obra',
+      'Gerencia',
+    ]
+    if (!ROLES_VALIDOS.includes(rol)) {
+      return NextResponse.json(
+        { error: `Rol inválido: "${rol}"` },
+        { status: 400 }
+      )
+    }
+
     // URL base para el redirect del invite
     const origin =
       process.env.NEXT_PUBLIC_SITE_URL ??
