@@ -71,7 +71,7 @@ export function InvalidRoleError({
         >
           <Image
             src={logoHorizontal}
-            alt='RyR Constructora'
+            alt='Constructora RyR'
             width={220}
             height={66}
             className='h-auto w-40 sm:w-[220px]'

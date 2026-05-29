@@ -43,7 +43,7 @@ export function SidebarHeader({
             >
               <Image
                 src={logoSrc}
-                alt='RyR Constructora'
+                alt='Constructora RyR'
                 width={140}
                 height={40}
                 className='h-auto w-auto'

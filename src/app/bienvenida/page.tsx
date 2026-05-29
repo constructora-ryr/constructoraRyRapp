@@ -146,7 +146,7 @@ export default function BienvenidaPage() {
       <div className='fixed inset-0 z-0 h-screen w-screen'>
         <Image
           src='/images/fondo-login.png'
-          alt='Fondo RyR Constructora'
+          alt='Fondo Constructora RyR'
           fill
           sizes='100vw'
           className='object-cover'
@@ -168,7 +168,7 @@ export default function BienvenidaPage() {
           <div className='relative h-28 w-full max-w-md'>
             <Image
               src='/images/logo1-dark.png'
-              alt='Logo RyR Constructora'
+              alt='Logo Constructora RyR'
               fill
               sizes='(max-width: 640px) 280px, 400px'
               className='object-contain drop-shadow-2xl'
@@ -193,7 +193,7 @@ export default function BienvenidaPage() {
             <div className='relative mb-6 h-16 w-full'>
               <Image
                 src='/images/logo2-dark.png'
-                alt='Logo RyR Constructora'
+                alt='Logo Constructora RyR'
                 fill
                 sizes='400px'
                 className='object-contain drop-shadow-xl'
@@ -478,7 +478,7 @@ export default function BienvenidaPage() {
           transition={{ delay: 0.8 }}
           className='mt-8 text-center text-xs text-white/40'
         >
-          © {new Date().getFullYear()} RyR Constructora LTDA. Todos los
+          © {new Date().getFullYear()} Constructora RyR LTDA. Todos los
           derechos reservados.
         </motion.p>
       </div>

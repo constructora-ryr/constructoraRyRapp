@@ -1,5 +1,5 @@
 /**
- * Sistema de Diseño Global - RyR Constructora
+ * Sistema de Diseño Global - Constructora RyR
  *
  * Principios:
  * - Compacto pero usable (min 32px touch targets)

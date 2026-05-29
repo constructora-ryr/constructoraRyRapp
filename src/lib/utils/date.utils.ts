@@ -1,5 +1,5 @@
 /**
- * 📅 Utilidades de Fecha - RyR Constructora
+ * 📅 Utilidades de Fecha - Constructora RyR
  *
  * Funciones centralizadas para manejo consistente de fechas
  * en toda la aplicación, evitando problemas de zona horaria.

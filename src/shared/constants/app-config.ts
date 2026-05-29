@@ -9,7 +9,7 @@
 // 🏢 INFORMACIÓN DE LA EMPRESA
 // =============================================================================
 export const COMPANY = {
-  name: process.env.NEXT_PUBLIC_COMPANY_NAME || 'RyR Constructora',
+  name: process.env.NEXT_PUBLIC_COMPANY_NAME || 'Constructora RyR',
   logo: process.env.NEXT_PUBLIC_COMPANY_LOGO || '/logo.png',
   address: 'Dirección de la constructora', // TODO: Mover a env
   phone: '+57 9 XXXX XXXX', // TODO: Mover a env

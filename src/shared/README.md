@@ -1,6 +1,6 @@
 # Shared - Recursos Globales Compartidos
 
-> Infraestructura compartida para toda la aplicación RyR Constructora
+> Infraestructura compartida para toda la aplicación Constructora RyR
 
 ## 📁 Estructura
 
@@ -110,7 +110,7 @@ ROUTE_LABELS['/proyectos'] // 'Proyectos'
 ```tsx
 import { APP_CONFIG, API_CONFIG, PAGINATION } from '@/shared'
 
-APP_CONFIG.name // 'RyR Constructora'
+APP_CONFIG.name // 'Constructora RyR'
 API_CONFIG.timeout // 10000
 PAGINATION.defaultPageSize // 20
 ```

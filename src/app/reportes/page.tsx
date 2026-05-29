@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Reportes - RyR Constructora',
+  title: 'Reportes - Constructora RyR',
   description: 'Reportes y estadísticas del sistema',
 }
 

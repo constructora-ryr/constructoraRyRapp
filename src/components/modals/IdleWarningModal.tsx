@@ -190,7 +190,7 @@ export function IdleWarningModal({
                     <div className='relative h-24 w-32'>
                       <Image
                         src='/images/logo1-dark.png'
-                        alt='RyR Constructora'
+                        alt='Constructora RyR'
                         width={128}
                         height={96}
                         className='h-full w-full object-contain'

@@ -3,10 +3,10 @@
  */
 
 export const APP_CONFIG = {
-  name: 'RyR Constructora',
+  name: 'Constructora RyR',
   description: 'Sistema de Gestión Administrativa',
   version: '1.0.0',
-  author: 'RyR Constructora',
+  author: 'Constructora RyR',
   email: 'info@ryrconstrucora.com',
   phone: '+57 123 456 7890',
   address: 'Calle Principal #123, Ciudad, Colombia 🇨🇴',

@@ -52,7 +52,7 @@ export function AbonosListHeader({
             <div className='space-y-0.5'>
               <h1 className='text-2xl font-bold text-white'>Abonos</h1>
               <p className='text-xs text-violet-100 dark:text-violet-200'>
-                Registro global de recibos · RyR Constructora
+                Registro global de recibos · Constructora RyR
               </p>
             </div>
           </div>

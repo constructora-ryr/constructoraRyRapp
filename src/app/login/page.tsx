@@ -68,7 +68,7 @@ function LoginForm() {
       <div className={s.backgroundWrapper}>
         <Image
           src='/images/fondo-login.png'
-          alt='Fondo RyR Constructora'
+          alt='Fondo Constructora RyR'
           fill
           sizes='100vw'
           className={s.backgroundImage}
@@ -88,7 +88,7 @@ function LoginForm() {
           <div className={s.logo1Container}>
             <Image
               src='/images/logo1-dark.png'
-              alt='Logo RyR Constructora'
+              alt='Logo Constructora RyR'
               fill
               sizes='(max-width: 640px) 280px, (max-width: 1024px) 400px, 600px'
               className={s.logo1Image}
@@ -108,7 +108,7 @@ function LoginForm() {
             <div className={s.logo2Container}>
               <Image
                 src='/images/logo2-dark.png'
-                alt='Logo RyR Constructora 2'
+                alt='Logo Constructora RyR 2'
                 fill
                 sizes='(max-width: 768px) 100vw, 600px'
                 className={s.logo2Image}

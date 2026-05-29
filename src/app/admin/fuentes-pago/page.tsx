@@ -14,7 +14,7 @@ import { getServerPermissions } from '@/lib/auth/server'
 import { FuentesPagoAdminContent } from './fuentes-pago-admin-content'
 
 export const metadata = {
-  title: 'Administración de Fuentes de Pago | RyR Constructora',
+  title: 'Administración de Fuentes de Pago | Constructora RyR',
   description:
     'Gestiona los tipos de fuentes de pago disponibles en el sistema',
 }

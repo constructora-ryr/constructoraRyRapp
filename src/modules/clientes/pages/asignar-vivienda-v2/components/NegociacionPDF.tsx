@@ -2,7 +2,7 @@
  * Componente: NegociacionPDF
  *
  * Genera el PDF de resumen de negociación usando @react-pdf/renderer.
- * Diseño A4, una página, con branding RyR Constructora.
+ * Diseño A4, una página, con branding Constructora RyR.
  *
  * Nota: Este componente solo puede renderizarse en el cliente (browser)
  * porque usa APIs del renderer de PDF.
@@ -325,7 +325,7 @@ export function NegociacionPDF({
   return (
     <Document
       title={`Negociación - ${clienteNombre}`}
-      author='RyR Constructora'
+      author='Constructora RyR'
       subject='Resumen de Negociación de Vivienda'
     >
       <Page size='A4' style={s.page}>
@@ -334,7 +334,7 @@ export function NegociacionPDF({
           <View style={s.headerLeft}>
             <Image src='/images/logo1.png' style={s.logo} />
             <View style={s.headerTitles}>
-              <Text style={s.headerTitle}>RyR Constructora</Text>
+              <Text style={s.headerTitle}>Constructora RyR</Text>
               <Text style={s.headerSubtitle}>Resumen de Negociación</Text>
             </View>
           </View>
@@ -461,7 +461,7 @@ export function NegociacionPDF({
             Documento generado automáticamente · No tiene validez legal sin
             firma
           </Text>
-          <Text style={s.footerBrand}>RyR Constructora Ltda.</Text>
+          <Text style={s.footerBrand}>Constructora RyR Ltda.</Text>
         </View>
       </Page>
     </Document>

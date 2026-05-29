@@ -50,8 +50,8 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: 'RyR Constructora - Sistema de Gestión',
-    template: '%s | RyR Constructora',
+    default: 'Constructora RyR - Sistema de Gestión',
+    template: '%s | Constructora RyR',
   },
   description: 'Sistema de gestión administrativa para constructora RyR',
   icons: {

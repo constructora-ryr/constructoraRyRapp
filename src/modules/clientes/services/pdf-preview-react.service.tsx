@@ -554,7 +554,7 @@ const SeccionNotas = ({ notas }: { notas?: string }) => {
 const PDFFooter = () => (
   <View style={styles.footer}>
     <Text style={styles.footerText}>
-      Preview generado por el sistema de gestión de RyR Constructora Ltda.
+      Preview generado por el sistema de gestión de Constructora RyR Ltda.
     </Text>
     <Text style={styles.footerBold}>Página 1 de 1</Text>
   </View>

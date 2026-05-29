@@ -139,7 +139,7 @@ export function CreacionProyectoRenderer({
 
         {/* Responsable */}
         {proyecto.responsable &&
-          proyecto.responsable !== 'RyR Constructora' && (
+          proyecto.responsable !== 'Constructora RyR' && (
             <div className='flex items-start gap-2 border-b border-gray-200 py-1.5 dark:border-gray-700'>
               <User className='mt-0.5 h-4 w-4 flex-shrink-0 text-purple-600 dark:text-purple-400' />
               <div className='min-w-0 flex-1'>

@@ -11,7 +11,7 @@ import { resolverSlugCliente } from '@/lib/utils/slug.utils'
 import { AsignarViviendaV2Page } from '@/modules/clientes/pages/asignar-vivienda-v2'
 
 export const metadata: Metadata = {
-  title: 'Asignar Vivienda | RyR Constructora',
+  title: 'Asignar Vivienda | Constructora RyR',
   description: 'Asignar vivienda a cliente con cierre financiero completo',
 }
 

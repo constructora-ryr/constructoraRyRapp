@@ -47,7 +47,7 @@ export const ESTADO_ICONS: Record<EstadoProyecto, string> = {
 export const PROYECTO_DEFAULTS = {
   presupuesto: 100000,
   diasEstimados: 365,
-  responsable: 'RyR Constructora',
+  responsable: 'Constructora RyR',
   telefono: '+57 123 456 7890',
   email: 'info@ryrconstrucora.com',
   precioBaseVivienda: 80000000,

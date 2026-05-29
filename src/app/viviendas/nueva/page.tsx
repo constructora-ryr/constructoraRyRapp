@@ -10,7 +10,7 @@ import { getServerPermissions } from '@/lib/auth/server'
 import { NuevaViviendaAccordionView } from '@/modules/viviendas/components/NuevaViviendaAccordionView'
 
 export const metadata = {
-  title: 'Nueva Vivienda | RyR Constructora',
+  title: 'Nueva Vivienda | Constructora RyR',
   description: 'Registra una nueva vivienda en el sistema',
 }
 

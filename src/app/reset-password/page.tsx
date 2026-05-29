@@ -245,7 +245,7 @@ export default function ResetPasswordPage() {
             <div className='relative mx-auto mb-6 h-24 w-64'>
               <Image
                 src='/images/logo1-dark.png'
-                alt='Logo RyR Constructora'
+                alt='Logo Constructora RyR'
                 fill
                 sizes='256px'
                 className='object-contain'
@@ -546,7 +546,7 @@ export default function ResetPasswordPage() {
             className='mt-8 text-center text-xs text-gray-400'
           >
             <p>
-              Â© 2024 RyR Constructora LTDA. Todos los derechos reservados.
+              Â© 2024 Constructora RyR LTDA. Todos los derechos reservados.
             </p>
           </motion.div>
         </motion.div>

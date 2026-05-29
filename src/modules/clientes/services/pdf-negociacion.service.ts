@@ -538,7 +538,7 @@ export async function generarReportePDF(datos: DatosReportePDF): Promise<void> {
     setFont(doc, 'caption')
     doc.setTextColor(...COLORES.textSecondary)
     doc.text(
-      'Este documento fue generado automáticamente por el sistema de gestión de RyR Constructora Ltda.',
+      'Este documento fue generado automáticamente por el sistema de gestión de Constructora RyR Ltda.',
       105,
       290,
       { align: 'center' }
@@ -783,7 +783,7 @@ export async function generarPDFPreview(datos: DatosPreviewPDF): Promise<void> {
     setFont(doc, 'caption')
     doc.setTextColor(...COLORES.textSecondary)
     doc.text(
-      'Preview generado por el sistema de gestión de RyR Constructora Ltda.',
+      'Preview generado por el sistema de gestión de Constructora RyR Ltda.',
       105,
       290,
       { align: 'center' }

@@ -5,7 +5,7 @@ import { getServerPermissions } from '@/lib/auth/server'
 import { FuentesPagoHubContent } from './fuentes-pago-hub-content'
 
 export const metadata = {
-  title: 'Fuentes de Pago - Administración | RyR Constructora',
+  title: 'Fuentes de Pago - Administración | Constructora RyR',
   description:
     'Hub central para gestión de fuentes de pago, requisitos y configuración',
 }

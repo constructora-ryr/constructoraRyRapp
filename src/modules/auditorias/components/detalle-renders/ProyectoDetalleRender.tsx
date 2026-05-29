@@ -39,7 +39,7 @@ export function ProyectoDetalleRender({
     (metadata.proyecto_presupuesto != null &&
       Number(metadata.proyecto_presupuesto) > 0) ||
     (metadata.proyecto_responsable != null &&
-      metadata.proyecto_responsable !== 'RyR Constructora') ||
+      metadata.proyecto_responsable !== 'Constructora RyR') ||
     (metadata.proyecto_telefono != null &&
       metadata.proyecto_telefono !== '+57 300 000 0000') ||
     (metadata.proyecto_email != null &&
@@ -131,7 +131,7 @@ export function ProyectoDetalleRender({
               )}
 
             {metadata.proyecto_responsable != null &&
-              metadata.proyecto_responsable !== 'RyR Constructora' && (
+              metadata.proyecto_responsable !== 'Constructora RyR' && (
                 <InfoCard
                   icon={User}
                   label='Responsable'

@@ -1,6 +1,6 @@
 /**
  * Estilos y configuraciones para la página de login
- * RyR Constructora - Sistema de Gestión Administrativa
+ * Constructora RyR - Sistema de Gestión Administrativa
  * ✅ SEPARACIÓN DE RESPONSABILIDADES: Todos los estilos centralizados
  */
 

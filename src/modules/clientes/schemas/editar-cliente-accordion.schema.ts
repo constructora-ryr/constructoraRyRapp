@@ -67,7 +67,9 @@ export const editarClienteSchema = z.object({
     .or(z.literal('')),
   email: z
     .string()
-    .email('Correo electrónico inválido')
+    .email(
+      'Correo inválido. Los emails solo admiten letras sin tildes ni ñ (ej: londono@gmail.com)'
+    )
     .max(100, 'Máximo 100 caracteres')
     .or(z.literal('')),
   direccion: z

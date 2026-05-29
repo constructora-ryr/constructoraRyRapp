@@ -58,7 +58,18 @@ export function useAuthSessionQuery() {
     queryKey: authKeys.session(),
     queryFn: async () => {
       const { data, error } = await supabase.auth.getSession()
-      if (error) throw error
+      if (error) {
+        // Refresh token inválido/expirado: limpiar sesión localmente y retornar null
+        // El SDK ya emite TOKEN_REFRESH_FAILED y SIGNED_OUT; evitamos propagar el error
+        if (
+          error.message.includes('Refresh Token Not Found') ||
+          error.message.includes('Invalid Refresh Token')
+        ) {
+          await supabase.auth.signOut({ scope: 'local' })
+          return null
+        }
+        throw error
+      }
       return data.session
     },
     staleTime: 1000 * 60 * 5, // 5 minutos

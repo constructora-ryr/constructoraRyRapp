@@ -1,5 +1,5 @@
 /**
- * Servicio de Auditoría Completa - RyR Constructora
+ * Servicio de Auditoría Completa - Constructora RyR
  *
  * Este servicio registra TODAS las operaciones CRUD en los módulos de negocio.
  * Permite trazabilidad completa: quién hizo qué, cuándo, y qué datos cambiaron.
@@ -8,7 +8,7 @@
  * - audit-log.service.ts → Eventos de autenticación/seguridad (login, logout, etc.)
  * - audit.service.ts → Eventos de negocio (CRUD en viviendas, clientes, etc.)
  *
- * @author RyR Constructora
+ * @author Constructora RyR
  * @date 2025-11-04
  */
 
@@ -299,7 +299,7 @@ class AuditService {
       metadataDetallada.proyecto_presupuesto_formateado = `$${Number(proyecto.presupuesto).toLocaleString('es-CO')}`
     }
 
-    if (proyecto.responsable && proyecto.responsable !== 'RyR Constructora') {
+    if (proyecto.responsable && proyecto.responsable !== 'Constructora RyR') {
       metadataDetallada.proyecto_responsable = proyecto.responsable
     }
 

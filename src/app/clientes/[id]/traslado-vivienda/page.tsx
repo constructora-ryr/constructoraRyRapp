@@ -14,7 +14,7 @@ import { resolverSlugCliente } from '@/lib/utils/slug.utils'
 import { TrasladoViviendaPage } from '@/modules/clientes/pages/traslado-vivienda'
 
 export const metadata: Metadata = {
-  title: 'Traslado de Vivienda | RyR Constructora',
+  title: 'Traslado de Vivienda | Constructora RyR',
   description:
     'Traslado de vivienda de cliente con formulario acordeón progresivo',
 }

@@ -42,7 +42,7 @@ export function SessionClosedByInactivity() {
       <div className='fixed inset-0 z-0 h-full w-full'>
         <Image
           src='/images/fondo-login.png'
-          alt='Fondo RyR Constructora'
+          alt='Fondo Constructora RyR'
           fill
           sizes='100vw'
           className='object-cover object-center'
@@ -65,7 +65,7 @@ export function SessionClosedByInactivity() {
         >
           <Image
             src='/images/logo1-dark.png'
-            alt='Logo RyR Constructora'
+            alt='Logo Constructora RyR'
             fill
             sizes='(max-width: 640px) 192px, 256px'
             className='object-contain drop-shadow-2xl'
