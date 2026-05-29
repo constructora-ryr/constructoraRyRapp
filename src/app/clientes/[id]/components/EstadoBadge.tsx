@@ -36,7 +36,7 @@ export function EstadoBadge({ estado }: EstadoBadgeProps) {
         className={`inline-flex items-center gap-1.5 rounded-full bg-amber-400/25 px-3 py-1.5 backdrop-blur-xl ${styles.headerClasses.statusBadge}`}
       >
         <Star className='h-3 w-3 fill-amber-300 text-amber-300' />
-        <span className='text-xs font-bold text-amber-200'>Propietario</span>
+        <span className='text-xs font-bold text-amber-200'>Saldada</span>
       </span>
     )
   }

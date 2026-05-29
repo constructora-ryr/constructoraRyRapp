@@ -12,8 +12,8 @@ const GAP = 5
 const SEG_CONFIG = [
   { key: 'disponibles' as const, label: 'Disponibles', color: '#10b981' },
   { key: 'asignadas' as const, label: 'Asignadas', color: '#f59e0b' },
-  { key: 'entregadas' as const, label: 'Entregadas', color: '#64748b' },
-  { key: 'propietario' as const, label: 'Propietario', color: '#8b5cf6' },
+  { key: 'entregadas' as const, label: 'Escrituradas', color: '#8b5cf6' },
+  { key: 'propietario' as const, label: 'Saldadas', color: '#06b6d4' },
 ]
 
 interface ViviendasRingChartProps {

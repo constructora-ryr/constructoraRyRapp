@@ -140,8 +140,8 @@ export function useNegociacionTab({ cliente }: UseNegociacionTabProps) {
     queryFn: () =>
       fuentesPagoService.obtenerFuentesPagoNegociacion(negociacion?.id ?? ''),
     enabled: !!negociacion?.id,
-    staleTime: 1000 * 60, // 1 minuto - optimizado para reducir refetches
-    refetchOnMount: false, // No refetch si datos están en cache reciente
+    staleTime: 1000 * 60, // 1 minuto
+    refetchOnMount: true,
   })
 
   // ─── Tipos disponibles (para agregar fuentes) ──────────────────────────

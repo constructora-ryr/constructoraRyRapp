@@ -88,10 +88,10 @@ export function ViviendaCardEntregada({
               {proyectoNombre}
             </p>
           </div>
-          {/* Badge Estado Pagada */}
-          <span className='inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-green-500 to-emerald-500 px-2.5 py-1 text-xs font-bold text-white shadow-md shadow-green-500/30'>
+          {/* Badge Estado Escriturada */}
+          <span className='inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-500 to-purple-500 px-2.5 py-1 text-xs font-bold text-white shadow-md shadow-violet-500/30'>
             <CheckCircle2 className='h-4 w-4' />
-            PAGADA
+            ESCRITURADA
           </span>
         </div>
 
@@ -172,17 +172,17 @@ export function ViviendaCardEntregada({
         {/* SECCIÓN: Estado Completado */}
         <div className='mb-4 rounded-xl border-2 border-green-200 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 p-4 dark:border-green-700 dark:from-green-900/20 dark:via-emerald-900/20 dark:to-teal-900/20'>
           <div className='mb-3 flex items-center justify-between'>
-            <div className='flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-green-700 dark:text-green-300'>
+            <div className='flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-violet-700 dark:text-violet-300'>
               <CheckCircle2 className='h-4 w-4' />
-              Vivienda Pagada
+              Con Escritura
             </div>
           </div>
 
           {/* Estado de pago completo */}
           <div className='mb-3 rounded-lg border-2 border-green-300 bg-gradient-to-r from-green-100 to-emerald-100 p-4 text-center dark:border-green-600 dark:from-green-900/30 dark:to-emerald-900/30'>
             <CheckCircle2 className='mx-auto mb-2 h-12 w-12 text-green-600 dark:text-green-400' />
-            <p className='mb-1 text-sm font-black uppercase text-green-700 dark:text-green-300'>
-              100% Pagada
+            <p className='mb-1 text-sm font-black uppercase text-violet-700 dark:text-violet-300'>
+              Con Escritura
             </p>
             <p className='text-xs font-semibold text-green-600 dark:text-green-400'>
               Completamente Cancelada

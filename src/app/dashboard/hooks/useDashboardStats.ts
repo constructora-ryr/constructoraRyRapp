@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 
+import { supabase } from '@/lib/supabase/client'
 import { clientesService } from '@/modules/clientes/services/clientes.service'
 import { proyectosService } from '@/modules/proyectos/services'
 import { viviendasService } from '@/modules/viviendas/services/viviendas.service'
@@ -34,17 +35,29 @@ export interface DashboardStatsData {
     inactivos: number
     renunciaron: number
   }
+  recaudoMes: number
 }
 
 export function useDashboardStats() {
   return useQuery<DashboardStatsData>({
     queryKey: ['dashboard', 'stats'],
     queryFn: async () => {
-      const [proyectos, viviendas, clientesStats] = await Promise.all([
-        proyectosService.obtenerProyectos(false),
-        viviendasService.listar(),
-        clientesService.obtenerEstadisticas(),
-      ])
+      const inicioMes = new Date()
+      inicioMes.setDate(1)
+      inicioMes.setHours(0, 0, 0, 0)
+      const inicioMesStr = inicioMes.toISOString().slice(0, 10)
+
+      const [proyectos, viviendas, clientesStats, abonosMes] =
+        await Promise.all([
+          proyectosService.obtenerProyectos(false),
+          viviendasService.listar(),
+          clientesService.obtenerEstadisticas(),
+          supabase
+            .from('abonos_historial')
+            .select('monto, mora_incluida')
+            .eq('estado', 'Activo')
+            .gte('fecha_abono', inicioMesStr),
+        ])
 
       return {
         proyectos: {
@@ -74,6 +87,10 @@ export function useDashboardStats() {
           propietario: viviendas.filter(v => v.estado === 'Propietario').length,
         },
         clientes: clientesStats,
+        recaudoMes: (abonosMes.data ?? []).reduce(
+          (sum, a) => sum + (a.monto ?? 0) - (a.mora_incluida ?? 0),
+          0
+        ),
       }
     },
     staleTime: 2 * 60 * 1000,

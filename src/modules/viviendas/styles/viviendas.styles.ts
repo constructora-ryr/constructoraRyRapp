@@ -42,9 +42,9 @@ export const viviendasStyles = {
       'inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/20 backdrop-blur-md border border-white/30 text-white text-sm font-medium hover:bg-white/30 transition-all shadow-lg',
   },
 
-  // 📊 MÉTRICAS (4 cards - compactas)
+  // 📊 MÉTRICAS (5 cards - compactas)
   metricas: {
-    grid: 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3',
+    grid: 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3',
     card: 'group relative overflow-hidden rounded-xl backdrop-blur-xl bg-white/80 dark:bg-gray-800/80 border border-gray-200/50 dark:border-gray-700/50 px-4 py-3 shadow-lg hover:shadow-2xl transition-all duration-300',
     cardGlow:
       'absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 transition-opacity duration-300',

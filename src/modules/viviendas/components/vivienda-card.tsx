@@ -8,6 +8,7 @@ import type { Vivienda } from '../types'
 import { ViviendaCardAsignada } from './cards/vivienda-card-asignada'
 import { ViviendaCardDisponible } from './cards/vivienda-card-disponible'
 import { ViviendaCardEntregada } from './cards/vivienda-card-entregada'
+import { ViviendaCardPagada } from './cards/vivienda-card-pagada'
 
 interface ViviendaCardProps {
   vivienda: Vivienda
@@ -61,6 +62,15 @@ export function ViviendaCard({
         <ViviendaCardEntregada
           vivienda={vivienda}
           onVerDetalle={onVerDetalle}
+          onVerAbonos={onVerAbonos}
+          onEditar={onEditar}
+        />
+      )
+
+    case 'Propietario':
+      return (
+        <ViviendaCardPagada
+          vivienda={vivienda}
           onVerAbonos={onVerAbonos}
           onEditar={onEditar}
         />

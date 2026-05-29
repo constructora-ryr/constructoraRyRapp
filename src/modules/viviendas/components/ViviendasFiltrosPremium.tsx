@@ -107,7 +107,8 @@ export function ViviendasFiltrosPremium({
             <option value=''>Todos los estados</option>
             <option value='Disponible'>🟢 Disponible</option>
             <option value='Asignada'>🔵 Asignada</option>
-            <option value='Entregada'>🟣 Entregada</option>
+            <option value='Entregada'>🟣 Escriturada</option>
+            <option value='Propietario'>🩵 Saldada</option>
           </select>
         </div>
       </div>

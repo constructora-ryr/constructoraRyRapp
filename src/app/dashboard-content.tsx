@@ -3,7 +3,7 @@
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { motion } from 'framer-motion'
-import { Building2, Home, TrendingUp, Users } from 'lucide-react'
+import { Building2, DollarSign, Home, Users } from 'lucide-react'
 
 import { useAuth } from '@/hooks/auth/useAuthQuery'
 import { usePermisosQuery } from '@/modules/usuarios/hooks/usePermisosQuery'
@@ -101,38 +101,42 @@ export default function DashboardContent(_props: DashboardContentProps) {
       inactivos: 0,
       renunciaron: 0,
     },
+    recaudoMes: 0,
   }
+
+  const mesActual = new Date().toLocaleString('es-CO', { month: 'long' })
+  const recaudoMillones = Math.round(s.recaudoMes / 1_000_000)
 
   const kpis = [
     {
-      label: 'Obras en Curso',
+      label: 'Proyectos',
       value: s.proyectos.activos,
-      sub: `${s.proyectos.completados} obras finalizadas`,
+      sub: `${s.proyectos.completados} finalizado${s.proyectos.completados !== 1 ? 's' : ''}`,
       icon: Building2,
       accentText: 'text-emerald-600 dark:text-emerald-400',
       sparkline: 'M0,20 Q15,5 30,15 T60,10 T100,18',
     },
     {
-      label: 'Unidades Libres',
+      label: 'Disponibles',
       value: s.viviendas.disponibles,
-      sub: `de ${s.viviendas.total} inmuebles en total`,
+      sub: `de ${s.viviendas.total} unidades en total`,
       icon: Home,
       accentText: 'text-amber-600 dark:text-amber-400',
       sparkline: 'M0,15 Q10,25 25,10 T50,20 T100,12',
     },
     {
-      label: 'Interesados Activos',
+      label: 'Clientes',
       value: s.clientes.activos,
-      sub: `${s.clientes.interesados} en seguimiento`,
+      sub: `${s.clientes.interesados} interesado${s.clientes.interesados !== 1 ? 's' : ''}`,
       icon: Users,
       accentText: 'text-cyan-600 dark:text-cyan-400',
       sparkline: 'M0,25 Q15,10 35,20 T70,5 T100,15',
     },
     {
-      label: 'Ventas en Curso',
-      value: s.viviendas.asignadas,
-      sub: `${s.viviendas.entregadas} unidades entregadas`,
-      icon: TrendingUp,
+      label: 'Recaudo',
+      value: recaudoMillones,
+      sub: `millones en ${mesActual}`,
+      icon: DollarSign,
       accentText: 'text-violet-600 dark:text-violet-400',
       sparkline: 'M0,10 Q20,25 40,15 T75,25 T100,8',
     },

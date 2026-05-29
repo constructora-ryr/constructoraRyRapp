@@ -47,7 +47,8 @@ export const OPCIONES_RECARGO: OpcionRecargo[] = [
 export const VIVIENDA_ESTADOS = [
   { value: 'Disponible', label: 'Disponible' },
   { value: 'Asignada', label: 'Asignada' },
-  { value: 'Entregada', label: 'Entregada' },
+  { value: 'Entregada', label: 'Escriturada' },
+  { value: 'Propietario', label: 'Saldada' },
 ] as const
 
 // ============================================
@@ -98,7 +99,7 @@ export const ESTADO_COLORS: Record<ViviendaEstado, string> = {
     'text-green-600 bg-green-100 dark:bg-green-900 dark:text-green-300',
   Asignada: 'text-blue-600 bg-blue-100 dark:bg-blue-900 dark:text-blue-300',
   Entregada:
-    'text-emerald-600 bg-emerald-100 dark:bg-emerald-900 dark:text-emerald-300',
+    'text-violet-600 bg-violet-100 dark:bg-violet-900 dark:text-violet-300',
   Propietario:
     'text-emerald-600 bg-emerald-100 dark:bg-emerald-900 dark:text-emerald-300',
 }
@@ -106,8 +107,8 @@ export const ESTADO_COLORS: Record<ViviendaEstado, string> = {
 export const ESTADO_LABELS: Record<ViviendaEstado, string> = {
   Disponible: 'Disponible',
   Asignada: 'Asignada',
-  Entregada: 'Entregada',
-  Propietario: 'Propietario',
+  Entregada: 'Escriturada',
+  Propietario: 'Saldada',
 }
 
 export const ESTADO_ICONS: Record<ViviendaEstado, string> = {

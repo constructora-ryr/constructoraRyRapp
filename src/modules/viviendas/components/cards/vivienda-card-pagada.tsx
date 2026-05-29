@@ -59,7 +59,7 @@ export function ViviendaCardPagada({
               {proyectoNombre}
             </p>
           </div>
-          <span className={styles.estadoBadge.base}>✅ Pagada</span>
+          <span className={styles.estadoBadge.base}>✅ Saldada</span>
         </div>
       </div>
 
@@ -91,7 +91,7 @@ export function ViviendaCardPagada({
                 className={`${styles.clienteSection.info} font-semibold !text-emerald-700 dark:!text-emerald-300`}
               >
                 <CheckCircle2 className='h-4 w-4' />
-                Pagada: {formatDate(vivienda.fecha_pago_completo)}
+                Saldada: {formatDate(vivienda.fecha_pago_completo)}
               </span>
             )}
           </div>
@@ -164,7 +164,7 @@ export function ViviendaCardPagada({
               <div className={styles.pagadaIcon}>
                 <CheckCircle2 className='h-6 w-6 text-white' />
               </div>
-              <p className={styles.pagadaText}>TOTALMENTE PAGADA</p>
+              <p className={styles.pagadaText}>SALDADA AL 100%</p>
               <p className='mt-1 text-sm text-white/90'>
                 {formatCurrency(vivienda.valor_total)}
               </p>
@@ -183,7 +183,7 @@ export function ViviendaCardPagada({
             {/* Info adicional */}
             {vivienda.cantidad_abonos && vivienda.cantidad_abonos > 0 && (
               <p className='mt-2 text-center text-xs text-gray-600 dark:text-gray-400'>
-                Pagada en {vivienda.cantidad_abonos} abono
+                Saldada en {vivienda.cantidad_abonos} abono
                 {vivienda.cantidad_abonos > 1 ? 's' : ''}
               </p>
             )}

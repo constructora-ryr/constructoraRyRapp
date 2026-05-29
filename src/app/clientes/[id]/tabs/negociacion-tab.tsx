@@ -28,6 +28,7 @@ import {
   RefreshCw,
   Shield,
   SlidersHorizontal,
+  Stamp,
   Tag,
   TrendingUp,
   Wallet,
@@ -88,6 +89,11 @@ export function NegociacionTab({
 
   // ── Estado para modal de renuncia ───────────────────────────────────────
   const [modalRenunciaOpen, setModalRenunciaOpen] = useState(false)
+
+  // ── Estado para modal de escritura ──────────────────────────────────────
+  const [modalEscriturarOpen, setModalEscriturarOpen] = useState(false)
+  const [fechaEscriturar, setFechaEscriturar] = useState('')
+  const [guardandoEscriturar, setGuardandoEscriturar] = useState(false)
 
   // ── Estado para edición inline de valor escritura ────────────────────────
   const [editandoEscritura, setEditandoEscritura] = useState(false)
@@ -159,6 +165,33 @@ export function NegociacionTab({
       setGuardandoEscritura(false)
     }
   }, [valorEscrituraEdit, negociacion, refetchNegociaciones])
+
+  const handleMarcarEscriturada = useCallback(async () => {
+    if (!negociacion?.vivienda?.id || !fechaEscriturar) return
+    setGuardandoEscriturar(true)
+    try {
+      const res = await fetch('/api/viviendas/escriturar', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          vivienda_id: negociacion.vivienda.id,
+          fecha_escritura: fechaEscriturar,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Error desconocido')
+      toast.success('Vivienda marcada como Escriturada')
+      setModalEscriturarOpen(false)
+      setFechaEscriturar('')
+      await refetchNegociaciones()
+    } catch (err) {
+      toast.error('Error al escriturar', {
+        description: err instanceof Error ? err.message : 'Error desconocido',
+      })
+    } finally {
+      setGuardandoEscriturar(false)
+    }
+  }, [negociacion, fechaEscriturar, refetchNegociaciones])
 
   if (isLoading)
     return (
@@ -260,6 +293,20 @@ export function NegociacionTab({
               >
                 <ArrowRightLeft className='h-3.5 w-3.5' />
                 Trasladar vivienda
+              </button>
+            ) : null}
+            {puedeEscritura &&
+            negociacion.estado === 'Activa' &&
+            vivienda?.estado === 'Asignada' ? (
+              <button
+                onClick={() => {
+                  setFechaEscriturar(new Date().toISOString().slice(0, 10))
+                  setModalEscriturarOpen(true)
+                }}
+                className='inline-flex items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-2.5 py-1 text-[11px] font-semibold text-violet-700 transition-all hover:border-violet-300 hover:bg-violet-100 hover:shadow-sm dark:border-violet-800 dark:bg-violet-900/20 dark:text-violet-400 dark:hover:bg-violet-900/40'
+              >
+                <Stamp className='h-3.5 w-3.5' />
+                Marcar Escriturada
               </button>
             ) : null}
             {puedeRenunciar &&
@@ -781,6 +828,66 @@ export function NegociacionTab({
             refetchFuentes()
           }}
         />
+      ) : null}
+
+      {/* Modal: Marcar como Escriturada */}
+      {modalEscriturarOpen ? (
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm'>
+          <div className='w-full max-w-sm rounded-2xl border border-violet-200 bg-white p-6 shadow-2xl dark:border-violet-800/40 dark:bg-gray-900'>
+            <div className='mb-4 flex items-center gap-3'>
+              <div className='flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/30'>
+                <Stamp className='h-5 w-5 text-violet-600 dark:text-violet-400' />
+              </div>
+              <div>
+                <h3 className='text-sm font-bold text-gray-900 dark:text-white'>
+                  Marcar como Escriturada
+                </h3>
+                <p className='text-[11px] text-gray-500 dark:text-gray-400'>
+                  {vivienda
+                    ? `Manzana ${vivienda.manzanas?.nombre} Casa ${vivienda.numero}`
+                    : 'Vivienda asignada'}
+                </p>
+              </div>
+            </div>
+            <p className='mb-4 text-[12px] text-gray-600 dark:text-gray-300'>
+              Esta acción indica que se firmaron las escrituras públicas. La
+              vivienda pasará a estado{' '}
+              <span className='font-semibold text-violet-600 dark:text-violet-400'>
+                Escriturada
+              </span>{' '}
+              y ya no podrá trasladarse.
+            </p>
+            <label className='mb-1 block text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400'>
+              Fecha de escritura
+            </label>
+            <input
+              type='date'
+              value={fechaEscriturar}
+              onChange={e => setFechaEscriturar(e.target.value)}
+              max={new Date().toISOString().slice(0, 10)}
+              className='mb-4 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-400/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white'
+            />
+            <div className='flex gap-2'>
+              <button
+                onClick={() => {
+                  setModalEscriturarOpen(false)
+                  setFechaEscriturar('')
+                }}
+                disabled={guardandoEscriturar}
+                className='flex-1 rounded-lg border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800'
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => void handleMarcarEscriturada()}
+                disabled={!fechaEscriturar || guardandoEscriturar}
+                className='flex-1 rounded-lg bg-violet-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-violet-700 disabled:opacity-50'
+              >
+                {guardandoEscriturar ? 'Guardando...' : 'Confirmar'}
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
 
       {/* Modal: Registrar Renuncia */}

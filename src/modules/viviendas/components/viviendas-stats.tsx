@@ -10,6 +10,7 @@ export interface ViviendasStatsProps {
   disponibles: number
   asignadas: number
   entregadas: number
+  propietario: number
   valorTotal: number
 }
 
@@ -18,6 +19,7 @@ export function ViviendasStats({
   disponibles,
   asignadas,
   entregadas,
+  propietario,
   valorTotal: _valorTotal,
 }: ViviendasStatsProps) {
   const metricas = [
@@ -44,10 +46,17 @@ export function ViviendasStats({
     },
     {
       icon: DoorOpen,
-      label: 'Entregadas',
+      label: 'Escrituradas',
       value: entregadas.toString(),
       gradient: 'from-purple-500 to-pink-600',
       shadow: 'shadow-purple-500/50',
+    },
+    {
+      icon: CheckCircle,
+      label: 'Saldadas',
+      value: propietario.toString(),
+      gradient: 'from-emerald-500 to-teal-600',
+      shadow: 'shadow-emerald-500/50',
     },
   ]
 
