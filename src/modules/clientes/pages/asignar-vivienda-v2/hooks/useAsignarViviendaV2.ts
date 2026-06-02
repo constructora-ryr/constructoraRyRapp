@@ -15,6 +15,7 @@ import { toast } from 'sonner'
 
 import { useRouter } from 'next/navigation'
 
+import { createClient } from '@/lib/supabase/client'
 import { formatDateForDB } from '@/lib/utils/date.utils'
 import { formatCurrency } from '@/lib/utils/format.utils'
 import { useAsignarViviendaForm } from '@/modules/clientes/components/asignar-vivienda/hooks/useAsignarViviendaForm'
@@ -26,6 +27,10 @@ import type {
 } from '@/modules/clientes/components/asignar-vivienda/types'
 import { useCrearNegociacion } from '@/modules/clientes/hooks/useCrearNegociacion'
 import type { CrearFuentePagoDTO } from '@/modules/clientes/types'
+import {
+  validarSinNegociacionActiva,
+  validarViviendaDisponible,
+} from '@/modules/clientes/utils/asignar-vivienda-validaciones'
 import { obtenerMonto } from '@/modules/clientes/utils/fuentes-pago-campos.utils'
 import { useEntidadesFinancierasCombinadas } from '@/modules/configuracion/hooks/useEntidadesFinancierasParaFuentes'
 import { useTiposFuentesConCampos } from '@/modules/configuracion/hooks/useTiposFuentesConCampos'
@@ -135,6 +140,17 @@ export function useAsignarViviendaV2({
   useEffect(() => {
     setValue('valor_negociado', valorTotal)
   }, [valorTotal, setValue])
+
+  // Fix 3: warning al recargar/salir si el formulario tiene datos sin guardar
+  useEffect(() => {
+    if (!viviendaId && !proyectoSeleccionado) return
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [viviendaId, proyectoSeleccionado])
 
   // Propagar el error real de useCrearNegociacion una vez que React actualiza su estado
   useEffect(() => {
@@ -356,6 +372,42 @@ export function useAsignarViviendaV2({
       setErrorApi(
         'Las fuentes de pago no cubren el total a financiar. Regresa al paso 2 y ajusta los montos.'
       )
+      return
+    }
+
+    // Fix 2: verificar que la vivienda sigue disponible en el momento del submit
+    const supabase = createClient()
+    const { data: viviendaActual, error: errVivienda } = await supabase
+      .from('viviendas')
+      .select('estado')
+      .eq('id', viviendaId)
+      .single()
+
+    const checkVivienda = validarViviendaDisponible(
+      errVivienda ? null : (viviendaActual?.estado as string | null)
+    )
+    if (!checkVivienda.ok) {
+      setErrorApi(checkVivienda.error ?? 'Error verificando vivienda.')
+      return
+    }
+
+    // Fix 1: verificar que el cliente no tenga ya una negociación activa
+    const { data: negActiva, error: errNeg } = await supabase
+      .from('negociaciones')
+      .select('id')
+      .eq('cliente_id', clienteId)
+      .in('estado', ['Activa', 'Suspendida'])
+      .maybeSingle()
+
+    if (errNeg) {
+      setErrorApi(
+        'No se pudo verificar el estado del cliente. Intenta de nuevo.'
+      )
+      return
+    }
+    const checkNeg = validarSinNegociacionActiva(negActiva)
+    if (!checkNeg.ok) {
+      setErrorApi(checkNeg.error ?? 'Negociación activa existente.')
       return
     }
 

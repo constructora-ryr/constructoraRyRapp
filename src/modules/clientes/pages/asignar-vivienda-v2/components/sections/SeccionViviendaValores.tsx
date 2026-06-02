@@ -232,23 +232,29 @@ export function SeccionViviendaValores({
               }`}
             >
               <div className={s.valueChip.wrapper}>
-                <DollarSign className={s.valueChip.icon} />
-                <span className={s.valueChip.label}>Valor Vivienda Base</span>
+                <div className='flex items-center gap-1'>
+                  <DollarSign className={s.valueChip.icon} />
+                  <span className={s.valueChip.label}>Valor Vivienda Base</span>
+                </div>
                 <span className={s.valueChip.value}>
                   {formatCurrency(valorBase)}
                 </span>
               </div>
               <div className={s.valueChip.wrapper}>
-                <FileText className={s.valueChip.icon} />
-                <span className={s.valueChip.label}>Gastos Notariales.</span>
+                <div className='flex items-center gap-1'>
+                  <FileText className={s.valueChip.icon} />
+                  <span className={s.valueChip.label}>Gastos Notariales</span>
+                </div>
                 <span className={s.valueChip.value}>
                   {formatCurrency(gastosNotariales)}
                 </span>
               </div>
               {recargoEsquinera > 0 && (
                 <div className={s.valueChip.wrapper}>
-                  <Tag className={s.valueChip.icon} />
-                  <span className={s.valueChip.label}>Recargo Esquinera</span>
+                  <div className='flex items-center gap-1'>
+                    <Tag className={s.valueChip.icon} />
+                    <span className={s.valueChip.label}>Recargo Esquinera</span>
+                  </div>
                   <span className={s.valueChip.value}>
                     {formatCurrency(recargoEsquinera)}
                   </span>

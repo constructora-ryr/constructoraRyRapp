@@ -30,6 +30,7 @@ import {
 } from '@/hooks/auth'
 import { createClient } from '@/lib/supabase/client'
 import { debugLog, errorLog, successLog } from '@/lib/utils/logger'
+import { suppressKnownConsoleErrors } from '@/lib/utils/suppress-known-errors'
 
 // ============================================
 // TYPES
@@ -54,6 +55,10 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 // ============================================
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  // Suprimir errores de consola conocidos del SDK de Supabase que no podemos
+  // evitar porque se emiten internamente antes de que nuestros handlers corran.
+  suppressKnownConsoleErrors()
+
   // ============================================
   // LIMPIAR SESIÓN INVÁLIDA (Refresh Token No Found)
   // ============================================

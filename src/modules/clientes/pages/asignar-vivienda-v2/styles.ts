@@ -138,10 +138,10 @@ export const styles = {
     wrapper:
       'bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-lg p-3 flex flex-col gap-1',
     label:
-      'text-[10px] uppercase tracking-widest text-gray-500 dark:text-gray-400 block',
+      'text-[10px] uppercase tracking-widest text-gray-500 dark:text-gray-400',
     value:
       'text-gray-900 dark:text-white text-sm font-[family-name:var(--font-jakarta)] tabular-nums font-bold',
-    icon: 'w-3.5 h-3.5 text-gray-400 dark:text-gray-500 mb-0.5',
+    icon: 'w-3.5 h-3.5 text-gray-400 dark:text-gray-500 shrink-0',
   },
 
   // ──────────────────────────────

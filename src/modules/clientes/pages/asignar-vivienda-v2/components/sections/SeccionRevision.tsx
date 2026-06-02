@@ -1,12 +1,6 @@
 'use client'
 
-import {
-  type ReactElement,
-  useCallback,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
 import {
   AlertCircle,
@@ -24,10 +18,7 @@ import {
   User,
 } from 'lucide-react'
 
-import {
-  formatDateForDisplay,
-  getTodayDateString,
-} from '@/lib/utils/date.utils'
+import { formatDateForDisplay } from '@/lib/utils/date.utils'
 import { formatCurrency } from '@/lib/utils/format.utils'
 import { logger } from '@/lib/utils/logger'
 import type {
@@ -35,6 +26,7 @@ import type {
   ViviendaDetalle,
 } from '@/modules/clientes/components/asignar-vivienda/types'
 import { LABELS_TIPO_DESCUENTO } from '@/modules/clientes/constants/descuento.constants'
+import { generarPDFPreview } from '@/modules/clientes/services/pdf-negociacion-preview.service'
 import { obtenerMontoParaCierre } from '@/modules/clientes/utils/fuentes-pago-campos.utils'
 import { useEntidadesFinancierasCombinadas } from '@/modules/configuracion/hooks/useEntidadesFinancierasParaFuentes'
 import type { TipoFuentePagoConCampos } from '@/modules/configuracion/types/campos-dinamicos.types'
@@ -194,16 +186,6 @@ export function SeccionRevision({
     [fuentesActivas, tiposConCampos, entidades]
   )
 
-  // Estable: calculado una vez al montar (hoy no cambia durante la sesión)
-  const fechaGeneracion = useRef(
-    formatDateForDisplay(getTodayDateString())
-  ).current
-
-  // Estable: generado una sola vez al montar (identificador único de la sesión)
-  const nombreArchivo = useRef(
-    `negociacion-${clienteNombre.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.pdf`
-  ).current
-
   const pctDescuento =
     valorBaseTotal > 0
       ? ((descuentoAplicado / valorBaseTotal) * 100).toFixed(1)
@@ -214,37 +196,30 @@ export function SeccionRevision({
   const handleDescargarPDF = useCallback(async () => {
     setGenerandoPDF(true)
     try {
-      const { pdf } = await import('@react-pdf/renderer')
-      const { createElement } = await import('react')
-      const { NegociacionPDF: PDFDoc } = await import('../NegociacionPDF')
-
-      const elemento = createElement(PDFDoc, {
-        clienteNombre,
-        proyectoNombre,
-        viviendaLabel,
-        valorBase,
-        gastosNotariales,
-        recargoEsquinera,
-        descuentoAplicado,
-        valorTotal,
-        valorEscrituraPublica,
-        aplicarDescuento,
-        fuentes: fuentesPDF,
-        notas,
-        fechaGeneracion,
+      const partes = clienteNombre.trim().split(' ')
+      await generarPDFPreview({
+        cliente: {
+          nombres: partes[0] ?? '',
+          apellidos: partes.slice(1).join(' '),
+        },
+        vivienda: {
+          proyecto: proyectoNombre,
+          manzana: viviendaSeleccionada?.manzana_nombre,
+          numeroVivienda: viviendaSeleccionada?.numero?.toString() ?? '',
+        },
+        valorBase: valorBase + recargoEsquinera,
+        gastosNotariales: gastosNotariales > 0 ? gastosNotariales : undefined,
+        descuento: descuentoAplicado,
+        valorFinal: valorTotal,
+        valorEscrituraPublica:
+          valorEscrituraPublica > 0 ? valorEscrituraPublica : undefined,
+        fuentesPago: fuentesPDF.map(f => ({
+          tipo: f.nombre,
+          monto: f.monto,
+          entidad: f.entidad,
+        })),
+        notas: notas || undefined,
       })
-
-      const blob = await pdf(
-        elemento as unknown as ReactElement<Record<string, unknown>>
-      ).toBlob()
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = nombreArchivo
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      setTimeout(() => URL.revokeObjectURL(url), 5000)
     } catch (err) {
       logger.error('Error generando PDF:', err)
     } finally {
@@ -253,18 +228,16 @@ export function SeccionRevision({
   }, [
     clienteNombre,
     proyectoNombre,
-    viviendaLabel,
+    viviendaSeleccionada?.manzana_nombre,
+    viviendaSeleccionada?.numero,
     valorBase,
     gastosNotariales,
     recargoEsquinera,
     descuentoAplicado,
     valorTotal,
     valorEscrituraPublica,
-    aplicarDescuento,
     fuentesPDF,
     notas,
-    fechaGeneracion,
-    nombreArchivo,
   ])
 
   return (
