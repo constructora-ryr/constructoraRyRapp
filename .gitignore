@@ -55,7 +55,7 @@ next-env.d.ts
 Thumbs.db
 .DS_Store
 
-# Archivos temporales de auditoría y diagnóstico
+# Archivos temporales de auditorï¿½a y diagnï¿½stico
 eslint-audit-raw.json
 eslint-current.txt
 eslint-full-output.txt
@@ -65,3 +65,19 @@ docs/auditoria-bd-resultado.json
 scripts/auditoria-bd.js
 scripts/auditoria-cruce-codigo.js
 scripts/auditoria-cruce-codigo-v2.js
+
+# Dumps de base de datos
+*_dump.sql
+dump_*.sql
+dev_dump.sql
+
+# Archivos generados por repomix
+repomix*.xml
+repomix.config.json
+
+# DB migration scripts with credentials
+scripts/migrate_prod.ps1
+dev_dump.sql
+
+# Supabase temp
+supabase/.temp/
