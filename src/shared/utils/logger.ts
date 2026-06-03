@@ -73,8 +73,10 @@ class Logger {
    * Método principal de logging
    */
   private log(level: LogLevel, message: string, context?: LogContext): void {
-    // En producción, solo mostrar errores críticos
-    if (!this.isDevelopment && level !== 'error') {
+    // En producción no mostrar nada en consola
+    if (!this.isDevelopment) {
+      if (level === 'error')
+        this.sendToMonitoring({ level, message, ...context })
       return
     }
 
