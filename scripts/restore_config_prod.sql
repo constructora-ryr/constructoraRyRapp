@@ -22,42 +22,43 @@ ON CONFLICT (tipo_fuente, tipo_documento) DO NOTHING;
 
 -- 2. requisitos_fuentes_pago_config (solo los activos relevantes)
 INSERT INTO requisitos_fuentes_pago_config
-  (tipo_fuente, paso_identificador, titulo, descripcion, instrucciones, nivel_validacion, tipo_documento_sugerido, categoria_documento, orden, activo, version, alcance)
+  (tipo_fuente, paso_identificador, titulo, descripcion, instrucciones, nivel_validacion, tipo_documento_sugerido, categoria_documento, orden, activo, version, alcance, fuentes_aplicables)
 VALUES
   (
     'Crédito Hipotecario', 'carta_aprobacion_credito',
     'Carta de Aprobación de Crédito',
     'Carta emitida por el banco aprobando el crédito hipotecario del cliente',
     'Solicita al cliente la carta de aprobación del banco. Debe incluir monto aprobado y condiciones del crédito.',
-    'DOCUMENTO_OBLIGATORIO', 'carta_aprobacion_credito', 'Carta de Aprobación', 1, true, 1, 'ESPECIFICO_FUENTE'
+    'DOCUMENTO_OBLIGATORIO', 'carta_aprobacion_credito', 'Carta de Aprobación', 1, true, 1, 'ESPECIFICO_FUENTE', NULL
   ),
   (
     'COMPARTIDO', 'boleta_registro',
     'Boleta de Registro',
     'Documento expedido por la Oficina de Registro que certifica que el inmueble ya es propiedad del cliente',
     '',
-    'DOCUMENTO_OBLIGATORIO', NULL, NULL, 2, true, 1, 'COMPARTIDO_CLIENTE'
+    'DOCUMENTO_OBLIGATORIO', NULL, NULL, 2, true, 1, 'COMPARTIDO_CLIENTE',
+    ARRAY['Crédito Hipotecario','Subsidio Mi Casa Ya','Subsidio Caja Compensación']
   ),
   (
     'Subsidio Mi Casa Ya', 'carta_aprobacion_subsidio',
     'Carta de Aprobación del Subsidio',
     'Carta emitida por el Ministerio de Vivienda aprobando el subsidio Mi Casa Ya del cliente',
     'Solicita al cliente la carta de aprobación del subsidio emitida por el Ministerio de Vivienda. Debe incluir monto aprobado y condiciones del subsidio.',
-    'DOCUMENTO_OBLIGATORIO', 'Carta Aprobación', 'Carta de Aprobación', 1, true, 1, 'ESPECIFICO_FUENTE'
+    'DOCUMENTO_OBLIGATORIO', 'Carta Aprobación', 'Carta de Aprobación', 1, true, 1, 'ESPECIFICO_FUENTE', NULL
   ),
   (
     'Subsidio Caja Compensación', 'carta_asignacion_subsidiocaja',
     'Carta de Asignación Subsidio Caja de Compensación',
     'Carta de Asignación de Subsidio de Caja de compensación',
     '',
-    'DOCUMENTO_OBLIGATORIO', 'Carta de Asignación Subsidio Caja de Compensación', 'Carta de Aprobación', 1, true, 1, 'ESPECIFICO_FUENTE'
+    'DOCUMENTO_OBLIGATORIO', 'Carta de Asignación Subsidio Caja de Compensación', 'Carta de Aprobación', 1, true, 1, 'ESPECIFICO_FUENTE', NULL
   ),
   (
     'Subsidio Caja Compensación', 'carta_aprobacion_subsidio',
     'Carta de Aprobación Subsidio Caja de Compensación',
     'Carta emitida por la Caja de Compensación aprobando el subsidio de vivienda del cliente',
     'Solicita al cliente la carta de aprobación del subsidio emitida por la Caja de Compensación. Debe incluir monto aprobado y condiciones del subsidio.',
-    'DOCUMENTO_OBLIGATORIO', 'Carta Aprobación', 'Carta de Aprobación', 3, true, 1, 'ESPECIFICO_FUENTE'
+    'DOCUMENTO_OBLIGATORIO', 'Carta Aprobación', 'Carta de Aprobación', 3, true, 1, 'ESPECIFICO_FUENTE', NULL
   )
 ON CONFLICT (tipo_fuente, paso_identificador, version) DO NOTHING;
 
