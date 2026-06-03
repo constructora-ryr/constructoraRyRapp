@@ -20,6 +20,10 @@ max_frequency = "1m0s"
 subject = "Te invitaron a RyR Constructora"
 content_path = "./supabase/templates/invite.html"
 
+[auth.email.template.recovery]
+subject = "Recupera tu contraseña — Constructora RyR"
+content_path = "./supabase/templates/recovery.html"
+
 [auth.mfa.totp]
 enroll_enabled = true
 verify_enabled = true
