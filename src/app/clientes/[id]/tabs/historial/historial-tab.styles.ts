@@ -91,7 +91,7 @@ export const historialStyles = {
     headerRow: 'flex items-start justify-between gap-3',
     titulo: 'text-sm font-bold text-gray-900 dark:text-white',
     descripcion:
-      'mt-0.5 text-xs leading-relaxed text-gray-600 dark:text-gray-400',
+      'mt-0.5 text-xs leading-relaxed text-gray-600 dark:text-gray-400 whitespace-pre-wrap',
     // Badge de acción
     accionBadge:
       'inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold',

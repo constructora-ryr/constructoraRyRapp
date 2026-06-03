@@ -545,9 +545,7 @@ export default function ResetPasswordPage() {
             transition={{ delay: 0.5 }}
             className='mt-8 text-center text-xs text-gray-400'
           >
-            <p>
-              Â© 2024 Constructora RyR LTDA. Todos los derechos reservados.
-            </p>
+            <p>© 2024 Constructora RyR LTDA. Todos los derechos reservados.</p>
           </motion.div>
         </motion.div>
       </div>

@@ -93,7 +93,7 @@ export function NotaModal({
     isLoading || titulo.trim().length < 3 || contenido.trim().length < 10
 
   return (
-    <div className='fixed inset-0 z-50 flex items-center justify-center p-4'>
+    <div className='fixed inset-0 z-[200] flex items-center justify-center p-4'>
       {/* Backdrop */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -164,8 +164,8 @@ export function NotaModal({
               value={contenido}
               onChange={e => setContenido(e.target.value)}
               placeholder='Describe el evento, conversación o información relevante...'
-              rows={6}
-              className='w-full resize-none rounded-lg border-2 border-gray-200 bg-gray-50 px-4 py-2.5 text-sm transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 dark:border-gray-700 dark:bg-gray-800'
+              rows={10}
+              className='w-full resize-y rounded-lg border-2 border-gray-200 bg-gray-50 px-4 py-2.5 text-sm transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 dark:border-gray-700 dark:bg-gray-800'
               required
             />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>

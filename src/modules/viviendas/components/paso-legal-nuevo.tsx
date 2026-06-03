@@ -301,15 +301,6 @@ export function PasoLegalNuevo({ register, errors }: PasoLegalProps) {
           Regular: Lote rectangular. Irregular: Lote con formas atípicas.
         </p>
       </div>
-
-      {/* Info: Certificado de Tradición */}
-      <div className='rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950/30'>
-        <p className='text-sm text-blue-900 dark:text-blue-100'>
-          📄 <strong>Nota:</strong> El Certificado de Tradición se gestiona
-          desde el módulo de <strong>Documentos</strong> después de crear la
-          vivienda.
-        </p>
-      </div>
     </motion.div>
   )
 }

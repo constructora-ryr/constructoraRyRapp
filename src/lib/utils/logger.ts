@@ -20,6 +20,7 @@
 
 const IS_DEV = process.env.NODE_ENV === 'development'
 const DEBUG_AUTH = process.env.NEXT_PUBLIC_DEBUG_AUTH === 'true'
+const DEBUG_MODE = process.env.NEXT_PUBLIC_DEBUG_MODE === 'true'
 
 /**
  * Log de debugging (solo en desarrollo con DEBUG_AUTH=true)
@@ -56,7 +57,9 @@ export function errorLog(
     ...additionalData,
   }
 
-  console.error(`[RYR ERROR - ${context.toUpperCase()}]`, errorInfo)
+  if (IS_DEV || DEBUG_MODE) {
+    console.error(`[RYR ERROR - ${context.toUpperCase()}]`, errorInfo)
+  }
 
   // TODO: Aquí se puede integrar Sentry u otro servicio de monitoreo
   // if (typeof window !== 'undefined' && window.Sentry) {
@@ -89,7 +92,9 @@ export function successLog(message: string) {
  * @param message - Mensaje de advertencia
  */
 export function warnLog(message: string, data?: unknown) {
-  console.warn(`⚠️ [RYR WARNING]`, message, data || '')
+  if (IS_DEV || DEBUG_MODE) {
+    console.warn(`⚠️ [RYR WARNING]`, message, data || '')
+  }
 }
 
 // ============================================
@@ -98,17 +103,17 @@ export function warnLog(message: string, data?: unknown) {
 
 /**
  * Logger simple drop-in para reemplazar console.* en toda la app.
- * - error: siempre se muestra (necesario para debugging en producción)
- * - warn: solo en desarrollo
+ * - error: solo en desarrollo o con DEBUG_MODE=true
+ * - warn: solo en desarrollo o con DEBUG_MODE=true
  * - info: solo en desarrollo
  * - debug: solo en desarrollo con DEBUG_AUTH=true
  */
 export const logger = {
   error: (...args: unknown[]) => {
-    console.error(...args)
+    if (IS_DEV || DEBUG_MODE) console.error(...args)
   },
   warn: (...args: unknown[]) => {
-    if (IS_DEV) console.warn(...args)
+    if (IS_DEV || DEBUG_MODE) console.warn(...args)
   },
   info: (...args: unknown[]) => {
     if (IS_DEV) console.info(...args)
