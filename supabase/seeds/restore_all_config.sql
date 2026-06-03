@@ -29,7 +29,8 @@ TRUNCATE TABLE fuentes_pago_requisitos_config CASCADE;
 \i config_fuentes_pago_requisitos_config.sql
 
 \echo '→ requisitos_fuentes_pago_config'
-TRUNCATE TABLE requisitos_fuentes_pago_config CASCADE;
+-- DELETE en lugar de TRUNCATE CASCADE para no borrar documentos_cliente
+DELETE FROM requisitos_fuentes_pago_config;
 \i config_requisitos_fuentes_pago_config.sql
 
 -- Verificación
