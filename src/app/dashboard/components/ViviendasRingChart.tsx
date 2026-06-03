@@ -108,18 +108,21 @@ export function ViviendasRingChart({
           const pct = total > 0 ? Math.round((count / total) * 100) : 0
           return (
             <div key={cfg.key} className='space-y-1'>
-              <div className='flex min-w-0 items-center gap-2'>
+              <div
+                className='grid items-center gap-x-2'
+                style={{ gridTemplateColumns: 'auto 1fr auto auto' }}
+              >
                 <span
-                  className='h-2 w-2 flex-shrink-0 rounded-full'
+                  className='h-2 w-2 rounded-full'
                   style={{ background: cfg.color }}
                 />
-                <span className='min-w-0 flex-1 truncate text-xs text-zinc-500 dark:text-zinc-400'>
+                <span className='text-xs text-zinc-500 dark:text-zinc-400'>
                   {cfg.label}
                 </span>
-                <span className='flex-shrink-0 font-mono text-xs font-semibold text-zinc-800 dark:text-zinc-200'>
+                <span className='font-mono text-xs font-semibold text-zinc-800 dark:text-zinc-200'>
                   {count}
                 </span>
-                <span className='w-8 flex-shrink-0 text-right text-[10px] text-zinc-400 dark:text-zinc-500'>
+                <span className='w-8 text-right text-[10px] text-zinc-400 dark:text-zinc-500'>
                   {pct}%
                 </span>
               </div>
