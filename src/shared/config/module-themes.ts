@@ -25,6 +25,7 @@ export type ModuleName =
   | 'documentos'
   | 'renuncias'
   | 'usuarios'
+  | 'papelera'
 
 export interface ModuleTheme {
   /** Nombre del módulo */
@@ -633,6 +634,62 @@ export const moduleThemes: Record<ModuleName, ModuleTheme> = {
         secondary: 'bg-purple-600',
       },
       shadow: 'shadow-indigo-500/10',
+    },
+  },
+
+  /** 🗑️ PAPELERA - Slate/Zinc/Stone */
+  papelera: {
+    name: 'Papelera',
+    colors: {
+      primary: 'slate',
+      secondary: 'zinc',
+      tertiary: 'stone',
+      light: 'slate-50',
+      dark: 'slate-900',
+    },
+    classes: {
+      gradient: {
+        primary: 'from-slate-600 to-zinc-600',
+        triple: 'from-slate-500 via-zinc-600 to-stone-600',
+        background: 'from-slate-500 via-zinc-500 to-stone-500',
+        backgroundDark: 'from-slate-600 via-zinc-600 to-stone-700',
+        hover: 'hover:from-slate-700 hover:via-zinc-700 hover:to-stone-700',
+      },
+      button: {
+        primary:
+          'bg-gradient-to-r from-slate-600 to-zinc-600 hover:from-slate-700 hover:to-zinc-700 text-white shadow-md hover:shadow-lg transition-all',
+        secondary:
+          'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-gray-700 dark:text-slate-300 dark:hover:bg-gray-600',
+        hover: 'hover:bg-slate-50 dark:hover:bg-slate-900/20',
+      },
+      input: {
+        focusBorder: 'focus:border-slate-500',
+        focusRing: 'focus:ring-2 focus:ring-slate-500/20',
+      },
+      border: {
+        light: 'border-slate-200 dark:border-slate-800',
+        dark: 'border-slate-800',
+        hover: 'hover:border-slate-400 dark:hover:border-slate-500',
+      },
+      bg: {
+        light: 'bg-slate-50 dark:bg-slate-900/20',
+        dark: 'bg-slate-900/20',
+        hover: 'hover:bg-slate-50 dark:hover:bg-slate-900/30',
+      },
+      focus: {
+        ring: 'focus:ring-2 focus:ring-slate-500 focus:border-transparent',
+        ringDark: 'dark:focus:ring-slate-400',
+      },
+      text: {
+        primary: 'text-slate-600 dark:text-slate-400',
+        secondary: 'text-slate-700 dark:text-slate-300',
+        dark: 'dark:text-slate-400',
+      },
+      badge: {
+        primary: 'bg-slate-600',
+        secondary: 'bg-zinc-600',
+      },
+      shadow: 'shadow-slate-500/10',
     },
   },
 }

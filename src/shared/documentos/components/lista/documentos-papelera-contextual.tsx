@@ -15,9 +15,9 @@ import { AlertTriangle, RefreshCw, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { useAuth } from '@/contexts/auth-context'
-import { EmptyState } from '@/shared/components/layout/EmptyState'
 import { LoadingState } from '@/shared/components/layout/LoadingState'
 import { useModal } from '@/shared/components/modals'
+import { EmptyState } from '@/shared/components/ui/EmptyState'
 import { type ModuleName } from '@/shared/config/module-themes'
 
 import { DocumentosEliminacionService } from '../../services/documentos-eliminacion.service'
@@ -101,9 +101,10 @@ export function DocumentosPapeleraContextual({
   if (cantidadEliminados === 0) {
     return (
       <EmptyState
-        icon={<Trash2 className='h-12 w-12' />}
+        icon={Trash2}
         title='Papelera vacía'
-        description='No hay documentos eliminados en esta vivienda'
+        description='No hay documentos eliminados. Los archivos que elimines aparecerán aquí antes de ser borrados definitivamente.'
+        moduleName='papelera'
       />
     )
   }
