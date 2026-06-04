@@ -39,4 +39,5 @@ export {
 export { useEditarUsuario } from './useEditarUsuario'
 export { useNuevoUsuario } from './useNuevoUsuario'
 export { usePermisosAdmin } from './usePermisosAdmin'
+export { useReenviarInvitacion } from './useReenviarInvitacion'
 export { useUsuariosList } from './useUsuariosList'

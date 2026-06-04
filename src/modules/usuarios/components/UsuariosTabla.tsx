@@ -8,16 +8,21 @@
 
 'use client'
 
+import { useState } from 'react'
+
 import { motion } from 'framer-motion'
-import { Pencil, UserPlus } from 'lucide-react'
+import { Mail, Pencil, UserPlus } from 'lucide-react'
+import { toast } from 'sonner'
 
 import { useRouter } from 'next/navigation'
 
 import { formatDateCompact } from '@/lib/utils/date.utils'
 
+import { useReenviarInvitacion } from '../hooks/useReenviarInvitacion'
 import { usuariosPageStyles as styles } from '../styles/usuarios-page.styles'
 import type { UsuarioCompleto } from '../types'
 import {
+  esPendiente,
   getEstadoUI,
   getIniciales,
   getNombreCompleto,
@@ -104,6 +109,20 @@ function FilaUsuario({ usuario, canEdit, onEditar }: FilaUsuarioProps) {
   const estadoUI = getEstadoUI(usuario.estado)
   const iniciales = getIniciales(usuario)
   const nombreCompleto = getNombreCompleto(usuario)
+  const pendiente = esPendiente(usuario)
+
+  const { reenviar, cargando } = useReenviarInvitacion()
+  const [reenviado, setReenviado] = useState(false)
+
+  const handleReenviar = async () => {
+    try {
+      await reenviar(usuario.email)
+      setReenviado(true)
+      toast.success(`Invitación reenviada a ${usuario.email}`)
+    } catch {
+      toast.error('No se pudo reenviar la invitación')
+    }
+  }
 
   return (
     <tr className={styles.tabla.tr}>
@@ -113,7 +132,11 @@ function FilaUsuario({ usuario, canEdit, onEditar }: FilaUsuarioProps) {
           <div className={styles.tabla.avatar}>{iniciales}</div>
           <div>
             <p className={styles.tabla.avatarName}>{nombreCompleto}</p>
-            {usuario.debe_cambiar_password ? (
+            {pendiente ? (
+              <p className='text-xs text-amber-500 dark:text-amber-400'>
+                Invitación pendiente
+              </p>
+            ) : usuario.debe_cambiar_password ? (
               <p className={styles.tabla.avatarWarning}>
                 Debe cambiar contraseña
               </p>
@@ -136,9 +159,16 @@ function FilaUsuario({ usuario, canEdit, onEditar }: FilaUsuarioProps) {
 
       {/* Estado */}
       <td className={styles.tabla.td}>
-        <span className={`${styles.tabla.badge} ${estadoUI.badgeClass}`}>
-          {estadoUI.label}
-        </span>
+        {pendiente ? (
+          <span className='inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-300'>
+            <span className='h-1.5 w-1.5 rounded-full bg-amber-400' />
+            Pendiente
+          </span>
+        ) : (
+          <span className={`${styles.tabla.badge} ${estadoUI.badgeClass}`}>
+            {estadoUI.label}
+          </span>
+        )}
       </td>
 
       {/* Último login */}
@@ -162,14 +192,32 @@ function FilaUsuario({ usuario, canEdit, onEditar }: FilaUsuarioProps) {
       {/* Acciones */}
       {canEdit ? (
         <td className={styles.tabla.tdRight}>
-          <button
-            onClick={onEditar}
-            className={styles.tabla.actionButton}
-            title={`Editar ${nombreCompleto}`}
-            aria-label={`Editar ${nombreCompleto}`}
-          >
-            <Pencil className='h-4 w-4' />
-          </button>
+          <div className='flex items-center justify-end gap-1'>
+            {pendiente && !reenviado ? (
+              <button
+                onClick={handleReenviar}
+                disabled={cargando}
+                className='inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-50 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300 dark:hover:bg-amber-900/40'
+                title={`Reenviar invitación a ${usuario.email}`}
+                aria-label={`Reenviar invitación a ${nombreCompleto}`}
+              >
+                <Mail className='h-3.5 w-3.5' />
+                {cargando ? 'Enviando...' : 'Reenviar'}
+              </button>
+            ) : pendiente && reenviado ? (
+              <span className='text-xs text-green-600 dark:text-green-400'>
+                ✓ Enviado
+              </span>
+            ) : null}
+            <button
+              onClick={onEditar}
+              className={styles.tabla.actionButton}
+              title={`Editar ${nombreCompleto}`}
+              aria-label={`Editar ${nombreCompleto}`}
+            >
+              <Pencil className='h-4 w-4' />
+            </button>
+          </div>
         </td>
       ) : null}
     </tr>

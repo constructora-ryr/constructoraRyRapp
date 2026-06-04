@@ -32,6 +32,11 @@ export async function GET(request: NextRequest) {
 
   // Flujo OTP (token_hash) — invitaciones y magic links
   if (tokenHash && type) {
+    // Si hay sesión activa (ej: admin abre su propio link de invitación),
+    // cerrarla primero para que el nuevo usuario tome la sesión correctamente.
+    if (type === 'invite') {
+      await supabase.auth.signOut()
+    }
     const { error } = await supabase.auth.verifyOtp({
       token_hash: tokenHash,
       type,

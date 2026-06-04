@@ -369,6 +369,13 @@ export function getNombreCompleto(
   return `${usuario.nombres} ${usuario.apellidos}`.trim()
 }
 
+/** Retorna true si el usuario fue invitado pero aún no ha completado su setup */
+export function esPendiente(
+  usuario: Pick<Usuario, 'ultimo_login' | 'debe_cambiar_password'>
+): boolean {
+  return !usuario.ultimo_login && usuario.debe_cambiar_password
+}
+
 /** Retorna las iniciales de un usuario para el avatar */
 export function getIniciales(
   usuario: Pick<Usuario, 'nombres' | 'apellidos'>

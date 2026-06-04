@@ -193,6 +193,24 @@ export async function cambiarRolUsuario(
 }
 
 /**
+ * Reenvía el email de invitación a un usuario que aún no ha iniciado sesión.
+ */
+export async function reenviarInvitacion(email: string): Promise<void> {
+  const response = await fetch('/api/usuarios/reenviar-invitacion', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  })
+
+  const body = await response.json()
+
+  if (!response.ok) {
+    logger.error('❌ [USUARIOS] Error reenviando invitación:', body)
+    throw new Error(body.error ?? 'Error al reenviar invitación')
+  }
+}
+
+/**
  * Desbloquea un usuario reseteando sus intentos fallidos.
  */
 export async function desbloquearUsuario(id: string): Promise<void> {

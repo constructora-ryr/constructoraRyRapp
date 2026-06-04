@@ -111,7 +111,9 @@ export function ViviendaHeader({
                       Valor Total
                     </p>
                     <p className='text-lg font-semibold text-white'>
-                      {formatCurrency(vivienda.valor_total)}
+                      {formatCurrency(
+                        vivienda.valor_negociado || vivienda.valor_total
+                      )}
                     </p>
                   </div>
                 </div>

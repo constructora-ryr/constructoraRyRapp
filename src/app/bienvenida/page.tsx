@@ -123,6 +123,12 @@ export default function BienvenidaPage() {
         return
       }
 
+      // Marcar que el usuario completó su setup
+      await supabase
+        .from('usuarios')
+        .update({ debe_cambiar_password: false })
+        .eq('id', (await supabase.auth.getUser()).data.user?.id ?? '')
+
       setPageState('success')
       // Cerrar sesión y redirigir al login para que el JWT se genere correctamente
       setTimeout(async () => {
