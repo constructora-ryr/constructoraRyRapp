@@ -26,9 +26,9 @@ import {
   X,
 } from 'lucide-react'
 
-import { EmptyState } from '@/shared/components/layout/EmptyState'
 import { LoadingState } from '@/shared/components/layout/LoadingState'
 import { ConfirmacionModal } from '@/shared/components/modals'
+import { EmptyState } from '@/shared/components/ui/EmptyState'
 
 import { useDocumentosEliminados } from '../../hooks'
 import type { DocumentoProyecto } from '../../types/documento.types'
@@ -104,9 +104,10 @@ export function DocumentosEliminadosLista() {
   if (error) {
     return (
       <EmptyState
-        icon={<AlertTriangle className='h-12 w-12' />}
+        icon={AlertTriangle}
         title='Error al cargar papelera'
         description={error.message}
+        moduleName='papelera'
       />
     )
   }
@@ -321,13 +322,14 @@ export function DocumentosEliminadosLista() {
       {/* 📋 LISTA DE DOCUMENTOS ELIMINADOS */}
       {documentos.length === 0 ? (
         <EmptyState
-          icon={<Trash2 className='h-12 w-12' />}
+          icon={hayFiltrosActivos ? Filter : Trash2}
           title={hayFiltrosActivos ? 'Sin resultados' : 'Papelera vacía'}
           description={
             hayFiltrosActivos
-              ? 'No se encontraron documentos con los filtros aplicados'
-              : 'No hay documentos eliminados en ningún módulo'
+              ? 'No se encontraron documentos con los filtros aplicados. Intenta ajustar los filtros.'
+              : 'Todo limpio. Los documentos que elimines aparecerán aquí antes de ser borrados definitivamente.'
           }
+          moduleName='papelera'
         />
       ) : (
         <motion.div
