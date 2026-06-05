@@ -108,6 +108,8 @@ export function useModalRegistroPago({
   } | null>(null)
 
   const cancelledRef = useRef(false)
+  // Ref síncrono — previene doble submit antes de que React re-renderice el botón disabled
+  const submittingRef = useRef(false)
 
   // React Query mutation para registrar abono
   const registrarAbonoMutation = useRegistrarAbonoMutation()
@@ -191,8 +193,18 @@ export function useModalRegistroPago({
 
   // ── Submit: 2 fases (Storage → BD) ─────────────────────────────────────────
   const handleSubmit = async () => {
-    if (!validar()) return
-    if (!comprobante) return
+    // Guard síncrono — bloquea re-entradas antes de que React re-renderice el botón
+    if (submittingRef.current) return
+    submittingRef.current = true
+
+    if (!validar()) {
+      submittingRef.current = false
+      return
+    }
+    if (!comprobante) {
+      submittingRef.current = false
+      return
+    }
 
     cancelledRef.current = false
 
@@ -208,6 +220,7 @@ export function useModalRegistroPago({
     try {
       uploadedPath = await subirComprobante(path, comprobante)
     } catch {
+      submittingRef.current = false
       setFaseLoading('idle')
       setErrors({
         submit:
@@ -256,6 +269,7 @@ export function useModalRegistroPago({
         )
       }
     } catch {
+      submittingRef.current = false
       setFaseLoading('idle')
       setErrors({
         submit:
@@ -264,6 +278,7 @@ export function useModalRegistroPago({
       return
     }
 
+    submittingRef.current = false
     setFaseLoading('idle')
     // No llamar onSuccess() aquí — la pantalla de éxito maneja el cierre
   }
