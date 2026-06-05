@@ -104,7 +104,8 @@ export async function POST(request: NextRequest) {
       .update({
         telefono: telefono ?? null,
         creado_por: adminUser.id,
-        debe_cambiar_password: false,
+        // debe_cambiar_password permanece true (seteado por handle_new_user)
+        // hasta que el usuario complete su primer login
       })
       .eq('id', inviteData.user.id)
 
