@@ -54,7 +54,17 @@ export async function obtenerUsuarios(
     throw new Error(`Error al obtener usuarios: ${error.message}`)
   }
 
-  return (data ?? []) as unknown as UsuarioCompleto[]
+  const ROL_ORDEN: Record<string, number> = {
+    Administrador: 0,
+    Gerencia: 1,
+    Contabilidad: 2,
+    'Administrador de Obra': 3,
+  }
+
+  const usuarios = (data ?? []) as unknown as UsuarioCompleto[]
+  return usuarios.sort(
+    (a, b) => (ROL_ORDEN[a.rol] ?? 99) - (ROL_ORDEN[b.rol] ?? 99)
+  )
 }
 
 /**
