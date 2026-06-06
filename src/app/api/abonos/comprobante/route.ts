@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+import { getServerPermissions } from '@/lib/auth/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { createRouteClient } from '@/lib/supabase/server-route'
 import { logger } from '@/lib/utils/logger'
@@ -12,9 +13,10 @@ import { logger } from '@/lib/utils/logger'
  *
  * Seguridad:
  * 1. Requiere sesión autenticada.
- * 2. Verifica que el path está registrado en abonos_historial.comprobante_url
+ * 2. Requiere permiso 'ver' en el módulo abonos.
+ * 3. Verifica que el path está registrado en abonos_historial.comprobante_url
  *    (impide que un usuario autenticado acceda a archivos aleatorios).
- * 3. La URL firmada expira en 1 hora.
+ * 4. La URL firmada expira en 1 hora.
  */
 export async function GET(request: NextRequest) {
   // 1. Verificar sesión
@@ -28,7 +30,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   }
 
-  // 2. Leer parámetro ?path=
+  // 2. Verificar permiso 'ver' en módulo abonos
+  const permisos = await getServerPermissions('abonos')
+  if (!permisos.canView) {
+    return NextResponse.json(
+      { error: 'Acceso denegado. No tienes permisos para ver comprobantes.' },
+      { status: 403 }
+    )
+  }
+
+  // 3. Leer parámetro ?path=
   const path = request.nextUrl.searchParams.get('path')
   if (!path) {
     return NextResponse.json(
@@ -37,7 +48,7 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  // 3. Verificar que el path existe en la BD (sin filtro de estado → acceso histórico)
+  // 4. Verificar que el path existe en la BD (sin filtro de estado → acceso histórico)
   const { data: abono, error: dbError } = await supabase
     .from('abonos_historial')
     .select('id')
