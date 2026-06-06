@@ -296,7 +296,7 @@ function KpiResumen({
         <p className='text-xs font-medium text-gray-500 dark:text-gray-400'>
           {label}
         </p>
-        <p className='text-xl font-bold text-gray-900 dark:text-white'>
+        <p className='text-base font-bold text-gray-900 dark:text-white'>
           {valor}
         </p>
       </div>
@@ -307,8 +307,6 @@ function KpiResumen({
 // ── Utilidad local ───────────────────────────────────────────────────────────
 
 function formatCOP(valor: number): string {
-  if (valor >= 1_000_000_000) return `$${(valor / 1_000_000_000).toFixed(1)} MM`
-  if (valor >= 1_000_000) return `$${(valor / 1_000_000).toFixed(1)} M`
   return new Intl.NumberFormat('es-CO', {
     style: 'currency',
     currency: 'COP',

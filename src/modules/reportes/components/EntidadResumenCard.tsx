@@ -91,7 +91,7 @@ function EntidadResumenCardComponent({
           <p className='text-[10px] font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400'>
             Suma de créditos
           </p>
-          <p className='text-sm font-bold text-gray-900 dark:text-white'>
+          <p className='text-xs font-bold text-gray-900 dark:text-white'>
             {formatCOP(entidad.montoTotalAprobado)}
           </p>
         </div>
@@ -123,12 +123,6 @@ export const EntidadResumenCard = memo(EntidadResumenCardComponent)
 // ── Utilidad local ───────────────────────────────────────────────────────────
 
 function formatCOP(valor: number): string {
-  if (valor >= 1_000_000_000) {
-    return `$${(valor / 1_000_000_000).toFixed(1)} MM`
-  }
-  if (valor >= 1_000_000) {
-    return `$${(valor / 1_000_000).toFixed(1)} M`
-  }
   return new Intl.NumberFormat('es-CO', {
     style: 'currency',
     currency: 'COP',
