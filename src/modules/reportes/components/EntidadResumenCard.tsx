@@ -89,7 +89,10 @@ function EntidadResumenCardComponent({
         </div>
         <div>
           <p className='text-[10px] font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400'>
-            Suma de créditos
+            {entidad.tipo === 'Caja de Compensación' ||
+            entidad.tipo === 'Cooperativa'
+              ? 'Total Subsidios'
+              : 'Total Créditos'}
           </p>
           <p className='text-xs font-bold text-gray-900 dark:text-white'>
             {formatCOP(entidad.montoTotalAprobado)}

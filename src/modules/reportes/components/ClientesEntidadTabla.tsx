@@ -36,14 +36,21 @@ interface ClientesEntidadTablaProps {
   entidad: EntidadFinancieraResumen
 }
 
-function labelValor(tipo: TipoEntidadFinanciera): string {
+function labelColumna(tipo: TipoEntidadFinanciera): string {
   return tipo === 'Caja de Compensación' || tipo === 'Cooperativa'
     ? 'Valor Subsidio'
     : 'Valor Crédito'
 }
 
+function labelTotal(tipo: TipoEntidadFinanciera): string {
+  return tipo === 'Caja de Compensación' || tipo === 'Cooperativa'
+    ? 'Total Subsidios'
+    : 'Total Créditos'
+}
+
 function ClientesEntidadTablaComponent({ entidad }: ClientesEntidadTablaProps) {
-  const headerValor = labelValor(entidad.tipo)
+  const headerValor = labelColumna(entidad.tipo)
+  const totalLabel = labelTotal(entidad.tipo)
 
   const columns: ColumnDef<ClienteEnEntidad>[] = [
     // 1. VIVIENDA
@@ -196,7 +203,7 @@ function ClientesEntidadTablaComponent({ entidad }: ClientesEntidadTablaProps) {
         </div>
         <div className='text-right'>
           <p className='text-[11px] font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500'>
-            Suma de créditos
+            {totalLabel}
           </p>
           <p className='text-sm font-bold text-gray-900 dark:text-white'>
             {formatCOP(entidad.montoTotalAprobado)}
