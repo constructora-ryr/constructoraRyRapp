@@ -28,6 +28,7 @@ import type {
 import { useCrearNegociacion } from '@/modules/clientes/hooks/useCrearNegociacion'
 import type { CrearFuentePagoDTO } from '@/modules/clientes/types'
 import {
+  type EstadoVivienda,
   validarSinNegociacionActiva,
   validarViviendaDisponible,
 } from '@/modules/clientes/utils/asignar-vivienda-validaciones'
@@ -384,7 +385,7 @@ export function useAsignarViviendaV2({
       .single()
 
     const checkVivienda = validarViviendaDisponible(
-      errVivienda ? null : (viviendaActual?.estado as string | null)
+      errVivienda ? null : (viviendaActual?.estado as EstadoVivienda | null)
     )
     if (!checkVivienda.ok) {
       setErrorApi(checkVivienda.error ?? 'Error verificando vivienda.')
@@ -422,15 +423,23 @@ export function useAsignarViviendaV2({
         const monto = obtenerMonto(f.config, camposConfig)
         const generaCuotas =
           tipoConCampos?.logica_negocio?.genera_cuotas === true
+        // Resolver nombre e ID de entidad financiera
+        const entidadNombre =
+          (entidades.find(e => e.value === f.config.entidad)?.label ??
+            f.config.entidad) ||
+          undefined
+        const entidadId =
+          f.config.entidad_financiera_id ||
+          entidades.find(e => e.label === entidadNombre)?.value ||
+          undefined
+
         return {
           tipo: f.tipo,
           monto_aprobado: monto,
           capital_para_cierre: f.config.capital_para_cierre ?? undefined,
           parametrosCredito: f.config.parametrosCredito ?? undefined,
-          entidad:
-            (entidades.find(e => e.value === f.config.entidad)?.label ??
-              f.config.entidad) ||
-            undefined,
+          entidad: entidadNombre,
+          entidad_financiera_id: entidadId,
           numero_referencia: f.config.numero_referencia || undefined,
           permite_multiples_abonos:
             generaCuotas || (f.config.permite_multiples_abonos ?? false),

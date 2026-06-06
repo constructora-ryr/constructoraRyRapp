@@ -20,6 +20,9 @@ export interface FuentePagoConfig {
   /** Crédito con la constructora: capital sin intereses, para cierre financiero */
   capital_para_cierre?: number
 
+  /** FK normalizada a entidades_financieras — se puebla al seleccionar del combobox */
+  entidad_financiera_id?: string
+
   /** @deprecated Legacy fields - mantener por compatibilidad, pero usar `campos` para nuevos */
   monto_aprobado?: number
   entidad?: string

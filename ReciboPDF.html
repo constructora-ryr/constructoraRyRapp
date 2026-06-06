@@ -1,478 +1,1039 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Recibo RYR-0042 — Constructora RyR</title>
-  <style>
-    *, *::before, *::after {
-      box-sizing: border-box; margin: 0; padding: 0;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-    }
-    body {
-      background: #d1d5db;
-      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 28px 16px 48px;
-      min-height: 100vh;
-    }
-
-    /* ── Toolbar ── */
-    .toolbar {
-      display: flex; gap: 10px; margin-bottom: 20px;
-      align-items: center; background: white;
-      border-radius: 10px; padding: 8px 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-    .toolbar span { font-size: 11px; color: #6b7280; font-weight: 500; }
-    .tbtn { padding: 6px 14px; border-radius: 6px; border: none; font-size: 11px; font-weight: 700; cursor: pointer; }
-    .tbtn-red { background: #be1522; color: white; }
-    .tbtn-out { background: transparent; border: 1px solid #e5e7eb; color: #374151; }
-    .tbtn-tog { background: none; border: none; cursor: pointer; font-size: 11px; color: #be1522; font-weight: 600; padding: 4px 8px; }
-
-    /* ── A4 Paper ── */
-    .paper {
-      width: 794px; min-height: 1123px;
-      background: white;
-      box-shadow: 0 8px 40px rgba(0,0,0,0.2);
-      border-radius: 3px; position: relative;
-      overflow: hidden; display: flex; flex-direction: column;
-    }
-    /* Franja lateral izquierda */
-    .paper::before {
-      content: '';
-      position: absolute;
-      left: 0; top: 0; bottom: 0;
-      width: 5px;
-      background: linear-gradient(180deg, #be1522 0%, #9b1019 50%, #111111 100%);
-      z-index: 20;
-    }
-    /* Número de recibo marca de agua secundaria */
-    .paper::after {
-      content: 'RYR-0042';
-      position: absolute;
-      bottom: 80px; right: 30px;
-      font-size: 72px; font-weight: 900;
-      color: rgba(190,21,34,0.05);
-      letter-spacing: -0.03em;
-      pointer-events: none;
-      z-index: 1;
-      font-family: 'Helvetica Neue', Helvetica, sans-serif;
-      user-select: none;
-    }
-
-    /* ── WATERMARK ── */
-    .watermark {
-      position: absolute; inset: 0;
-      display: flex; align-items: center; justify-content: center;
-      pointer-events: none; z-index: 10; opacity: 0; transition: opacity 0.3s;
-    }
-    .watermark.visible { opacity: 1; }
-    .watermark-text {
-      font-size: 120px; font-weight: 900;
-      color: rgba(190,21,34,0.10);
-      transform: rotate(-35deg);
-      letter-spacing: 0.05em; white-space: nowrap;
-      user-select: none; text-transform: uppercase;
-    }
-
-    /* ── HEADER ── */
-    .header {
-      padding: 22px 40px 18px;
-      display: flex; align-items: center; justify-content: space-between;
-      border-bottom: 1px solid #e5e7eb;
-      position: relative;
-    }
-    .header::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
-      background: linear-gradient(90deg, #be1522 0%, #9b1019 55%, #111111 100%);
-    }
-    .header-left { display: flex; align-items: center; gap: 14px; }
-    .logo-img { height: 38px; object-fit: contain; }
-    .logo-divider { width: 1px; height: 32px; background: #e5e7eb; }
-    .header-tagline { font-size: 9px; color: #9ca3af; letter-spacing: 0.04em; }
-    .header-nit { font-size: 9px; font-weight: 700; color: #6b7280; margin-top: 2px; }
-
-    .header-right { text-align: right; }
-    .recibo-label { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.18em; color: #be1522; margin-bottom: 3px; }
-    .recibo-numero { font-size: 26px; font-weight: 900; color: #111111; letter-spacing: -0.03em; line-height: 1; }
-    .recibo-fecha { font-size: 9px; color: #6b7280; margin-top: 4px; }
-    .estado-badge {
-      display: inline-flex; align-items: center; gap: 5px;
-      margin-top: 6px; border-radius: 20px; padding: 3px 12px;
-      background: #f0fdf4; border: 1px solid #86efac;
-      transition: all 0.2s;
-    }
-    .estado-badge.anulado { background: #fef2f2; border-color: #fca5a5; }
-    .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: #16a34a; transition: background 0.2s; }
-    .badge-dot.anulado { background: #dc2626; }
-    .badge-txt { font-size: 9px; font-weight: 700; color: #15803d; letter-spacing: 0.05em; transition: color 0.2s; }
-    .badge-txt.anulado { color: #dc2626; }
-
-    /* ── MONTO BANDA — protagonista ── */
-    .monto-banda {
-      background: linear-gradient(130deg, #be1522 0%, #9b1019 45%, #7f0a0f 75%, #111111 100%);
-      padding: 26px 40px;
-      display: flex; align-items: center; justify-content: space-between;
-      position: relative; overflow: hidden;
-    }
-    .monto-banda::before {
-      content: ''; position: absolute; inset: 0;
-      background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.07) 1px, transparent 0);
-      background-size: 22px 22px;
-    }
-    .monto-banda::after {
-      content: ''; position: absolute;
-      right: -80px; top: -80px; width: 260px; height: 260px;
-      border-radius: 50%; background: rgba(255,255,255,0.04); pointer-events: none;
-    }
-    .monto-left { position: relative; z-index: 1; }
-    .monto-label { font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 5px; }
-    .monto-valor { font-size: 44px; font-weight: 900; color: white; letter-spacing: -0.04em; line-height: 1; text-shadow: 0 2px 16px rgba(0,0,0,0.25); }
-    .monto-valor.anulado { text-decoration: line-through; opacity: 0.55; }
-    .monto-fecha { font-size: 9.5px; color: rgba(255,255,255,0.55); margin-top: 6px; }
-    .monto-right { position: relative; z-index: 1; text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
-    .monto-metodo-pill {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.22);
-      border-radius: 8px; padding: 7px 16px;
-    }
-    .monto-metodo-label { font-size: 8px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.1em; }
-    .monto-metodo-val { font-size: 12px; font-weight: 700; color: white; }
-    .recibo-num-banda { font-size: 9px; color: rgba(255,255,255,0.45); }
-
-    /* ── CONTENIDO ── */
-    .content { padding: 22px 40px; flex: 1; display: flex; flex-direction: column; gap: 14px; }
-
-    /* ── SECCIÓN ── */
-    .seccion { border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
-    .sec-hdr {
-      display: flex; align-items: center; gap: 8px;
-      padding: 8px 14px; background: #fafafa;
-      border-bottom: 1px solid #e5e7eb;
-    }
-    .sec-accent { width: 3px; height: 14px; border-radius: 2px; background: #be1522; flex-shrink: 0; }
-    .sec-title { font-size: 9px; font-weight: 800; color: #111111; text-transform: uppercase; letter-spacing: 0.12em; }
-    .sec-icon { font-size: 11px; opacity: 0.6; }
-    .sec-body { padding: 13px 14px 11px; display: flex; flex-direction: column; gap: 8px; }
-
-    /* ── FILA ── */
-    .fila { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 7px; border-bottom: 1px solid #f3f4f6; }
-    .fila:last-child { border-bottom: none; padding-bottom: 0; }
-    .f-lbl { font-size: 9px; color: #6b7280; font-weight: 500; max-width: 40%; }
-    .f-val { font-size: 10px; font-weight: 700; color: #111111; text-align: right; max-width: 58%; }
-    .f-val.mono { font-family: 'Courier New', monospace; font-weight: 600; font-size: 9.5px; color: #374151; }
-
-    /* ── 2 COLS ── */
-    .dos-col { display: flex; gap: 14px; }
-    .col { flex: 1; }
-
-    /* ── PROPIEDAD (horizontal) ── */
-    .prop-body { display: flex; }
-    .prop-col { flex: 1; padding: 13px 14px; }
-    .prop-col:first-child { border-right: 1px solid #f3f4f6; }
-
-    /* ── RESUMEN FINANCIERO ── */
-    .fin { border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
-
-    /* Progress mejorado */
-    .fin-progress { padding: 12px 14px; background: #f9fafb; border-bottom: 1px solid #f3f4f6; }
-    .fin-prog-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px; }
-    .fin-prog-main { display: flex; flex-direction: column; gap: 1px; }
-    .fin-prog-amounts { font-size: 13px; font-weight: 800; color: #111111; letter-spacing: -0.02em; }
-    .fin-prog-amounts span { color: #be1522; }
-    .fin-prog-sub { font-size: 8.5px; color: #9ca3af; }
-    .fin-prog-pct { font-size: 18px; font-weight: 900; color: #be1522; letter-spacing: -0.03em; }
-    .prog-track { height: 8px; background: #e5e7eb; border-radius: 99px; overflow: hidden; }
-    .prog-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg,#be1522,#9b1019); box-shadow: 0 0 10px rgba(190,21,34,0.35); }
-
-    /* fin filas */
-    .fin-fila { display: flex; justify-content: space-between; align-items: center; padding: 9px 14px; border-bottom: 1px solid #f3f4f6; font-size: 9px; }
-    .fin-fila:last-of-type { border-bottom: none; }
-    .fin-lbl { color: #6b7280; }
-    .fin-val { font-weight: 700; color: #111111; }
-    .fin-val.verde { color: #16a34a; }
-    .fin-total { display: flex; justify-content: space-between; align-items: center; padding: 13px 14px; background: #111111; }
-    .fin-tot-lbl { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.75); }
-    .fin-tot-val { font-size: 16px; font-weight: 900; color: white; letter-spacing: -0.03em; }
-
-    /* ── BANNER ANULADO ── */
-    .banner-anulado { border: 2px solid #dc2626; border-radius: 8px; overflow: hidden; display: none; }
-    .banner-anulado.visible { display: block; }
-    .ban-hdr { background: #dc2626; padding: 9px 14px; display: flex; align-items: center; gap: 7px; }
-    .ban-hdr-txt { font-size: 9px; font-weight: 800; color: white; text-transform: uppercase; letter-spacing: 0.1em; }
-    .ban-body { background: #fef2f2; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
-
-    /* ── NOTA ── */
-    .nota { border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px 14px; background: #f9fafb; }
-    .nota-lbl { font-size: 8px; font-weight: 800; color: #6b7280; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 5px; }
-    .nota-txt { font-size: 9px; color: #374151; font-style: italic; line-height: 1.6; }
-
-    /* ── FIRMA EMISOR ── */
-    .firma-emisor {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 9px 14px;
-      background: #f9fafb;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      font-size: 8.5px;
-    }
-    .firma-label { color: #9ca3af; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px; }
-    .firma-val   { color: #374151; font-weight: 700; }
-    .firma-sep   { width: 1px; height: 28px; background: #e5e7eb; }
-
-    /* ── CÓDIGO VERIFICACIÓN ── */
-    .cod-ver {
-      display: flex; align-items: center; justify-content: center; gap: 10px;
-      padding: 8px 14px;
-      background: #f9fafb;
-      border: 1px dashed #d1d5db;
-      border-radius: 8px;
-    }
-    .cod-ver-label { font-size: 8px; color: #9ca3af; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; }
-    .cod-ver-val   { font-size: 12px; font-weight: 900; color: #374151; letter-spacing: 0.12em; font-family: 'Courier New', monospace; }
-    .cod-ver-dot   { width: 4px; height: 4px; border-radius: 50%; background: #d1d5db; }
-
-    /* ── FIN DEL DOCUMENTO ── */
-    .fin-doc {
-      display: flex; align-items: center; gap: 10px;
-      margin: 4px 0 2px;
-    }
-    .fin-doc-line { flex: 1; height: 1px; background: #e5e7eb; }
-    .fin-doc-txt { font-size: 8px; color: #9ca3af; white-space: nowrap; letter-spacing: 0.08em; text-transform: uppercase; }
-
-    /* ── FOOTER ── */
-    .footer { padding: 14px 40px 18px; background: #f9fafb; border-top: 1px solid #e5e7eb; }
-    .footer-legal {
-      font-size: 7.5px; color: #9ca3af; line-height: 1.65;
-      text-align: center; margin-bottom: 10px;
-    }
-    .footer-legal strong { color: #6b7280; }
-    .footer-bottom { display: flex; justify-content: space-between; align-items: center; }
-    .footer-gen { font-size: 7.5px; color: #9ca3af; }
-    .footer-doc { font-size: 7.5px; font-weight: 700; color: #6b7280; }
-    .footer-digital {
-      font-size: 7.5px; color: #9ca3af; text-align: center;
-      margin-top: 6px; font-style: italic;
-    }
-
-    @media print {
-      body { background: white; padding: 0; }
-      .toolbar { display: none; }
-      .paper { box-shadow: none; width: 100%; min-height: auto; }
-
-      /* Forzar impresión de fondos y colores */
-      * {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Recibo RYR-0042 — Constructora RyR</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
       }
-    }
-  </style>
-</head>
-<body>
+      body {
+        background: #d1d5db;
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 28px 16px 48px;
+        min-height: 100vh;
+      }
 
-  <div class="toolbar">
-    <span>Vista previa — Recibo PDF Constructora RyR</span>
-    <button class="tbtn tbtn-tog" onclick="toggleAnulado()">↔ Ver estado ANULADO</button>
-    <button class="tbtn tbtn-out" onclick="window.print()">Imprimir / Guardar PDF</button>
-  </div>
+      /* ── Toolbar ── */
+      .toolbar {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        align-items: center;
+        background: white;
+        border-radius: 10px;
+        padding: 8px 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      }
+      .toolbar span {
+        font-size: 11px;
+        color: #6b7280;
+        font-weight: 500;
+      }
+      .tbtn {
+        padding: 6px 14px;
+        border-radius: 6px;
+        border: none;
+        font-size: 11px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .tbtn-red {
+        background: #be1522;
+        color: white;
+      }
+      .tbtn-out {
+        background: transparent;
+        border: 1px solid #e5e7eb;
+        color: #374151;
+      }
+      .tbtn-tog {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 11px;
+        color: #be1522;
+        font-weight: 600;
+        padding: 4px 8px;
+      }
 
-  <div class="paper" id="paper">
+      /* ── A4 Paper ── */
+      .paper {
+        width: 794px;
+        min-height: 1123px;
+        background: white;
+        box-shadow: 0 8px 40px rgba(0, 0, 0, 0.2);
+        border-radius: 3px;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      /* Franja lateral izquierda */
+      .paper::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 5px;
+        background: linear-gradient(
+          180deg,
+          #be1522 0%,
+          #9b1019 50%,
+          #111111 100%
+        );
+        z-index: 20;
+      }
+      /* Número de recibo marca de agua secundaria */
+      .paper::after {
+        content: 'RYR-0042';
+        position: absolute;
+        bottom: 80px;
+        right: 30px;
+        font-size: 72px;
+        font-weight: 900;
+        color: rgba(190, 21, 34, 0.05);
+        letter-spacing: -0.03em;
+        pointer-events: none;
+        z-index: 1;
+        font-family: 'Helvetica Neue', Helvetica, sans-serif;
+        user-select: none;
+      }
 
-    <!-- Watermark -->
-    <div class="watermark" id="watermark"><span class="watermark-text">ANULADO</span></div>
+      /* ── WATERMARK ── */
+      .watermark {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+        z-index: 10;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      .watermark.visible {
+        opacity: 1;
+      }
+      .watermark-text {
+        font-size: 120px;
+        font-weight: 900;
+        color: rgba(190, 21, 34, 0.1);
+        transform: rotate(-35deg);
+        letter-spacing: 0.05em;
+        white-space: nowrap;
+        user-select: none;
+        text-transform: uppercase;
+      }
 
-    <!-- ═══ HEADER ═══ -->
-    <div class="header">
-      <div class="header-left">
-        <img src="../../assets/logo1.png" class="logo-img" alt="Constructora RyR Ltda." />
-        <div class="logo-divider"></div>
-        <div>
-          <div class="header-tagline">Comprobante de Pago</div>
-          <div class="header-nit">NIT: 805.023.664</div>
-        </div>
-      </div>
-      <div class="header-right">
-        <div class="recibo-label">Recibo de Pago</div>
-        <div class="recibo-numero">RYR-0042</div>
-        <div class="recibo-fecha">Fecha de pago: 15 de abril de 2025</div>
-        <div class="estado-badge" id="estadoBadge">
-          <div class="badge-dot" id="badgeDot"></div>
-          <span class="badge-txt" id="badgeTxt">✓ PAGO RECIBIDO</span>
-        </div>
-      </div>
+      /* ── HEADER ── */
+      .header {
+        padding: 22px 40px 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid #e5e7eb;
+        position: relative;
+      }
+      .header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(
+          90deg,
+          #be1522 0%,
+          #9b1019 55%,
+          #111111 100%
+        );
+      }
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .logo-img {
+        height: 38px;
+        object-fit: contain;
+      }
+      .logo-divider {
+        width: 1px;
+        height: 32px;
+        background: #e5e7eb;
+      }
+      .header-tagline {
+        font-size: 9px;
+        color: #9ca3af;
+        letter-spacing: 0.04em;
+      }
+      .header-nit {
+        font-size: 9px;
+        font-weight: 700;
+        color: #6b7280;
+        margin-top: 2px;
+      }
+
+      .header-right {
+        text-align: right;
+      }
+      .recibo-label {
+        font-size: 8px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        color: #be1522;
+        margin-bottom: 3px;
+      }
+      .recibo-numero {
+        font-size: 26px;
+        font-weight: 900;
+        color: #111111;
+        letter-spacing: -0.03em;
+        line-height: 1;
+      }
+      .recibo-fecha {
+        font-size: 9px;
+        color: #6b7280;
+        margin-top: 4px;
+      }
+      .estado-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 6px;
+        border-radius: 20px;
+        padding: 3px 12px;
+        background: #f0fdf4;
+        border: 1px solid #86efac;
+        transition: all 0.2s;
+      }
+      .estado-badge.anulado {
+        background: #fef2f2;
+        border-color: #fca5a5;
+      }
+      .badge-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #16a34a;
+        transition: background 0.2s;
+      }
+      .badge-dot.anulado {
+        background: #dc2626;
+      }
+      .badge-txt {
+        font-size: 9px;
+        font-weight: 700;
+        color: #15803d;
+        letter-spacing: 0.05em;
+        transition: color 0.2s;
+      }
+      .badge-txt.anulado {
+        color: #dc2626;
+      }
+
+      /* ── MONTO BANDA — protagonista ── */
+      .monto-banda {
+        background: linear-gradient(
+          130deg,
+          #be1522 0%,
+          #9b1019 45%,
+          #7f0a0f 75%,
+          #111111 100%
+        );
+        padding: 26px 40px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
+        overflow: hidden;
+      }
+      .monto-banda::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(
+          circle at 1px 1px,
+          rgba(255, 255, 255, 0.07) 1px,
+          transparent 0
+        );
+        background-size: 22px 22px;
+      }
+      .monto-banda::after {
+        content: '';
+        position: absolute;
+        right: -80px;
+        top: -80px;
+        width: 260px;
+        height: 260px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.04);
+        pointer-events: none;
+      }
+      .monto-left {
+        position: relative;
+        z-index: 1;
+      }
+      .monto-label {
+        font-size: 9px;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.6);
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        margin-bottom: 5px;
+      }
+      .monto-valor {
+        font-size: 44px;
+        font-weight: 900;
+        color: white;
+        letter-spacing: -0.04em;
+        line-height: 1;
+        text-shadow: 0 2px 16px rgba(0, 0, 0, 0.25);
+      }
+      .monto-valor.anulado {
+        text-decoration: line-through;
+        opacity: 0.55;
+      }
+      .monto-fecha {
+        font-size: 9.5px;
+        color: rgba(255, 255, 255, 0.55);
+        margin-top: 6px;
+      }
+      .monto-right {
+        position: relative;
+        z-index: 1;
+        text-align: right;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 8px;
+      }
+      .monto-metodo-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 8px;
+        padding: 7px 16px;
+      }
+      .monto-metodo-label {
+        font-size: 8px;
+        color: rgba(255, 255, 255, 0.5);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+      }
+      .monto-metodo-val {
+        font-size: 12px;
+        font-weight: 700;
+        color: white;
+      }
+      .recibo-num-banda {
+        font-size: 9px;
+        color: rgba(255, 255, 255, 0.45);
+      }
+
+      /* ── CONTENIDO ── */
+      .content {
+        padding: 22px 40px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      /* ── SECCIÓN ── */
+      .seccion {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .sec-hdr {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        background: #fafafa;
+        border-bottom: 1px solid #e5e7eb;
+      }
+      .sec-accent {
+        width: 3px;
+        height: 14px;
+        border-radius: 2px;
+        background: #be1522;
+        flex-shrink: 0;
+      }
+      .sec-title {
+        font-size: 9px;
+        font-weight: 800;
+        color: #111111;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+      }
+      .sec-icon {
+        font-size: 11px;
+        opacity: 0.6;
+      }
+      .sec-body {
+        padding: 13px 14px 11px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      /* ── FILA ── */
+      .fila {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        padding-bottom: 7px;
+        border-bottom: 1px solid #f3f4f6;
+      }
+      .fila:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+      }
+      .f-lbl {
+        font-size: 9px;
+        color: #6b7280;
+        font-weight: 500;
+        max-width: 40%;
+      }
+      .f-val {
+        font-size: 10px;
+        font-weight: 700;
+        color: #111111;
+        text-align: right;
+        max-width: 58%;
+      }
+      .f-val.mono {
+        font-family: 'Courier New', monospace;
+        font-weight: 600;
+        font-size: 9.5px;
+        color: #374151;
+      }
+
+      /* ── 2 COLS ── */
+      .dos-col {
+        display: flex;
+        gap: 14px;
+      }
+      .col {
+        flex: 1;
+      }
+
+      /* ── PROPIEDAD (horizontal) ── */
+      .prop-body {
+        display: flex;
+      }
+      .prop-col {
+        flex: 1;
+        padding: 13px 14px;
+      }
+      .prop-col:first-child {
+        border-right: 1px solid #f3f4f6;
+      }
+
+      /* ── RESUMEN FINANCIERO ── */
+      .fin {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      /* Progress mejorado */
+      .fin-progress {
+        padding: 12px 14px;
+        background: #f9fafb;
+        border-bottom: 1px solid #f3f4f6;
+      }
+      .fin-prog-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-bottom: 8px;
+      }
+      .fin-prog-main {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+      }
+      .fin-prog-amounts {
+        font-size: 13px;
+        font-weight: 800;
+        color: #111111;
+        letter-spacing: -0.02em;
+      }
+      .fin-prog-amounts span {
+        color: #be1522;
+      }
+      .fin-prog-sub {
+        font-size: 8.5px;
+        color: #9ca3af;
+      }
+      .fin-prog-pct {
+        font-size: 18px;
+        font-weight: 900;
+        color: #be1522;
+        letter-spacing: -0.03em;
+      }
+      .prog-track {
+        height: 8px;
+        background: #e5e7eb;
+        border-radius: 99px;
+        overflow: hidden;
+      }
+      .prog-fill {
+        height: 100%;
+        border-radius: 99px;
+        background: linear-gradient(90deg, #be1522, #9b1019);
+        box-shadow: 0 0 10px rgba(190, 21, 34, 0.35);
+      }
+
+      /* fin filas */
+      .fin-fila {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 9px 14px;
+        border-bottom: 1px solid #f3f4f6;
+        font-size: 9px;
+      }
+      .fin-fila:last-of-type {
+        border-bottom: none;
+      }
+      .fin-lbl {
+        color: #6b7280;
+      }
+      .fin-val {
+        font-weight: 700;
+        color: #111111;
+      }
+      .fin-val.verde {
+        color: #16a34a;
+      }
+      .fin-total {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 13px 14px;
+        background: #111111;
+      }
+      .fin-tot-lbl {
+        font-size: 10px;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.75);
+      }
+      .fin-tot-val {
+        font-size: 16px;
+        font-weight: 900;
+        color: white;
+        letter-spacing: -0.03em;
+      }
+
+      /* ── BANNER ANULADO ── */
+      .banner-anulado {
+        border: 2px solid #dc2626;
+        border-radius: 8px;
+        overflow: hidden;
+        display: none;
+      }
+      .banner-anulado.visible {
+        display: block;
+      }
+      .ban-hdr {
+        background: #dc2626;
+        padding: 9px 14px;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .ban-hdr-txt {
+        font-size: 9px;
+        font-weight: 800;
+        color: white;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+      }
+      .ban-body {
+        background: #fef2f2;
+        padding: 12px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      /* ── NOTA ── */
+      .nota {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 10px 14px;
+        background: #f9fafb;
+      }
+      .nota-lbl {
+        font-size: 8px;
+        font-weight: 800;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 5px;
+      }
+      .nota-txt {
+        font-size: 9px;
+        color: #374151;
+        font-style: italic;
+        line-height: 1.6;
+      }
+
+      /* ── FIRMA EMISOR ── */
+      .firma-emisor {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 9px 14px;
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 8.5px;
+      }
+      .firma-label {
+        color: #9ca3af;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 2px;
+      }
+      .firma-val {
+        color: #374151;
+        font-weight: 700;
+      }
+      .firma-sep {
+        width: 1px;
+        height: 28px;
+        background: #e5e7eb;
+      }
+
+      /* ── CÓDIGO VERIFICACIÓN ── */
+      .cod-ver {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 8px 14px;
+        background: #f9fafb;
+        border: 1px dashed #d1d5db;
+        border-radius: 8px;
+      }
+      .cod-ver-label {
+        font-size: 8px;
+        color: #9ca3af;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+      }
+      .cod-ver-val {
+        font-size: 12px;
+        font-weight: 900;
+        color: #374151;
+        letter-spacing: 0.12em;
+        font-family: 'Courier New', monospace;
+      }
+      .cod-ver-dot {
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: #d1d5db;
+      }
+
+      /* ── FIN DEL DOCUMENTO ── */
+      .fin-doc {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 4px 0 2px;
+      }
+      .fin-doc-line {
+        flex: 1;
+        height: 1px;
+        background: #e5e7eb;
+      }
+      .fin-doc-txt {
+        font-size: 8px;
+        color: #9ca3af;
+        white-space: nowrap;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      /* ── FOOTER ── */
+      .footer {
+        padding: 14px 40px 18px;
+        background: #f9fafb;
+        border-top: 1px solid #e5e7eb;
+      }
+      .footer-legal {
+        font-size: 7.5px;
+        color: #9ca3af;
+        line-height: 1.65;
+        text-align: center;
+        margin-bottom: 10px;
+      }
+      .footer-legal strong {
+        color: #6b7280;
+      }
+      .footer-bottom {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .footer-gen {
+        font-size: 7.5px;
+        color: #9ca3af;
+      }
+      .footer-doc {
+        font-size: 7.5px;
+        font-weight: 700;
+        color: #6b7280;
+      }
+      .footer-digital {
+        font-size: 7.5px;
+        color: #9ca3af;
+        text-align: center;
+        margin-top: 6px;
+        font-style: italic;
+      }
+
+      @media print {
+        body {
+          background: white;
+          padding: 0;
+        }
+        .toolbar {
+          display: none;
+        }
+        .paper {
+          box-shadow: none;
+          width: 100%;
+          min-height: auto;
+        }
+
+        /* Forzar impresión de fondos y colores */
+        * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          color-adjust: exact !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="toolbar">
+      <span>Vista previa — Recibo PDF Constructora RyR</span>
+      <button class="tbtn tbtn-tog" onclick="toggleAnulado()">
+        ↔ Ver estado ANULADO
+      </button>
+      <button class="tbtn tbtn-out" onclick="window.print()">
+        Imprimir / Guardar PDF
+      </button>
     </div>
 
-    <!-- ═══ MONTO BANDA ═══ -->
-    <div class="monto-banda">
-      <div class="monto-left">
-        <div class="monto-label" id="montoLabel">Valor recibido</div>
-        <div class="monto-valor" id="montoValor">$2.500.000</div>
-        <div class="monto-fecha">Registrado el 15 de abril de 2025</div>
+    <div class="paper" id="paper">
+      <!-- Watermark -->
+      <div class="watermark" id="watermark">
+        <span class="watermark-text">ANULADO</span>
       </div>
-      <div class="monto-right">
-        <div class="monto-metodo-pill">
+
+      <!-- ═══ HEADER ═══ -->
+      <div class="header">
+        <div class="header-left">
+          <img
+            src="../../assets/logo1.png"
+            class="logo-img"
+            alt="Constructora RyR Ltda."
+          />
+          <div class="logo-divider"></div>
           <div>
-            <div class="monto-metodo-label">Método de pago</div>
-            <div class="monto-metodo-val">Transferencia bancaria</div>
+            <div class="header-tagline">Comprobante de Pago</div>
+            <div class="header-nit">NIT: 805.023.664</div>
           </div>
         </div>
-        <div class="recibo-num-banda">Recibo: RYR-0042</div>
+        <div class="header-right">
+          <div class="recibo-label">Recibo de Pago</div>
+          <div class="recibo-numero">RYR-0042</div>
+          <div class="recibo-fecha">Fecha de pago: 15 de abril de 2025</div>
+          <div class="estado-badge" id="estadoBadge">
+            <div class="badge-dot" id="badgeDot"></div>
+            <span class="badge-txt" id="badgeTxt">✓ PAGO RECIBIDO</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ MONTO BANDA ═══ -->
+      <div class="monto-banda">
+        <div class="monto-left">
+          <div class="monto-label" id="montoLabel">Valor recibido</div>
+          <div class="monto-valor" id="montoValor">$2.500.000</div>
+          <div class="monto-fecha">Registrado el 15 de abril de 2025</div>
+        </div>
+        <div class="monto-right">
+          <div class="monto-metodo-pill">
+            <div>
+              <div class="monto-metodo-label">Método de pago</div>
+              <div class="monto-metodo-val">Transferencia bancaria</div>
+            </div>
+          </div>
+          <div class="recibo-num-banda">Recibo: RYR-0042</div>
+        </div>
+      </div>
+
+      <!-- ═══ CONTENIDO ═══ -->
+      <div class="content">
+        <!-- Cliente + Detalles -->
+        <div class="dos-col">
+          <div class="col">
+            <div class="seccion">
+              <div class="sec-hdr">
+                <div class="sec-accent"></div>
+                <span class="sec-icon">👤</span>
+                <div class="sec-title">Datos del Cliente</div>
+              </div>
+              <div class="sec-body">
+                <div class="fila">
+                  <div class="f-lbl">Nombre completo:</div>
+                  <div class="f-val">María Elena López Herrera</div>
+                </div>
+                <div class="fila">
+                  <div class="f-lbl">Cédula / NIT:</div>
+                  <div class="f-val mono">29.847.531</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="seccion">
+              <div class="sec-hdr">
+                <div class="sec-accent"></div>
+                <span class="sec-icon">💳</span>
+                <div class="sec-title">Detalles del Pago</div>
+              </div>
+              <div class="sec-body">
+                <div class="fila">
+                  <div class="f-lbl">Concepto:</div>
+                  <div class="f-val">Abono cuota mensual</div>
+                </div>
+                <div class="fila">
+                  <div class="f-lbl">Fecha de pago:</div>
+                  <div class="f-val">15 de abril de 2025</div>
+                </div>
+                <div class="fila">
+                  <div class="f-lbl">N.° de referencia:</div>
+                  <div class="f-val mono">TXN-20250415-9847</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Propiedad -->
+        <div class="seccion">
+          <div class="sec-hdr">
+            <div class="sec-accent"></div>
+            <span class="sec-icon">🏠</span>
+            <div class="sec-title">Propiedad</div>
+          </div>
+          <div class="prop-body">
+            <div class="prop-col">
+              <div class="fila">
+                <div class="f-lbl">Proyecto:</div>
+                <div class="f-val">Las Américas 2</div>
+              </div>
+            </div>
+            <div class="prop-col">
+              <div class="fila">
+                <div class="f-lbl">Vivienda:</div>
+                <div class="f-val">Manzana B &nbsp;·&nbsp; Casa No. 14</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resumen financiero -->
+        <div class="fin">
+          <div
+            class="sec-hdr"
+            style="border-radius: 0; border-bottom: 1px solid #e5e7eb"
+          >
+            <div class="sec-accent"></div>
+            <span class="sec-icon">📊</span>
+            <div class="sec-title">Resumen Financiero</div>
+          </div>
+
+          <!-- Progress mejorado -->
+          <div class="fin-progress">
+            <div class="fin-prog-row">
+              <div class="fin-prog-main">
+                <div class="fin-prog-amounts">
+                  $18.500.000 <span>de $65.000.000</span> pagados
+                </div>
+                <div class="fin-prog-sub">
+                  Incluye el pago de este recibo · Valor total de la vivienda:
+                  $65.000.000
+                </div>
+              </div>
+              <div class="fin-prog-pct">28.5%</div>
+            </div>
+            <div class="prog-track">
+              <div class="prog-fill" style="width: 28.5%"></div>
+            </div>
+          </div>
+
+          <div class="fin-fila">
+            <span class="fin-lbl">Valor total de la vivienda:</span
+            ><span class="fin-val">$65.000.000</span>
+          </div>
+          <div class="fin-fila">
+            <span class="fin-lbl">Total abonado (incluye este pago):</span
+            ><span class="fin-val">$18.500.000</span>
+          </div>
+          <div class="fin-fila">
+            <span class="fin-lbl">Este pago:</span
+            ><span class="fin-val verde">+ $2.500.000</span>
+          </div>
+
+          <div class="fin-total">
+            <span class="fin-tot-lbl"
+              >Saldo pendiente después de este pago:</span
+            >
+            <span class="fin-tot-val">$46.500.000</span>
+          </div>
+        </div>
+
+        <!-- Observaciones -->
+        <div class="nota">
+          <div class="nota-lbl">Observaciones:</div>
+          <div class="nota-txt">
+            "Pago correspondiente a la cuota del mes de abril 2025. El cliente
+            solicitó recibo para trámite bancario."
+          </div>
+        </div>
+
+        <!-- Banner ANULADO -->
+        <div class="banner-anulado" id="bannerAnulado">
+          <div class="ban-hdr">
+            <span style="font-size: 12px; color: white">⚠</span
+            ><span class="ban-hdr-txt"
+              >Este recibo ha sido anulado — no tiene validez como comprobante
+              de pago</span
+            >
+          </div>
+          <div class="ban-body">
+            <div class="fila">
+              <div class="f-lbl">Motivo:</div>
+              <div class="f-val">Error en el monto registrado</div>
+            </div>
+            <div class="fila">
+              <div class="f-lbl">Anulado por:</div>
+              <div class="f-val">N. Rodríguez (Administrador)</div>
+            </div>
+            <div class="fila">
+              <div class="f-lbl">Fecha de anulación:</div>
+              <div class="f-val">18 de abril de 2025</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Firma del emisor -->
+        <div class="firma-emisor">
+          <div>
+            <div class="firma-label">Emitido por</div>
+            <div class="firma-val">N. Rodríguez</div>
+          </div>
+          <div class="firma-sep"></div>
+          <div>
+            <div class="firma-label">Cargo</div>
+            <div class="firma-val">Administrador</div>
+          </div>
+          <div class="firma-sep"></div>
+          <div>
+            <div class="firma-label">Fecha y hora</div>
+            <div class="firma-val">15 abr 2025 · 10:32 a.m.</div>
+          </div>
+        </div>
+
+        <!-- Fin del documento -->
+        <div class="fin-doc">
+          <div class="fin-doc-line"></div>
+          <div class="fin-doc-txt">— Fin del documento —</div>
+          <div class="fin-doc-line"></div>
+        </div>
+      </div>
+      <!-- /content -->
+
+      <!-- ═══ FOOTER ═══ -->
+      <div class="footer">
+        <div class="footer-legal">
+          Este documento constituye un comprobante de pago emitido por
+          <strong>Constructora RyR Ltda.</strong>
+          Cualquier verificación o aclaración podrá realizarse presentando este
+          comprobante como soporte de su transacción.
+          <strong
+            >Este documento no constituye una factura electrónica de
+            venta.</strong
+          >
+          &nbsp;·&nbsp; constructoraryrltda@hotmail.com &nbsp;·&nbsp; 318
+          4946116
+        </div>
+        <div class="footer-bottom">
+          <div class="footer-gen">
+            Generado el: 1 de mayo de 2026 · 10:32 a.m.
+          </div>
+          <div class="footer-doc">Documento: RYR-0042</div>
+        </div>
+        <div class="footer-digital">
+          Documento generado digitalmente por el sistema Constructora RyR — no
+          requiere firma física
+        </div>
       </div>
     </div>
+    <!-- /paper -->
 
-    <!-- ═══ CONTENIDO ═══ -->
-    <div class="content">
-
-      <!-- Cliente + Detalles -->
-      <div class="dos-col">
-        <div class="col">
-          <div class="seccion">
-        <div class="sec-hdr"><div class="sec-accent"></div><span class="sec-icon">👤</span><div class="sec-title">Datos del Cliente</div></div>
-            <div class="sec-body">
-              <div class="fila"><div class="f-lbl">Nombre completo:</div><div class="f-val">María Elena López Herrera</div></div>
-              <div class="fila"><div class="f-lbl">Cédula / NIT:</div><div class="f-val mono">29.847.531</div></div>
-            </div>
-          </div>
-        </div>
-        <div class="col">
-          <div class="seccion">
-          <div class="sec-hdr"><div class="sec-accent"></div><span class="sec-icon">💳</span><div class="sec-title">Detalles del Pago</div></div>
-            <div class="sec-body">
-              <div class="fila"><div class="f-lbl">Concepto:</div><div class="f-val">Abono cuota mensual</div></div>
-              <div class="fila"><div class="f-lbl">Fecha de pago:</div><div class="f-val">15 de abril de 2025</div></div>
-              <div class="fila"><div class="f-lbl">N.° de referencia:</div><div class="f-val mono">TXN-20250415-9847</div></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Propiedad -->
-      <div class="seccion">
-        <div class="sec-hdr"><div class="sec-accent"></div><span class="sec-icon">🏠</span><div class="sec-title">Propiedad</div></div>
-        <div class="prop-body">
-          <div class="prop-col">
-            <div class="fila"><div class="f-lbl">Proyecto:</div><div class="f-val">Las Américas 2</div></div>
-          </div>
-          <div class="prop-col">
-            <div class="fila"><div class="f-lbl">Vivienda:</div><div class="f-val">Manzana B &nbsp;·&nbsp; Casa No. 14</div></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Resumen financiero -->
-      <div class="fin">
-        <div class="sec-hdr" style="border-radius:0; border-bottom:1px solid #e5e7eb">
-          <div class="sec-accent"></div>
-          <span class="sec-icon">📊</span>
-          <div class="sec-title">Resumen Financiero</div>
-        </div>
-
-        <!-- Progress mejorado -->
-        <div class="fin-progress">
-          <div class="fin-prog-row">
-            <div class="fin-prog-main">
-              <div class="fin-prog-amounts">$18.500.000 <span>de $65.000.000</span> pagados</div>
-              <div class="fin-prog-sub">Incluye el pago de este recibo · Valor total de la vivienda: $65.000.000</div>
-            </div>
-            <div class="fin-prog-pct">28.5%</div>
-          </div>
-          <div class="prog-track">
-            <div class="prog-fill" style="width:28.5%"></div>
-          </div>
-        </div>
-
-        <div class="fin-fila"><span class="fin-lbl">Valor total de la vivienda:</span><span class="fin-val">$65.000.000</span></div>
-        <div class="fin-fila"><span class="fin-lbl">Total abonado (incluye este pago):</span><span class="fin-val">$18.500.000</span></div>
-        <div class="fin-fila"><span class="fin-lbl">Este pago:</span><span class="fin-val verde">+ $2.500.000</span></div>
-
-        <div class="fin-total">
-          <span class="fin-tot-lbl">Saldo pendiente después de este pago:</span>
-          <span class="fin-tot-val">$46.500.000</span>
-        </div>
-      </div>
-
-      <!-- Observaciones -->
-      <div class="nota">
-        <div class="nota-lbl">Observaciones:</div>
-        <div class="nota-txt">"Pago correspondiente a la cuota del mes de abril 2025. El cliente solicitó recibo para trámite bancario."</div>
-      </div>
-
-      <!-- Banner ANULADO -->
-      <div class="banner-anulado" id="bannerAnulado">
-        <div class="ban-hdr"><span style="font-size:12px;color:white">⚠</span><span class="ban-hdr-txt">Este recibo ha sido anulado — no tiene validez como comprobante de pago</span></div>
-        <div class="ban-body">
-          <div class="fila"><div class="f-lbl">Motivo:</div><div class="f-val">Error en el monto registrado</div></div>
-          <div class="fila"><div class="f-lbl">Anulado por:</div><div class="f-val">N. Rodríguez (Administrador)</div></div>
-          <div class="fila"><div class="f-lbl">Fecha de anulación:</div><div class="f-val">18 de abril de 2025</div></div>
-        </div>
-      </div>
-
-      <!-- Firma del emisor -->
-      <div class="firma-emisor">
-        <div>
-          <div class="firma-label">Emitido por</div>
-          <div class="firma-val">N. Rodríguez</div>
-        </div>
-        <div class="firma-sep"></div>
-        <div>
-          <div class="firma-label">Cargo</div>
-          <div class="firma-val">Administrador</div>
-        </div>
-        <div class="firma-sep"></div>
-        <div>
-          <div class="firma-label">Fecha y hora</div>
-          <div class="firma-val">15 abr 2025 · 10:32 a.m.</div>
-        </div>
-      </div>
-
-      <!-- Fin del documento -->
-      <div class="fin-doc">
-        <div class="fin-doc-line"></div>
-        <div class="fin-doc-txt">— Fin del documento —</div>
-        <div class="fin-doc-line"></div>
-      </div>
-
-    </div><!-- /content -->
-
-    <!-- ═══ FOOTER ═══ -->
-    <div class="footer">
-      <div class="footer-legal">
-        Este documento constituye un comprobante de pago emitido por <strong>Constructora RyR Ltda.</strong>
-        Cualquier verificación o aclaración podrá realizarse presentando este comprobante como soporte de su transacción.
-        <strong>Este documento no constituye una factura electrónica de venta.</strong>
-        &nbsp;·&nbsp; constructoraryrltda@hotmail.com &nbsp;·&nbsp; 318 4946116
-      </div>
-      <div class="footer-bottom">
-        <div class="footer-gen">Generado el: 1 de mayo de 2026 · 10:32 a.m.</div>
-        <div class="footer-doc">Documento: RYR-0042</div>
-      </div>
-      <div class="footer-digital">Documento generado digitalmente por el sistema Constructora RyR — no requiere firma física</div>
-    </div>
-
-  </div><!-- /paper -->
-
-  <script>
-    let anulado = false;
-    function toggleAnulado() {
-      anulado = !anulado;
-      document.getElementById('watermark').classList.toggle('visible', anulado);
-      document.getElementById('bannerAnulado').classList.toggle('visible', anulado);
-      const badge = document.getElementById('estadoBadge');
-      const dot   = document.getElementById('badgeDot');
-      const txt   = document.getElementById('badgeTxt');
-      badge.classList.toggle('anulado', anulado);
-      dot.classList.toggle('anulado', anulado);
-      txt.classList.toggle('anulado', anulado);
-      txt.textContent = anulado ? '✗ ANULADO' : '✓ PAGO RECIBIDO';
-      document.getElementById('montoLabel').textContent = anulado ? 'Valor anulado' : 'Valor recibido';
-      document.getElementById('montoValor').classList.toggle('anulado', anulado);
-    }
-  </script>
-
-</body>
+    <script>
+      let anulado = false
+      function toggleAnulado() {
+        anulado = !anulado
+        document
+          .getElementById('watermark')
+          .classList.toggle('visible', anulado)
+        document
+          .getElementById('bannerAnulado')
+          .classList.toggle('visible', anulado)
+        const badge = document.getElementById('estadoBadge')
+        const dot = document.getElementById('badgeDot')
+        const txt = document.getElementById('badgeTxt')
+        badge.classList.toggle('anulado', anulado)
+        dot.classList.toggle('anulado', anulado)
+        txt.classList.toggle('anulado', anulado)
+        txt.textContent = anulado ? '✗ ANULADO' : '✓ PAGO RECIBIDO'
+        document.getElementById('montoLabel').textContent = anulado
+          ? 'Valor anulado'
+          : 'Valor recibido'
+        document
+          .getElementById('montoValor')
+          .classList.toggle('anulado', anulado)
+      }
+    </script>
+  </body>
 </html>

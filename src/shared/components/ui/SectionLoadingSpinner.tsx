@@ -34,6 +34,7 @@ const RING_COLORS: Record<ModuleName, string> = {
   auditorias: 'border-t-indigo-400 border-r-purple-500',
   renuncias: 'border-t-red-400 border-r-pink-500',
   usuarios: 'border-t-indigo-400 border-r-purple-500',
+  papelera: 'border-t-slate-400 border-r-zinc-500',
 }
 
 const RING_BG: Record<ModuleName, string> = {
@@ -46,6 +47,7 @@ const RING_BG: Record<ModuleName, string> = {
   auditorias: 'from-indigo-500/20 to-purple-500/20',
   renuncias: 'from-red-500/20 to-pink-500/20',
   usuarios: 'from-indigo-500/20 to-purple-500/20',
+  papelera: 'from-slate-500/20 to-zinc-500/20',
 }
 
 const ICON_BG: Record<ModuleName, string> = {
@@ -58,6 +60,7 @@ const ICON_BG: Record<ModuleName, string> = {
   auditorias: 'from-indigo-600 via-purple-600 to-violet-600',
   renuncias: 'from-red-600 via-rose-600 to-pink-600',
   usuarios: 'from-indigo-600 via-purple-600 to-fuchsia-600',
+  papelera: 'from-slate-600 via-zinc-600 to-stone-600',
 }
 
 const ICON_SHADOW: Record<ModuleName, string> = {
@@ -70,6 +73,7 @@ const ICON_SHADOW: Record<ModuleName, string> = {
   auditorias: 'shadow-indigo-500/40',
   renuncias: 'shadow-red-500/40',
   usuarios: 'shadow-indigo-500/40',
+  papelera: 'shadow-slate-500/40',
 }
 
 const DOT_COLOR: Record<ModuleName, string> = {
@@ -82,6 +86,7 @@ const DOT_COLOR: Record<ModuleName, string> = {
   auditorias: 'bg-indigo-400',
   renuncias: 'bg-red-400',
   usuarios: 'bg-indigo-400',
+  papelera: 'bg-slate-400',
 }
 
 const LABEL_COLOR: Record<ModuleName, string> = {
@@ -94,6 +99,7 @@ const LABEL_COLOR: Record<ModuleName, string> = {
   auditorias: 'text-indigo-400',
   renuncias: 'text-red-400',
   usuarios: 'text-indigo-400',
+  papelera: 'text-slate-400',
 }
 
 // ── Props ──────────────────────────────────────────────────────────────────────

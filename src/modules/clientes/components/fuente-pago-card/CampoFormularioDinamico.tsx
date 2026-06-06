@@ -38,6 +38,13 @@ interface CampoFormularioDinamicoProps {
   /** Callback de cambio */
   onChange: (valor: ValorCampo) => void
 
+  /**
+   * Callback exclusivo para campos select_banco/select_caja.
+   * Recibe el UUID (id) y el nombre (label) de la entidad seleccionada
+   * para poder normalizar entidad_financiera_id en la BD.
+   */
+  onEntidadSeleccionada?: (id: string, label: string) => void
+
   /** Mensaje de error */
   error?: string
 
@@ -57,7 +64,15 @@ export const CampoFormularioDinamico = forwardRef<
   CampoFormularioDinamicoProps
 >(
   (
-    { config, value, onChange, error, disabled = false, className = '' },
+    {
+      config,
+      value,
+      onChange,
+      onEntidadSeleccionada,
+      error,
+      disabled = false,
+      className = '',
+    },
     ref
   ) => {
     // ============================================
@@ -193,6 +208,9 @@ export const CampoFormularioDinamico = forwardRef<
               opciones={bancos}
               value={(value as string) || ''}
               onChange={v => onChange(v)}
+              onSelectOption={opt =>
+                onEntidadSeleccionada?.(opt.value, opt.label)
+              }
               disabled={disabled || cargandoBancos}
               loading={cargandoBancos}
               placeholder={config.placeholder || 'Buscar banco...'}
@@ -207,6 +225,9 @@ export const CampoFormularioDinamico = forwardRef<
               opciones={cajas}
               value={(value as string) || ''}
               onChange={v => onChange(v)}
+              onSelectOption={opt =>
+                onEntidadSeleccionada?.(opt.value, opt.label)
+              }
               disabled={disabled || cargandoCajas}
               loading={cargandoCajas}
               placeholder={

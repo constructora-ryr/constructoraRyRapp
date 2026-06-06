@@ -251,6 +251,24 @@ export function useFuentePagoCard({
     [handleCampoChange]
   )
 
+  /**
+   * Captura el UUID de la entidad financiera seleccionada en el combobox.
+   * El campo "entidad" (nombre) ya se actualiza vía handleCampoChange.
+   * Este handler solo persiste el FK para normalización en BD.
+   */
+  const handleEntidadSeleccionada = useCallback(
+    (id: string, _label: string) => {
+      if (config) {
+        onChange({
+          ...config,
+          campos: { ...(config.campos || {}) },
+          entidad_financiera_id: id,
+        })
+      }
+    },
+    [config, onChange]
+  )
+
   const handleRemoveDocument = useCallback(() => {
     if (config) {
       onChange({
@@ -274,6 +292,7 @@ export function useFuentePagoCard({
     // Handlers dinámicos
     handleEnabledChange,
     handleCampoChange,
+    handleEntidadSeleccionada,
     validarCampos,
 
     // Handlers legacy (compatibilidad)

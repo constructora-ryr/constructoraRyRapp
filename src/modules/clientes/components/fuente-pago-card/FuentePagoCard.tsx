@@ -327,6 +327,7 @@ function FuentePagoCardComponent(props: FuentePagoCardProps) {
                     onChange={valor =>
                       hook.handleCampoChange(campoConfig.nombre, valor)
                     }
+                    onEntidadSeleccionada={hook.handleEntidadSeleccionada}
                     error={hook.errores[campoConfig.nombre]}
                   />
                 ))}

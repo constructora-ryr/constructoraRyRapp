@@ -73,7 +73,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (event === 'TOKEN_REFRESHED') {
         debugLog('🔄 Token refrescado exitosamente')
       }
-      if (event === 'TOKEN_REFRESH_FAILED') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((event as any) === 'TOKEN_REFRESH_FAILED') {
         // Limpiar solo la sesión local para no dejar tokens basura en storage
         await supabase.auth.signOut({ scope: 'local' })
       }

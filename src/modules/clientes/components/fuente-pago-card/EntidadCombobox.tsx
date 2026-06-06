@@ -14,6 +14,8 @@ interface EntidadComboboxProps {
   opciones: EntidadOption[]
   value: string
   onChange: (value: string) => void
+  /** Callback adicional que recibe el objeto completo {value: UUID, label: nombre} al seleccionar */
+  onSelectOption?: (opt: EntidadOption) => void
   disabled?: boolean
   loading?: boolean
   placeholder?: string
@@ -24,6 +26,7 @@ export function EntidadCombobox({
   opciones,
   value,
   onChange,
+  onSelectOption,
   disabled = false,
   loading = false,
   placeholder = 'Buscar entidad...',
@@ -61,6 +64,7 @@ export function EntidadCombobox({
 
   const handleSelect = (opt: EntidadOption) => {
     onChange(opt.label)
+    onSelectOption?.(opt)
     setIsOpen(false)
     setSearchTerm('')
     setHighlightedIndex(0)

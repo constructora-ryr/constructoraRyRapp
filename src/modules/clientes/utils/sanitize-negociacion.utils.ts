@@ -14,6 +14,7 @@ export interface CrearFuentePagoDTO {
   tipo: string
   monto_aprobado: number
   entidad?: string
+  entidad_financiera_id?: string
   numero_referencia?: string
   carta_asignacion_url?: string
   capital_para_cierre?: number
@@ -52,6 +53,7 @@ export interface ActualizarFuentePagoDTO {
   tipo: string
   monto_aprobado: number
   entidad?: string | null
+  entidad_financiera_id?: string | null
   numero_referencia?: string | null
   detalles?: string | null
   permite_multiples_abonos?: boolean
@@ -91,6 +93,8 @@ export function sanitizeCrearFuentePagoDTO(
     tipo: sanitizeString(datos.tipo) || '',
     monto_aprobado: sanitizeRequiredNumber(datos.monto_aprobado),
     entidad: sanitizeString(datos.entidad) ?? undefined,
+    entidad_financiera_id:
+      sanitizeString(datos.entidad_financiera_id) ?? undefined,
     numero_referencia: sanitizeString(datos.numero_referencia) ?? undefined,
     carta_asignacion_url:
       sanitizeString(datos.carta_asignacion_url) ?? undefined,
