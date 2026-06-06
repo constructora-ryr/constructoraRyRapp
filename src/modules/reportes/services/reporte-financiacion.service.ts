@@ -42,7 +42,6 @@ class ReporteFinanciacionService {
       )
       .eq('estado_fuente', 'activa')
       .not('entidad_financiera_id', 'is', null)
-      .in('negociaciones.estado', ['Activa', 'Completada'])
 
     if (error) {
       logger.error('Error obteniendo reporte de financiación:', error)
@@ -58,21 +57,25 @@ class ReporteFinanciacionService {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     rows: any[]
   ): ReporteFinanciacionData {
-    const filas: FuentePagoConEntidadRow[] = rows.map(row => ({
-      fuenteId: row.id,
-      negociacionId: row.negociaciones.id,
-      clienteId: row.negociaciones.clientes.id,
-      clienteNombre: row.negociaciones.clientes.nombre_completo ?? '',
-      clienteDocumento: row.negociaciones.clientes.numero_documento ?? '',
-      tipoFuente: row.tipo,
-      montoAprobado: row.monto_aprobado ?? 0,
-      numeroReferencia: row.numero_referencia ?? null,
-      estadoNegociacion: row.negociaciones.estado,
-      entidadId: row.entidades_financieras.id,
-      entidadNombre: row.entidades_financieras.nombre,
-      entidadTipo: row.entidades_financieras.tipo,
-      entidadCodigo: row.entidades_financieras.codigo,
-    }))
+    const ESTADOS_NEGOCIACION_VALIDOS = new Set(['Activa', 'Completada'])
+
+    const filas: FuentePagoConEntidadRow[] = rows
+      .filter(row => ESTADOS_NEGOCIACION_VALIDOS.has(row.negociaciones?.estado))
+      .map(row => ({
+        fuenteId: row.id,
+        negociacionId: row.negociaciones.id,
+        clienteId: row.negociaciones.clientes.id,
+        clienteNombre: row.negociaciones.clientes.nombre_completo ?? '',
+        clienteDocumento: row.negociaciones.clientes.numero_documento ?? '',
+        tipoFuente: row.tipo,
+        montoAprobado: row.monto_aprobado ?? 0,
+        numeroReferencia: row.numero_referencia ?? null,
+        estadoNegociacion: row.negociaciones.estado,
+        entidadId: row.entidades_financieras.id,
+        entidadNombre: row.entidades_financieras.nombre,
+        entidadTipo: row.entidades_financieras.tipo,
+        entidadCodigo: row.entidades_financieras.codigo,
+      }))
 
     const montoTotal = filas.reduce((sum, f) => sum + f.montoAprobado, 0)
 

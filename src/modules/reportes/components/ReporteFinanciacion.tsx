@@ -2,11 +2,17 @@
 
 import { useState } from 'react'
 
+import { motion } from 'framer-motion'
 import {
   AlertCircle,
+  BarChart3,
   Building2,
   DollarSign,
+  Info,
+  Landmark,
+  ListChecks,
   RefreshCw,
+  TrendingUp,
   Users,
 } from 'lucide-react'
 
@@ -34,7 +40,8 @@ export function ReporteFinanciacion() {
   if (isError)
     return <EstadoError mensaje={error.message} onReintentar={refetch} />
 
-  if (!data) return null
+  if (!data || data.entidades.length === 0)
+    return <EstadoVacio onActualizar={refetch} actualizando={isFetching} />
 
   const reporte = data
 
@@ -97,6 +104,119 @@ export function ReporteFinanciacion() {
         <ClientesEntidadTabla entidad={entidadSeleccionada} />
       )}
     </div>
+  )
+}
+
+// ── Empty State ──────────────────────────────────────────────────────────────
+
+function EstadoVacio({
+  onActualizar,
+  actualizando,
+}: {
+  onActualizar: () => void
+  actualizando: boolean
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className='space-y-5 rounded-xl border border-gray-200/50 bg-gradient-to-br from-white/90 via-indigo-50/90 to-violet-50/90 p-6 text-center shadow-xl backdrop-blur-xl dark:border-gray-700/50 dark:from-gray-800/90 dark:via-gray-800/80 dark:to-indigo-950/50'
+    >
+      {/* Icono con gradiente */}
+      <div className='flex justify-center'>
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 200 }}
+          className='mx-auto flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 via-violet-600 to-purple-600 shadow-2xl shadow-indigo-500/30'
+        >
+          <BarChart3 className='h-8 w-8 text-white' />
+        </motion.div>
+      </div>
+
+      {/* Título y descripción */}
+      <div className='space-y-2'>
+        <h3 className='bg-gradient-to-br from-gray-900 via-gray-800 to-indigo-900 bg-clip-text text-xl font-bold text-transparent dark:from-white dark:via-gray-100 dark:to-indigo-100'>
+          Sin datos de financiación
+        </h3>
+        <p className='mx-auto max-w-lg text-sm leading-relaxed text-gray-600 dark:text-gray-400'>
+          Aún no hay negociaciones activas con financiación por entidad
+          asignada. Los datos aparecerán automáticamente cuando se registren.
+        </p>
+      </div>
+
+      {/* Checklist */}
+      <div className='rounded-xl border border-gray-200/80 bg-white/60 p-4 text-left shadow-lg backdrop-blur-sm dark:border-gray-700/50 dark:bg-gray-900/40'>
+        <div className='mb-3 flex items-center gap-2 border-b border-gray-200 pb-2 text-sm font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300'>
+          <ListChecks className='h-4 w-4' />
+          ¿Qué necesitas para ver datos?
+        </div>
+        <div className='space-y-2.5'>
+          <div className='flex items-start gap-3'>
+            <div className='mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/30'>
+              <Landmark className='h-3 w-3 text-indigo-600 dark:text-indigo-400' />
+            </div>
+            <div className='min-w-0 flex-1'>
+              <p className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                Tener entidades financieras registradas
+              </p>
+              <p className='mt-0.5 text-xs text-gray-500 dark:text-gray-400'>
+                Ve a Administración → Entidades Financieras para crearlas
+              </p>
+            </div>
+          </div>
+          <div className='flex items-start gap-3'>
+            <div className='mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/30'>
+              <Users className='h-3 w-3 text-indigo-600 dark:text-indigo-400' />
+            </div>
+            <div className='min-w-0 flex-1'>
+              <p className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                Asignar entidad en la fuente de pago de clientes
+              </p>
+              <p className='mt-0.5 text-xs text-gray-500 dark:text-gray-400'>
+                Al registrar o editar una negociación, vincula la fuente de
+                crédito con su entidad financiera
+              </p>
+            </div>
+          </div>
+          <div className='flex items-start gap-3'>
+            <div className='mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/30'>
+              <TrendingUp className='h-3 w-3 text-indigo-600 dark:text-indigo-400' />
+            </div>
+            <div className='min-w-0 flex-1'>
+              <p className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                Tener negociaciones activas o completadas
+              </p>
+              <p className='mt-0.5 text-xs text-gray-500 dark:text-gray-400'>
+                Solo se incluyen negociaciones en estado Activa o Completada
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer informativo + botón actualizar */}
+      <div className='flex items-start gap-3 border-t border-gray-200 pt-1 text-left dark:border-gray-700'>
+        <Info className='mt-0.5 h-5 w-5 flex-shrink-0 text-indigo-600 dark:text-indigo-400' />
+        <p className='flex-1 text-xs leading-relaxed text-gray-600 dark:text-gray-400'>
+          Este reporte agrupa las fuentes de financiación activas por entidad,
+          mostrando el monto total aprobado y los clientes vinculados a cada
+          banco o fondo.
+        </p>
+        <button
+          type='button'
+          onClick={onActualizar}
+          disabled={actualizando}
+          className='flex flex-shrink-0 items-center gap-1.5 rounded-lg border border-indigo-200 px-3 py-1.5 text-xs font-medium text-indigo-600 transition-colors hover:bg-indigo-50 disabled:opacity-50 dark:border-indigo-800 dark:text-indigo-400 dark:hover:bg-indigo-900/20'
+        >
+          <RefreshCw
+            className={`h-3 w-3 ${actualizando ? 'animate-spin' : ''}`}
+          />
+          Actualizar
+        </button>
+      </div>
+    </motion.div>
   )
 }
 
