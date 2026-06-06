@@ -2,33 +2,200 @@
 
 import { memo } from 'react'
 
+import { type ColumnDef } from '@tanstack/react-table'
 import { ExternalLink, FileText, Users } from 'lucide-react'
 
 import Link from 'next/link'
 
-import type { ClienteEnEntidad, EntidadFinancieraResumen } from '../types'
+import { DataTable } from '@/shared/components/table/DataTable'
+
+import type {
+  ClienteEnEntidad,
+  EntidadFinancieraResumen,
+  TipoEntidadFinanciera,
+} from '../types'
+
+const TABLE_STYLES = `
+  .reportes-tabla-wrapper thead {
+    background-image: linear-gradient(135deg, #4f46e5 0%, #7c3aed 60%, #6d28d9 100%) !important;
+  }
+  .reportes-tabla-wrapper thead th {
+    font-size: 10px !important;
+    letter-spacing: 0.03em !important;
+    white-space: nowrap !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+  }
+  .reportes-tabla-wrapper tbody td {
+    text-align: center !important;
+    vertical-align: middle !important;
+  }
+`
 
 interface ClientesEntidadTablaProps {
   entidad: EntidadFinancieraResumen
 }
 
+function labelValor(tipo: TipoEntidadFinanciera): string {
+  return tipo === 'Caja de Compensación' || tipo === 'Cooperativa'
+    ? 'Valor Subsidio'
+    : 'Valor Crédito'
+}
+
 function ClientesEntidadTablaComponent({ entidad }: ClientesEntidadTablaProps) {
+  const headerValor = labelValor(entidad.tipo)
+
+  const columns: ColumnDef<ClienteEnEntidad>[] = [
+    // 1. VIVIENDA
+    {
+      id: 'vivienda',
+      header: 'Vivienda',
+      size: 90,
+      cell: ({ row }) => (
+        <div className='flex items-center justify-center'>
+          {row.original.viviendaLabel ? (
+            <span className='rounded-lg border border-violet-200 bg-violet-50 px-2.5 py-1 text-xs font-bold text-violet-700 dark:border-violet-800 dark:bg-violet-950/30 dark:text-violet-300'>
+              {row.original.viviendaLabel}
+            </span>
+          ) : (
+            <span className='text-xs text-gray-400 dark:text-gray-500'>—</span>
+          )}
+        </div>
+      ),
+    },
+
+    // 2. CLIENTE
+    {
+      accessorKey: 'clienteNombre',
+      header: 'Cliente',
+      size: 220,
+      cell: ({ row }) => (
+        <div className='text-left'>
+          <span className='text-xs font-semibold text-gray-900 dark:text-white'>
+            {row.original.clienteNombre}
+          </span>
+        </div>
+      ),
+    },
+
+    // 3. TIPO DOCUMENTO
+    {
+      accessorKey: 'clienteTipoDocumento',
+      header: 'Tipo Doc.',
+      size: 85,
+      cell: ({ row }) => (
+        <div className='flex items-center justify-center'>
+          <span className='text-xs text-gray-600 dark:text-gray-400'>
+            {row.original.clienteTipoDocumento || '—'}
+          </span>
+        </div>
+      ),
+    },
+
+    // 4. NÚMERO DOCUMENTO
+    {
+      accessorKey: 'clienteDocumento',
+      header: 'N° Documento',
+      size: 120,
+      cell: ({ row }) => (
+        <span className='text-xs text-gray-600 dark:text-gray-400'>
+          {row.original.clienteDocumento || '—'}
+        </span>
+      ),
+    },
+
+    // 5. VALOR (dinámico según tipo entidad)
+    {
+      accessorKey: 'montoAprobado',
+      header: headerValor,
+      size: 130,
+      cell: ({ row }) => (
+        <span className='text-xs font-semibold text-gray-900 dark:text-white'>
+          {formatCOP(row.original.montoAprobado)}
+        </span>
+      ),
+    },
+
+    // 6. REFERENCIA
+    {
+      accessorKey: 'numeroReferencia',
+      header: 'Referencia Cred.',
+      size: 150,
+      cell: ({ row }) => (
+        <div className='text-left'>
+          <span className='text-xs text-gray-600 dark:text-gray-400'>
+            {row.original.numeroReferencia ?? '—'}
+          </span>
+        </div>
+      ),
+    },
+
+    // 7. ESTADO NEG.
+    {
+      accessorKey: 'estadoNegociacion',
+      header: 'Estado neg.',
+      size: 105,
+      cell: ({ row }) => {
+        const estado = row.original.estadoNegociacion
+        const estadoColor: Record<string, string> = {
+          Activa:
+            'border-emerald-300 text-emerald-700 dark:border-emerald-700 dark:text-emerald-400',
+          Completada:
+            'border-blue-300 text-blue-700 dark:border-blue-700 dark:text-blue-400',
+          Suspendida:
+            'border-amber-300 text-amber-700 dark:border-amber-700 dark:text-amber-400',
+        }
+        const badgeClass =
+          estadoColor[estado] ??
+          'border-gray-300 text-gray-500 dark:border-gray-600 dark:text-gray-400'
+        return (
+          <div className='flex items-center justify-center'>
+            <span
+              className={`inline-flex items-center rounded-lg border px-2 py-0.5 text-xs font-medium ${badgeClass}`}
+            >
+              {estado}
+            </span>
+          </div>
+        )
+      },
+    },
+
+    // 8. VER CLIENTE
+    {
+      id: 'acciones',
+      header: '',
+      size: 55,
+      cell: ({ row }) => (
+        <div className='flex items-center justify-center'>
+          <Link
+            href={`/clientes/${row.original.clienteId}`}
+            onClick={e => e.stopPropagation()}
+            className='inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-violet-600 transition-colors hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-950/30'
+          >
+            Ver
+            <ExternalLink className='h-3 w-3' />
+          </Link>
+        </div>
+      ),
+    },
+  ]
+
   return (
-    <div className='overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800'>
-      {/* Cabecera de la tabla */}
-      <div className='flex items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/80'>
-        <div className='flex items-center gap-2'>
-          <Users className='h-4 w-4 text-gray-500 dark:text-gray-400' />
+    <div className='reportes-tabla-wrapper overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900'>
+      {/* Cabecera */}
+      <div className='flex items-center justify-between border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-violet-50 px-5 py-3.5 dark:border-gray-700 dark:from-indigo-950/30 dark:to-violet-950/20'>
+        <div className='flex items-center gap-2.5'>
+          <Users className='h-4 w-4 text-violet-600 dark:text-violet-400' />
           <h3 className='text-sm font-semibold text-gray-900 dark:text-white'>
             Clientes con {entidad.nombre}
           </h3>
-          <span className='rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-300'>
-            {entidad.totalClientesUnicos} cliente
-            {entidad.totalClientesUnicos !== 1 ? 's' : ''}
+          <span className='rounded-full bg-violet-100 px-2 py-0.5 text-xs font-semibold text-violet-700 dark:bg-violet-900/40 dark:text-violet-300'>
+            {entidad.totalClientesUnicos}{' '}
+            {entidad.totalClientesUnicos !== 1 ? 'clientes' : 'cliente'}
           </span>
         </div>
         <div className='text-right'>
-          <p className='text-xs text-gray-500 dark:text-gray-400'>
+          <p className='text-[11px] font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500'>
             Suma de créditos
           </p>
           <p className='text-sm font-bold text-gray-900 dark:text-white'>
@@ -38,44 +205,21 @@ function ClientesEntidadTablaComponent({ entidad }: ClientesEntidadTablaProps) {
       </div>
 
       {/* Tabla */}
-      <div className='overflow-x-auto'>
-        <table className='w-full text-sm'>
-          <thead>
-            <tr className='border-b border-gray-100 bg-gray-50/50 dark:border-gray-700/50 dark:bg-gray-800/40'>
-              <th className='px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400'>
-                Cliente
-              </th>
-              <th className='px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400'>
-                Documento
-              </th>
-              <th className='px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400'>
-                Tipo de fuente
-              </th>
-              <th className='px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400'>
-                Valor del crédito
-              </th>
-              <th className='px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400'>
-                Referencia
-              </th>
-              <th className='px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400'>
-                Estado neg.
-              </th>
-              <th className='px-4 py-2.5' />
-            </tr>
-          </thead>
-          <tbody className='divide-y divide-gray-100 dark:divide-gray-700/50'>
-            {entidad.clientes.map((cliente, idx) => (
-              <FilaCliente
-                key={`${cliente.negociacionId}-${idx}`}
-                cliente={cliente}
-              />
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {entidad.clientes.length > 0 ? (
+        <style jsx global>{`
+          ${TABLE_STYLES}
+        `}</style>
+      ) : null}
 
-      {entidad.clientes.length === 0 && (
-        <div className='flex flex-col items-center py-10 text-center'>
+      {entidad.clientes.length > 0 ? (
+        <DataTable
+          columns={columns}
+          data={entidad.clientes}
+          gradientColor='purple'
+          showPagination={entidad.clientes.length > 10}
+        />
+      ) : (
+        <div className='flex flex-col items-center py-12 text-center'>
           <FileText className='mb-2 h-8 w-8 text-gray-300 dark:text-gray-600' />
           <p className='text-sm text-gray-500 dark:text-gray-400'>
             Sin clientes registrados para esta entidad
@@ -86,66 +230,7 @@ function ClientesEntidadTablaComponent({ entidad }: ClientesEntidadTablaProps) {
   )
 }
 
-// ── Fila individual ──────────────────────────────────────────────────────────
-
-function FilaCliente({ cliente }: { cliente: ClienteEnEntidad }) {
-  const estadoColor: Record<string, string> = {
-    Activa:
-      'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-    Completada:
-      'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-    Suspendida:
-      'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-  }
-
-  const badgeClass =
-    estadoColor[cliente.estadoNegociacion] ??
-    'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
-
-  return (
-    <tr className='group transition-colors hover:bg-gray-50/70 dark:hover:bg-gray-700/20'>
-      <td className='px-4 py-3'>
-        <p className='font-medium text-gray-900 dark:text-white'>
-          {cliente.clienteNombre}
-        </p>
-      </td>
-      <td className='px-4 py-3 text-gray-600 dark:text-gray-400'>
-        {cliente.clienteDocumento}
-      </td>
-      <td className='px-4 py-3 text-gray-600 dark:text-gray-400'>
-        {cliente.tipoFuente}
-      </td>
-      <td className='px-4 py-3 text-right font-medium text-gray-900 dark:text-white'>
-        {formatCOP(cliente.montoAprobado)}
-      </td>
-      <td className='px-4 py-3 text-gray-500 dark:text-gray-400'>
-        {cliente.numeroReferencia ?? (
-          <span className='italic text-gray-400 dark:text-gray-600'>—</span>
-        )}
-      </td>
-      <td className='px-4 py-3 text-center'>
-        <span
-          className={`rounded-full px-2 py-0.5 text-xs font-medium ${badgeClass}`}
-        >
-          {cliente.estadoNegociacion}
-        </span>
-      </td>
-      <td className='px-4 py-3 text-right'>
-        <Link
-          href={`/clientes/${cliente.clienteId}`}
-          className='inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-blue-600 opacity-0 transition-opacity hover:bg-blue-50 group-hover:opacity-100 dark:text-blue-400 dark:hover:bg-blue-950/30'
-        >
-          Ver
-          <ExternalLink className='h-3 w-3' />
-        </Link>
-      </td>
-    </tr>
-  )
-}
-
 export const ClientesEntidadTabla = memo(ClientesEntidadTablaComponent)
-
-// ── Utilidad local ───────────────────────────────────────────────────────────
 
 function formatCOP(valor: number): string {
   return new Intl.NumberFormat('es-CO', {

@@ -35,7 +35,12 @@ class ReporteFinanciacionService {
           clientes (
             id,
             nombre_completo,
+            tipo_documento,
             numero_documento
+          ),
+          viviendas!negociaciones_vivienda_id_fkey (
+            numero,
+            manzanas ( nombre )
           )
         )
       `
@@ -67,21 +72,28 @@ class ReporteFinanciacionService {
           row.negociaciones.clientes != null &&
           ESTADOS_NEGOCIACION_VALIDOS.has(row.negociaciones.estado)
       )
-      .map(row => ({
-        fuenteId: row.id,
-        negociacionId: row.negociaciones.id,
-        clienteId: row.negociaciones.clientes.id,
-        clienteNombre: row.negociaciones.clientes.nombre_completo ?? '',
-        clienteDocumento: row.negociaciones.clientes.numero_documento ?? '',
-        tipoFuente: row.tipo,
-        montoAprobado: row.monto_aprobado ?? 0,
-        numeroReferencia: row.numero_referencia ?? null,
-        estadoNegociacion: row.negociaciones.estado,
-        entidadId: row.entidades_financieras.id,
-        entidadNombre: row.entidades_financieras.nombre,
-        entidadTipo: row.entidades_financieras.tipo,
-        entidadCodigo: row.entidades_financieras.codigo,
-      }))
+      .map(row => {
+        const manzana = row.negociaciones.viviendas?.manzanas?.nombre ?? ''
+        const numero = row.negociaciones.viviendas?.numero ?? ''
+        const viviendaLabel = manzana && numero ? `${manzana}${numero}` : null
+        return {
+          fuenteId: row.id,
+          negociacionId: row.negociaciones.id,
+          clienteId: row.negociaciones.clientes.id,
+          clienteNombre: row.negociaciones.clientes.nombre_completo ?? '',
+          clienteTipoDocumento: row.negociaciones.clientes.tipo_documento ?? '',
+          clienteDocumento: row.negociaciones.clientes.numero_documento ?? '',
+          tipoFuente: row.tipo,
+          montoAprobado: row.monto_aprobado ?? 0,
+          numeroReferencia: row.numero_referencia ?? null,
+          estadoNegociacion: row.negociaciones.estado,
+          entidadId: row.entidades_financieras.id,
+          entidadNombre: row.entidades_financieras.nombre,
+          entidadTipo: row.entidades_financieras.tipo,
+          entidadCodigo: row.entidades_financieras.codigo,
+          viviendaLabel,
+        }
+      })
 
     const montoTotal = filas.reduce((sum, f) => sum + f.montoAprobado, 0)
 
@@ -110,11 +122,13 @@ class ReporteFinanciacionService {
         negociacionId: fila.negociacionId,
         clienteId: fila.clienteId,
         clienteNombre: fila.clienteNombre,
+        clienteTipoDocumento: fila.clienteTipoDocumento,
         clienteDocumento: fila.clienteDocumento,
         tipoFuente: fila.tipoFuente,
         montoAprobado: fila.montoAprobado,
         numeroReferencia: fila.numeroReferencia,
         estadoNegociacion: fila.estadoNegociacion,
+        viviendaLabel: fila.viviendaLabel,
       })
     }
 
@@ -123,6 +137,7 @@ class ReporteFinanciacionService {
       totalClientesUnicos: new Set(e.clientes.map(c => c.clienteId)).size,
       porcentajeDelTotal:
         montoTotal > 0 ? (e.montoTotalAprobado / montoTotal) * 100 : 0,
+      clientes: [...e.clientes].sort(sortByVivienda),
     }))
 
     entidades.sort((a, b) => b.montoTotalAprobado - a.montoTotalAprobado)
@@ -137,3 +152,22 @@ class ReporteFinanciacionService {
 }
 
 export const reporteFinanciacionService = new ReporteFinanciacionService()
+
+function sortByVivienda(
+  a: { viviendaLabel: string | null },
+  b: { viviendaLabel: string | null }
+): number {
+  if (!a.viviendaLabel && !b.viviendaLabel) return 0
+  if (!a.viviendaLabel) return 1
+  if (!b.viviendaLabel) return -1
+
+  const matchA = a.viviendaLabel.match(/^([A-Za-záéíóúÁÉÍÓÚ]+)(\d+)$/)
+  const matchB = b.viviendaLabel.match(/^([A-Za-záéíóúÁÉÍÓÚ]+)(\d+)$/)
+
+  if (!matchA || !matchB)
+    return a.viviendaLabel.localeCompare(b.viviendaLabel, 'es')
+
+  const letterCmp = matchA[1].localeCompare(matchB[1], 'es')
+  if (letterCmp !== 0) return letterCmp
+  return parseInt(matchA[2], 10) - parseInt(matchB[2], 10)
+}

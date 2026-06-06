@@ -256,8 +256,19 @@ export function generarTextos(
       const metodo = metadata?.abono_metodo_pago
         ? String(metadata.abono_metodo_pago)
         : null
+      const fechaRaw = metadata?.abono_fecha_abono
+        ? String(metadata.abono_fecha_abono)
+        : (datos_nuevos?.fecha_abono as string | undefined)
+      const fechaStr = fechaRaw
+        ? new Date(fechaRaw).toLocaleDateString('es-CO', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+          })
+        : null
       const partes = [
         consecutivo ? `Recibo: ${consecutivo}` : null,
+        fechaStr ? `Fecha: ${fechaStr}` : null,
         `Valor: ${montoStr}`,
         fuente ? `Fuente: ${fuente}` : null,
         metodo ? `Método: ${metodo}` : null,

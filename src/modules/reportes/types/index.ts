@@ -11,6 +11,7 @@ export interface FuentePagoConEntidadRow {
   negociacionId: string
   clienteId: string
   clienteNombre: string
+  clienteTipoDocumento: string
   clienteDocumento: string
   tipoFuente: string
   montoAprobado: number
@@ -20,6 +21,7 @@ export interface FuentePagoConEntidadRow {
   entidadNombre: string
   entidadTipo: TipoEntidadFinanciera
   entidadCodigo: string
+  viviendaLabel: string | null
 }
 
 // ── Agrupación por entidad (resultado final del hook) ───────────────────────
@@ -28,11 +30,13 @@ export interface ClienteEnEntidad {
   negociacionId: string
   clienteId: string
   clienteNombre: string
+  clienteTipoDocumento: string
   clienteDocumento: string
   tipoFuente: string
   montoAprobado: number
   numeroReferencia: string | null
   estadoNegociacion: string
+  viviendaLabel: string | null
 }
 
 export interface EntidadFinancieraResumen {
