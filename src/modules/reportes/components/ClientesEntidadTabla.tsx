@@ -29,7 +29,7 @@ function ClientesEntidadTablaComponent({ entidad }: ClientesEntidadTablaProps) {
         </div>
         <div className='text-right'>
           <p className='text-xs text-gray-500 dark:text-gray-400'>
-            Total aprobado
+            Suma de créditos
           </p>
           <p className='text-sm font-bold text-gray-900 dark:text-white'>
             {formatCOP(entidad.montoTotalAprobado)}
@@ -52,7 +52,7 @@ function ClientesEntidadTablaComponent({ entidad }: ClientesEntidadTablaProps) {
                 Tipo de fuente
               </th>
               <th className='px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400'>
-                Monto aprobado
+                Valor del crédito
               </th>
               <th className='px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400'>
                 Referencia
