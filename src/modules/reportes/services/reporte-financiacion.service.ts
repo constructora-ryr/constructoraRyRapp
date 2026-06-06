@@ -137,6 +137,7 @@ class ReporteFinanciacionService {
       totalClientesUnicos: new Set(e.clientes.map(c => c.clienteId)).size,
       porcentajeDelTotal:
         montoTotal > 0 ? (e.montoTotalAprobado / montoTotal) * 100 : 0,
+      clientes: [...e.clientes].sort(sortByVivienda),
     }))
 
     entidades.sort((a, b) => b.montoTotalAprobado - a.montoTotalAprobado)
@@ -151,3 +152,22 @@ class ReporteFinanciacionService {
 }
 
 export const reporteFinanciacionService = new ReporteFinanciacionService()
+
+function sortByVivienda(
+  a: { viviendaLabel: string | null },
+  b: { viviendaLabel: string | null }
+): number {
+  if (!a.viviendaLabel && !b.viviendaLabel) return 0
+  if (!a.viviendaLabel) return 1
+  if (!b.viviendaLabel) return -1
+
+  const matchA = a.viviendaLabel.match(/^([A-Za-záéíóúÁÉÍÓÚ]+)(\d+)$/)
+  const matchB = b.viviendaLabel.match(/^([A-Za-záéíóúÁÉÍÓÚ]+)(\d+)$/)
+
+  if (!matchA || !matchB)
+    return a.viviendaLabel.localeCompare(b.viviendaLabel, 'es')
+
+  const letterCmp = matchA[1].localeCompare(matchB[1], 'es')
+  if (letterCmp !== 0) return letterCmp
+  return parseInt(matchA[2], 10) - parseInt(matchB[2], 10)
+}
