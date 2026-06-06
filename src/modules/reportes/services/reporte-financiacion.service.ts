@@ -23,16 +23,16 @@ class ReporteFinanciacionService {
         monto_aprobado,
         numero_referencia,
         entidad_financiera_id,
-        entidades_financieras!inner (
+        entidades_financieras (
           id,
           nombre,
           tipo,
           codigo
         ),
-        negociaciones!inner (
+        negociaciones (
           id,
           estado,
-          clientes!inner (
+          clientes (
             id,
             nombre_completo,
             numero_documento
@@ -60,7 +60,13 @@ class ReporteFinanciacionService {
     const ESTADOS_NEGOCIACION_VALIDOS = new Set(['Activa', 'Completada'])
 
     const filas: FuentePagoConEntidadRow[] = rows
-      .filter(row => ESTADOS_NEGOCIACION_VALIDOS.has(row.negociaciones?.estado))
+      .filter(
+        row =>
+          row.entidades_financieras != null &&
+          row.negociaciones != null &&
+          row.negociaciones.clientes != null &&
+          ESTADOS_NEGOCIACION_VALIDOS.has(row.negociaciones.estado)
+      )
       .map(row => ({
         fuenteId: row.id,
         negociacionId: row.negociaciones.id,
