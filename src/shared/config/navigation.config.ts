@@ -104,18 +104,18 @@ export const navigationGroups: NavigationGroup[] = [
         requiredPermission: { modulo: 'proyectos', accion: 'ver' },
         children: [
           {
-            name: 'Ver Proyectos',
-            href: '/proyectos',
-            icon: LayoutList,
-            description: 'Lista de proyectos',
-            requiredPermission: { modulo: 'proyectos', accion: 'ver' },
-          },
-          {
             name: 'Nuevo Proyecto',
             href: '/proyectos/nuevo',
             icon: Plus,
             description: 'Crear proyecto',
             requiredPermission: { modulo: 'proyectos', accion: 'crear' },
+          },
+          {
+            name: 'Ver Proyectos',
+            href: '/proyectos',
+            icon: LayoutList,
+            description: 'Lista de proyectos',
+            requiredPermission: { modulo: 'proyectos', accion: 'ver' },
           },
         ],
       },
@@ -128,18 +128,18 @@ export const navigationGroups: NavigationGroup[] = [
         requiredPermission: { modulo: 'viviendas', accion: 'ver' },
         children: [
           {
-            name: 'Ver Viviendas',
-            href: '/viviendas',
-            icon: LayoutList,
-            description: 'Lista de viviendas',
-            requiredPermission: { modulo: 'viviendas', accion: 'ver' },
-          },
-          {
             name: 'Nueva Vivienda',
             href: '/viviendas/nueva',
             icon: Plus,
             description: 'Registrar vivienda',
             requiredPermission: { modulo: 'viviendas', accion: 'crear' },
+          },
+          {
+            name: 'Ver Viviendas',
+            href: '/viviendas',
+            icon: LayoutList,
+            description: 'Lista de viviendas',
+            requiredPermission: { modulo: 'viviendas', accion: 'ver' },
           },
         ],
       },
@@ -157,18 +157,18 @@ export const navigationGroups: NavigationGroup[] = [
         requiredPermission: { modulo: 'clientes', accion: 'ver' },
         children: [
           {
-            name: 'Ver Clientes',
-            href: '/clientes',
-            icon: LayoutList,
-            description: 'Lista de clientes',
-            requiredPermission: { modulo: 'clientes', accion: 'ver' },
-          },
-          {
             name: 'Nuevo Cliente',
             href: '/clientes/nuevo',
             icon: Plus,
             description: 'Registrar cliente',
             requiredPermission: { modulo: 'clientes', accion: 'crear' },
+          },
+          {
+            name: 'Ver Clientes',
+            href: '/clientes',
+            icon: LayoutList,
+            description: 'Lista de clientes',
+            requiredPermission: { modulo: 'clientes', accion: 'ver' },
           },
         ],
       },
@@ -181,18 +181,18 @@ export const navigationGroups: NavigationGroup[] = [
         requiredPermission: { modulo: 'abonos', accion: 'ver' },
         children: [
           {
-            name: 'Ver Abonos',
-            href: '/abonos',
-            icon: LayoutList,
-            description: 'Historial de abonos',
-            requiredPermission: { modulo: 'abonos', accion: 'ver' },
-          },
-          {
             name: 'Registrar Abono',
             href: '/abonos/registrar',
             icon: Plus,
             description: 'Nuevo pago',
             requiredPermission: { modulo: 'abonos', accion: 'crear' },
+          },
+          {
+            name: 'Ver Abonos',
+            href: '/abonos',
+            icon: LayoutList,
+            description: 'Historial de abonos',
+            requiredPermission: { modulo: 'abonos', accion: 'ver' },
           },
         ],
       },
