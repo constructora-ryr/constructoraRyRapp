@@ -63,7 +63,7 @@ export function ReporteFinanciacion() {
         />
         <KpiResumen
           icono={DollarSign}
-          label='Monto total aprobado'
+          label='Total Entidades'
           valor={formatCOP(reporte.montoTotalAprobado)}
           colorIcono='from-emerald-600 to-teal-600'
         />
