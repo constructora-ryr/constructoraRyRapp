@@ -221,12 +221,13 @@ export function NegociacionTab({
   // total_abonado solo suma capital (sin mora/intereses del crédito constructora),
   // así que computar totalComprometido - totalAbonado genera un saldo fantasma.
   const baseTotal = interesesTotales > 0 ? totalComprometido : valorVivienda
+  // Saldo: cuando hay intereses, recalcular sobre baseTotal (que ya los incluye).
+  // Usar saldo_pendiente de BD solo cuando no hay intereses (el trigger no los suma).
   const saldo =
-    negociacion.saldo_pendiente ?? Math.max(0, baseTotal - totalAbonado)
-  // Abonado para display: cuando hay intereses el DB excluye mora de total_abonado.
-  // El real = baseTotal - saldo (totalComprometido - lo que falta).
-  const totalAbonadoDisplay =
-    interesesTotales > 0 ? Math.max(0, baseTotal - saldo) : totalAbonado
+    interesesTotales > 0
+      ? Math.max(0, baseTotal - totalAbonado)
+      : (negociacion.saldo_pendiente ?? Math.max(0, baseTotal - totalAbonado))
+  const totalAbonadoDisplay = totalAbonado
   const pctPagado =
     negociacion.porcentaje_pagado !== null &&
     negociacion.porcentaje_pagado !== undefined
