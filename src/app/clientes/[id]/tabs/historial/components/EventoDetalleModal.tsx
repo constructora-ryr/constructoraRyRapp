@@ -68,9 +68,11 @@ export function EventoDetalleModal({
               </div>
               <div>
                 <h3 className='text-sm font-bold text-white'>
-                  {evento.titulo}
+                  {evento.metadata?.esNota ? 'Nota Manual' : evento.titulo}
                 </h3>
-                <p className='text-xs text-white/80'>{evento.descripcion}</p>
+                {!evento.metadata?.esNota && (
+                  <p className='text-xs text-white/80'>{evento.descripcion}</p>
+                )}
               </div>
             </div>
             <button
