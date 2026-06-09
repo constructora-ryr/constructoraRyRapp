@@ -14,6 +14,7 @@ import { DevolucionProcesadaRenderer } from './DevolucionProcesadaRenderer'
 import { DocumentoRenderer } from './DocumentoRenderer'
 import { NegociacionActualizadaRenderer } from './NegociacionActualizadaRenderer'
 import { NegociacionCreadaRenderer } from './NegociacionCreadaRenderer'
+import { NotaManualRenderer } from './NotaManualRenderer'
 import { RenunciaRenderer } from './RenunciaRenderer'
 import { TrasladoViviendaRenderer } from './TrasladoViviendaRenderer'
 
@@ -54,6 +55,9 @@ const RENDERERS: Partial<Record<string, RendererComponent>> = {
   // Interés y genérico
   interes_registrado: CambioGenericoRenderer,
   interes_actualizado: CambioGenericoRenderer,
+
+  // Notas manuales
+  nota_manual: NotaManualRenderer,
 }
 
 export function getEventoRenderer(tipo: string): RendererComponent {
