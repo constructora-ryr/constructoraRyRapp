@@ -1,5 +1,7 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
+
 import HighlightExt from '@tiptap/extension-highlight'
 import PlaceholderExt from '@tiptap/extension-placeholder'
 import { useEditor, EditorContent } from '@tiptap/react'
@@ -65,6 +67,10 @@ export function RichTextEditor({
   placeholder = 'Escribe aquí...',
   minHeight = '180px',
 }: RichTextEditorProps) {
+  // Rastrea el último HTML emitido por el editor para distinguir
+  // cambios externos (carga de notaData) de cambios internos (el usuario escribe)
+  const lastEmitted = useRef<string>(value || '')
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -76,7 +82,9 @@ export function RichTextEditor({
     content: value || '',
     onUpdate: ({ editor }) => {
       const html = editor.getHTML()
-      onChange(html === '<p></p>' ? '' : html)
+      const result = html === '<p></p>' ? '' : html
+      lastEmitted.current = result
+      onChange(result)
     },
     editorProps: {
       attributes: {
@@ -85,6 +93,14 @@ export function RichTextEditor({
     },
     immediatelyRender: false,
   })
+
+  // Sincronizar cuando el valor cambia externamente (ej: carga de notaData en modo edición)
+  useEffect(() => {
+    if (editor && value !== lastEmitted.current) {
+      editor.commands.setContent(value || '', false)
+      lastEmitted.current = value || ''
+    }
+  }, [editor, value])
 
   if (!editor) return null
 
