@@ -9,10 +9,12 @@ import { useEffect, useState } from 'react'
 
 import { motion } from 'framer-motion'
 import { AlertCircle, FileEdit, Loader2, Save, Star, X } from 'lucide-react'
+import { createPortal } from 'react-dom'
 
 import { logger } from '@/lib/utils/logger'
 import { useNotaPorId } from '@/modules/clientes/hooks/useNotaPorId'
 import { useNotasHistorial } from '@/modules/clientes/hooks/useNotasHistorial'
+import { RichTextEditor } from '@/shared/components/rich-text/RichTextEditor'
 
 interface NotaModalProps {
   isOpen: boolean
@@ -20,6 +22,11 @@ interface NotaModalProps {
   clienteId: string
   clienteNombre: string
   notaId?: string | null
+}
+
+// Extrae texto plano del HTML para validar longitud mínima
+function extractText(html: string): string {
+  return html.replace(/<[^>]*>/g, '').trim()
 }
 
 export function NotaModal({
@@ -52,7 +59,8 @@ export function NotaModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (titulo.trim().length < 3 || contenido.trim().length < 10) return
+    const textoPlano = extractText(contenido)
+    if (titulo.trim().length < 3 || textoPlano.length < 10) return
 
     try {
       let result
@@ -89,11 +97,12 @@ export function NotaModal({
   if (!isOpen) return null
 
   const isLoading = isCreando || isActualizando
+  const textoPlano = extractText(contenido)
   const isDisabled =
-    isLoading || titulo.trim().length < 3 || contenido.trim().length < 10
+    isLoading || titulo.trim().length < 3 || textoPlano.length < 10
 
-  return (
-    <div className='fixed inset-0 z-[200] flex items-center justify-center p-4'>
+  return createPortal(
+    <div className='fixed inset-0 z-[500] flex items-center justify-center p-4'>
       {/* Backdrop */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -160,16 +169,14 @@ export function NotaModal({
             <label className='mb-2 block text-sm font-semibold text-gray-700 dark:text-gray-300'>
               Contenido de la nota *
             </label>
-            <textarea
+            <RichTextEditor
               value={contenido}
-              onChange={e => setContenido(e.target.value)}
+              onChange={setContenido}
               placeholder='Describe el evento, conversación o información relevante...'
-              rows={10}
-              className='w-full resize-y rounded-lg border-2 border-gray-200 bg-gray-50 px-4 py-2.5 text-sm transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 dark:border-gray-700 dark:bg-gray-800'
-              required
+              minHeight='160px'
             />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-              {contenido.length} caracteres (mínimo 10)
+              {textoPlano.length} caracteres (mínimo 10)
             </p>
           </div>
 
@@ -237,6 +244,7 @@ export function NotaModal({
           </div>
         </form>
       </motion.div>
-    </div>
+    </div>,
+    document.body
   )
 }
