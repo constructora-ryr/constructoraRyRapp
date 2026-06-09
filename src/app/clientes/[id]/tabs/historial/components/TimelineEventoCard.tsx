@@ -11,6 +11,7 @@ import { motion } from 'framer-motion'
 import { Clock, Edit, Eye, Star, Trash2, User } from 'lucide-react'
 
 import type { EventoHistorialHumanizado } from '@/modules/clientes/types/historial.types'
+import { RichTextContent } from '@/shared/components/rich-text/RichTextContent'
 
 import {
   coloresEvento,
@@ -107,11 +108,15 @@ export function TimelineEventoCard({
                     <span className={styles.eventoCard.notaBadge}>Nota</span>
                   ) : null}
                 </div>
-                <p className={styles.eventoCard.descripcion}>
-                  {esNota
-                    ? evento.descripcion?.replace(/<[^>]*>/g, '').trim()
-                    : evento.descripcion}
-                </p>
+                {esNota ? (
+                  <div className='mt-0.5 line-clamp-3 text-sm text-gray-600 dark:text-gray-400'>
+                    <RichTextContent html={evento.descripcion ?? ''} />
+                  </div>
+                ) : (
+                  <p className={styles.eventoCard.descripcion}>
+                    {evento.descripcion}
+                  </p>
+                )}
               </div>
 
               <div className='flex shrink-0 items-center gap-2'>
