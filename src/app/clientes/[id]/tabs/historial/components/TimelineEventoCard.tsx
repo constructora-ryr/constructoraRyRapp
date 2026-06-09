@@ -184,6 +184,18 @@ export function TimelineEventoCard({
                   <Eye className={styles.eventoCard.notaButtonIcon} />
                 </button>
               ) : null}
+
+              {/* Botón expandir nota completa */}
+              {esNota ? (
+                <button
+                  type='button'
+                  onClick={() => setShowDetalle(true)}
+                  className={`${styles.eventoCard.notaButton} text-violet-600 dark:text-violet-400`}
+                  title='Ver nota completa'
+                >
+                  <Eye className={styles.eventoCard.notaButtonIcon} />
+                </button>
+              ) : null}
             </div>
           </div>
         </motion.div>
