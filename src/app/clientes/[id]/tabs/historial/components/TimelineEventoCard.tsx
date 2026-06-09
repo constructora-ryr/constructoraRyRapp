@@ -108,7 +108,9 @@ export function TimelineEventoCard({
                   ) : null}
                 </div>
                 <p className={styles.eventoCard.descripcion}>
-                  {evento.descripcion}
+                  {esNota
+                    ? evento.descripcion?.replace(/<[^>]*>/g, '').trim()
+                    : evento.descripcion}
                 </p>
               </div>
 
