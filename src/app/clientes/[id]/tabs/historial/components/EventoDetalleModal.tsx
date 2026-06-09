@@ -70,7 +70,9 @@ export function EventoDetalleModal({
                 <h3 className='text-sm font-bold text-white'>
                   {evento.titulo}
                 </h3>
-                {!evento.metadata?.esNota && (
+                {evento.metadata?.esNota ? (
+                  <p className='text-xs text-white/70'>Nota manual</p>
+                ) : (
                   <p className='text-xs text-white/80'>{evento.descripcion}</p>
                 )}
               </div>
