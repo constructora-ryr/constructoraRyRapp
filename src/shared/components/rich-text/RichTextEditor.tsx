@@ -2,7 +2,6 @@
 
 import HighlightExt from '@tiptap/extension-highlight'
 import PlaceholderExt from '@tiptap/extension-placeholder'
-import UnderlineExt from '@tiptap/extension-underline'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import {
@@ -71,7 +70,6 @@ export function RichTextEditor({
       StarterKit.configure({
         heading: { levels: [2, 3] },
       }),
-      UnderlineExt,
       HighlightExt.configure({ multicolor: false }),
       PlaceholderExt.configure({ placeholder }),
     ],
