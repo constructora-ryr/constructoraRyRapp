@@ -1,5 +1,7 @@
 'use client'
 
+import { useMemo } from 'react'
+
 import { motion } from 'framer-motion'
 import {
   ArrowRightLeft,
@@ -13,6 +15,7 @@ import {
 import { formatDateCompact } from '@/lib/utils/date.utils'
 import type { AbonoHistorial, FuentePago } from '@/modules/abonos/types'
 import { formatearNumeroRecibo } from '@/modules/abonos/utils/formato-recibo'
+import { esCreditoConstructora } from '@/shared/constants/fuentes-pago.constants'
 
 interface TimelineAbonosProps {
   abonos: AbonoHistorial[]
@@ -37,6 +40,32 @@ export function TimelineAbonos({
 }: TimelineAbonosProps) {
   const resolveFuenteTipo = (fuente_pago_id: string): string | null =>
     fuentesPago.find(f => f.id === fuente_pago_id)?.tipo ?? null
+
+  // Asigna número de cuota a cada abono de tipo "Crédito con la Constructora"
+  // agrupando por fuente y ordenando por fecha ascendente (el orden de pago = orden de cuota)
+  const cuotaNumeroMap = useMemo(() => {
+    const map = new Map<string, number>()
+    const byFuente = new Map<string, AbonoHistorial[]>()
+
+    for (const a of abonos) {
+      const tipo = resolveFuenteTipo(a.fuente_pago_id)
+      if (!esCreditoConstructora(tipo)) continue
+      if (!byFuente.has(a.fuente_pago_id)) byFuente.set(a.fuente_pago_id, [])
+      const grupo = byFuente.get(a.fuente_pago_id)
+      if (grupo) grupo.push(a)
+    }
+
+    for (const grupo of byFuente.values()) {
+      const sorted = [...grupo].sort(
+        (a, b) =>
+          new Date(a.fecha_abono).getTime() - new Date(b.fecha_abono).getTime()
+      )
+      sorted.forEach((a, i) => map.set(a.id, i + 1))
+    }
+
+    return map
+  }, [abonos, fuentesPago]) // eslint-disable-line react-hooks/exhaustive-deps
+
   if (loading) {
     return (
       <div className='space-y-3'>
@@ -84,6 +113,7 @@ export function TimelineAbonos({
         {abonos.map((abono, i) => {
           const esTrasladado = Boolean(abono.trasladado_desde_negociacion_id)
           const fuenteTipo = resolveFuenteTipo(abono.fuente_pago_id)
+          const numeroCuota = cuotaNumeroMap.get(abono.id)
 
           return (
             <motion.div
@@ -129,6 +159,12 @@ export function TimelineAbonos({
                       {fuenteTipo ? (
                         <span className='inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700 dark:bg-white/[0.08] dark:text-white/70'>
                           {fuenteTipo}
+                        </span>
+                      ) : null}
+
+                      {numeroCuota ? (
+                        <span className='inline-flex items-center rounded-md bg-violet-100 px-2 py-0.5 text-xs font-semibold text-violet-700 dark:bg-violet-500/15 dark:text-violet-300'>
+                          Cuota #{numeroCuota}
                         </span>
                       ) : null}
 
