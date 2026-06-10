@@ -18,6 +18,7 @@ interface HeaderPagoProps {
   colorScheme: ColorScheme
   onFuenteChange: (f: FuentePagoConAbonos) => void
   valorCuota?: number
+  numeroCuota?: number
 }
 
 export function HeaderPago({
@@ -27,6 +28,7 @@ export function HeaderPago({
   colorScheme,
   onFuenteChange,
   valorCuota,
+  numeroCuota,
 }: HeaderPagoProps) {
   const esCreditoConstructora = checkCreditoConstructora(
     fuenteSeleccionada.tipo
@@ -62,6 +64,11 @@ export function HeaderPago({
                 ? '🏦 Desembolso único · No editable'
                 : '💰 Pago en cuotas'}
             </span>
+            {numeroCuota ? (
+              <span className='rounded-full bg-white/25 px-2 py-0.5 text-[10px] font-bold text-white'>
+                Cuota #{numeroCuota}
+              </span>
+            ) : null}
           </div>
           <p className='mt-0.5 text-xs text-white/80'>
             {fuenteSeleccionada.tipo}
