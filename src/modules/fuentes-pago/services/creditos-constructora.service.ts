@@ -112,27 +112,20 @@ export async function corregirFechaInicioCredito(params: {
     cuotasCorregidas,
   } = params
 
-  // 1. Eliminar cuotas de la versión actual
-  const { error: eDelete } = await supabase
-    .from('cuotas_credito')
-    .delete()
-    .eq('fuente_pago_id', fuentePagoId)
-    .eq('version_plan', versionActual)
-
-  if (eDelete) return { error: new Error(eDelete.message) }
-
-  // 2. Insertar cuotas con fechas corregidas
-  const { error: eInsert } = await supabase.from('cuotas_credito').insert(
+  // Upsert: actualiza fecha_vencimiento en las cuotas existentes sin eliminarlas.
+  // Evita conflictos con uq_cuota_version_numero si un DELETE previo falla por RLS.
+  const { error: eUpsert } = await supabase.from('cuotas_credito').upsert(
     cuotasCorregidas.map(c => ({
       fuente_pago_id: fuentePagoId,
       numero_cuota: c.numero_cuota,
       fecha_vencimiento: c.fecha_vencimiento,
       valor_cuota: c.valor_cuota,
       version_plan: versionActual,
-    }))
+    })),
+    { onConflict: 'fuente_pago_id,version_plan,numero_cuota' }
   )
 
-  if (eInsert) return { error: new Error(eInsert.message) }
+  if (eUpsert) return { error: new Error(eUpsert.message) }
 
   // 3. Actualizar fecha_inicio en creditos_constructora
   const { error: eUpdate } = await supabase
