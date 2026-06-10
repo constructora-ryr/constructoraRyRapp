@@ -27,13 +27,13 @@ export function CorregirFechaInicioModal({
   onConfirmar,
   onCerrar,
 }: CorregirFechaInicioModalProps) {
-  const fechaOriginalStr = creditoActual.fecha_inicio // YYYY-MM-DD
+  const fechaOriginalStr = creditoActual.fecha_inicio.slice(0, 10)
   const [fechaStr, setFechaStr] = useState(fechaOriginalStr)
 
   // Calcular desplazamiento en meses y preview de cuotas
   const { mesesDiff, cuotasPreview } = useMemo(() => {
     const original = new Date(fechaOriginalStr + 'T12:00:00')
-    const nueva = new Date(fechaStr + 'T12:00:00')
+    const nueva = fechaStr ? new Date(fechaStr + 'T12:00:00') : original
     const diff =
       (nueva.getFullYear() - original.getFullYear()) * 12 +
       (nueva.getMonth() - original.getMonth())
