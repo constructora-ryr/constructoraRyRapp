@@ -222,9 +222,11 @@ export function useAbonosQuery() {
   } = useQuery({
     queryKey: abonosKeys.lists(),
     queryFn: fetchAbonos,
-    staleTime: 30 * 1000, // 30 segundos — datos de pagos cambian con frecuencia
+    staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
-    placeholderData: previousData => previousData, // Smooth UX: mantener datos previos
+    retry: 3,
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 10000),
+    placeholderData: previousData => previousData,
   })
 
   return {
