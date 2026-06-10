@@ -39,7 +39,9 @@ export function CorregirFechaInicioModal({
       (nueva.getMonth() - original.getMonth())
 
     const preview = periodos.map(p => {
-      const fechaActual = new Date(p.fecha_vencimiento + 'T12:00:00')
+      const fechaActual = new Date(
+        p.fecha_vencimiento.slice(0, 10) + 'T12:00:00'
+      )
       return {
         numero: p.numero_cuota,
         fechaOriginal: fechaActual,
