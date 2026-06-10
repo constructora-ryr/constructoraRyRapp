@@ -33,6 +33,7 @@ interface FuentePagoCardProps {
   clienteSlug?: string
   onRegistrarAbono: (fuente: FuentePagoConAbonos) => void
   onAbonoRegistrado?: () => void
+  cuotasRefreshKey?: number
   index: number
   canCreate?: boolean
   validacion?: {
@@ -107,6 +108,7 @@ export function FuentePagoCard({
   negociacionId,
   onRegistrarAbono,
   onAbonoRegistrado,
+  cuotasRefreshKey,
   index,
   canCreate,
   validacion,
@@ -445,6 +447,7 @@ export function FuentePagoCard({
             negociacionId={negociacionId}
             montoFuente={fuente.monto_aprobado}
             onPagoCuotaRegistrado={onAbonoRegistrado}
+            refreshKey={cuotasRefreshKey}
             readonly
           />
         </div>

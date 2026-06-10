@@ -57,6 +57,8 @@ export default function AbonosDetalleClient({
   const canEditar = esAdmin || puede('abonos', 'editar')
   const canAnular = esAdmin || puede('abonos', 'anular')
 
+  const [cuotasRefreshKey, setCuotasRefreshKey] = useState(0)
+
   // Modal unificado de detalle (comprobante + acciones)
   const [abonoDetalle, setAbonoDetalle] = useState<AbonoParaDetalle | null>(
     null
@@ -147,10 +149,15 @@ export default function AbonosDetalleClient({
     })
   }, [])
 
+  const handleAbonoConRefresh = useCallback(() => {
+    handleAbonoRegistrado()
+    setCuotasRefreshKey(k => k + 1)
+  }, [handleAbonoRegistrado])
+
   const handleEditarSuccess = useCallback(() => {
     setAbonoEditando(null)
-    handleAbonoRegistrado()
-  }, [handleAbonoRegistrado])
+    handleAbonoConRefresh()
+  }, [handleAbonoConRefresh])
 
   // Construir slug canónico desde los datos resueltos (no desde el parámetro URL)
   const clienteSlug = negociacion
@@ -279,7 +286,8 @@ export default function AbonosDetalleClient({
                   negociacionId={negociacion.id}
                   clienteSlug={clienteSlug}
                   onRegistrarAbono={handleRegistrarAbono}
-                  onAbonoRegistrado={handleAbonoRegistrado}
+                  onAbonoRegistrado={handleAbonoConRefresh}
+                  cuotasRefreshKey={cuotasRefreshKey}
                   index={index}
                   canCreate={canRegistrar}
                   validacion={validarFuentePago[fuente.id]}
@@ -318,7 +326,7 @@ export default function AbonosDetalleClient({
             }
             fuentesPago={[fuenteSeleccionada]}
             fuenteInicial={fuenteSeleccionada}
-            onSuccess={handleAbonoRegistrado}
+            onSuccess={handleAbonoConRefresh}
             negociacionContext={
               negociacion
                 ? {
@@ -343,7 +351,7 @@ export default function AbonosDetalleClient({
           abono={abonoDetalle}
           isOpen={abonoDetalle !== null}
           onClose={() => setAbonoDetalle(null)}
-          onAnulado={handleAbonoRegistrado}
+          onAnulado={handleAbonoConRefresh}
           onEditar={canEditar ? handleEditarDesdeDetalle : undefined}
           canEditar={canEditar}
           canAnular={canAnular}
