@@ -17,6 +17,7 @@ import { SectionLoadingSpinner } from '@/shared/components/ui'
 import { useCuotasCredito } from '../hooks/useCuotasCredito'
 
 import { ConfigurarPlanCredito } from './ConfigurarPlanCredito'
+import { CorregirFechaInicioModal } from './CorregirFechaInicioModal'
 import { PanelResumenCredito } from './PanelResumenCredito'
 import { ReestructurarCreditoModal } from './ReestructurarCreditoModal'
 import { TablaAmortizacion } from './TablaAmortizacion'
@@ -56,12 +57,14 @@ export function CuotasCreditoTab({
     recargar,
     reestructurar,
     crearPlan,
+    corregirFechaInicio,
     proximaCuota,
     progresoCredito,
     saldoPendienteReal,
   } = useCuotasCredito({ fuentePagoId, negociacionId })
 
   const [mostrarReestructurar, setMostrarReestructurar] = useState(false)
+  const [mostrarCorregirFecha, setMostrarCorregirFecha] = useState(false)
 
   // Capital pendiente real: capital original - capital efectivamente aplicado (desde períodos)
   const capitalPendienteReal = useMemo(() => {
@@ -144,12 +147,31 @@ export function CuotasCreditoTab({
         proximaCuota={proximaCuota}
         progresoCredito={progresoCredito}
         procesando={procesando}
+        onCorregirFecha={
+          !readonly && isAdmin ? () => setMostrarCorregirFecha(true) : undefined
+        }
         onReestructurar={
           !readonly && isAdmin ? () => setMostrarReestructurar(true) : undefined
         }
       />
 
       <TablaAmortizacion periodos={periodos} />
+
+      {!readonly && isAdmin && mostrarCorregirFecha && credito ? (
+        <CorregirFechaInicioModal
+          creditoActual={credito}
+          periodos={periodos}
+          procesando={procesando}
+          onConfirmar={async nuevaFecha => {
+            const ok = await corregirFechaInicio(nuevaFecha)
+            if (ok) {
+              setMostrarCorregirFecha(false)
+              await recargar()
+            }
+          }}
+          onCerrar={() => setMostrarCorregirFecha(false)}
+        />
+      ) : null}
 
       {!readonly && isAdmin && mostrarReestructurar && credito ? (
         <ReestructurarCreditoModal

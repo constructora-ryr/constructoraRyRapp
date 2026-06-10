@@ -85,6 +85,65 @@ export async function crearCredito(
 }
 
 // ============================================================
+// CORREGIR FECHA DE INICIO
+// ============================================================
+
+/**
+ * Corrige la fecha de inicio de un crédito corriendo todas las fechas de cuotas
+ * por el mismo desplazamiento en meses, sin recalcular montos.
+ * Operación atómica: elimina cuotas de la versión actual e inserta las corregidas.
+ */
+export async function corregirFechaInicioCredito(params: {
+  creditoId: string
+  fuentePagoId: string
+  versionActual: number
+  nuevaFechaInicio: string // YYYY-MM-DD
+  cuotasCorregidas: Array<{
+    numero_cuota: number
+    fecha_vencimiento: string
+    valor_cuota: number
+  }>
+}): Promise<{ error: Error | null }> {
+  const {
+    creditoId,
+    fuentePagoId,
+    versionActual,
+    nuevaFechaInicio,
+    cuotasCorregidas,
+  } = params
+
+  // 1. Eliminar cuotas de la versión actual
+  const { error: eDelete } = await supabase
+    .from('cuotas_credito')
+    .delete()
+    .eq('fuente_pago_id', fuentePagoId)
+    .eq('version_plan', versionActual)
+
+  if (eDelete) return { error: new Error(eDelete.message) }
+
+  // 2. Insertar cuotas con fechas corregidas
+  const { error: eInsert } = await supabase.from('cuotas_credito').insert(
+    cuotasCorregidas.map(c => ({
+      fuente_pago_id: fuentePagoId,
+      numero_cuota: c.numero_cuota,
+      fecha_vencimiento: c.fecha_vencimiento,
+      valor_cuota: c.valor_cuota,
+      version_plan: versionActual,
+    }))
+  )
+
+  if (eInsert) return { error: new Error(eInsert.message) }
+
+  // 3. Actualizar fecha_inicio en creditos_constructora
+  const { error: eUpdate } = await supabase
+    .from('creditos_constructora')
+    .update({ fecha_inicio: nuevaFechaInicio })
+    .eq('id', creditoId)
+
+  return { error: eUpdate ? new Error(eUpdate.message) : null }
+}
+
+// ============================================================
 // ACTUALIZAR
 // ============================================================
 
