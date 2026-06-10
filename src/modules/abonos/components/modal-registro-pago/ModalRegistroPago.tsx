@@ -87,6 +87,7 @@ export function ModalRegistroPago(props: ModalRegistroPagoProps) {
     abonoRegistrado,
     handleCloseExito,
     valorCuota,
+    numeroCuota,
   } = useModalRegistroPago(props)
 
   const styles = getModalStyles(colorScheme, modo)
@@ -264,6 +265,7 @@ export function ModalRegistroPago(props: ModalRegistroPagoProps) {
           colorScheme={colorScheme}
           onFuenteChange={setFuenteSeleccionada}
           valorCuota={valorCuota}
+          numeroCuota={numeroCuota}
         />
 
         <div className={styles.body}>

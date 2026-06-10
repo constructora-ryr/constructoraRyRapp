@@ -331,6 +331,10 @@ export function useModalRegistroPago({
     moraIncluidaProp,
     // Crédito constructora
     valorCuota,
+    numeroCuota:
+      valorCuota && esCreditoConstructora(fuenteSeleccionada?.tipo)
+        ? Math.round((fuenteSeleccionada?.monto_recibido ?? 0) / valorCuota) + 1
+        : undefined,
     // Handlers
     handleSubmit,
     handleClose,
