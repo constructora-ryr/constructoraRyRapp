@@ -230,7 +230,9 @@ export function useCreditoConstructora({
         if (!credito) throw new Error('No hay datos del crédito cargados')
 
         // Calcular el desplazamiento en meses entre la fecha original y la nueva
-        const fechaOriginal = new Date(credito.fecha_inicio + 'T12:00:00')
+        const fechaOriginal = new Date(
+          credito.fecha_inicio.slice(0, 10) + 'T12:00:00'
+        )
         const mesesDiff =
           (nuevaFechaInicio.getFullYear() - fechaOriginal.getFullYear()) * 12 +
           (nuevaFechaInicio.getMonth() - fechaOriginal.getMonth())
