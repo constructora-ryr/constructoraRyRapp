@@ -246,7 +246,6 @@ export function ComprobantePago({
         onChange={handleChange}
         tabIndex={-1}
         className='sr-only'
-        aria-hidden='true'
       />
 
       {errorMsg ? (
