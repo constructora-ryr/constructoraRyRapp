@@ -237,7 +237,9 @@ export function useCreditoConstructora({
 
         // Correr cada cuota el mismo número de meses
         const cuotasCorregidas = periodos.map(p => {
-          const fechaActual = new Date(p.fecha_vencimiento + 'T12:00:00')
+          const fechaActual = new Date(
+            p.fecha_vencimiento.slice(0, 10) + 'T12:00:00'
+          )
           const nuevaFecha = sumarMeses(fechaActual, mesesDiff)
           return {
             numero_cuota: p.numero_cuota,
