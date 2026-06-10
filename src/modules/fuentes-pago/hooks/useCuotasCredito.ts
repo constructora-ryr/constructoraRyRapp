@@ -83,6 +83,7 @@ export function useCuotasCredito({
     recargar: inner.recargar,
     reestructurar: inner.reestructurar,
     crearPlan: inner.crearPlan,
+    corregirFechaInicio: inner.corregirFechaInicio,
     saldoPendienteReal: inner.saldoPendienteReal,
     // Calculados
     proximaCuota,

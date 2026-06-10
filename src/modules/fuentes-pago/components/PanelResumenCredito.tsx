@@ -1,6 +1,12 @@
 'use client'
 
-import { ArrowRightLeft, CheckCircle2, Clock, TrendingDown } from 'lucide-react'
+import {
+  ArrowRightLeft,
+  CalendarClock,
+  CheckCircle2,
+  Clock,
+  TrendingDown,
+} from 'lucide-react'
 
 import { formatDateCompact } from '@/lib/utils/date.utils'
 import type {
@@ -18,6 +24,8 @@ interface PanelResumenCreditoProps {
   procesando: boolean
   /** Si no se pasa, el botón "Reestructurar" no se muestra (modo lectura) */
   onReestructurar?: () => void
+  /** Solo admins. Abre el modal de corrección de fecha de inicio. */
+  onCorregirFecha?: () => void
 }
 
 export function PanelResumenCredito({
@@ -27,6 +35,7 @@ export function PanelResumenCredito({
   progresoCredito,
   procesando,
   onReestructurar,
+  onCorregirFecha,
 }: PanelResumenCreditoProps) {
   // Semáforo de próxima cuota
   const semaforo = proximaCuota ? getSemaforo(proximaCuota) : null
@@ -51,16 +60,28 @@ export function PanelResumenCredito({
           />
           <Stat label='Tasa mensual' value={`${credito.tasa_mensual}%`} />
         </div>
-        {onReestructurar ? (
-          <button
-            onClick={onReestructurar}
-            disabled={procesando}
-            className='inline-flex items-center gap-1.5 rounded-lg bg-indigo-100 px-2.5 py-1 text-xs font-medium text-indigo-700 transition-all hover:bg-indigo-200 disabled:opacity-50 dark:bg-indigo-800/40 dark:text-indigo-300 dark:hover:bg-indigo-800/60'
-          >
-            <ArrowRightLeft className='h-3 w-3' />
-            Reestructurar
-          </button>
-        ) : null}
+        <div className='flex items-center gap-2'>
+          {onCorregirFecha ? (
+            <button
+              onClick={onCorregirFecha}
+              disabled={procesando}
+              className='inline-flex items-center gap-1.5 rounded-lg bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700 transition-all hover:bg-amber-200 disabled:opacity-50 dark:bg-amber-800/40 dark:text-amber-300 dark:hover:bg-amber-800/60'
+            >
+              <CalendarClock className='h-3 w-3' />
+              Corregir fecha
+            </button>
+          ) : null}
+          {onReestructurar ? (
+            <button
+              onClick={onReestructurar}
+              disabled={procesando}
+              className='inline-flex items-center gap-1.5 rounded-lg bg-indigo-100 px-2.5 py-1 text-xs font-medium text-indigo-700 transition-all hover:bg-indigo-200 disabled:opacity-50 dark:bg-indigo-800/40 dark:text-indigo-300 dark:hover:bg-indigo-800/60'
+            >
+              <ArrowRightLeft className='h-3 w-3' />
+              Reestructurar
+            </button>
+          ) : null}
+        </div>
       </div>
 
       {/* Zona B — Próxima cuota + progreso */}

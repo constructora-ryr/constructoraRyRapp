@@ -10,6 +10,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 
 import {
+  corregirFechaInicioCredito,
   crearCredito,
   getCreditoByFuente,
 } from '../services/creditos-constructora.service'
@@ -29,6 +30,7 @@ import type {
 import {
   calcularTablaAmortizacion,
   fechaCuotaParaBD,
+  sumarMeses,
 } from '../utils/calculos-credito'
 
 interface UseCreditoConstructoraProps {
@@ -45,6 +47,7 @@ interface UseCreditoConstructoraReturn {
   recargar: () => Promise<void>
   reestructurar: (params: ParametrosReestructuracion) => Promise<boolean>
   crearPlan: (params: ParametrosCredito) => Promise<boolean>
+  corregirFechaInicio: (nuevaFechaInicio: Date) => Promise<boolean>
   /**
    * Saldo pendiente real: monto_aprobado − monto_recibido de fuentes_pago.
    * Cuando hay abonos pagados, es el valor correcto para reestructurar
@@ -219,6 +222,55 @@ export function useCreditoConstructora({
     [fuentePagoId, cargarDatos]
   )
 
+  const corregirFechaInicio = useCallback(
+    async (nuevaFechaInicio: Date): Promise<boolean> => {
+      try {
+        setProcesando(true)
+        setError(null)
+        if (!credito) throw new Error('No hay datos del crédito cargados')
+
+        // Calcular el desplazamiento en meses entre la fecha original y la nueva
+        const fechaOriginal = new Date(credito.fecha_inicio + 'T12:00:00')
+        const mesesDiff =
+          (nuevaFechaInicio.getFullYear() - fechaOriginal.getFullYear()) * 12 +
+          (nuevaFechaInicio.getMonth() - fechaOriginal.getMonth())
+
+        // Correr cada cuota el mismo número de meses
+        const cuotasCorregidas = periodos.map(p => {
+          const fechaActual = new Date(p.fecha_vencimiento + 'T12:00:00')
+          const nuevaFecha = sumarMeses(fechaActual, mesesDiff)
+          return {
+            numero_cuota: p.numero_cuota,
+            fecha_vencimiento: fechaCuotaParaBD(nuevaFecha),
+            valor_cuota: p.valor_cuota,
+          }
+        })
+
+        const { error: e } = await corregirFechaInicioCredito({
+          creditoId: credito.id,
+          fuentePagoId,
+          versionActual: credito.version_actual,
+          nuevaFechaInicio: fechaCuotaParaBD(nuevaFechaInicio),
+          cuotasCorregidas,
+        })
+
+        if (e) throw e
+        await cargarDatos()
+        return true
+      } catch (err: unknown) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Error corrigiendo fecha de inicio'
+        )
+        return false
+      } finally {
+        setProcesando(false)
+      }
+    },
+    [credito, periodos, fuentePagoId, cargarDatos]
+  )
+
   return {
     credito,
     periodos,
@@ -229,6 +281,7 @@ export function useCreditoConstructora({
     recargar: cargarDatos,
     reestructurar,
     crearPlan,
+    corregirFechaInicio,
     saldoPendienteReal,
   }
 }

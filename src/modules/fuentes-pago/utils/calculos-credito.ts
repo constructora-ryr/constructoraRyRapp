@@ -117,6 +117,17 @@ export function calcularMoraSugerida(
  * @param numCuotasPagadas  - Cuántas cuotas se han marcado como Pagadas
  * @returns Capital pendiente para el nuevo plan
  */
+/**
+ * Suma N meses a una fecha preservando el día del mes.
+ */
+export function sumarMeses(fecha: Date, meses: number): Date {
+  return new Date(
+    fecha.getFullYear(),
+    fecha.getMonth() + meses,
+    fecha.getDate()
+  )
+}
+
 export function calcularCapitalPendiente(
   capitalOriginal: number,
   numCuotasTotal: number,
