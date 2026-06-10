@@ -8,7 +8,7 @@
 
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { CreditCard } from 'lucide-react'
 
@@ -28,6 +28,8 @@ interface CuotasCreditoTabProps {
   /** Pre-fills the capital field in the "Configurar plan" form */
   montoFuente?: number
   onPagoCuotaRegistrado?: () => void
+  /** Incrementar este valor desde el padre para forzar un refetch de cuotas. */
+  refreshKey?: number
   /**
    * Modo lectura: oculta "Configurar plan" y "Reestructurar".
    * Usar en Abonos (solo informar). Quitar en Cierre Financiero / Negociación.
@@ -44,6 +46,7 @@ export function CuotasCreditoTab({
   fuentePagoId,
   negociacionId,
   montoFuente,
+  refreshKey,
   readonly = false,
   isAdmin = false,
 }: CuotasCreditoTabProps) {
@@ -65,6 +68,10 @@ export function CuotasCreditoTab({
 
   const [mostrarReestructurar, setMostrarReestructurar] = useState(false)
   const [mostrarCorregirFecha, setMostrarCorregirFecha] = useState(false)
+
+  useEffect(() => {
+    if (refreshKey && refreshKey > 0) recargar()
+  }, [refreshKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Capital pendiente real: capital original - capital efectivamente aplicado (desde períodos)
   const capitalPendienteReal = useMemo(() => {
