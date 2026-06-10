@@ -44,8 +44,12 @@ export function calcularTablaAmortizacion(
   const capitalPorCuota = Math.round(capital / numCuotas)
   const interesPorCuota = Math.round(interesTotal / numCuotas)
 
+  // La última cuota absorbe el residuo del redondeo para que la suma exacta = montoTotal.
+  // Ej: $19.504.000 / 12 = $1.625.333,33 → redondeado $1.625.333 × 12 = $19.503.996 (faltan $4).
+  const valorUltimaCuota = montoTotal - valorCuota * (numCuotas - 1)
+
   const cuotas: CuotaCalculo[] = Array.from({ length: numCuotas }, (_, i) => {
-    // Usar nuevo objeto Date para evitar mutaciones
+    const esUltima = i === numCuotas - 1
     const fecha = new Date(
       fechaInicio.getFullYear(),
       fechaInicio.getMonth() + i + 1,
@@ -54,7 +58,7 @@ export function calcularTablaAmortizacion(
     return {
       numero: i + 1,
       fechaVencimiento: fecha,
-      valorCuota,
+      valorCuota: esUltima ? valorUltimaCuota : valorCuota,
       capitalPorCuota,
       interesPorCuota,
     }
