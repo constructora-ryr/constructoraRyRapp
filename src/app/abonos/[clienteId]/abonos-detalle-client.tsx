@@ -172,7 +172,7 @@ export default function AbonosDetalleClient({
 
   const handleVolver = () => router.push('/abonos')
 
-  if (isLoading || !negociacion) {
+  if (isLoading) {
     return (
       <div className='flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950'>
         <SectionLoadingSpinner
@@ -182,6 +182,11 @@ export default function AbonosDetalleClient({
         />
       </div>
     )
+  }
+
+  if (!negociacion) {
+    router.replace('/abonos')
+    return null
   }
 
   return (

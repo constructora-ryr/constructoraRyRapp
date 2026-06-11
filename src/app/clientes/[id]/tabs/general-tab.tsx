@@ -60,7 +60,10 @@ export function GeneralTab({
     negociaciones_completadas: 0,
   }
 
-  const tieneNegociacionActiva = estadisticas.negociaciones_activas > 0
+  const tieneNegociacionActiva =
+    estadisticas.negociaciones_activas > 0 ||
+    estadisticas.negociaciones_completadas > 0 ||
+    (cliente.negociaciones?.length ?? 0) > 0
 
   // Extraer negociación activa (datos ya cargados en cliente.negociaciones)
   const negociacionActiva = useMemo(() => {
