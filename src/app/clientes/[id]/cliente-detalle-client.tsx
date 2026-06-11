@@ -26,6 +26,7 @@ import {
   Trash2,
   User,
 } from 'lucide-react'
+import { useTheme } from 'next-themes'
 
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
@@ -111,6 +112,7 @@ export default function ClienteDetalleClient({
   clienteId,
 }: ClienteDetalleClientProps) {
   const router = useRouter()
+  const { resolvedTheme } = useTheme()
   const { confirm } = useModal()
   const { puede, esAdmin } = usePermisosQuery()
   const canEdit = esAdmin || puede('clientes', 'editar')
@@ -414,7 +416,9 @@ export default function ClienteDetalleClient({
             className={styles.headerClasses.container}
             style={{
               background: esPropietario
-                ? 'linear-gradient(135deg, #78350f 0%, #92400e 40%, #b45309 100%)'
+                ? resolvedTheme === 'dark'
+                  ? 'linear-gradient(135deg, #14b8a6 0%, #0d9488 50%, #0f766e 100%)'
+                  : 'linear-gradient(135deg, #0d9488 0%, #0f766e 50%, #115e59 100%)'
                 : 'linear-gradient(135deg, #0891b2 0%, #2563eb 50%, #1e40af 100%)',
             }}
           >
