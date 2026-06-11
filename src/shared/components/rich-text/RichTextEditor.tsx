@@ -97,7 +97,7 @@ export function RichTextEditor({
   // Sincronizar cuando el valor cambia externamente (ej: carga de notaData en modo edición)
   useEffect(() => {
     if (editor && value !== lastEmitted.current) {
-      editor.commands.setContent(value || '', false)
+      editor.commands.setContent(value || '', { emitUpdate: false })
       lastEmitted.current = value || ''
     }
   }, [editor, value])
