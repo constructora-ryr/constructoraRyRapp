@@ -32,7 +32,6 @@ import * as styles from '../cliente-detalle.styles'
 import {
   BannerDocumentacion,
   ContactoUbicacionCard,
-  EstadisticasComerciales,
   InfoPersonalCard,
   NotasCard,
   ResumenNegociacion,
@@ -104,9 +103,6 @@ export function GeneralTab({
             clienteId={cliente.id}
           />
         )}
-
-      {/* Tira de estadísticas compacta */}
-      <EstadisticasComerciales estadisticas={estadisticas} cliente={cliente} />
 
       {/* Grid de información: 50/50 con subgrid para alinear filas */}
       <div className='grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-y-0 md:[grid-template-rows:auto_auto_auto_auto_auto]'>
