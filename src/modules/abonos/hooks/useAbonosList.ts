@@ -11,10 +11,20 @@ export const PAGE_SIZE = 10
 export const PAGE_SIZE_OPTIONS = [10, 25, 50] as const
 export type PageSizeOption = (typeof PAGE_SIZE_OPTIONS)[number]
 
+export type RangoFecha =
+  | 'todo'
+  | 'este-mes'
+  | 'mes-anterior'
+  | 'ultimos-3-meses'
+  | 'este-ano'
+  | 'personalizado'
+
 export interface FiltrosAbonos {
   busqueda: string
   fuente: string // nombre de fuente o 'todas'
-  mes: string // 'YYYY-MM' o 'todos'
+  rango: RangoFecha
+  fechaDesde: string // YYYY-MM-DD, solo para 'personalizado'
+  fechaHasta: string // YYYY-MM-DD, solo para 'personalizado'
   mostrarActivos: boolean
   mostrarAnulados: boolean
   mostrarRenunciados: boolean
@@ -44,7 +54,9 @@ export function useAbonosList() {
   const [filtros, setFiltros] = useState<FiltrosAbonos>({
     busqueda: '',
     fuente: 'todas',
-    mes: 'todos',
+    rango: 'todo',
+    fechaDesde: '',
+    fechaHasta: '',
     mostrarActivos: true,
     mostrarAnulados: false,
     mostrarRenunciados: false,
@@ -57,7 +69,9 @@ export function useAbonosList() {
   const {
     busqueda,
     fuente,
-    mes,
+    rango,
+    fechaDesde,
+    fechaHasta,
     mostrarActivos,
     mostrarAnulados,
     mostrarRenunciados,
@@ -69,7 +83,9 @@ export function useAbonosList() {
   }, [
     busqueda,
     fuente,
-    mes,
+    rango,
+    fechaDesde,
+    fechaHasta,
     mostrarActivos,
     mostrarAnulados,
     mostrarRenunciados,
@@ -123,11 +139,34 @@ export function useAbonosList() {
       )
     }
 
-    // Filtro por mes (YYYY-MM)
-    if (filtros.mes && filtros.mes !== 'todos') {
+    // Filtro por rango de fecha
+    if (filtros.rango !== 'todo') {
+      const ahora = new Date()
+      let desde: Date | null = null
+      let hasta: Date | null = null
+
+      if (filtros.rango === 'este-mes') {
+        desde = new Date(ahora.getFullYear(), ahora.getMonth(), 1)
+        hasta = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0)
+      } else if (filtros.rango === 'mes-anterior') {
+        desde = new Date(ahora.getFullYear(), ahora.getMonth() - 1, 1)
+        hasta = new Date(ahora.getFullYear(), ahora.getMonth(), 0)
+      } else if (filtros.rango === 'ultimos-3-meses') {
+        desde = new Date(ahora.getFullYear(), ahora.getMonth() - 2, 1)
+        hasta = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0)
+      } else if (filtros.rango === 'este-ano') {
+        desde = new Date(ahora.getFullYear(), 0, 1)
+        hasta = new Date(ahora.getFullYear(), 11, 31)
+      } else if (filtros.rango === 'personalizado') {
+        desde = filtros.fechaDesde ? new Date(filtros.fechaDesde) : null
+        hasta = filtros.fechaHasta ? new Date(filtros.fechaHasta) : null
+      }
+
       resultado = resultado.filter(abono => {
-        const fechaMes = abono.fecha_abono.substring(0, 7)
-        return fechaMes === filtros.mes
+        const fecha = new Date(abono.fecha_abono)
+        if (desde && fecha < desde) return false
+        if (hasta && fecha > hasta) return false
+        return true
       })
     }
 
@@ -176,7 +215,9 @@ export function useAbonosList() {
     setFiltros({
       busqueda: '',
       fuente: 'todas',
-      mes: 'todos',
+      rango: 'todo',
+      fechaDesde: '',
+      fechaHasta: '',
       mostrarActivos: true,
       mostrarAnulados: false,
       mostrarRenunciados: false,
@@ -206,30 +247,11 @@ export function useAbonosList() {
     return Array.from(set).sort()
   }, [abonos])
 
-  const mesesDisponibles = useMemo(() => {
-    const meses: { value: string; label: string }[] = []
-    const ahora = new Date()
-    for (let i = 0; i < 12; i++) {
-      const d = new Date(ahora.getFullYear(), ahora.getMonth() - i, 1)
-      const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-      const label = d.toLocaleDateString('es-CO', {
-        month: 'long',
-        year: 'numeric',
-      })
-      meses.push({
-        value,
-        label: label.charAt(0).toUpperCase() + label.slice(1),
-      })
-    }
-    return meses
-  }, [])
-
   return {
     abonos: abonosPaginados,
     abonosCompletos: abonos,
     estadisticas,
     fuentesUnicas,
-    mesesDisponibles,
     filtros,
     actualizarFiltros,
     limpiarFiltros,
