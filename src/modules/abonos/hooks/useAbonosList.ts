@@ -142,30 +142,42 @@ export function useAbonosList() {
     // Filtro por rango de fecha
     if (filtros.rango !== 'todo') {
       const ahora = new Date()
-      let desde: Date | null = null
-      let hasta: Date | null = null
+      const pad = (n: number) => String(n).padStart(2, '0')
+      const toDateStr = (d: Date) =>
+        `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+
+      let desdeStr: string | null = null
+      let hastaStr: string | null = null
 
       if (filtros.rango === 'este-mes') {
-        desde = new Date(ahora.getFullYear(), ahora.getMonth(), 1)
-        hasta = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0)
+        desdeStr = toDateStr(new Date(ahora.getFullYear(), ahora.getMonth(), 1))
+        hastaStr = toDateStr(
+          new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0)
+        )
       } else if (filtros.rango === 'mes-anterior') {
-        desde = new Date(ahora.getFullYear(), ahora.getMonth() - 1, 1)
-        hasta = new Date(ahora.getFullYear(), ahora.getMonth(), 0)
+        desdeStr = toDateStr(
+          new Date(ahora.getFullYear(), ahora.getMonth() - 1, 1)
+        )
+        hastaStr = toDateStr(new Date(ahora.getFullYear(), ahora.getMonth(), 0))
       } else if (filtros.rango === 'ultimos-3-meses') {
-        desde = new Date(ahora.getFullYear(), ahora.getMonth() - 2, 1)
-        hasta = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0)
+        desdeStr = toDateStr(
+          new Date(ahora.getFullYear(), ahora.getMonth() - 2, 1)
+        )
+        hastaStr = toDateStr(
+          new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0)
+        )
       } else if (filtros.rango === 'este-ano') {
-        desde = new Date(ahora.getFullYear(), 0, 1)
-        hasta = new Date(ahora.getFullYear(), 11, 31)
+        desdeStr = `${ahora.getFullYear()}-01-01`
+        hastaStr = `${ahora.getFullYear()}-12-31`
       } else if (filtros.rango === 'personalizado') {
-        desde = filtros.fechaDesde ? new Date(filtros.fechaDesde) : null
-        hasta = filtros.fechaHasta ? new Date(filtros.fechaHasta) : null
+        desdeStr = filtros.fechaDesde || null
+        hastaStr = filtros.fechaHasta || null
       }
 
       resultado = resultado.filter(abono => {
-        const fecha = new Date(abono.fecha_abono)
-        if (desde && fecha < desde) return false
-        if (hasta && fecha > hasta) return false
+        const fechaAbono = abono.fecha_abono.substring(0, 10)
+        if (desdeStr && fechaAbono < desdeStr) return false
+        if (hastaStr && fechaAbono > hastaStr) return false
         return true
       })
     }
@@ -250,6 +262,7 @@ export function useAbonosList() {
   return {
     abonos: abonosPaginados,
     abonosCompletos: abonos,
+    totalSinFiltrar: abonos.length,
     estadisticas,
     fuentesUnicas,
     filtros,
