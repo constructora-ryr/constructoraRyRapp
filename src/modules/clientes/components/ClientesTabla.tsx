@@ -422,47 +422,26 @@ export function ClientesTabla({
             : valorTotal > 0
               ? Math.min(Math.round((totalAbonado / valorTotal) * 100), 100)
               : 0
-          const CIRCUNFERENCIA = 87.96
-          const strokeDash = (porcentaje / 100) * CIRCUNFERENCIA
-          const ringColor = pagadoCompleto
-            ? '#10b981'
+          const barColor = pagadoCompleto
+            ? 'bg-emerald-500'
             : porcentaje >= 50
-              ? '#3b82f6'
-              : '#f59e0b'
+              ? 'bg-blue-500'
+              : 'bg-amber-500'
+          const textColor = pagadoCompleto
+            ? 'text-emerald-600 dark:text-emerald-400'
+            : porcentaje >= 50
+              ? 'text-blue-600 dark:text-blue-400'
+              : 'text-amber-600 dark:text-amber-400'
           return (
-            <div className={styles.cell.center}>
-              <div className='relative h-9 w-9'>
-                <svg
-                  width='36'
-                  height='36'
-                  viewBox='0 0 36 36'
-                  style={{ transform: 'rotate(-90deg)' }}
-                >
-                  <circle
-                    cx='18'
-                    cy='18'
-                    r='14'
-                    fill='none'
-                    stroke='currentColor'
-                    strokeWidth='4'
-                    className='text-gray-200 dark:text-gray-700'
-                  />
-                  <circle
-                    cx='18'
-                    cy='18'
-                    r='14'
-                    fill='none'
-                    stroke={ringColor}
-                    strokeWidth='4'
-                    strokeLinecap='round'
-                    strokeDasharray={`${strokeDash} ${CIRCUNFERENCIA}`}
-                  />
-                </svg>
-                <div className='absolute inset-0 flex items-center justify-center'>
-                  <span className='text-[9px] font-bold leading-none text-gray-700 dark:text-gray-200'>
-                    {pagadoCompleto ? '✓' : `${porcentaje}%`}
-                  </span>
-                </div>
+            <div className='w-full min-w-[80px] px-1'>
+              <span className={`text-xs font-semibold ${textColor}`}>
+                {porcentaje}%
+              </span>
+              <div className='mt-1 h-1.5 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700'>
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${barColor}`}
+                  style={{ width: `${porcentaje}%` }}
+                />
               </div>
             </div>
           )
