@@ -23,7 +23,7 @@ export const abonosListaStyles = {
 
   // ─── Métricas ──────────────────────────────────────────────────────────────
   metricas: {
-    grid: 'grid grid-cols-2 gap-3 lg:grid-cols-4',
+    grid: 'grid grid-cols-1 gap-3 sm:grid-cols-3',
     card: 'group relative overflow-hidden rounded-xl border border-gray-200/50 bg-white/80 p-4 shadow-lg backdrop-blur-xl transition-all duration-300 hover:shadow-2xl dark:border-gray-700/50 dark:bg-gray-800/80',
     cardGlow:
       'absolute inset-0 bg-gradient-to-br from-violet-500/5 to-purple-500/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100',

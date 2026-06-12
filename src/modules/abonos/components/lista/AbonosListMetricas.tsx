@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Calendar, DollarSign, Receipt, TrendingUp } from 'lucide-react'
+import { Calendar, DollarSign, Receipt } from 'lucide-react'
 
 import { formatCurrency } from '@/lib/utils/format.utils'
 
@@ -24,14 +24,6 @@ const METRICAS = (e: EstadisticasAbonos) =>
       label: 'Total Recibos',
       value: e.totalAbonos.toString(),
       Icon: Receipt,
-    },
-    {
-      label: 'Promedio por Recibo',
-      value:
-        e.totalAbonos > 0
-          ? formatCurrency(e.montoTotal / e.totalAbonos)
-          : formatCurrency(0),
-      Icon: TrendingUp,
     },
     {
       label: 'Abonado este Mes',
