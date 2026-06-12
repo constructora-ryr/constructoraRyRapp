@@ -34,6 +34,7 @@ export interface DashboardStatsData {
     interesados: number
     inactivos: number
     renunciaron: number
+    propietarios: number
   }
   recaudoMes: number
 }

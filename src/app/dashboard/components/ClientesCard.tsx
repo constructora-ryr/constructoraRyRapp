@@ -65,6 +65,15 @@ function ClientesCardComponent({
         'bg-rose-500 dark:bg-rose-500 dark:shadow-[0_0_8px_rgba(244,63,94,0.6)]',
       pct: (clientes.renunciaron / total) * 100,
     },
+    {
+      label: 'Propietarios',
+      count: clientes.propietarios,
+      barClass:
+        'bg-teal-500 dark:bg-teal-400 dark:shadow-[0_0_10px_rgba(20,184,166,0.5)]',
+      dotClass:
+        'bg-teal-500 dark:bg-teal-400 dark:shadow-[0_0_8px_rgba(20,184,166,0.6)]',
+      pct: (clientes.propietarios / total) * 100,
+    },
   ]
 
   return (
