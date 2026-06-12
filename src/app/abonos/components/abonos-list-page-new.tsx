@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react'
 
-import { CreditCard, Receipt } from 'lucide-react'
+import { CreditCard, Receipt, SlidersHorizontal } from 'lucide-react'
 
 import { useRouter } from 'next/navigation'
 
@@ -68,6 +68,7 @@ export function AbonosListPage({
     paginaActual,
     totalPaginas,
     totalFiltrado,
+    totalSinFiltrar,
     setPaginaActual,
     pageSize,
     setPageSize,
@@ -135,21 +136,34 @@ export function AbonosListPage({
           />
 
           {totalFiltrado === 0 ? (
-            <EmptyState
-              icon={Receipt}
-              title='No hay abonos registrados'
-              description='Registra el primer abono para comenzar a llevar el control de pagos'
-              action={
-                canCreate
-                  ? {
-                      label: 'Registrar Primer Abono',
-                      onClick: () => router.push('/abonos/registrar'),
-                      icon: CreditCard,
-                    }
-                  : undefined
-              }
-              moduleName='abonos'
-            />
+            totalSinFiltrar === 0 ? (
+              <EmptyState
+                icon={Receipt}
+                title='No hay abonos registrados'
+                description='Registra el primer abono para comenzar a llevar el control de pagos'
+                action={
+                  canCreate
+                    ? {
+                        label: 'Registrar Primer Abono',
+                        onClick: () => router.push('/abonos/registrar'),
+                        icon: CreditCard,
+                      }
+                    : undefined
+                }
+                moduleName='abonos'
+              />
+            ) : (
+              <EmptyState
+                icon={SlidersHorizontal}
+                title='Sin resultados para estos filtros'
+                description='No hay abonos que coincidan con los filtros aplicados. Intenta con un rango de fechas diferente o limpia los filtros.'
+                action={{
+                  label: 'Limpiar filtros',
+                  onClick: limpiarFiltros,
+                }}
+                moduleName='abonos'
+              />
+            )
           ) : (
             <AbonosTabla
               abonos={abonos}
