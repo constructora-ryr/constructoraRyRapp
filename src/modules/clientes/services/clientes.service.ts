@@ -98,7 +98,7 @@ class ClientesService {
           )
         `
           )
-          .eq('estado', 'Activa'),
+          .in('estado', ['Activa', 'Completada']),
 
         // 3. Intereses activos (en paralelo)
         supabase
