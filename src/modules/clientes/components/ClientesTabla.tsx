@@ -425,7 +425,7 @@ export function ClientesTabla({
           if (pagadoCompleto) {
             return (
               <span className='inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'>
-                ✓ Pagado
+                ✓ 100%
               </span>
             )
           }
