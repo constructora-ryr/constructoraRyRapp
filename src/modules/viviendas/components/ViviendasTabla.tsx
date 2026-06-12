@@ -277,14 +277,16 @@ export function ViviendasTabla({
         }
         const porcentaje = Math.min(row.original.porcentaje_pagado || 0, 100)
         const pagadoCompleto = porcentaje >= 100
-        const barColor = pagadoCompleto
-          ? 'bg-emerald-500'
-          : porcentaje >= 50
-            ? 'bg-blue-500'
-            : 'bg-amber-500'
-        const textColor = pagadoCompleto
-          ? 'text-emerald-600 dark:text-emerald-400'
-          : porcentaje >= 50
+        if (pagadoCompleto) {
+          return (
+            <span className='inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'>
+              ✓ Pagado
+            </span>
+          )
+        }
+        const barColor = porcentaje >= 50 ? 'bg-blue-500' : 'bg-amber-500'
+        const textColor =
+          porcentaje >= 50
             ? 'text-blue-600 dark:text-blue-400'
             : 'text-amber-600 dark:text-amber-400'
         return (
