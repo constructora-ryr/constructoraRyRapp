@@ -258,8 +258,10 @@ export function useModalEditarAbono({
 
       setExito(true)
       onSuccess()
-    } catch {
-      setError('Error inesperado. Intenta de nuevo.')
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : 'Error inesperado. Intenta de nuevo.'
+      )
       setIsSubmitting(false)
     }
   }, [

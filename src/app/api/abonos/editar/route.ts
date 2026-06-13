@@ -110,7 +110,8 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    if (negociacion.estado !== 'Activa') {
+    const esAdmin = usuarioPerfil?.rol === 'Administrador'
+    if (negociacion.estado !== 'Activa' && !esAdmin) {
       return NextResponse.json(
         {
           error: `No se puede editar un abono de una negociación en estado "${negociacion.estado}"`,
