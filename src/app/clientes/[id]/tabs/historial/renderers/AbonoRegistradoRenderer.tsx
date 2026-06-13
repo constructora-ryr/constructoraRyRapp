@@ -152,7 +152,11 @@ export function AbonoRegistradoRenderer({ evento }: Props) {
               className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${esAnulacion ? 'bg-red-400/30 text-red-100' : 'bg-green-400/30 text-green-100'}`}
             >
               <Receipt className='h-3.5 w-3.5' />
-              {formatearNumeroRecibo(Number(numeroRecibo))}
+              {formatearNumeroRecibo(
+                typeof numeroRecibo === 'number'
+                  ? numeroRecibo
+                  : String(numeroRecibo)
+              )}
             </div>
           ) : null}
         </div>
