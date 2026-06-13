@@ -113,22 +113,33 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 1b. Validar que la fecha_abono no es anterior a fecha_negociacion en BD
+    // 1b. Validar estado y fecha de la negociación
     const { data: negociacion, error: negError } = await supabase
       .from('negociaciones')
-      .select('fecha_negociacion')
+      .select('estado, fecha_negociacion')
       .eq('id', negociacion_id)
       .single()
 
-    if (!negError && negociacion?.fecha_negociacion) {
-      const fechaNeg = negociacion.fecha_negociacion.slice(0, 10) // YYYY-MM-DD
-      if (fecha_abono < fechaNeg) {
+    if (!negError && negociacion) {
+      if (negociacion.estado !== 'Activa') {
         return NextResponse.json(
           {
-            error: `La fecha del abono no puede ser anterior al inicio de la negociación (${fechaNeg})`,
+            error: `No se puede registrar un abono en una negociación en estado "${negociacion.estado}"`,
           },
           { status: 400 }
         )
+      }
+
+      if (negociacion.fecha_negociacion) {
+        const fechaNeg = negociacion.fecha_negociacion.slice(0, 10)
+        if (fecha_abono < fechaNeg) {
+          return NextResponse.json(
+            {
+              error: `La fecha del abono no puede ser anterior al inicio de la negociación (${fechaNeg})`,
+            },
+            { status: 400 }
+          )
+        }
       }
     }
 

@@ -3,7 +3,6 @@
 import { useCallback, useMemo, useState } from 'react'
 
 import { formatDateCompact, formatDateForInput } from '@/lib/utils/date.utils'
-import { auditService } from '@/services/audit.service'
 import { formatCurrency } from '@/shared/utils/format'
 
 import { useEditarAbonoMutation } from '../../hooks/useAbonosQuery'
@@ -231,30 +230,8 @@ export function useModalEditarAbono({
         payload.eliminar_comprobante = true
       }
 
-      // 3. Llamar al servicio via React Query mutation
-      const result = await editarAbonoMutation.mutateAsync(payload)
-
-      // 4. Auditoría (fire-and-forget)
-      const camposTexto = diff.map(d => d.label).join(', ')
-      auditService
-        .auditarActualizacion(
-          'abonos_historial',
-          abonoInicial.id,
-          {
-            monto: abonoInicial.monto,
-            fecha_abono: abonoInicial.fecha_abono,
-            metodo_pago: abonoInicial.metodo_pago,
-            numero_referencia: abonoInicial.numero_referencia,
-            notas: abonoInicial.notas,
-            comprobante_url: abonoInicial.comprobante_url,
-          } as Record<string, unknown>,
-          result as unknown as Record<string, unknown>,
-          { motivo: motivo.trim(), campos_modificados: camposTexto },
-          'abonos'
-        )
-        .catch(_e => {
-          /* best-effort: audit log no debe bloquear el flujo principal */
-        })
+      // 3. Llamar al servicio via React Query mutation (el server ya registra el audit_log)
+      await editarAbonoMutation.mutateAsync(payload)
 
       setExito(true)
       onSuccess()
@@ -275,7 +252,6 @@ export function useModalEditarAbono({
     nuevoComprobante,
     eliminarComprobante,
     abonoInicial,
-    diff,
     editarAbonoMutation,
     onSuccess,
   ])
