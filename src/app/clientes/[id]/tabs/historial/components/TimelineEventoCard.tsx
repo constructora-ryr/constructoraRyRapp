@@ -178,10 +178,10 @@ export function TimelineEventoCard({
                 <button
                   type='button'
                   onClick={() => setShowDetalle(true)}
-                  className={styles.eventoCard.notaButton}
-                  title='Ver detalles'
+                  className={styles.eventoCard.detallesButton}
                 >
-                  <Eye className={styles.eventoCard.notaButtonIcon} />
+                  <Eye className={styles.eventoCard.detallesButtonIcon} />
+                  Ver detalle
                 </button>
               ) : null}
 
@@ -190,10 +190,10 @@ export function TimelineEventoCard({
                 <button
                   type='button'
                   onClick={() => setShowDetalle(true)}
-                  className={`${styles.eventoCard.notaButton} text-violet-600 dark:text-violet-400`}
-                  title='Ver nota completa'
+                  className={styles.eventoCard.detallesButtonNota}
                 >
-                  <Eye className={styles.eventoCard.notaButtonIcon} />
+                  <Eye className={styles.eventoCard.detallesButtonIcon} />
+                  Ver nota
                 </button>
               ) : null}
             </div>
