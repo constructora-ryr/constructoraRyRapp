@@ -225,8 +225,10 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    // 10. Ejecutar UPDATE (usar cliente autenticado para que auth.email() funcione en triggers)
-    const { data: abonoActualizado, error: updateError } = await supabase
+    // 10. Ejecutar UPDATE via admin client para no depender del claim user_rol en JWT
+    // (consistente con /api/abonos/anular). Las validaciones de auth/permisos ya se
+    // hicieron arriba; el audit_log se escribe explícitamente en el paso 11.
+    const { data: abonoActualizado, error: updateError } = await supabaseAdmin
       .from('abonos_historial')
       .update(actualizacion as unknown as TablesUpdate<'abonos_historial'>)
       .eq('id', abonoId)
