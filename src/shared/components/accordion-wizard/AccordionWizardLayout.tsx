@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, X } from 'lucide-react'
 
 import Link from 'next/link'
 
@@ -21,8 +21,11 @@ export function AccordionWizardLayout({
   children,
   isSubmitting,
   submitLoadingLabel,
+  cancelHref,
 }: AccordionWizardLayoutProps) {
   const styles = getAccordionWizardStyles(moduleName)
+  const destinoCancelar =
+    cancelHref ?? [...breadcrumbs].reverse().find(b => b.href)?.href
 
   return (
     <div className={styles.page.container}>
@@ -34,33 +37,42 @@ export function AccordionWizardLayout({
       >
         {/* Breadcrumbs */}
         <nav className={styles.breadcrumbs.container} aria-label='Breadcrumb'>
-          {breadcrumbs.map((crumb, i) => {
-            const isLast = i === breadcrumbs.length - 1
-            return (
-              <span key={crumb.label} className='flex items-center gap-2'>
-                {i > 0 ? (
-                  <ChevronRight
-                    className={`h-4 w-4 ${styles.breadcrumbs.separator}`}
-                  />
-                ) : null}
-                {isLast || !crumb.href ? (
-                  <span
-                    className={
-                      isLast
-                        ? styles.breadcrumbs.current
-                        : styles.breadcrumbs.link
-                    }
-                  >
-                    {crumb.label}
-                  </span>
-                ) : (
-                  <Link href={crumb.href} className={styles.breadcrumbs.link}>
-                    {crumb.label}
-                  </Link>
-                )}
-              </span>
-            )
-          })}
+          <div className={styles.breadcrumbs.crumbs}>
+            {breadcrumbs.map((crumb, i) => {
+              const isLast = i === breadcrumbs.length - 1
+              return (
+                <span key={crumb.label} className='flex items-center gap-2'>
+                  {i > 0 ? (
+                    <ChevronRight
+                      className={`h-4 w-4 ${styles.breadcrumbs.separator}`}
+                    />
+                  ) : null}
+                  {isLast || !crumb.href ? (
+                    <span
+                      className={
+                        isLast
+                          ? styles.breadcrumbs.current
+                          : styles.breadcrumbs.link
+                      }
+                    >
+                      {crumb.label}
+                    </span>
+                  ) : (
+                    <Link href={crumb.href} className={styles.breadcrumbs.link}>
+                      {crumb.label}
+                    </Link>
+                  )}
+                </span>
+              )
+            })}
+          </div>
+
+          {destinoCancelar ? (
+            <Link href={destinoCancelar} className={styles.breadcrumbs.cancel}>
+              <X className='h-3.5 w-3.5' />
+              Cancelar
+            </Link>
+          ) : null}
         </nav>
 
         {/* Wizard sections */}

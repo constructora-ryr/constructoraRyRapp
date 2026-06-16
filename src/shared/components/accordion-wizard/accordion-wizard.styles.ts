@@ -122,10 +122,13 @@ export const getAccordionWizardStyles = (moduleName: ModuleName) => {
       content: 'max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-3',
     },
     breadcrumbs: {
-      container: 'flex items-center gap-2 text-sm mb-6',
+      container: 'flex items-center justify-between gap-2 text-sm mb-6',
+      crumbs: 'flex items-center gap-2',
       link: 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors',
       separator: 'text-gray-300 dark:text-gray-600',
       current: `${theme.classes.text.primary} font-medium`,
+      cancel:
+        'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200',
     },
     section: {
       base: 'rounded-2xl border-2 transition-all duration-200',

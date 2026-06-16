@@ -40,6 +40,8 @@ export interface AccordionWizardLayoutProps {
   isSubmitting?: boolean
   /** Texto del overlay de loading (ej: "Creando Proyecto...") */
   submitLoadingLabel?: string
+  /** Destino del botón "Cancelar". Por defecto usa el último breadcrumb con href */
+  cancelHref?: string
 }
 
 /** Item de breadcrumb */
