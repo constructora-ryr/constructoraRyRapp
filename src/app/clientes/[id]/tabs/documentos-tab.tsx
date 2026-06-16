@@ -76,6 +76,7 @@ export function DocumentosTab({ cliente }: DocumentosTabProps) {
     volverADocumentos,
     onSuccessUpload,
     onCancelUpload,
+    carpetaIdPendiente,
   } = useDocumentosTab({ clienteId: cliente.id })
 
   // Si está mostrando categorías (PATRÓN IGUAL A PROYECTOS)
@@ -163,6 +164,7 @@ export function DocumentosTab({ cliente }: DocumentosTabProps) {
             tipoEntidad='cliente'
             moduleName='clientes'
             metadata={metadataPendiente}
+            carpetaId={carpetaIdPendiente}
             onSuccess={onSuccessUpload}
             onCancel={onCancelUpload}
           />
@@ -240,9 +242,7 @@ export function DocumentosTab({ cliente }: DocumentosTabProps) {
         moduleName='clientes'
         defaultVista='lista'
         onCategoriasClick={mostrarCategorias}
-        onUploadClick={carpetaId =>
-          mostrarUpload(false, carpetaId ? {} : undefined)
-        }
+        onUploadClick={carpetaId => mostrarUpload(false, undefined, carpetaId)}
       />
 
       {/* Modal de subir carta de aprobación */}

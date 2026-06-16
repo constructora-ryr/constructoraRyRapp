@@ -43,6 +43,9 @@ export function useDocumentosTab({ clienteId }: UseDocumentosTabProps) {
     string,
     unknown
   > | null>(null)
+  const [carpetaIdPendiente, setCarpetaIdPendiente] = useState<string | null>(
+    null
+  )
 
   // ✅ Hook de validación de documento de identidad
   const { tieneCedula, cargando: cargandoValidacion } = useDocumentoIdentidad({
@@ -59,13 +62,18 @@ export function useDocumentosTab({ clienteId }: UseDocumentosTabProps) {
    * @param metadata - Metadata para vincular con documento pendiente
    */
   const mostrarUpload = useCallback(
-    (esCedula = false, metadata?: Record<string, unknown>) => {
+    (
+      esCedula = false,
+      metadata?: Record<string, unknown>,
+      carpetaId?: string | null
+    ) => {
       setUploadTipoCedula(esCedula)
       // ✅ Si es cédula, agregar flag para pre-marcar checkbox
       const metadataConFlag = esCedula
         ? { ...metadata, auto_check_identidad: true }
         : metadata || null
       setMetadataPendiente(metadataConFlag)
+      setCarpetaIdPendiente(carpetaId ?? null)
       setVistaActual('upload')
     },
     []
@@ -85,6 +93,7 @@ export function useDocumentosTab({ clienteId }: UseDocumentosTabProps) {
     setVistaActual('documentos')
     setUploadTipoCedula(false)
     setMetadataPendiente(null)
+    setCarpetaIdPendiente(null)
   }, [])
 
   /**
@@ -126,6 +135,7 @@ export function useDocumentosTab({ clienteId }: UseDocumentosTabProps) {
     cargandoValidacion,
     uploadTipoCedula,
     metadataPendiente,
+    carpetaIdPendiente,
 
     // Vistas
     mostrandoUpload,

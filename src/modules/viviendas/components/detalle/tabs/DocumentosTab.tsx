@@ -33,6 +33,7 @@ export function DocumentosTab({ viviendaId }: DocumentosTabProps) {
   // Estados locales para vistas
   const [showUpload, setShowUpload] = useState(false)
   const [showCategorias, setShowCategorias] = useState(false)
+  const [carpetaIdUpload, setCarpetaIdUpload] = useState<string | null>(null)
 
   // 🚫 Sin permiso de ver: mostrar estado de acceso denegado
   if (!puedeVerDocumentos) {
@@ -128,6 +129,7 @@ export function DocumentosTab({ viviendaId }: DocumentosTabProps) {
           <DocumentoUpload
             entidadId={viviendaId}
             tipoEntidad='vivienda'
+            carpetaId={carpetaIdUpload}
             onSuccess={() => setShowUpload(false)}
             onCancel={() => setShowUpload(false)}
             moduleName='viviendas'
@@ -145,7 +147,10 @@ export function DocumentosTab({ viviendaId }: DocumentosTabProps) {
         tipoEntidad='vivienda'
         moduleName='viviendas'
         onCategoriasClick={() => setShowCategorias(true)}
-        onUploadClick={() => setShowUpload(true)}
+        onUploadClick={carpetaId => {
+          setCarpetaIdUpload(carpetaId ?? null)
+          setShowUpload(true)
+        }}
       />
     </div>
   )
