@@ -11,6 +11,7 @@ import type {
   ActualizarCarpetaParams,
   CarpetaBreadcrumb,
   CarpetaConConteo,
+  CarpetaConRuta,
   CarpetaDocumentoRow,
   CrearCarpetaParams,
 } from '../types/carpeta.types'
@@ -71,6 +72,46 @@ export class CarpetasDocumentosService {
     )
 
     return carpetasConConteo
+  }
+
+  /**
+   * Obtener TODAS las carpetas de una entidad (cualquier nivel de anidación)
+   * con su ruta completa armada, para selectores como "Mover a carpeta".
+   */
+  static async obtenerTodasLasCarpetas(
+    entidadId: string,
+    tipoEntidad: TipoEntidad
+  ): Promise<CarpetaConRuta[]> {
+    const { data, error } = await supabase
+      .from('carpetas_documentos')
+      .select('*')
+      .eq('entidad_id', entidadId)
+      .eq('tipo_entidad', tipoEntidad)
+      .order('nombre', { ascending: true })
+
+    if (error) {
+      logger.error('Error obteniendo todas las carpetas:', error)
+      throw new Error(`Error al obtener carpetas: ${error.message}`)
+    }
+
+    const carpetas = data as CarpetaDocumentoRow[]
+    const porId = new Map(carpetas.map(c => [c.id, c]))
+
+    const construirRuta = (carpeta: CarpetaDocumentoRow): string => {
+      const segmentos: string[] = [carpeta.nombre]
+      let actual = carpeta
+      while (actual.padre_id) {
+        const padre = porId.get(actual.padre_id)
+        if (!padre) break
+        segmentos.unshift(padre.nombre)
+        actual = padre
+      }
+      return segmentos.join(' / ')
+    }
+
+    return carpetas
+      .map(carpeta => ({ ...carpeta, ruta: construirRuta(carpeta) }))
+      .sort((a, b) => a.ruta.localeCompare(b.ruta))
   }
 
   /**

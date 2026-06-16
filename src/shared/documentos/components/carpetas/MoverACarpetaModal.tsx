@@ -7,7 +7,7 @@
 import { ArrowRight, Folder, FolderRoot, X } from 'lucide-react'
 
 import type { ModuleName } from '@/shared/config/module-themes'
-import { useCarpetasQuery } from '@/shared/documentos/hooks/useCarpetasQuery'
+import { useTodasLasCarpetasQuery } from '@/shared/documentos/hooks/useCarpetasQuery'
 import type { TipoEntidad } from '@/shared/documentos/types/entidad.types'
 
 interface MoverACarpetaModalProps {
@@ -31,8 +31,8 @@ export function MoverACarpetaModal({
   carpetaActualId,
   cargando = false,
 }: MoverACarpetaModalProps) {
-  // Obtener carpetas raíz para la entidad
-  const { carpetas } = useCarpetasQuery(entidadId, tipoEntidad, null)
+  // Obtener TODAS las carpetas de la entidad (cualquier nivel de anidación)
+  const { carpetas } = useTodasLasCarpetasQuery(entidadId, tipoEntidad)
 
   if (!isOpen) return null
 
@@ -97,10 +97,11 @@ export function MoverACarpetaModal({
                 <span className='font-medium text-gray-700 dark:text-gray-300'>
                   {carpeta.nombre}
                 </span>
-                <span className='ml-2 text-xs text-gray-400'>
-                  {carpeta.cantidad_documentos} doc
-                  {carpeta.cantidad_documentos !== 1 ? 's' : ''}
-                </span>
+                {carpeta.ruta !== carpeta.nombre ? (
+                  <span className='block truncate text-xs text-gray-400'>
+                    {carpeta.ruta}
+                  </span>
+                ) : null}
               </div>
               {carpeta.id === carpetaActualId ? (
                 <span className='text-xs text-gray-400'>Actual</span>

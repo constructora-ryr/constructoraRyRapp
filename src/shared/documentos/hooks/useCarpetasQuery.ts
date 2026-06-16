@@ -19,6 +19,7 @@ import type {
   ActualizarCarpetaParams,
   CarpetaBreadcrumb,
   CarpetaConConteo,
+  CarpetaConRuta,
   CrearCarpetaParams,
 } from '../types/carpeta.types'
 import type { TipoEntidad } from '../types/entidad.types'
@@ -35,6 +36,8 @@ export const carpetasKeys = {
     [...carpetasKeys.lists(), tipoEntidad, entidadId, padreId] as const,
   breadcrumbs: (carpetaId: string | null) =>
     [...carpetasKeys.all, 'breadcrumbs', carpetaId] as const,
+  todasPlanas: (entidadId: string, tipoEntidad: TipoEntidad) =>
+    [...carpetasKeys.all, 'plano', tipoEntidad, entidadId] as const,
 }
 
 // ============================================
@@ -57,6 +60,29 @@ export function useCarpetasQuery(
         tipoEntidad,
         padreId
       ),
+    enabled: !!entidadId && !!tipoEntidad,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  })
+
+  return { carpetas, cargando, error: error as Error | null }
+}
+
+// ============================================
+// HOOK: useTodasLasCarpetasQuery
+// ============================================
+export function useTodasLasCarpetasQuery(
+  entidadId: string,
+  tipoEntidad: TipoEntidad
+) {
+  const {
+    data: carpetas = [],
+    isLoading: cargando,
+    error,
+  } = useQuery<CarpetaConRuta[]>({
+    queryKey: carpetasKeys.todasPlanas(entidadId, tipoEntidad),
+    queryFn: () =>
+      CarpetasDocumentosService.obtenerTodasLasCarpetas(entidadId, tipoEntidad),
     enabled: !!entidadId && !!tipoEntidad,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
@@ -101,7 +127,7 @@ export function useCrearCarpetaMutation(
     onSuccess: (_data, variables) => {
       toast.success(`Carpeta "${variables.nombre}" creada`)
       queryClient.invalidateQueries({
-        queryKey: carpetasKeys.lists(),
+        queryKey: carpetasKeys.all,
       })
     },
     onError: (error: Error) => {
@@ -132,9 +158,6 @@ export function useActualizarCarpetaMutation(
     onSuccess: () => {
       toast.success('Carpeta actualizada')
       queryClient.invalidateQueries({
-        queryKey: carpetasKeys.lists(),
-      })
-      queryClient.invalidateQueries({
         queryKey: carpetasKeys.all,
       })
     },
@@ -161,7 +184,7 @@ export function useEliminarCarpetaMutation(
     onSuccess: () => {
       toast.success('Carpeta eliminada')
       queryClient.invalidateQueries({
-        queryKey: carpetasKeys.lists(),
+        queryKey: carpetasKeys.all,
       })
       // Los documentos vuelven a raíz, invalidar lista de docs
       queryClient.invalidateQueries({
@@ -204,7 +227,7 @@ export function useMoverDocumentoACarpetaMutation(
         queryKey: documentosKeys.list(entidadId, tipoEntidad),
       })
       queryClient.invalidateQueries({
-        queryKey: carpetasKeys.lists(),
+        queryKey: carpetasKeys.all,
       })
     },
     onError: (error: Error) => {

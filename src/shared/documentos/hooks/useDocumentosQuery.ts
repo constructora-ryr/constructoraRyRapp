@@ -184,6 +184,11 @@ export function useSubirDocumentoMutation(
         queryKey: documentosKeys.list(entidadId, tipoEntidad),
       })
 
+      // ✅ PASO 1.1: Invalidar conteo de carpetas (cantidad_documentos puede cambiar)
+      await queryClient.invalidateQueries({
+        queryKey: ['carpetas'],
+      })
+
       // ✅ PASO 2: Refetch INMEDIATO y FORZADO
       await queryClient.refetchQueries({
         queryKey: documentosKeys.list(entidadId, tipoEntidad),
@@ -280,6 +285,7 @@ export function useEliminarDocumentoMutation(
           queryKey: ['documentos-eliminados-clientes'],
         }),
         queryClient.refetchQueries({ queryKey: ['versiones-eliminadas'] }),
+        queryClient.invalidateQueries({ queryKey: ['carpetas', 'list'] }),
       ])
       toast.success('Documento eliminado correctamente')
     },

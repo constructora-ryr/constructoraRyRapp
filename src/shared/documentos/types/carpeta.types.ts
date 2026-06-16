@@ -59,3 +59,11 @@ export interface CarpetaBreadcrumb {
   id: string | null // null = raíz
   nombre: string
 }
+
+/**
+ * Carpeta plana (cualquier nivel) con su ruta completa para selectores
+ * que necesitan mostrar todas las carpetas de la entidad, no solo un nivel.
+ */
+export interface CarpetaConRuta extends CarpetaDocumentoRow {
+  ruta: string // ej: "Documentos desembolso subsidio / Fotos vivienda"
+}
