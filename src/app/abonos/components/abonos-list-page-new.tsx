@@ -72,6 +72,8 @@ export function AbonosListPage({
     setPaginaActual,
     pageSize,
     setPageSize,
+    orden,
+    toggleOrden,
     isLoading,
     error,
     refetch,
@@ -172,6 +174,8 @@ export function AbonosListPage({
               onAbonoClick={handleAbonoClick}
               onEditar={setAbonoEditando}
               onAnular={setAbonoAnulando}
+              orden={orden}
+              toggleOrden={toggleOrden}
               paginaActual={paginaActual}
               totalPaginas={totalPaginas}
               totalFiltrado={totalFiltrado}
