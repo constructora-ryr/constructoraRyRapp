@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { getServerPermissions } from '@/lib/auth/server'
+import { supabaseAdmin } from '@/lib/supabase/admin'
 import { createRouteClient } from '@/lib/supabase/server-route'
 import { logger } from '@/lib/utils/logger'
 
@@ -74,7 +75,7 @@ export async function POST() {
     // Ejecutar upserts en paralelo
     const resultados = await Promise.all(
       FUENTES_OFICIALES.map(async fuente => {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseAdmin
           .from('tipos_fuentes_pago')
           .upsert(
             {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { getServerPermissions } from '@/lib/auth/server'
+import { supabaseAdmin } from '@/lib/supabase/admin'
 import type { Json } from '@/lib/supabase/database.types'
 import { createRouteClient } from '@/lib/supabase/server-route'
 import { formatDateForDB } from '@/lib/utils/date.utils'
@@ -113,22 +114,33 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 1b. Validar que la fecha_abono no es anterior a fecha_negociacion en BD
+    // 1b. Validar estado y fecha de la negociación
     const { data: negociacion, error: negError } = await supabase
       .from('negociaciones')
-      .select('fecha_negociacion')
+      .select('estado, fecha_negociacion')
       .eq('id', negociacion_id)
       .single()
 
-    if (!negError && negociacion?.fecha_negociacion) {
-      const fechaNeg = negociacion.fecha_negociacion.slice(0, 10) // YYYY-MM-DD
-      if (fecha_abono < fechaNeg) {
+    if (!negError && negociacion) {
+      if (negociacion.estado !== 'Activa') {
         return NextResponse.json(
           {
-            error: `La fecha del abono no puede ser anterior al inicio de la negociación (${fechaNeg})`,
+            error: `No se puede registrar un abono en una negociación en estado "${negociacion.estado}"`,
           },
           { status: 400 }
         )
+      }
+
+      if (negociacion.fecha_negociacion) {
+        const fechaNeg = negociacion.fecha_negociacion.slice(0, 10)
+        if (fecha_abono < fechaNeg) {
+          return NextResponse.json(
+            {
+              error: `La fecha del abono no puede ser anterior al inicio de la negociación (${fechaNeg})`,
+            },
+            { status: 400 }
+          )
+        }
       }
     }
 
@@ -136,7 +148,7 @@ export async function POST(request: NextRequest) {
     const fechaAbonoDB = formatDateForDB(fecha_abono)
 
     // 4. Registrar el abono (numero_recibo se asigna automáticamente por secuencia BD)
-    const { data: nuevoAbono, error: abonoError } = await supabase
+    const { data: nuevoAbono, error: abonoError } = await supabaseAdmin
       .from('abonos_historial')
       .insert({
         negociacion_id,
@@ -181,12 +193,12 @@ export async function POST(request: NextRequest) {
 
       // Completar negociación + actualizar vivienda en paralelo
       await Promise.all([
-        supabase
+        supabaseAdmin
           .from('negociaciones')
           .update({ estado: 'Completada', fecha_completada: hoy })
           .eq('id', negociacion_id),
         negActualizada.vivienda_id
-          ? supabase
+          ? supabaseAdmin
               .from('viviendas')
               .update({ estado: 'Propietario' })
               .eq('id', negActualizada.vivienda_id)
@@ -195,7 +207,7 @@ export async function POST(request: NextRequest) {
 
       // Promover cliente a Propietario
       if (negActualizada.cliente_id) {
-        const { data: clienteRow } = await supabase
+        const { data: clienteRow } = await supabaseAdmin
           .from('clientes')
           .update({ estado: 'Propietario' })
           .eq('id', negActualizada.cliente_id)
@@ -280,7 +292,7 @@ export async function POST(request: NextRequest) {
           proyecto_nombre: viviendaCtx?.manzanas?.proyectos?.nombre ?? null,
         }
 
-        await supabase.from('audit_log').insert({
+        await supabaseAdmin.from('audit_log').insert({
           accion: 'CREATE',
           tabla: 'abonos_historial',
           registro_id: nuevoAbono.id,

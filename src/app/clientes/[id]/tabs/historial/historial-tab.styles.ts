@@ -116,10 +116,13 @@ export const historialStyles = {
     notaButton:
       'flex h-6 w-6 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300',
     notaButtonIcon: 'h-3 w-3',
-    // Botón ver detalles
+    // Botón ver detalles (eventos regulares — cyan)
     detallesButton:
-      'mt-2 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-all hover:border-cyan-300 hover:bg-cyan-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-cyan-700 dark:hover:bg-cyan-950/30',
-    detallesButtonIcon: 'h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400',
+      'inline-flex items-center gap-1.5 rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-[10px] font-semibold text-cyan-700 transition-all hover:border-cyan-400 hover:bg-cyan-100 dark:border-cyan-700/50 dark:bg-cyan-950/20 dark:text-cyan-400 dark:hover:bg-cyan-950/40',
+    detallesButtonIcon: 'h-3 w-3',
+    // Botón ver nota completa (notas manuales — violet)
+    detallesButtonNota:
+      'inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-[10px] font-semibold text-violet-700 transition-all hover:border-violet-400 hover:bg-violet-100 dark:border-violet-700/50 dark:bg-violet-950/20 dark:text-violet-400 dark:hover:bg-violet-950/40',
   },
 
   // ========== MODAL DE DETALLE ==========

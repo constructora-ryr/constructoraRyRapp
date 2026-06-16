@@ -27,6 +27,7 @@ import {
   Plus,
   Shield,
   Trash2,
+  UserCog,
   Users,
 } from 'lucide-react'
 
@@ -212,8 +213,8 @@ export const navigationGroups: NavigationGroup[] = [
       {
         name: 'Usuarios',
         href: '/usuarios',
-        icon: Users,
-        color: 'from-violet-500 to-purple-500',
+        icon: UserCog,
+        color: 'from-slate-500 to-gray-600',
         description: 'Gestión de usuarios',
         requiredPermission: { modulo: 'usuarios', accion: 'ver' },
       },
