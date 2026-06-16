@@ -30,6 +30,14 @@ export interface FiltrosAbonos {
   mostrarRenunciados: boolean
 }
 
+export type OrdenCampo = 'recibo' | 'fecha'
+export type OrdenDireccion = 'asc' | 'desc'
+
+export interface OrdenAbonos {
+  campo: OrdenCampo
+  direccion: OrdenDireccion
+}
+
 export interface EstadisticasAbonos {
   totalAbonos: number
   montoTotal: number
@@ -64,6 +72,18 @@ export function useAbonosList() {
 
   const [paginaActual, setPaginaActual] = useState(1)
   const [pageSize, setPageSize] = useState<PageSizeOption>(PAGE_SIZE)
+  const [orden, setOrden] = useState<OrdenAbonos>({
+    campo: 'recibo',
+    direccion: 'desc',
+  })
+
+  const toggleOrden = useCallback((campo: OrdenCampo) => {
+    setOrden(prev =>
+      prev.campo === campo
+        ? { campo, direccion: prev.direccion === 'asc' ? 'desc' : 'asc' }
+        : { campo, direccion: 'desc' }
+    )
+  }, [])
 
   // Desestructurar para deps primitivas en useEffect
   const {
@@ -185,14 +205,32 @@ export function useAbonosList() {
     return resultado
   }, [abonos, filtros])
 
+  // ─── Ordenamiento ────────────────────────────────────────────────────────
+  const abonosOrdenados = useMemo(() => {
+    const extraerNumero = (recibo: string) => {
+      const match = recibo.match(/(\d+)$/)
+      return match ? parseInt(match[1], 10) : 0
+    }
+
+    const resultado = [...abonosFiltrados]
+    resultado.sort((a, b) => {
+      const cmp =
+        orden.campo === 'recibo'
+          ? extraerNumero(a.numero_recibo) - extraerNumero(b.numero_recibo)
+          : a.fecha_abono.localeCompare(b.fecha_abono)
+      return orden.direccion === 'asc' ? cmp : -cmp
+    })
+    return resultado
+  }, [abonosFiltrados, orden])
+
   // ─── Paginación ──────────────────────────────────────────────────────────
-  const totalFiltrado = abonosFiltrados.length
+  const totalFiltrado = abonosOrdenados.length
   const totalPaginas = Math.max(1, Math.ceil(totalFiltrado / pageSize))
 
   const abonosPaginados = useMemo(() => {
     const inicio = (paginaActual - 1) * pageSize
-    return abonosFiltrados.slice(inicio, inicio + pageSize)
-  }, [abonosFiltrados, paginaActual, pageSize])
+    return abonosOrdenados.slice(inicio, inicio + pageSize)
+  }, [abonosOrdenados, paginaActual, pageSize])
 
   // ─── Estadísticas (sobre el total filtrado, no solo la página actual) ───
   const estadisticas = useMemo<EstadisticasAbonos>(() => {
@@ -277,6 +315,8 @@ export function useAbonosList() {
     setPaginaActual,
     pageSize,
     setPageSize,
+    orden,
+    toggleOrden,
     isLoading,
     error: queryError?.message ?? null,
     refetch: refrescar,

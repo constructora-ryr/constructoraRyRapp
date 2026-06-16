@@ -1,6 +1,12 @@
 'use client'
 
-import type { PageSizeOption } from '@/modules/abonos/hooks/useAbonosList'
+import { ArrowDown, ArrowUp, Calendar, Hash } from 'lucide-react'
+
+import type {
+  OrdenAbonos,
+  OrdenCampo,
+  PageSizeOption,
+} from '@/modules/abonos/hooks/useAbonosList'
 import type { AbonoConInfo } from '@/modules/abonos/hooks/useAbonosQuery'
 import type { AbonoParaEditar } from '@/modules/abonos/types/editar-abono.types'
 
@@ -15,6 +21,9 @@ interface AbonosTablaProps {
   onAbonoClick: (abono: AbonoConInfo) => void
   onEditar: (abono: AbonoParaEditar) => void
   onAnular: (abono: AbonoConInfo) => void
+  // Orden
+  orden: OrdenAbonos
+  toggleOrden: (campo: OrdenCampo) => void
   // Paginación
   paginaActual: number
   totalPaginas: number
@@ -24,6 +33,21 @@ interface AbonosTablaProps {
   setPageSize: (size: PageSizeOption) => void
 }
 
+function IconoOrden({
+  activo,
+  direccion,
+}: {
+  activo: boolean
+  direccion: 'asc' | 'desc'
+}) {
+  if (!activo) return null
+  return direccion === 'asc' ? (
+    <ArrowUp className='h-3 w-3' />
+  ) : (
+    <ArrowDown className='h-3 w-3' />
+  )
+}
+
 export function AbonosTabla({
   abonos,
   canEdit,
@@ -31,6 +55,8 @@ export function AbonosTabla({
   onAbonoClick,
   onEditar,
   onAnular,
+  orden,
+  toggleOrden,
   paginaActual,
   totalPaginas,
   totalFiltrado,
@@ -43,7 +69,33 @@ export function AbonosTabla({
       <table className='w-full text-sm'>
         <thead>
           <tr className={s.tabla.thead}>
-            <th className={`w-36 ${s.tabla.th}`}>Recibo</th>
+            <th className={`w-36 ${s.tabla.th}`}>
+              <div className='flex items-center gap-2'>
+                <button
+                  onClick={() => toggleOrden('recibo')}
+                  className='inline-flex items-center gap-1 transition-colors hover:text-violet-600 dark:hover:text-violet-400'
+                  title='Ordenar por número de recibo'
+                >
+                  <Hash className='h-3 w-3' />
+                  Recibo
+                  <IconoOrden
+                    activo={orden.campo === 'recibo'}
+                    direccion={orden.direccion}
+                  />
+                </button>
+                <button
+                  onClick={() => toggleOrden('fecha')}
+                  className='inline-flex items-center gap-1 text-gray-400 transition-colors hover:text-violet-600 dark:text-gray-500 dark:hover:text-violet-400'
+                  title='Ordenar por fecha'
+                >
+                  <Calendar className='h-3 w-3' />
+                  <IconoOrden
+                    activo={orden.campo === 'fecha'}
+                    direccion={orden.direccion}
+                  />
+                </button>
+              </div>
+            </th>
             <th className={s.tabla.th}>Cliente</th>
             <th className={s.tabla.th}>Vivienda</th>
             <th className={`w-36 ${s.tabla.th}`}>Método</th>
