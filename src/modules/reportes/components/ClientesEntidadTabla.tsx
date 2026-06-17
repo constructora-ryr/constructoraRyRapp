@@ -48,9 +48,30 @@ function labelTotal(tipo: TipoEntidadFinanciera): string {
     : 'Total Créditos'
 }
 
+function labelReferencia(tipo: TipoEntidadFinanciera): string {
+  return tipo === 'Caja de Compensación' || tipo === 'Cooperativa'
+    ? 'N° Acta'
+    : 'Referencia Cred.'
+}
+
+function esEntidadSubsidio(tipo: TipoEntidadFinanciera): boolean {
+  return tipo === 'Caja de Compensación' || tipo === 'Cooperativa'
+}
+
+function formatFechaActa(fecha: string): string {
+  const [year, month, day] = fecha.split('-').map(Number)
+  return new Intl.DateTimeFormat('es-CO', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date(year, month - 1, day))
+}
+
 function ClientesEntidadTablaComponent({ entidad }: ClientesEntidadTablaProps) {
   const headerValor = labelColumna(entidad.tipo)
   const totalLabel = labelTotal(entidad.tipo)
+  const headerReferencia = labelReferencia(entidad.tipo)
+  const subsidio = esEntidadSubsidio(entidad.tipo)
 
   const columns: ColumnDef<ClienteEnEntidad>[] = [
     // 1. VIVIENDA
@@ -123,18 +144,35 @@ function ClientesEntidadTablaComponent({ entidad }: ClientesEntidadTablaProps) {
       ),
     },
 
-    // 6. REFERENCIA
+    // 6. REFERENCIA / N° ACTA
     {
       accessorKey: 'numeroReferencia',
-      header: 'Referencia Cred.',
-      size: 150,
-      cell: ({ row }) => (
-        <div className='text-left'>
+      header: headerReferencia,
+      size: subsidio ? 180 : 150,
+      cell: ({ row }) => {
+        const { numeroReferencia, fechaActa } = row.original
+        if (subsidio) {
+          if (!numeroReferencia && !fechaActa) {
+            return (
+              <span className='text-xs text-gray-400 dark:text-gray-500'>
+                —
+              </span>
+            )
+          }
+          return (
+            <span className='text-xs text-gray-700 dark:text-gray-300'>
+              {numeroReferencia ? `Acta ${numeroReferencia}` : ''}
+              {numeroReferencia && fechaActa ? ' del ' : ''}
+              {fechaActa ? formatFechaActa(fechaActa) : ''}
+            </span>
+          )
+        }
+        return (
           <span className='text-xs text-gray-600 dark:text-gray-400'>
-            {row.original.numeroReferencia ?? '—'}
+            {numeroReferencia ?? '—'}
           </span>
-        </div>
-      ),
+        )
+      },
     },
 
     // 7. ESTADO NEG.

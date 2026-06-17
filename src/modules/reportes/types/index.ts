@@ -16,6 +16,7 @@ export interface FuentePagoConEntidadRow {
   tipoFuente: string
   montoAprobado: number
   numeroReferencia: string | null
+  fechaActa: string | null
   estadoNegociacion: string
   entidadId: string
   entidadNombre: string
@@ -35,6 +36,7 @@ export interface ClienteEnEntidad {
   tipoFuente: string
   montoAprobado: number
   numeroReferencia: string | null
+  fechaActa: string | null
   estadoNegociacion: string
   viviendaLabel: string | null
 }

@@ -22,6 +22,7 @@ class ReporteFinanciacionService {
         tipo,
         monto_aprobado,
         numero_referencia,
+        fecha_acta,
         entidad_financiera_id,
         entidades_financieras (
           id,
@@ -86,6 +87,7 @@ class ReporteFinanciacionService {
           tipoFuente: row.tipo,
           montoAprobado: row.monto_aprobado ?? 0,
           numeroReferencia: row.numero_referencia ?? null,
+          fechaActa: row.fecha_acta ?? null,
           estadoNegociacion: row.negociaciones.estado,
           entidadId: row.entidades_financieras.id,
           entidadNombre: row.entidades_financieras.nombre,
@@ -127,6 +129,7 @@ class ReporteFinanciacionService {
         tipoFuente: fila.tipoFuente,
         montoAprobado: fila.montoAprobado,
         numeroReferencia: fila.numeroReferencia,
+        fechaActa: fila.fechaActa,
         estadoNegociacion: fila.estadoNegociacion,
         viviendaLabel: fila.viviendaLabel,
       })
