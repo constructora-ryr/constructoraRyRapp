@@ -385,7 +385,7 @@ export function ViviendasTabla({
         columns={columns}
         data={viviendas}
         gradientColor='orange'
-        pageSize={10}
+        pageSize={20}
         initialSorting={[
           {
             id: 'identificador',

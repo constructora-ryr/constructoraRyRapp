@@ -267,7 +267,7 @@ export function ProyectosTabla({
       columns={columns}
       data={proyectos}
       gradientColor='green'
-      pageSize={10}
+      pageSize={20}
       showPagination={true}
       onRowClick={onView}
     />
