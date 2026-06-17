@@ -53,14 +53,35 @@ class ReporteFinanciacionService {
       throw new Error(`Error al cargar reporte: ${error.message}`)
     }
 
-    return this.agruparPorEntidad(data ?? [])
+    const fuenteIds = (data ?? []).map(row => row.id)
+
+    // Segunda query: solo el primer abono activo por fuente (fecha de desembolso).
+    // Ordenado ASC para que el primer registro por fuente sea el más antiguo.
+    const desembolsoMap = new Map<string, string>()
+    if (fuenteIds.length > 0) {
+      const { data: abonosData } = await supabase
+        .from('abonos_historial')
+        .select('fuente_pago_id, fecha_abono')
+        .in('fuente_pago_id', fuenteIds)
+        .eq('estado', 'Activo')
+        .order('fecha_abono', { ascending: true })
+
+      for (const abono of abonosData ?? []) {
+        if (!desembolsoMap.has(abono.fuente_pago_id)) {
+          desembolsoMap.set(abono.fuente_pago_id, abono.fecha_abono)
+        }
+      }
+    }
+
+    return this.agruparPorEntidad(data ?? [], desembolsoMap)
   }
 
   // ── Transformación y agrupación ─────────────────────────────────────────
 
   private agruparPorEntidad(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    rows: any[]
+    rows: any[],
+    desembolsoMap: Map<string, string>
   ): ReporteFinanciacionData {
     const ESTADOS_NEGOCIACION_VALIDOS = new Set(['Activa', 'Completada'])
 
@@ -85,6 +106,7 @@ class ReporteFinanciacionService {
         const numero = row.negociaciones.viviendas?.numero ?? ''
         const viviendaLabel = manzana && numero ? `${manzana}${numero}` : null
         const entidad = row.entidades_financieras ?? MCY_SINTETICO
+        const fechaDesembolso = desembolsoMap.get(row.id) ?? null
         return {
           fuenteId: row.id,
           negociacionId: row.negociaciones.id,
@@ -102,6 +124,10 @@ class ReporteFinanciacionService {
           entidadTipo: entidad.tipo,
           entidadCodigo: entidad.codigo,
           viviendaLabel,
+          desembolso: {
+            desembolsado: fechaDesembolso !== null,
+            fechaDesembolso,
+          },
         }
       })
 
@@ -140,6 +166,7 @@ class ReporteFinanciacionService {
         fechaActa: fila.fechaActa,
         estadoNegociacion: fila.estadoNegociacion,
         viviendaLabel: fila.viviendaLabel,
+        desembolso: fila.desembolso,
       })
     }
 

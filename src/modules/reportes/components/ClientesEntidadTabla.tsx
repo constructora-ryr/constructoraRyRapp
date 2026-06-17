@@ -192,30 +192,37 @@ function ClientesEntidadTablaComponent({ entidad }: ClientesEntidadTablaProps) {
       },
     },
 
-    // 7. ESTADO NEG.
+    // 7. DESEMBOLSO
     {
-      accessorKey: 'estadoNegociacion',
-      header: 'Estado neg.',
-      size: 105,
+      id: 'desembolso',
+      header: 'Desembolso',
+      size: 140,
       cell: ({ row }) => {
-        const estado = row.original.estadoNegociacion
-        const estadoColor: Record<string, string> = {
-          Activa:
-            'border-emerald-300 text-emerald-700 dark:border-emerald-700 dark:text-emerald-400',
-          Completada:
-            'border-blue-300 text-blue-700 dark:border-blue-700 dark:text-blue-400',
-          Suspendida:
-            'border-amber-300 text-amber-700 dark:border-amber-700 dark:text-amber-400',
+        const { desembolsado, fechaDesembolso } = row.original.desembolso
+        if (desembolsado && fechaDesembolso) {
+          const [y, m, d] = fechaDesembolso.split('-').map(Number)
+          const fechaFmt = new Intl.DateTimeFormat('es-CO', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+          }).format(new Date(y, m - 1, d))
+          return (
+            <div className='flex flex-col items-center gap-0.5'>
+              <span className='inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'>
+                <span className='h-1.5 w-1.5 rounded-full bg-emerald-500' />
+                Desembolsado
+              </span>
+              <span className='text-[10px] text-gray-400 dark:text-gray-500'>
+                {fechaFmt}
+              </span>
+            </div>
+          )
         }
-        const badgeClass =
-          estadoColor[estado] ??
-          'border-gray-300 text-gray-500 dark:border-gray-600 dark:text-gray-400'
         return (
           <div className='flex items-center justify-center'>
-            <span
-              className={`inline-flex items-center rounded-lg border px-2 py-0.5 text-xs font-medium ${badgeClass}`}
-            >
-              {estado}
+            <span className='inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'>
+              <span className='h-1.5 w-1.5 rounded-full bg-amber-400' />
+              Pendiente
             </span>
           </div>
         )

@@ -24,6 +24,7 @@ export interface FuentePagoConEntidadRow {
   entidadTipo: TipoEntidadFinanciera
   entidadCodigo: string
   viviendaLabel: string | null
+  desembolso: { desembolsado: boolean; fechaDesembolso: string | null }
 }
 
 // ── Agrupación por entidad (resultado final del hook) ───────────────────────
@@ -40,6 +41,7 @@ export interface ClienteEnEntidad {
   fechaActa: string | null
   estadoNegociacion: string
   viviendaLabel: string | null
+  desembolso: { desembolsado: boolean; fechaDesembolso: string | null }
 }
 
 export interface EntidadFinancieraResumen {
