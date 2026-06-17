@@ -433,7 +433,16 @@ export function useAsignarViviendaV2({
           entidades.find(e => e.label === entidadNombre)?.value ||
           undefined
 
-        const fechaActaVal = f.config.campos?.['fecha_acta']
+        // El campo de fecha varía según el tipo ("fecha_acta" vs "fecha_resolucion"), buscamos por tipo 'date'.
+        const tipoConCamposActual = tiposConCampos.find(
+          t => t.nombre === f.tipo
+        )
+        const camposConfigActual =
+          tipoConCamposActual?.configuracion_campos?.campos ?? []
+        const fechaCampo = camposConfigActual.find(c => c.tipo === 'date')
+        const fechaActaVal = fechaCampo
+          ? f.config.campos?.[fechaCampo.nombre]
+          : undefined
         const fechaActa =
           fechaActaVal && String(fechaActaVal).trim() !== ''
             ? String(fechaActaVal)
