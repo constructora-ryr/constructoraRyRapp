@@ -86,36 +86,34 @@ export async function PATCH(request: NextRequest) {
     )
   }
 
-  // Audit log (fire-and-forget)
-  void (async () => {
-    try {
-      const manzanas = vivienda.manzanas as {
-        nombre: string
-        proyectos: { nombre: string }
-      } | null
-      await supabaseAdmin.from('audit_log').insert({
-        accion: 'UPDATE',
-        tabla: 'viviendas',
-        registro_id: vivienda_id,
-        usuario_id: user.id,
-        usuario_email: user.email ?? '',
-        datos_nuevos: {
-          estado: 'Entregada',
-          fecha_entrega: fechaDB,
-        } as unknown as Json,
-        metadata: {
-          accion_descripcion: 'Vivienda marcada como Escriturada',
-          vivienda_numero: vivienda.numero,
-          manzana_nombre: manzanas?.nombre ?? null,
-          proyecto_nombre: manzanas?.proyectos?.nombre ?? null,
-          fecha_escritura: fechaDB,
-        } as unknown as Json,
-        modulo: 'viviendas',
-      })
-    } catch (auditError) {
-      logger.error('Error registrando audit de escritura:', auditError)
-    }
-  })()
+  // Audit log — sincrónico para garantizar persistencia en serverless
+  try {
+    const manzanas = vivienda.manzanas as {
+      nombre: string
+      proyectos: { nombre: string }
+    } | null
+    await supabaseAdmin.from('audit_log').insert({
+      accion: 'UPDATE',
+      tabla: 'viviendas',
+      registro_id: vivienda_id,
+      usuario_id: user.id,
+      usuario_email: user.email ?? '',
+      datos_nuevos: {
+        estado: 'Entregada',
+        fecha_entrega: fechaDB,
+      } as unknown as Json,
+      metadata: {
+        accion_descripcion: 'Vivienda marcada como Escriturada',
+        vivienda_numero: vivienda.numero,
+        manzana_nombre: manzanas?.nombre ?? null,
+        proyecto_nombre: manzanas?.proyectos?.nombre ?? null,
+        fecha_escritura: fechaDB,
+      } as unknown as Json,
+      modulo: 'viviendas',
+    })
+  } catch (auditError) {
+    logger.error('Error registrando audit de escritura:', auditError)
+  }
 
   return NextResponse.json({
     success: true,

@@ -222,91 +222,80 @@ export async function POST(request: NextRequest) {
       negociacionCompletada = true
     }
 
-    // 5. Registrar en audit_log con metadata enriquecida (fire-and-forget)
-    //    El cliente_id en metadata es CRÍTICO para que el historial del cliente lo muestre.
-    void (async () => {
-      try {
-        const [{ data: fuenteActualizada }, { data: contexto }] =
-          await Promise.all([
-            supabase
-              .from('fuentes_pago')
-              .select('monto_recibido, saldo_pendiente')
-              .eq('id', fuente_pago_id)
-              .single(),
-            supabase
-              .from('negociaciones')
-              .select(
-                'id, cliente_id, saldo_pendiente, valor_total_pagar, clientes(id, nombres, apellidos), viviendas!negociaciones_vivienda_id_fkey(numero, manzanas(nombre, proyectos(nombre)))'
-              )
-              .eq('id', negociacion_id)
-              .single(),
-          ])
+    // 5. Registrar en audit_log con metadata enriquecida.
+    //    Sincrónico: Vercel no garantiza ejecución post-response sin waitUntil,
+    //    por lo que el log debe escribirse antes de retornar la respuesta.
+    try {
+      const [{ data: fuenteActualizada }, { data: contexto }] =
+        await Promise.all([
+          supabase
+            .from('fuentes_pago')
+            .select('monto_recibido, saldo_pendiente')
+            .eq('id', fuente_pago_id)
+            .single(),
+          supabase
+            .from('negociaciones')
+            .select(
+              'id, cliente_id, saldo_pendiente, valor_total_pagar, clientes(id, nombres, apellidos), viviendas!negociaciones_vivienda_id_fkey(numero, manzanas(nombre, proyectos(nombre)))'
+            )
+            .eq('id', negociacion_id)
+            .single(),
+        ])
 
-        // Extraer datos anidados con type assertion segura
-        const cliente = contexto?.clientes as
-          | { id: string; nombres: string; apellidos: string }
-          | null
-          | undefined
-        const viviendaCtx = contexto?.viviendas as
-          | {
-              numero: string
-              manzanas: { nombre: string; proyectos: { nombre: string } }
-            }
-          | null
-          | undefined
+      const cliente = contexto?.clientes as
+        | { id: string; nombres: string; apellidos: string }
+        | null
+        | undefined
+      const viviendaCtx = contexto?.viviendas as
+        | {
+            numero: string
+            manzanas: { nombre: string; proyectos: { nombre: string } }
+          }
+        | null
+        | undefined
 
-        const metadata = {
-          // Clave para filtro de historial del cliente
-          cliente_id: contexto?.cliente_id ?? null,
-          cliente_nombre: cliente
-            ? `${String(cliente.nombres ?? '')} ${String(cliente.apellidos ?? '')}`.trim()
-            : null,
-
-          // Datos del abono (snapshot)
-          abono_monto: monto,
-          abono_numero_recibo: (nuevoAbono as Record<string, unknown>)
-            .numero_recibo,
-          abono_metodo_pago: metodo_pago,
-          abono_fecha_abono: fechaAbonoDB,
-          abono_numero_referencia: numero_referencia ?? null,
-          abono_notas: notas ?? null,
-          abono_mora_incluida: moraIncluida > 0 ? moraIncluida : null,
-          abono_comprobante_url: comprobante_path ?? null,
-
-          // Fuente de pago — saldo antes (snapshot al validar) y después (post-trigger)
-          fuente_tipo: fuente.tipo ?? null,
-          fuente_monto_aprobado: fuente.monto_aprobado ?? null,
-          fuente_monto_antes: fuente.monto_recibido ?? null,
-          fuente_saldo_antes: fuente.saldo_pendiente ?? null,
-          fuente_monto_despues: fuenteActualizada?.monto_recibido ?? null,
-          fuente_saldo_despues: fuenteActualizada?.saldo_pendiente ?? null,
-
-          // Negociación
-          negociacion_id,
-          negociacion_valor_total_pagar: contexto?.valor_total_pagar ?? null,
-          negociacion_saldo_despues: contexto?.saldo_pendiente ?? null,
-
-          // Vivienda / Proyecto
-          vivienda_numero: viviendaCtx?.numero ?? null,
-          manzana_nombre: viviendaCtx?.manzanas?.nombre ?? null,
-          proyecto_nombre: viviendaCtx?.manzanas?.proyectos?.nombre ?? null,
-        }
-
-        await supabaseAdmin.from('audit_log').insert({
-          accion: 'CREATE',
-          tabla: 'abonos_historial',
-          registro_id: nuevoAbono.id,
-          usuario_id: user?.id ?? null,
-          usuario_email: user?.email ?? '',
-          datos_nuevos: nuevoAbono as unknown as Json,
-          metadata: metadata as unknown as Json,
-          modulo: 'abonos',
-        })
-      } catch (auditError) {
-        // No fallar el flujo principal si la auditoría falla
-        logger.error('Error registrando audit de abono:', auditError)
+      const metadata = {
+        // CRÍTICO: cliente_id es la clave para que el historial del cliente filtre este evento
+        cliente_id: contexto?.cliente_id ?? null,
+        cliente_nombre: cliente
+          ? `${String(cliente.nombres ?? '')} ${String(cliente.apellidos ?? '')}`.trim()
+          : null,
+        abono_monto: monto,
+        abono_numero_recibo: (nuevoAbono as Record<string, unknown>)
+          .numero_recibo,
+        abono_metodo_pago: metodo_pago,
+        abono_fecha_abono: fechaAbonoDB,
+        abono_numero_referencia: numero_referencia ?? null,
+        abono_notas: notas ?? null,
+        abono_mora_incluida: moraIncluida > 0 ? moraIncluida : null,
+        abono_comprobante_url: comprobante_path ?? null,
+        fuente_tipo: fuente.tipo ?? null,
+        fuente_monto_aprobado: fuente.monto_aprobado ?? null,
+        fuente_monto_antes: fuente.monto_recibido ?? null,
+        fuente_saldo_antes: fuente.saldo_pendiente ?? null,
+        fuente_monto_despues: fuenteActualizada?.monto_recibido ?? null,
+        fuente_saldo_despues: fuenteActualizada?.saldo_pendiente ?? null,
+        negociacion_id,
+        negociacion_valor_total_pagar: contexto?.valor_total_pagar ?? null,
+        negociacion_saldo_despues: contexto?.saldo_pendiente ?? null,
+        vivienda_numero: viviendaCtx?.numero ?? null,
+        manzana_nombre: viviendaCtx?.manzanas?.nombre ?? null,
+        proyecto_nombre: viviendaCtx?.manzanas?.proyectos?.nombre ?? null,
       }
-    })()
+
+      await supabaseAdmin.from('audit_log').insert({
+        accion: 'CREATE',
+        tabla: 'abonos_historial',
+        registro_id: nuevoAbono.id,
+        usuario_id: user?.id ?? null,
+        usuario_email: user?.email ?? '',
+        datos_nuevos: nuevoAbono as unknown as Json,
+        metadata: metadata as unknown as Json,
+        modulo: 'abonos',
+      })
+    } catch (auditError) {
+      logger.error('Error registrando audit de abono:', auditError)
+    }
 
     return NextResponse.json({
       success: true,

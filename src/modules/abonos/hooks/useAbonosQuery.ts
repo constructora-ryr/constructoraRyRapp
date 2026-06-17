@@ -252,10 +252,16 @@ export function useAnularAbonoMutation() {
         return data
       }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: abonosKeys.lists(),
-        refetchType: 'all',
-      })
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: abonosKeys.lists(),
+          refetchType: 'all',
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['historial-cliente'],
+          refetchType: 'active',
+        }),
+      ])
     },
     onError: (error: Error) => {
       logger.error('❌ Error anulando abono:', error.message)
@@ -274,10 +280,16 @@ export function useEditarAbonoMutation() {
         return abono
       }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: abonosKeys.lists(),
-        refetchType: 'all',
-      })
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: abonosKeys.lists(),
+          refetchType: 'all',
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['historial-cliente'],
+          refetchType: 'active',
+        }),
+      ])
       toast.success('Abono actualizado correctamente')
     },
     onError: (error: Error) => {
@@ -293,10 +305,17 @@ export function useRegistrarAbonoMutation() {
   return useMutation({
     mutationFn: (payload: RegistrarAbonoPayload) => registrarAbonoApi(payload),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: abonosKeys.lists(),
-        refetchType: 'all',
-      })
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: abonosKeys.lists(),
+          refetchType: 'all',
+        }),
+        // Refrescar historial del cliente activo para que el nuevo evento aparezca de inmediato
+        queryClient.invalidateQueries({
+          queryKey: ['historial-cliente'],
+          refetchType: 'active',
+        }),
+      ])
     },
     onError: (error: Error) => {
       logger.error('❌ Error registrando abono:', error.message)
