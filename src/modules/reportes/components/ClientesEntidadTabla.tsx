@@ -200,7 +200,7 @@ function ClientesEntidadTablaComponent({ entidad }: ClientesEntidadTablaProps) {
       cell: ({ row }) => {
         const { desembolsado, fechaDesembolso } = row.original.desembolso
         if (desembolsado && fechaDesembolso) {
-          const [y, m, d] = fechaDesembolso.split('-').map(Number)
+          const [y, m, d] = fechaDesembolso.split('T')[0].split('-').map(Number)
           const fechaFmt = new Intl.DateTimeFormat('es-CO', {
             day: 'numeric',
             month: 'short',
