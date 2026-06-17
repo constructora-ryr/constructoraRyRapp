@@ -40,6 +40,7 @@ import {
   esCreditoHipotecario,
   esCuotaInicial,
   esSubsidioCajaCompensacion,
+  esSubsidioMiCasaYa,
 } from '@/shared/constants/fuentes-pago.constants'
 
 import { useConfigurarFuentesPago } from '../../hooks'
@@ -582,7 +583,10 @@ export function ConfigurarFuentesPago({
                         <div>
                           <label className='mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300'>
                             <CreditCard className='h-4 w-4 text-purple-500' />
-                            Número de Referencia
+                            {esSubsidioCajaCompensacion(fuente.tipo) ||
+                            esSubsidioMiCasaYa(fuente.tipo)
+                              ? 'N° Acta'
+                              : 'Número de Referencia'}
                           </label>
                           <input
                             type='text'
@@ -594,7 +598,35 @@ export function ConfigurarFuentesPago({
                                 e.target.value
                               )
                             }
-                            placeholder='Ej: CRED-2024-001'
+                            placeholder={
+                              esSubsidioCajaCompensacion(fuente.tipo) ||
+                              esSubsidioMiCasaYa(fuente.tipo)
+                                ? 'Ej: 340'
+                                : 'Ej: CRED-2024-001'
+                            }
+                            className='w-full rounded-lg border-2 border-gray-200 bg-white px-4 py-2 text-gray-900 transition-all focus:border-purple-500 focus:outline-none focus:ring-4 focus:ring-purple-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white'
+                          />
+                        </div>
+                      )}
+
+                      {/* Fecha del Acta (solo para Caja de Compensación y Mi Casa Ya) */}
+                      {(esSubsidioCajaCompensacion(fuente.tipo) ||
+                        esSubsidioMiCasaYa(fuente.tipo)) && (
+                        <div>
+                          <label className='mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300'>
+                            <CreditCard className='h-4 w-4 text-purple-500' />
+                            Fecha del Acta
+                          </label>
+                          <input
+                            type='date'
+                            value={fuente.fecha_acta || ''}
+                            onChange={e =>
+                              actualizarFuente(
+                                index,
+                                'fecha_acta',
+                                e.target.value || null
+                              )
+                            }
                             className='w-full rounded-lg border-2 border-gray-200 bg-white px-4 py-2 text-gray-900 transition-all focus:border-purple-500 focus:outline-none focus:ring-4 focus:ring-purple-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white'
                           />
                         </div>

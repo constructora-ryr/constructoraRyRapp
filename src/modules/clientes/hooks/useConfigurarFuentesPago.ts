@@ -36,6 +36,7 @@ export interface FuentePago {
   capital_para_cierre?: number
   entidad?: string
   numero_referencia?: string
+  fecha_acta?: string
   carta_asignacion_url?: string
   /** Solo para créditos: parámetros del crédito (capital, tasa, cuotas, fecha) */
   parametrosCredito?: ParametrosCredito | null
@@ -105,6 +106,7 @@ export function useConfigurarFuentesPago({
           capital_para_cierre: f.capital_para_cierre ?? undefined,
           entidad: f.entidad ?? undefined,
           numero_referencia: f.numero_referencia ?? undefined,
+          fecha_acta: f.fecha_acta ?? undefined,
           carta_asignacion_url: f.carta_asignacion_url ?? undefined,
         }))
       )
@@ -247,6 +249,7 @@ export function useConfigurarFuentesPago({
             monto_aprobado: fuente.monto_aprobado,
             entidad: fuente.entidad,
             numero_referencia: fuente.numero_referencia,
+            fecha_acta: fuente.fecha_acta ?? null,
           })
         } else {
           // Crear nueva

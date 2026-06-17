@@ -18,6 +18,7 @@ type ActualizarFuentePagoShape = {
   entidad?: string | null
   entidad_financiera_id?: string | null
   numero_referencia?: string | null
+  fecha_acta?: string | null
   carta_asignacion_url?: string | null
   estado?: 'Activa' | 'Inactiva'
   fecha_completado?: string | null
@@ -83,6 +84,10 @@ export function sanitizeActualizarFuentePagoServiceDTO<
     numero_referencia:
       datos.numero_referencia !== undefined
         ? (sanitizeString(datos.numero_referencia) ?? undefined)
+        : undefined,
+    fecha_acta:
+      datos.fecha_acta !== undefined
+        ? (sanitizeDate(datos.fecha_acta) ?? undefined)
         : undefined,
     carta_asignacion_url:
       datos.carta_asignacion_url !== undefined

@@ -31,6 +31,7 @@ export interface ActualizarFuentePagoDTO {
   entidad?: string
   entidad_financiera_id?: string
   numero_referencia?: string
+  fecha_acta?: string | null
   carta_asignacion_url?: string
   estado?: 'Activa' | 'Inactiva'
   fecha_completado?: string
@@ -50,6 +51,7 @@ export interface FuentePago {
   entidad: string | null
   entidad_financiera_id?: string | null
   numero_referencia: string | null
+  fecha_acta: string | null
   permite_multiples_abonos: boolean
   carta_asignacion_url: string | null
   estado: 'Activa' | 'Inactiva'
@@ -148,7 +150,7 @@ class FuentesPagoService {
         `
         id, negociacion_id, tipo, entidad_display, entidad_financiera_id,
         monto_aprobado, capital_para_cierre, monto_recibido, saldo_pendiente, porcentaje_completado,
-        numero_referencia, permite_multiples_abonos, carta_asignacion_url,
+        numero_referencia, fecha_acta, permite_multiples_abonos, carta_asignacion_url,
         estado, estado_fuente, fecha_completado, fecha_creacion, fecha_actualizacion
       `
       )
@@ -172,7 +174,7 @@ class FuentesPagoService {
         `
         id, negociacion_id, tipo, entidad_display, entidad_financiera_id,
         monto_aprobado, capital_para_cierre, monto_recibido, saldo_pendiente, porcentaje_completado,
-        numero_referencia, permite_multiples_abonos, carta_asignacion_url,
+        numero_referencia, fecha_acta, permite_multiples_abonos, carta_asignacion_url,
         estado, estado_fuente, fecha_completado, fecha_creacion, fecha_actualizacion
       `
       )

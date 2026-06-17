@@ -16,6 +16,7 @@ export interface CrearFuentePagoDTO {
   entidad?: string
   entidad_financiera_id?: string
   numero_referencia?: string
+  fecha_acta?: string
   carta_asignacion_url?: string
   capital_para_cierre?: number
   parametrosCredito?: ParametrosCreditoDTO
@@ -96,6 +97,7 @@ export function sanitizeCrearFuentePagoDTO(
     entidad_financiera_id:
       sanitizeString(datos.entidad_financiera_id) ?? undefined,
     numero_referencia: sanitizeString(datos.numero_referencia) ?? undefined,
+    fecha_acta: sanitizeDate(datos.fecha_acta) ?? undefined,
     carta_asignacion_url:
       sanitizeString(datos.carta_asignacion_url) ?? undefined,
     capital_para_cierre: sanitizeNumber(datos.capital_para_cierre),
