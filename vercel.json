@@ -2,7 +2,6 @@
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
   "installCommand": "npm install",
-  "ignoreCommand": "[ \"$VERCEL_ENV\" != \"production\" ]",
   "framework": "nextjs",
   "regions": ["iad1"],
   "build": {
