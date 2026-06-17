@@ -6,10 +6,15 @@ import {
   CheckCircle2,
   ChevronDown,
   DollarSign,
+  Pencil,
 } from 'lucide-react'
 
 import type { FuentePago } from '@/modules/clientes/services/fuentes-pago.service'
-import { esCreditoConstructora } from '@/shared/constants/fuentes-pago.constants'
+import {
+  esCreditoConstructora,
+  esSubsidioCajaCompensacion,
+  esSubsidioMiCasaYa,
+} from '@/shared/constants/fuentes-pago.constants'
 import { formatCurrency } from '@/shared/utils/format'
 
 import { getFuenteColor } from '../hooks'
@@ -32,6 +37,7 @@ interface FuenteMiniCardProps {
   colorToken?: string
   cuotasExpandidas?: boolean
   onToggleCuotas?: () => void
+  onEditarActa?: () => void
 }
 
 export function FuenteMiniCard({
@@ -41,9 +47,12 @@ export function FuenteMiniCard({
   colorToken,
   cuotasExpandidas,
   onToggleCuotas,
+  onEditarActa,
 }: FuenteMiniCardProps) {
   const color = getFuenteColor(colorToken)
   const esCredito = esCreditoConstructora(fuente.tipo)
+  const esSubsidioConActa =
+    esSubsidioCajaCompensacion(fuente.tipo) || esSubsidioMiCasaYa(fuente.tipo)
 
   // Para crédito constructora: capital = capital_para_cierre, total = monto_aprobado
   const capital = fuente.capital_para_cierre ?? fuente.monto_aprobado
@@ -150,9 +159,7 @@ export function FuenteMiniCard({
           ) : null}
         </div>
 
-        {/* ── Zona 7: Botón cuotas (crédito) o spacer exacto (otros)
-            Altura total del botón: mt-2(8) + border-t(1) + pt-2(8) + line-height(20) = 37px
-            El spacer replica esa altura para que todas las cards midan igual. ── */}
+        {/* ── Zona 7: Botón cuotas (crédito) | Editar acta (subsidio) | spacer ── */}
         {esCredito && onToggleCuotas ? (
           <button
             type='button'
@@ -164,6 +171,15 @@ export function FuenteMiniCard({
             <ChevronDown
               className={`ml-auto h-3 w-3 transition-transform duration-200 ${cuotasExpandidas ? 'rotate-180' : ''}`}
             />
+          </button>
+        ) : esSubsidioConActa && onEditarActa ? (
+          <button
+            type='button'
+            onClick={onEditarActa}
+            className='mt-2 flex w-full items-center gap-1 border-t border-gray-100 pt-2 text-[10px] font-semibold text-orange-500 transition-colors hover:text-orange-600 dark:border-gray-700/50 dark:text-orange-400 dark:hover:text-orange-300'
+          >
+            <Pencil className='h-3 w-3' />
+            Editar N° Acta
           </button>
         ) : (
           <div aria-hidden className='mt-2 h-[37px]' />

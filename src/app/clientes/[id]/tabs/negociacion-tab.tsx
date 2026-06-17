@@ -53,6 +53,7 @@ import {
   AbonosRecientes,
   AjusteCierreFinancieroModal,
   DescuentoModal,
+  EditarActaModal,
   FuenteMiniCard,
   NegociacionCerradaRenuncia,
   SinNegociacion,
@@ -86,6 +87,14 @@ export function NegociacionTab({
   const [abonoEditando, setAbonoEditando] = useState<AbonoParaEditar | null>(
     null
   )
+
+  // ── Estado para edición de acta (solo admin) ─────────────────────────────
+  const [fuenteEditandoActa, setFuenteEditandoActa] = useState<{
+    id: string
+    tipo: string
+    numeroReferencia: string | null
+    fechaActa: string | null
+  } | null>(null)
 
   // ── Estado para modal de renuncia ───────────────────────────────────────
   const [modalRenunciaOpen, setModalRenunciaOpen] = useState(false)
@@ -694,6 +703,17 @@ export function NegociacionTab({
                         ? () => toggleCuotas(fuente.id)
                         : undefined
                     }
+                    onEditarActa={
+                      esAdminPermisos
+                        ? () =>
+                            setFuenteEditandoActa({
+                              id: fuente.id,
+                              tipo: fuente.tipo,
+                              numeroReferencia: fuente.numero_referencia,
+                              fechaActa: fuente.fecha_acta,
+                            })
+                        : undefined
+                    }
                   />
                 ))}
               </div>
@@ -900,6 +920,18 @@ export function NegociacionTab({
             setModalRenunciaOpen(false)
             router.push('/renuncias')
           }}
+        />
+      ) : null}
+
+      {/* Modal: Editar N° Acta (solo admin) */}
+      {esAdminPermisos && fuenteEditandoActa ? (
+        <EditarActaModal
+          fuenteId={fuenteEditandoActa.id}
+          tipoFuente={fuenteEditandoActa.tipo}
+          numeroReferenciaInicial={fuenteEditandoActa.numeroReferencia}
+          fechaActaInicial={fuenteEditandoActa.fechaActa}
+          onClose={() => setFuenteEditandoActa(null)}
+          onGuardado={() => refetchFuentes()}
         />
       ) : null}
     </div>

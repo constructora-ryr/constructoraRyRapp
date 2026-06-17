@@ -1,4 +1,5 @@
 export { AbonosRecientes } from './AbonosRecientes'
+export { EditarActaModal } from './EditarActaModal'
 export { BarraFinanciera } from './BarraFinanciera'
 export { DescuentoModal } from './DescuentoModal'
 export { FuenteCardPlan } from './FuenteCardPlan'
