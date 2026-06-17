@@ -151,6 +151,7 @@ class ReporteFinanciacionService {
           totalNegociaciones: 0,
           totalClientesUnicos: 0,
           montoTotalAprobado: 0,
+          totalDesembolsado: 0,
           porcentajeDelTotal: 0,
           clientes: [],
         })
@@ -160,6 +161,9 @@ class ReporteFinanciacionService {
       if (!entidad) continue
       entidad.totalNegociaciones += 1
       entidad.montoTotalAprobado += fila.montoAprobado
+      if (fila.desembolso.desembolsado) {
+        entidad.totalDesembolsado += fila.montoAprobado
+      }
       entidad.clientes.push({
         negociacionId: fila.negociacionId,
         clienteId: fila.clienteId,

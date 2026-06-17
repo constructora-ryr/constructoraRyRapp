@@ -52,6 +52,7 @@ export interface EntidadFinancieraResumen {
   totalNegociaciones: number
   totalClientesUnicos: number
   montoTotalAprobado: number
+  totalDesembolsado: number
   porcentajeDelTotal: number
   clientes: ClienteEnEntidad[]
 }

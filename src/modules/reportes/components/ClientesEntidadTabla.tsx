@@ -48,8 +48,8 @@ function labelTotal(tipo: TipoEntidadFinanciera): string {
   return tipo === 'Caja de Compensación' ||
     tipo === 'Cooperativa' ||
     tipo === 'Gobierno'
-    ? 'Total Subsidios'
-    : 'Total Créditos'
+    ? 'Total Asignado'
+    : 'Total Aprobado'
 }
 
 function labelReferencia(tipo: TipoEntidadFinanciera): string {
@@ -269,13 +269,23 @@ function ClientesEntidadTablaComponent({ entidad }: ClientesEntidadTablaProps) {
             {entidad.totalClientesUnicos !== 1 ? 'clientes' : 'cliente'}
           </span>
         </div>
-        <div className='text-right'>
-          <p className='text-[11px] font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500'>
-            {totalLabel}
-          </p>
-          <p className='text-sm font-bold text-gray-900 dark:text-white'>
-            {formatCOP(entidad.montoTotalAprobado)}
-          </p>
+        <div className='flex items-center gap-4'>
+          <div className='text-right'>
+            <p className='text-[11px] font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500'>
+              {totalLabel}
+            </p>
+            <p className='text-sm font-bold text-gray-900 dark:text-white'>
+              {formatCOP(entidad.montoTotalAprobado)}
+            </p>
+          </div>
+          <div className='text-right'>
+            <p className='text-[11px] font-medium uppercase tracking-wide text-emerald-500 dark:text-emerald-400'>
+              Desembolsado
+            </p>
+            <p className='text-sm font-bold text-emerald-600 dark:text-emerald-400'>
+              {formatCOP(entidad.totalDesembolsado)}
+            </p>
+          </div>
         </div>
       </div>
 

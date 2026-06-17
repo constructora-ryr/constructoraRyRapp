@@ -92,16 +92,22 @@ function EntidadResumenCardComponent({
         </div>
         <div>
           <p className='text-[10px] font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400'>
-            {entidad.tipo === 'Caja de Compensación' ||
-            entidad.tipo === 'Cooperativa' ||
-            entidad.tipo === 'Gobierno'
-              ? 'Total Subsidios'
-              : 'Total Créditos'}
+            {esSubsidio(entidad.tipo) ? 'Total Asignado' : 'Total Aprobado'}
           </p>
           <p className='text-xs font-bold text-gray-900 dark:text-white'>
             {formatCOP(entidad.montoTotalAprobado)}
           </p>
         </div>
+      </div>
+
+      {/* Desembolso */}
+      <div className='mt-2 flex items-center justify-between rounded-lg bg-emerald-50 px-2.5 py-1.5 dark:bg-emerald-950/30'>
+        <p className='text-[10px] font-medium uppercase tracking-wide text-emerald-600 dark:text-emerald-400'>
+          Desembolsado
+        </p>
+        <p className='text-xs font-bold text-emerald-700 dark:text-emerald-300'>
+          {formatCOP(entidad.totalDesembolsado)}
+        </p>
       </div>
 
       {/* Barra de porcentaje */}
@@ -127,7 +133,15 @@ function EntidadResumenCardComponent({
 
 export const EntidadResumenCard = memo(EntidadResumenCardComponent)
 
-// ── Utilidad local ───────────────────────────────────────────────────────────
+// ── Utilidades locales ───────────────────────────────────────────────────────
+
+function esSubsidio(tipo: string): boolean {
+  return (
+    tipo === 'Caja de Compensación' ||
+    tipo === 'Cooperativa' ||
+    tipo === 'Gobierno'
+  )
+}
 
 function formatCOP(valor: number): string {
   return new Intl.NumberFormat('es-CO', {
