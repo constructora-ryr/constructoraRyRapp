@@ -161,7 +161,7 @@ function ClientesEntidadTablaComponent({ entidad }: ClientesEntidadTablaProps) {
           }
           return (
             <span className='text-xs text-gray-700 dark:text-gray-300'>
-              {numeroReferencia ? `Acta ${numeroReferencia}` : ''}
+              {numeroReferencia ?? ''}
               {numeroReferencia && fechaActa ? ' del ' : ''}
               {fechaActa ? formatFechaActa(fechaActa) : ''}
             </span>
