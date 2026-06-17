@@ -21,6 +21,7 @@ function EntidadResumenCardComponent({
     Banco: 'from-blue-600 to-indigo-600',
     'Caja de Compensación': 'from-emerald-600 to-teal-600',
     Cooperativa: 'from-purple-600 to-violet-600',
+    Gobierno: 'from-orange-500 to-amber-500',
     Otro: 'from-gray-500 to-slate-600',
   }
 
@@ -28,6 +29,7 @@ function EntidadResumenCardComponent({
     Banco: 'bg-blue-50 dark:bg-blue-950/30',
     'Caja de Compensación': 'bg-emerald-50 dark:bg-emerald-950/30',
     Cooperativa: 'bg-purple-50 dark:bg-purple-950/30',
+    Gobierno: 'bg-orange-50 dark:bg-orange-950/30',
     Otro: 'bg-gray-50 dark:bg-gray-800/50',
   }
 
@@ -35,6 +37,7 @@ function EntidadResumenCardComponent({
     Banco: 'border-blue-200 dark:border-blue-800',
     'Caja de Compensación': 'border-emerald-200 dark:border-emerald-800',
     Cooperativa: 'border-purple-200 dark:border-purple-800',
+    Gobierno: 'border-orange-200 dark:border-orange-800',
     Otro: 'border-gray-200 dark:border-gray-700',
   }
 
@@ -65,7 +68,7 @@ function EntidadResumenCardComponent({
               {entidad.nombre}
             </p>
             <p className='text-xs text-gray-500 dark:text-gray-400'>
-              {entidad.tipo}
+              {entidad.tipo === 'Gobierno' ? 'Subsidio' : entidad.tipo}
             </p>
           </div>
         </div>
@@ -90,7 +93,8 @@ function EntidadResumenCardComponent({
         <div>
           <p className='text-[10px] font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400'>
             {entidad.tipo === 'Caja de Compensación' ||
-            entidad.tipo === 'Cooperativa'
+            entidad.tipo === 'Cooperativa' ||
+            entidad.tipo === 'Gobierno'
               ? 'Total Subsidios'
               : 'Total Créditos'}
           </p>

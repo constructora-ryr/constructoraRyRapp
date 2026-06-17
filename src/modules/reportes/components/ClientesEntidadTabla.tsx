@@ -75,7 +75,7 @@ function formatFechaActa(fecha: string): string {
   const [year, month, day] = fecha.split('-').map(Number)
   return new Intl.DateTimeFormat('es-CO', {
     day: 'numeric',
-    month: 'long',
+    month: 'short',
     year: 'numeric',
   }).format(new Date(year, month - 1, day))
 }
