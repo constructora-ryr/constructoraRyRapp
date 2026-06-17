@@ -37,24 +37,30 @@ interface ClientesEntidadTablaProps {
 }
 
 function labelColumna(tipo: TipoEntidadFinanciera): string {
-  return tipo === 'Caja de Compensación' || tipo === 'Cooperativa'
+  return tipo === 'Caja de Compensación' ||
+    tipo === 'Cooperativa' ||
+    tipo === 'Gobierno'
     ? 'Valor Subsidio'
     : 'Valor Crédito'
 }
 
 function labelTotal(tipo: TipoEntidadFinanciera): string {
-  return tipo === 'Caja de Compensación' || tipo === 'Cooperativa'
+  return tipo === 'Caja de Compensación' ||
+    tipo === 'Cooperativa' ||
+    tipo === 'Gobierno'
     ? 'Total Subsidios'
     : 'Total Créditos'
 }
 
 function labelReferencia(tipo: TipoEntidadFinanciera): string {
-  return tipo === 'Caja de Compensación' || tipo === 'Cooperativa'
-    ? 'N° Acta'
-    : 'Referencia Cred.'
+  if (tipo === 'Caja de Compensación' || tipo === 'Cooperativa')
+    return 'N° Acta'
+  if (tipo === 'Gobierno') return 'N° Referencia'
+  return 'Referencia Cred.'
 }
 
-function esEntidadSubsidio(tipo: TipoEntidadFinanciera): boolean {
+// Cajas y Cooperativas muestran "Acta X del fecha"; Gobierno solo el número
+function esEntidadConActa(tipo: TipoEntidadFinanciera): boolean {
   return tipo === 'Caja de Compensación' || tipo === 'Cooperativa'
 }
 
@@ -71,7 +77,8 @@ function ClientesEntidadTablaComponent({ entidad }: ClientesEntidadTablaProps) {
   const headerValor = labelColumna(entidad.tipo)
   const totalLabel = labelTotal(entidad.tipo)
   const headerReferencia = labelReferencia(entidad.tipo)
-  const subsidio = esEntidadSubsidio(entidad.tipo)
+  const conActa = esEntidadConActa(entidad.tipo)
+  const esSubsidioSimple = entidad.tipo === 'Gobierno'
 
   const columns: ColumnDef<ClienteEnEntidad>[] = [
     // 1. VIVIENDA
@@ -144,14 +151,16 @@ function ClientesEntidadTablaComponent({ entidad }: ClientesEntidadTablaProps) {
       ),
     },
 
-    // 6. REFERENCIA / N° ACTA
+    // 6. REFERENCIA / N° ACTA / N° REFERENCIA
     {
       accessorKey: 'numeroReferencia',
       header: headerReferencia,
-      size: subsidio ? 180 : 150,
+      size: conActa ? 180 : 150,
       cell: ({ row }) => {
         const { numeroReferencia, fechaActa } = row.original
-        if (subsidio) {
+
+        // Cajas / Cooperativas: "340 del 12 de junio de 2025"
+        if (conActa) {
           if (!numeroReferencia && !fechaActa) {
             return (
               <span className='text-xs text-gray-400 dark:text-gray-500'>
@@ -167,6 +176,17 @@ function ClientesEntidadTablaComponent({ entidad }: ClientesEntidadTablaProps) {
             </span>
           )
         }
+
+        // Mi Casa Ya: solo el número de referencia
+        if (esSubsidioSimple) {
+          return (
+            <span className='text-xs text-gray-700 dark:text-gray-300'>
+              {numeroReferencia ?? '—'}
+            </span>
+          )
+        }
+
+        // Bancos / Otro: referencia de crédito
         return (
           <span className='text-xs text-gray-600 dark:text-gray-400'>
             {numeroReferencia ?? '—'}

@@ -2,6 +2,7 @@ export type TipoEntidadFinanciera =
   | 'Banco'
   | 'Caja de Compensación'
   | 'Cooperativa'
+  | 'Gobierno'
   | 'Otro'
 
 // ── Fila plana que devuelve el servicio ─────────────────────────────────────

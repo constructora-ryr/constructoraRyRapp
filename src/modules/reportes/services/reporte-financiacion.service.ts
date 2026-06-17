@@ -47,7 +47,6 @@ class ReporteFinanciacionService {
       `
       )
       .eq('estado_fuente', 'activa')
-      .not('entidad_financiera_id', 'is', null)
 
     if (error) {
       logger.error('Error obteniendo reporte de financiación:', error)
@@ -65,10 +64,18 @@ class ReporteFinanciacionService {
   ): ReporteFinanciacionData {
     const ESTADOS_NEGOCIACION_VALIDOS = new Set(['Activa', 'Completada'])
 
+    const MCY_SINTETICO = {
+      id: 'micasaya-sintetico',
+      nombre: 'Mi Casa Ya',
+      tipo: 'Gobierno' as const,
+      codigo: 'MCY',
+    }
+
     const filas: FuentePagoConEntidadRow[] = rows
       .filter(
         row =>
-          row.entidades_financieras != null &&
+          (row.entidades_financieras != null ||
+            row.tipo === 'Subsidio Mi Casa Ya') &&
           row.negociaciones != null &&
           row.negociaciones.clientes != null &&
           ESTADOS_NEGOCIACION_VALIDOS.has(row.negociaciones.estado)
@@ -77,6 +84,7 @@ class ReporteFinanciacionService {
         const manzana = row.negociaciones.viviendas?.manzanas?.nombre ?? ''
         const numero = row.negociaciones.viviendas?.numero ?? ''
         const viviendaLabel = manzana && numero ? `${manzana}${numero}` : null
+        const entidad = row.entidades_financieras ?? MCY_SINTETICO
         return {
           fuenteId: row.id,
           negociacionId: row.negociaciones.id,
@@ -89,10 +97,10 @@ class ReporteFinanciacionService {
           numeroReferencia: row.numero_referencia ?? null,
           fechaActa: row.fecha_acta ?? null,
           estadoNegociacion: row.negociaciones.estado,
-          entidadId: row.entidades_financieras.id,
-          entidadNombre: row.entidades_financieras.nombre,
-          entidadTipo: row.entidades_financieras.tipo,
-          entidadCodigo: row.entidades_financieras.codigo,
+          entidadId: entidad.id,
+          entidadNombre: entidad.nombre,
+          entidadTipo: entidad.tipo,
+          entidadCodigo: entidad.codigo,
           viviendaLabel,
         }
       })
