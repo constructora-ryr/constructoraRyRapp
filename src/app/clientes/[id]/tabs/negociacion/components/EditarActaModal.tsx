@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 
 import { AnimatePresence, motion } from 'framer-motion'
 import { CalendarDays, Hash, Save, X } from 'lucide-react'
+import { createPortal } from 'react-dom'
 import { toast } from 'sonner'
 
 import { fuentesPagoService } from '@/modules/clientes/services/fuentes-pago.service'
@@ -66,7 +67,7 @@ export function EditarActaModal({
     }
   }
 
-  return (
+  return createPortal(
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
@@ -164,6 +165,7 @@ export function EditarActaModal({
           </div>
         </div>
       </motion.div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   )
 }

@@ -53,15 +53,22 @@ function labelTotal(tipo: TipoEntidadFinanciera): string {
 }
 
 function labelReferencia(tipo: TipoEntidadFinanciera): string {
-  if (tipo === 'Caja de Compensación' || tipo === 'Cooperativa')
-    return 'N° Acta'
-  if (tipo === 'Gobierno') return 'N° Referencia'
+  if (
+    tipo === 'Caja de Compensación' ||
+    tipo === 'Cooperativa' ||
+    tipo === 'Gobierno'
+  )
+    return 'N° de Acta'
   return 'Referencia Cred.'
 }
 
-// Cajas y Cooperativas muestran "Acta X del fecha"; Gobierno solo el número
+// Subsidios (Cajas, Cooperativas y Gobierno/Mi Casa Ya) muestran "Acta X del fecha"
 function esEntidadConActa(tipo: TipoEntidadFinanciera): boolean {
-  return tipo === 'Caja de Compensación' || tipo === 'Cooperativa'
+  return (
+    tipo === 'Caja de Compensación' ||
+    tipo === 'Cooperativa' ||
+    tipo === 'Gobierno'
+  )
 }
 
 function formatFechaActa(fecha: string): string {
@@ -78,7 +85,6 @@ function ClientesEntidadTablaComponent({ entidad }: ClientesEntidadTablaProps) {
   const totalLabel = labelTotal(entidad.tipo)
   const headerReferencia = labelReferencia(entidad.tipo)
   const conActa = esEntidadConActa(entidad.tipo)
-  const esSubsidioSimple = entidad.tipo === 'Gobierno'
 
   const columns: ColumnDef<ClienteEnEntidad>[] = [
     // 1. VIVIENDA
@@ -173,15 +179,6 @@ function ClientesEntidadTablaComponent({ entidad }: ClientesEntidadTablaProps) {
               {numeroReferencia ?? ''}
               {numeroReferencia && fechaActa ? ' del ' : ''}
               {fechaActa ? formatFechaActa(fechaActa) : ''}
-            </span>
-          )
-        }
-
-        // Mi Casa Ya: solo el número de referencia
-        if (esSubsidioSimple) {
-          return (
-            <span className='text-xs text-gray-700 dark:text-gray-300'>
-              {numeroReferencia ?? '—'}
             </span>
           )
         }
