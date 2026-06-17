@@ -100,6 +100,7 @@ export default function DashboardContent(_props: DashboardContentProps) {
       interesados: 0,
       inactivos: 0,
       renunciaron: 0,
+      propietarios: 0,
     },
     recaudoMes: 0,
   }
