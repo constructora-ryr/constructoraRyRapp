@@ -14,6 +14,9 @@ class ReporteFinanciacionService {
    * Retorna los datos ya agrupados y calculados para el reporte.
    */
   async obtenerReporteFinanciacion(): Promise<ReporteFinanciacionData> {
+    // Filtramos en DB: solo fuentes vinculadas a una entidad financiera
+    // o del tipo Mi Casa Ya (que no tiene entidad_financiera_id pero sí tipo propio).
+    // Esto excluye cuotas iniciales y créditos constructora del resultado.
     const { data, error } = await supabase
       .from('fuentes_pago')
       .select(
@@ -47,16 +50,19 @@ class ReporteFinanciacionService {
       `
       )
       .eq('estado_fuente', 'activa')
+      .or('entidad_financiera_id.not.is.null,tipo.eq.Subsidio Mi Casa Ya')
 
     if (error) {
       logger.error('Error obteniendo reporte de financiación:', error)
       throw new Error(`Error al cargar reporte: ${error.message}`)
     }
 
-    const fuenteIds = (data ?? []).map(row => row.id)
+    const rows = data ?? []
+    const fuenteIds = rows.map(row => row.id)
 
-    // Segunda query: solo el primer abono activo por fuente (fecha de desembolso).
-    // Ordenado ASC para que el primer registro por fuente sea el más antiguo.
+    // Segunda query: fecha del primer desembolso activo por fuente.
+    // Solo dos campos, solo el subconjunto relevante, orden ASC para que
+    // el primer registro por fuente_pago_id sea el desembolso más antiguo.
     const desembolsoMap = new Map<string, string>()
     if (fuenteIds.length > 0) {
       const { data: abonosData } = await supabase
@@ -73,7 +79,7 @@ class ReporteFinanciacionService {
       }
     }
 
-    return this.agruparPorEntidad(data ?? [], desembolsoMap)
+    return this.agruparPorEntidad(rows, desembolsoMap)
   }
 
   // ── Transformación y agrupación ─────────────────────────────────────────

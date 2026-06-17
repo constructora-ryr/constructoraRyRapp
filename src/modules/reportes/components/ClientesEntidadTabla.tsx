@@ -71,13 +71,23 @@ function esEntidadConActa(tipo: TipoEntidadFinanciera): boolean {
   )
 }
 
+function parseFecha(fechaStr: string): Date | null {
+  const datePart = fechaStr.split('T')[0]
+  const [y, m, d] = datePart.split('-').map(Number)
+  if (!y || !m || !d || isNaN(y) || isNaN(m) || isNaN(d)) return null
+  const date = new Date(y, m - 1, d)
+  return isNaN(date.getTime()) ? null : date
+}
+
+const DATE_FMT = new Intl.DateTimeFormat('es-CO', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+})
+
 function formatFechaActa(fecha: string): string {
-  const [year, month, day] = fecha.split('-').map(Number)
-  return new Intl.DateTimeFormat('es-CO', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).format(new Date(year, month - 1, day))
+  const date = parseFecha(fecha)
+  return date ? DATE_FMT.format(date) : ''
 }
 
 function ClientesEntidadTablaComponent({ entidad }: ClientesEntidadTablaProps) {
@@ -200,12 +210,8 @@ function ClientesEntidadTablaComponent({ entidad }: ClientesEntidadTablaProps) {
       cell: ({ row }) => {
         const { desembolsado, fechaDesembolso } = row.original.desembolso
         if (desembolsado && fechaDesembolso) {
-          const [y, m, d] = fechaDesembolso.split('T')[0].split('-').map(Number)
-          const fechaFmt = new Intl.DateTimeFormat('es-CO', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
-          }).format(new Date(y, m - 1, d))
+          const date = parseFecha(fechaDesembolso)
+          const fechaFmt = date ? DATE_FMT.format(date) : ''
           return (
             <div className='flex flex-col items-center gap-0.5'>
               <span className='inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'>
