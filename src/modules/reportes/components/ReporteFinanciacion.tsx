@@ -44,6 +44,10 @@ export function ReporteFinanciacion() {
     return <EstadoVacio onActualizar={refetch} actualizando={isFetching} />
 
   const reporte = data
+  const totalDesembolsado = reporte.entidades.reduce(
+    (sum, e) => sum + e.totalDesembolsado,
+    0
+  )
 
   return (
     <div className='space-y-6'>
@@ -57,15 +61,13 @@ export function ReporteFinanciacion() {
         />
         <KpiResumen
           icono={Users}
-          label='Clientes financiados'
+          label='Clientes activos'
           valor={reporte.totalClientesFinanciados}
           colorIcono='from-cyan-600 to-blue-600'
         />
-        <KpiResumen
-          icono={DollarSign}
-          label='Total Entidades'
-          valor={formatCOP(reporte.montoTotalAprobado)}
-          colorIcono='from-emerald-600 to-teal-600'
+        <KpiResumenFinanciero
+          aprobado={reporte.montoTotalAprobado}
+          desembolsado={totalDesembolsado}
         />
       </div>
 
@@ -299,6 +301,38 @@ function KpiResumen({
         <p className='text-base font-bold text-gray-900 dark:text-white'>
           {valor}
         </p>
+      </div>
+    </div>
+  )
+}
+
+// ── KPI financiero: aprobado + desembolsado ──────────────────────────────────
+
+function KpiResumenFinanciero({
+  aprobado,
+  desembolsado,
+}: {
+  aprobado: number
+  desembolsado: number
+}) {
+  return (
+    <div className='flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800'>
+      <div className='flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-600 to-teal-600 shadow-sm'>
+        <DollarSign className='h-5 w-5 text-white' />
+      </div>
+      <div className='min-w-0 flex-1'>
+        <p className='text-xs font-medium text-gray-500 dark:text-gray-400'>
+          Total aprobado
+        </p>
+        <p className='text-base font-bold text-gray-900 dark:text-white'>
+          {formatCOP(aprobado)}
+        </p>
+        <div className='mt-1 flex items-center gap-1.5'>
+          <span className='h-1.5 w-1.5 rounded-full bg-emerald-500' />
+          <p className='text-[11px] font-semibold text-emerald-600 dark:text-emerald-400'>
+            {formatCOP(desembolsado)} desembolsado
+          </p>
+        </div>
       </div>
     </div>
   )
