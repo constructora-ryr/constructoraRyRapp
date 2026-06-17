@@ -46,7 +46,7 @@ export function usePagination<T>(
 ): PaginationResult<T> {
   const {
     initialPage = 1,
-    initialPageSize = 10,
+    initialPageSize = 20,
     autoScrollOnChange = true,
   } = options
 

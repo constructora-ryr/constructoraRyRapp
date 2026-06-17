@@ -78,7 +78,7 @@ export function DataTable<TData>({
   columns,
   data,
   gradientColor = 'orange',
-  pageSize = 10,
+  pageSize = 20,
   showPagination = true,
   initialSorting = [],
   onRowClick,
@@ -246,8 +246,7 @@ export function DataTable<TData>({
                 }}
                 className='cursor-pointer rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-gray-900 transition-all hover:border-gray-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:hover:border-gray-500 dark:focus:border-orange-400'
               >
-                <option value={10}>10</option>
-                <option value={25}>25</option>
+                <option value={20}>20</option>
                 <option value={50}>50</option>
                 <option value={100}>100</option>
                 {data.length > 100 && (

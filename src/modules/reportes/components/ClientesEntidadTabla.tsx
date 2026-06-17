@@ -291,7 +291,7 @@ function ClientesEntidadTablaComponent({ entidad }: ClientesEntidadTablaProps) {
           columns={columns}
           data={entidad.clientes}
           gradientColor='purple'
-          showPagination={entidad.clientes.length > 10}
+          showPagination={entidad.clientes.length > 20}
         />
       ) : (
         <div className='flex flex-col items-center py-12 text-center'>

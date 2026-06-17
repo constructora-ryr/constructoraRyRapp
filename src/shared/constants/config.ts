@@ -39,8 +39,8 @@ export const STORAGE_KEYS = {
 
 // Configuración de paginación
 export const PAGINATION = {
-  DEFAULT_PAGE_SIZE: 12,
-  PAGE_SIZE_OPTIONS: [12, 24, 48, 96],
+  DEFAULT_PAGE_SIZE: 20,
+  PAGE_SIZE_OPTIONS: [20, 50, 100],
   MAX_VISIBLE_PAGES: 5,
 } as const
 
