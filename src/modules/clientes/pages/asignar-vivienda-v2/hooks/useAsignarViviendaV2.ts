@@ -433,6 +433,12 @@ export function useAsignarViviendaV2({
           entidades.find(e => e.label === entidadNombre)?.value ||
           undefined
 
+        const fechaActaVal = f.config.campos?.['fecha_acta']
+        const fechaActa =
+          fechaActaVal && String(fechaActaVal).trim() !== ''
+            ? String(fechaActaVal)
+            : undefined
+
         return {
           tipo: f.tipo,
           monto_aprobado: monto,
@@ -441,6 +447,7 @@ export function useAsignarViviendaV2({
           entidad: entidadNombre,
           entidad_financiera_id: entidadId,
           numero_referencia: f.config.numero_referencia || undefined,
+          fecha_acta: fechaActa,
           permite_multiples_abonos:
             generaCuotas || (f.config.permite_multiples_abonos ?? false),
         }

@@ -536,7 +536,9 @@ export interface CrearFuentePagoDTO {
    */
   capital_para_cierre?: number
   entidad?: string
+  entidad_financiera_id?: string
   numero_referencia?: string
+  fecha_acta?: string
   permite_multiples_abonos: boolean
   carta_aprobacion_url?: string
   carta_asignacion_url?: string

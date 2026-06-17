@@ -20,6 +20,7 @@ export interface CrearFuentePagoDTO {
   entidad?: string // nombre legible (nunca UUID)
   entidad_financiera_id?: string // opcional: ID resuelto por el caller
   numero_referencia?: string
+  fecha_acta?: string
   permite_multiples_abonos?: boolean
 }
 
@@ -69,7 +70,7 @@ type FuentePagoConEntidadRow = Omit<FuentePago, 'entidad'> & {
 const BASE_COLUMNS = `
   id, negociacion_id, tipo, entidad, entidad_financiera_id,
   monto_aprobado, monto_recibido, saldo_pendiente, porcentaje_completado,
-  numero_referencia, permite_multiples_abonos, carta_asignacion_url,
+  numero_referencia, fecha_acta, permite_multiples_abonos, carta_asignacion_url,
   estado, estado_fuente, fecha_completado, fecha_creacion, fecha_actualizacion
 `.trim()
 
@@ -117,6 +118,7 @@ class FuentesPagoService {
         entidad: datosSanitizados.entidad ?? null,
         entidad_financiera_id: entidadFinancieraId,
         numero_referencia: datosSanitizados.numero_referencia ?? null,
+        fecha_acta: datosSanitizados.fecha_acta ?? null,
         permite_multiples_abonos:
           datosSanitizados.permite_multiples_abonos ??
           tipoFuente.permite_multiples_abonos ??

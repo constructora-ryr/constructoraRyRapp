@@ -183,6 +183,7 @@ class NegociacionesService {
             entidad: fuente.entidad || null,
             entidad_financiera_id: fuente.entidad_financiera_id || null,
             numero_referencia: fuente.numero_referencia || null,
+            fecha_acta: fuente.fecha_acta || null,
             carta_asignacion_url: fuente.carta_asignacion_url || null,
             permite_multiples_abonos:
               fuente.permite_multiples_abonos ?? esCuotaInicial(fuente.tipo),
