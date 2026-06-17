@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   ChevronDown,
   DollarSign,
+  Hash,
   Pencil,
 } from 'lucide-react'
 
@@ -18,6 +19,15 @@ import {
 import { formatCurrency } from '@/shared/utils/format'
 
 import { getFuenteColor } from '../hooks'
+
+function formatFechaActa(fecha: string): string {
+  const [year, month, day] = fecha.split('-').map(Number)
+  return new Intl.DateTimeFormat('es-CO', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(year, month - 1, day))
+}
 
 interface DocPendienteInfo {
   nombre: string
@@ -115,7 +125,7 @@ export function FuenteMiniCard({
           {formatCurrency(montoTotal)}
         </p>
 
-        {/* ── Zona 4: Desglose intereses — SIEMPRE h-[18px] con o sin texto ── */}
+        {/* ── Zona 4: Desglose intereses (crédito) | N° Acta (subsidio) — SIEMPRE h-[18px] ── */}
         <p className='mt-0.5 flex h-[18px] items-center gap-1 text-[10px] tabular-nums'>
           {esCredito && intereses > 0 ? (
             <>
@@ -126,6 +136,21 @@ export function FuenteMiniCard({
               <span className='text-violet-500 dark:text-violet-400'>
                 +{formatCurrency(intereses)} int.
               </span>
+            </>
+          ) : esSubsidioConActa && fuente.numero_referencia ? (
+            <>
+              <Hash className='h-2.5 w-2.5 flex-shrink-0 text-orange-400 dark:text-orange-500' />
+              <span className='text-gray-500 dark:text-gray-400'>
+                {fuente.numero_referencia}
+              </span>
+              {fuente.fecha_acta ? (
+                <>
+                  <span className='text-gray-300 dark:text-gray-600'>·</span>
+                  <span className='truncate text-gray-400 dark:text-gray-500'>
+                    {formatFechaActa(fuente.fecha_acta)}
+                  </span>
+                </>
+              ) : null}
             </>
           ) : null}
         </p>
