@@ -11,7 +11,12 @@
 
 'use client'
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  QueryClient,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import { toast } from 'sonner'
 
 import { supabase } from '@/lib/supabase/client'
@@ -25,6 +30,9 @@ import {
 } from '../services/registrar-abono.service'
 import type { AnularAbonoPayload } from '../types'
 import type { EditarAbonoPayload } from '../types/editar-abono.types'
+
+import { negociacionDetalleKeys } from './useNegociacionDetalle'
+import { negociacionesAbonosKeys } from './useNegociacionesAbonos'
 
 // ============================================
 // TIPOS (basados en vista_abonos_completos)
@@ -241,6 +249,44 @@ export function useAbonosQuery() {
 // MUTATIONS STANDALONE (sin suscripción a query)
 // ============================================
 
+/**
+ * Invalida todos los queries afectados por un cambio de abono.
+ * Debe llamarse en onSuccess de registrar / anular / editar.
+ *
+ * - negociacionesAbonosKeys: controla saldo_pendiente → botón "puedeAbonar"
+ * - negociacionDetalleKeys: fuentes + historial en vista detalle del cliente
+ * - fuentes-pago-neg-tab / abonos-recientes-neg: tab negociación en ficha cliente
+ * - historial-cliente: línea de tiempo del cliente
+ */
+async function invalidarQuerysAbono(queryClient: QueryClient) {
+  await Promise.all([
+    queryClient.invalidateQueries({
+      queryKey: abonosKeys.lists(),
+      refetchType: 'all',
+    }),
+    queryClient.invalidateQueries({
+      queryKey: negociacionesAbonosKeys.lists(),
+      refetchType: 'all',
+    }),
+    queryClient.invalidateQueries({
+      queryKey: negociacionDetalleKeys.all,
+      refetchType: 'all',
+    }),
+    queryClient.invalidateQueries({
+      queryKey: ['fuentes-pago-neg-tab'],
+      refetchType: 'active',
+    }),
+    queryClient.invalidateQueries({
+      queryKey: ['abonos-recientes-neg'],
+      refetchType: 'active',
+    }),
+    queryClient.invalidateQueries({
+      queryKey: ['historial-cliente'],
+      refetchType: 'active',
+    }),
+  ])
+}
+
 /** Mutation: Anular abono */
 export function useAnularAbonoMutation() {
   const queryClient = useQueryClient()
@@ -252,16 +298,7 @@ export function useAnularAbonoMutation() {
         return data
       }),
     onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: abonosKeys.lists(),
-          refetchType: 'all',
-        }),
-        queryClient.invalidateQueries({
-          queryKey: ['historial-cliente'],
-          refetchType: 'active',
-        }),
-      ])
+      await invalidarQuerysAbono(queryClient)
     },
     onError: (error: Error) => {
       logger.error('❌ Error anulando abono:', error.message)
@@ -280,16 +317,7 @@ export function useEditarAbonoMutation() {
         return abono
       }),
     onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: abonosKeys.lists(),
-          refetchType: 'all',
-        }),
-        queryClient.invalidateQueries({
-          queryKey: ['historial-cliente'],
-          refetchType: 'active',
-        }),
-      ])
+      await invalidarQuerysAbono(queryClient)
       toast.success('Abono actualizado correctamente')
     },
     onError: (error: Error) => {
@@ -305,17 +333,7 @@ export function useRegistrarAbonoMutation() {
   return useMutation({
     mutationFn: (payload: RegistrarAbonoPayload) => registrarAbonoApi(payload),
     onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: abonosKeys.lists(),
-          refetchType: 'all',
-        }),
-        // Refrescar historial del cliente activo para que el nuevo evento aparezca de inmediato
-        queryClient.invalidateQueries({
-          queryKey: ['historial-cliente'],
-          refetchType: 'active',
-        }),
-      ])
+      await invalidarQuerysAbono(queryClient)
     },
     onError: (error: Error) => {
       logger.error('❌ Error registrando abono:', error.message)
