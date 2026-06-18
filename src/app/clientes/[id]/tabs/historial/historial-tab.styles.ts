@@ -109,7 +109,12 @@ export const historialStyles = {
     notaBadge:
       'inline-flex items-center gap-1 rounded-full bg-purple-100 px-2 py-0.5 text-[9px] font-semibold text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
     notaImportanteIndicator:
-      'inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-0.5 text-[9px] font-semibold text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
+      'inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+    // Cards específicos para notas (background tintado para distinguirlas de eventos automáticos)
+    notaCard:
+      'group relative overflow-hidden rounded-xl border bg-purple-50/50 shadow-md transition-all duration-300 hover:shadow-xl backdrop-blur-xl dark:bg-purple-950/20 border-purple-200 dark:border-purple-800',
+    notaImportanteCard:
+      'group relative overflow-hidden rounded-xl border bg-amber-50/60 shadow-md transition-all duration-300 hover:shadow-xl backdrop-blur-xl dark:bg-amber-950/20 border-amber-200 dark:border-amber-800',
     // Botones de nota
     notaActions:
       'flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100',
@@ -240,6 +245,14 @@ export const coloresEvento = {
     headerGradient:
       'bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600',
   },
+  amber: {
+    bg: 'bg-amber-100 dark:bg-amber-950',
+    icon: 'text-amber-700 dark:text-amber-400',
+    border: 'border-amber-200 dark:border-amber-800',
+    barraLateral: 'bg-amber-500',
+    headerGradient:
+      'bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600',
+  },
   gray: {
     bg: 'bg-gray-100 dark:bg-gray-800',
     icon: 'text-gray-600 dark:text-gray-400',
@@ -312,8 +325,8 @@ export const HEADER_GRADIENTS_POR_TIPO: Record<TipoEventoHistorial, string> = {
   interes_descartado:
     'bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600',
 
-  // ── Notas y genérico (gris neutro) ────────────────────────────────────
-  nota_manual: 'bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600',
+  // ── Notas manuales (púrpura / violeta) ───────────────────────────────
+  nota_manual: 'bg-gradient-to-r from-purple-600 via-violet-600 to-purple-700',
   evento_generico: 'bg-gradient-to-r from-gray-600 via-slate-600 to-zinc-600',
 
   // ── Traslado de vivienda (esmeralda → teal) ───────────────────────────

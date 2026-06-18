@@ -101,7 +101,8 @@ export type ColorEvento =
   | 'green' // Creación, aprobación, éxito
   | 'yellow' // Actualización, cambio
   | 'red' // Eliminación, rechazo, error
-  | 'purple' // Completado, finalizado
+  | 'purple' // Notas manuales
+  | 'amber' // Notas importantes (distinto del yellow de actualizaciones)
   | 'cyan' // Documentos
   | 'orange' // Advertencias, descartes
   | 'gray' // Otros

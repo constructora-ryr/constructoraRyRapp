@@ -82,11 +82,17 @@ export function TimelineEventoCard({
           />
         </div>
 
-        {/* Card */}
+        {/* Card — notas usan clases propias con fondo tintado para distinguirlas de eventos automáticos */}
         <motion.div
           whileHover={styles.animations.cardHover.whileHover}
           transition={styles.animations.cardHover.transition}
-          className={`${styles.eventoCard.card} ${colores.border}`}
+          className={
+            esNota
+              ? esImportante
+                ? styles.eventoCard.notaImportanteCard
+                : styles.eventoCard.notaCard
+              : `${styles.eventoCard.card} ${colores.border}`
+          }
         >
           <div
             className={`${styles.eventoCard.barraLateral} ${colores.barraLateral}`}

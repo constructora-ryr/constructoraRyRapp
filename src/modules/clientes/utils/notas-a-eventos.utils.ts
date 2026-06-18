@@ -3,7 +3,7 @@
  * Permite unificar notas + eventos automáticos en el mismo timeline
  */
 
-import { FileEdit, Star } from 'lucide-react'
+import { Star, StickyNote } from 'lucide-react'
 
 import type { EventoHistorialHumanizado } from '../types/historial.types'
 import type { NotaHistorialConUsuario } from '../types/notas-historial.types'
@@ -41,8 +41,8 @@ export function convertirNotaAEvento(
       nombres: nombreCompleto || nota.creador.email,
       rol: nota.creador.rol,
     },
-    icono: nota.es_importante ? Star : FileEdit,
-    color: nota.es_importante ? 'yellow' : 'purple',
+    icono: nota.es_importante ? Star : StickyNote,
+    color: nota.es_importante ? 'amber' : 'purple',
     metadata: {
       esNota: true,
       notaId: nota.id,
