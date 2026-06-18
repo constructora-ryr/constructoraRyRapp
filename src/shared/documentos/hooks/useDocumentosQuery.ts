@@ -208,6 +208,14 @@ export function useSubirDocumentoMutation(
         }
       )
 
+      // ✅ PASO 4: Refrescar historial del cliente si el tab está visible
+      if (tipoEntidad === 'cliente') {
+        queryClient.invalidateQueries({
+          queryKey: ['historial-cliente'],
+          refetchType: 'active',
+        })
+      }
+
       toast.success('Documento subido correctamente', {
         description: nuevoDocumento.titulo,
       })
@@ -246,6 +254,13 @@ export function useActualizarDocumentoMutation(
       queryClient.invalidateQueries({
         queryKey: documentosKeys.list(entidadId, tipoEntidad),
       })
+
+      if (tipoEntidad === 'cliente') {
+        queryClient.invalidateQueries({
+          queryKey: ['historial-cliente'],
+          refetchType: 'active',
+        })
+      }
 
       toast.success('Documento actualizado')
     },
@@ -286,6 +301,14 @@ export function useEliminarDocumentoMutation(
         }),
         queryClient.refetchQueries({ queryKey: ['versiones-eliminadas'] }),
         queryClient.invalidateQueries({ queryKey: ['carpetas', 'list'] }),
+        ...(tipoEntidad === 'cliente'
+          ? [
+              queryClient.invalidateQueries({
+                queryKey: ['historial-cliente'],
+                refetchType: 'active',
+              }),
+            ]
+          : []),
       ])
       toast.success('Documento eliminado correctamente')
     },
