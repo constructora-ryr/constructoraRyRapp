@@ -19,6 +19,7 @@ import {
   Trash2,
 } from 'lucide-react'
 
+import { toTitleCase } from '@/lib/utils/string.utils'
 import { DataTable } from '@/shared/components/table/DataTable'
 import { cn } from '@/shared/utils/helpers'
 
@@ -88,7 +89,8 @@ export function ViviendasTabla({
       accessorFn: row => row.manzanas?.proyectos?.nombre || '',
       cell: ({ row }) => {
         const nombreProyecto =
-          row.original.manzanas?.proyectos?.nombre || 'Sin proyecto'
+          toTitleCase(row.original.manzanas?.proyectos?.nombre) ||
+          'Sin proyecto'
         return (
           <div className='flex items-center gap-1.5'>
             <Building2 className='h-3 w-3 flex-shrink-0 text-orange-600 dark:text-orange-400' />
@@ -109,9 +111,9 @@ export function ViviendasTabla({
         <div className={styles.cell.center}>
           <span
             className={styles.cell.textCompact}
-            title={row.original.nomenclatura || 'N/A'}
+            title={toTitleCase(row.original.nomenclatura) || 'N/A'}
           >
-            {row.original.nomenclatura || 'N/A'}
+            {toTitleCase(row.original.nomenclatura) || 'N/A'}
           </span>
         </div>
       ),
@@ -142,7 +144,7 @@ export function ViviendasTabla({
       cell: ({ row }) => (
         <div className={styles.cell.center}>
           <span className={styles.cell.textCompact}>
-            {row.original.tipo_vivienda || 'N/A'}
+            {toTitleCase(row.original.tipo_vivienda) || 'N/A'}
           </span>
         </div>
       ),

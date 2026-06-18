@@ -20,6 +20,7 @@ import {
   Trash2,
 } from 'lucide-react'
 
+import { toTitleCase } from '@/lib/utils/string.utils'
 import { DataTable } from '@/shared/components/table/DataTable'
 import { cn } from '@/shared/utils/helpers'
 
@@ -99,7 +100,9 @@ export function ProyectosTabla({
           <div className={styles.iconContainer}>
             <Building2 className={styles.iconSvg} />
           </div>
-          <span className={styles.nombre.text}>{row.original.nombre}</span>
+          <span className={styles.nombre.text}>
+            {toTitleCase(row.original.nombre)}
+          </span>
         </div>
       ),
     },
@@ -111,7 +114,7 @@ export function ProyectosTabla({
         <div className={styles.ubicacion.container}>
           <MapPin className={styles.ubicacion.icon} />
           <span className={styles.ubicacion.text}>
-            {row.original.ubicacion}
+            {toTitleCase(row.original.ubicacion)}
           </span>
         </div>
       ),

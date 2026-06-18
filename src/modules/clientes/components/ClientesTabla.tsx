@@ -22,7 +22,7 @@ import {
   UserX,
 } from 'lucide-react'
 
-import { formatNombreCompleto } from '@/lib/utils/string.utils'
+import { formatNombreCompleto, toTitleCase } from '@/lib/utils/string.utils'
 import { DataTable } from '@/shared/components/table/DataTable'
 import { cn } from '@/shared/utils/helpers'
 
@@ -226,9 +226,9 @@ export function ClientesTabla({
                 <Building2 className='h-3.5 w-3.5 flex-shrink-0 text-green-600 dark:text-green-400' />
                 <span
                   className='overflow-hidden whitespace-nowrap text-xs font-medium text-gray-900 dark:text-white'
-                  title={proyecto}
+                  title={toTitleCase(proyecto) || proyecto}
                 >
-                  {proyecto}
+                  {toTitleCase(proyecto)}
                 </span>
               </div>
             ) : (
