@@ -100,12 +100,12 @@ export function TimelineAbonos({
 
   return (
     <div className='relative'>
-      {/* Línea vertical de timeline */}
+      {/* Línea vertical de timeline: 2-stop gradient que permanece visible en todos los ítems */}
       <div
         className='absolute bottom-5 left-[19px] top-5 w-px'
         style={{
           background:
-            'linear-gradient(to bottom, rgba(16,185,129,0.5), rgba(255,255,255,0.08), transparent)',
+            'linear-gradient(to bottom, rgba(16,185,129,0.45), rgba(16,185,129,0.1))',
         }}
       />
 

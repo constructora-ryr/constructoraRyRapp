@@ -20,11 +20,14 @@ import {
 
 import Link from 'next/link'
 
+import { formatDateForDisplay } from '@/lib/utils/date.utils'
 import type { FuentePagoConAbonos } from '@/modules/abonos/types'
 import { CuotasCreditoTab } from '@/modules/fuentes-pago/components/CuotasCreditoTab'
 import {
   esCreditoConstructora as checkCreditoConstructora,
   esCuotaInicial as checkCuotaInicial,
+  esSubsidioCajaCompensacion as checkSubsidioCaja,
+  esSubsidioMiCasaYa as checkSubsidioMCY,
 } from '@/shared/constants/fuentes-pago.constants'
 
 interface FuentePagoCardProps {
@@ -118,6 +121,8 @@ export function FuentePagoCard({
   const esDesembolsoUnico = fuente.permite_multiples_abonos === false
   const esCuotaInicial = checkCuotaInicial(fuente.tipo)
   const esCreditoConstructora = checkCreditoConstructora(fuente.tipo)
+  const esSubsidio =
+    checkSubsidioMCY(fuente.tipo) || checkSubsidioCaja(fuente.tipo)
   const yaDesembolsada = esDesembolsoUnico && fuente.monto_recibido > 0
   const docsPendientesObligatorios =
     validacion?.documentosObligatoriosPendientes ?? 0
@@ -201,8 +206,18 @@ export function FuentePagoCard({
                   {fuente.entidad && fuente.numero_referencia && <span>·</span>}
                   {fuente.numero_referencia && (
                     <span className='flex items-center gap-1'>
-                      <Hash className='h-3 w-3' />
-                      {fuente.numero_referencia}
+                      {esSubsidio ? (
+                        <>
+                          No. Acta {fuente.numero_referencia}
+                          {fuente.fecha_acta &&
+                            ` del ${formatDateForDisplay(fuente.fecha_acta)}`}
+                        </>
+                      ) : (
+                        <>
+                          <Hash className='h-3 w-3' />
+                          {fuente.numero_referencia}
+                        </>
+                      )}
                     </span>
                   )}
                 </div>

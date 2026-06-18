@@ -84,6 +84,7 @@ export interface FuentePago {
   capital_para_cierre?: number | null
   entidad?: string
   numero_referencia?: string
+  fecha_acta?: string | null
   fecha_aprobacion?: string
   estado: string
   permite_multiples_abonos: boolean
