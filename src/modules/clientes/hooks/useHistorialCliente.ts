@@ -43,6 +43,8 @@ export function useHistorialCliente({
   const [usuarioFiltro, setUsuarioFiltro] = useState('')
   // Filtro por categoría (tabla: 'clientes' | 'negociaciones' | etc. | 'notas' | 'todos')
   const [categoria, setCategoria] = useState('todos')
+  // Toggle para que admins vean eventos ocultos
+  const [mostrarOcultos, setMostrarOcultos] = useState(false)
 
   // ========== QUERIES (Eventos automáticos + Notas manuales) ==========
   const {
@@ -51,11 +53,16 @@ export function useHistorialCliente({
     error: errorEventos,
     refetch: refetchEventos,
   } = useQuery({
-    queryKey: ['historial-cliente', clienteId, limit],
-    queryFn: () => historialClienteService.obtenerHistorial(clienteId, limit),
+    queryKey: ['historial-cliente', clienteId, limit, mostrarOcultos],
+    queryFn: () =>
+      historialClienteService.obtenerHistorial(
+        clienteId,
+        limit,
+        mostrarOcultos
+      ),
     enabled: habilitado && !!clienteId,
     refetchOnWindowFocus: false,
-    staleTime: 0, // Sin cache - siempre fresh
+    staleTime: 0,
   })
 
   const {
@@ -353,6 +360,10 @@ export function useHistorialCliente({
     limpiarFiltros,
     tieneAplicados,
 
+    // Toggle ocultos (solo admins)
+    mostrarOcultos,
+    setMostrarOcultos,
+
     // Acciones
     refetch: () => {
       refetchEventos()
@@ -360,8 +371,7 @@ export function useHistorialCliente({
     },
 
     ocultarEvento: async (eventoId: string) => {
-      // Actualización optimista: saca el evento del cache antes de la llamada
-      const queryKey = ['historial-cliente', clienteId, limit]
+      const queryKey = ['historial-cliente', clienteId, limit, mostrarOcultos]
       const prevData =
         queryClient.getQueryData<
           import('../types/historial.types').EventoHistorialCliente[]
@@ -371,17 +381,44 @@ export function useHistorialCliente({
         queryKey,
         (
           old: import('../types/historial.types').EventoHistorialCliente[] = []
-        ) => old.filter(e => e.id !== eventoId)
+        ) =>
+          mostrarOcultos
+            ? old.map(e => (e.id === eventoId ? { ...e, oculto: true } : e))
+            : old.filter(e => e.id !== eventoId)
       )
 
       try {
         await historialClienteService.ocultarEvento(eventoId)
         toast.success('Evento ocultado del historial')
       } catch (err) {
-        // Rollback si falla
         queryClient.setQueryData(queryKey, prevData)
         toast.error(
           err instanceof Error ? err.message : 'No se pudo ocultar el evento'
+        )
+      }
+    },
+
+    restaurarEvento: async (eventoId: string) => {
+      const queryKey = ['historial-cliente', clienteId, limit, mostrarOcultos]
+      const prevData =
+        queryClient.getQueryData<
+          import('../types/historial.types').EventoHistorialCliente[]
+        >(queryKey)
+
+      queryClient.setQueryData(
+        queryKey,
+        (
+          old: import('../types/historial.types').EventoHistorialCliente[] = []
+        ) => old.map(e => (e.id === eventoId ? { ...e, oculto: false } : e))
+      )
+
+      try {
+        await historialClienteService.restaurarEvento(eventoId)
+        toast.success('Evento restaurado en el historial')
+      } catch (err) {
+        queryClient.setQueryData(queryKey, prevData)
+        toast.error(
+          err instanceof Error ? err.message : 'No se pudo restaurar el evento'
         )
       }
     },

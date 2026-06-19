@@ -26,6 +26,7 @@ interface TimelineEventoCardProps {
   onEliminarNota?: (notaId: string) => void
   notasEditables?: Set<string>
   onOcultarEvento?: (eventoId: string) => void
+  onRestaurarEvento?: (eventoId: string) => void
 }
 
 export function TimelineEventoCard({
@@ -34,9 +35,12 @@ export function TimelineEventoCard({
   onEliminarNota,
   notasEditables,
   onOcultarEvento,
+  onRestaurarEvento,
 }: TimelineEventoCardProps) {
   const [showDetalle, setShowDetalle] = useState(false)
   const [ocultando, setOcultando] = useState(false)
+  const [restaurando, setRestaurando] = useState(false)
+  const estaOculto = evento.oculto === true
   const colores = coloresEvento[evento.color] || coloresEvento.gray
 
   const esNota = evento.metadata?.esNota === true
@@ -75,7 +79,7 @@ export function TimelineEventoCard({
         initial={styles.animations.slideIn.initial}
         animate={styles.animations.slideIn.animate}
         transition={{ duration: 0.3 }}
-        className={styles.eventoCard.wrapper}
+        className={`${styles.eventoCard.wrapper} ${estaOculto ? 'opacity-40' : ''}`}
       >
         {/* Punto del timeline */}
         <div className={`${styles.eventoCard.punto} ${colores.bg}`}>
@@ -160,8 +164,24 @@ export function TimelineEventoCard({
                 ) : null}
               </div>
 
-              {/* Botón ocultar — solo admins (onOcultarEvento definido), solo eventos automáticos */}
-              {onOcultarEvento && !esNota ? (
+              {/* Botones ocultar/restaurar — solo admins, solo eventos automáticos */}
+              {!esNota && onRestaurarEvento && estaOculto ? (
+                <button
+                  type='button'
+                  disabled={restaurando}
+                  onClick={async () => {
+                    setRestaurando(true)
+                    await onRestaurarEvento(evento.id)
+                    setRestaurando(false)
+                  }}
+                  className='inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium text-amber-600 transition-colors hover:bg-amber-50 hover:text-amber-700 disabled:opacity-50 dark:text-amber-400 dark:hover:bg-amber-900/20'
+                  title='Restaurar este evento en el historial'
+                >
+                  <Eye className='h-3 w-3' />
+                  {restaurando ? 'Restaurando…' : 'Restaurar'}
+                </button>
+              ) : null}
+              {!esNota && onOcultarEvento && !estaOculto ? (
                 <button
                   type='button'
                   disabled={ocultando}

@@ -23,6 +23,7 @@ interface TimelineGrupoFechaProps {
   onEliminarNota?: (notaId: string) => void
   notasEditables?: Set<string>
   onOcultarEvento?: (eventoId: string) => void
+  onRestaurarEvento?: (eventoId: string) => void
 }
 
 export function TimelineGrupoFecha({
@@ -33,6 +34,7 @@ export function TimelineGrupoFecha({
   onEliminarNota,
   notasEditables,
   onOcultarEvento,
+  onRestaurarEvento,
 }: TimelineGrupoFechaProps) {
   return (
     <motion.div
@@ -63,6 +65,7 @@ export function TimelineGrupoFecha({
             onEliminarNota={onEliminarNota}
             notasEditables={notasEditables}
             onOcultarEvento={onOcultarEvento}
+            onRestaurarEvento={onRestaurarEvento}
           />
         ))}
       </div>

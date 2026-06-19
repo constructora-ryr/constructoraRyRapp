@@ -15,7 +15,7 @@ import { useMemo, useState } from 'react'
 
 import { useQueryClient } from '@tanstack/react-query'
 import { AnimatePresence } from 'framer-motion'
-import { Clock, Filter, Lock, X } from 'lucide-react'
+import { Clock, Eye, EyeOff, Filter, Lock, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { formatDateCompact } from '@/lib/utils/date.utils'
@@ -65,7 +65,10 @@ export function HistorialTab({ clienteId, clienteNombre }: HistorialTabProps) {
     setCategoria,
     limpiarFiltros,
     tieneAplicados,
+    mostrarOcultos,
+    setMostrarOcultos,
     ocultarEvento,
+    restaurarEvento,
   } = useHistorialCliente({ clienteId, habilitado: tienePermiso })
 
   // Aplanar eventos para calcular permisos
@@ -201,6 +204,28 @@ export function HistorialTab({ clienteId, clienteNombre }: HistorialTabProps) {
         canAgregarNota={canAnotarHistorial}
       />
 
+      {/* Toggle ocultos — solo admins */}
+      {esAdmin ? (
+        <div className='flex justify-end'>
+          <button
+            type='button'
+            onClick={() => setMostrarOcultos(v => !v)}
+            className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+              mostrarOcultos
+                ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-400'
+                : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:border-white/10 dark:bg-white/[0.03] dark:text-white/40 dark:hover:text-white/60'
+            }`}
+          >
+            {mostrarOcultos ? (
+              <Eye className='h-3.5 w-3.5' />
+            ) : (
+              <EyeOff className='h-3.5 w-3.5' />
+            )}
+            {mostrarOcultos ? 'Ocultar ocultos' : 'Mostrar ocultos'}
+          </button>
+        </div>
+      ) : null}
+
       {/* Timeline */}
       {estadisticas.filtrados === 0 ? (
         <div className='py-8'>
@@ -227,6 +252,7 @@ export function HistorialTab({ clienteId, clienteNombre }: HistorialTabProps) {
                 onEliminarNota={handleEliminarNota}
                 notasEditables={notasEditables}
                 onOcultarEvento={esAdmin ? ocultarEvento : undefined}
+                onRestaurarEvento={esAdmin ? restaurarEvento : undefined}
               />
             ))}
           </AnimatePresence>

@@ -25,6 +25,7 @@ export interface EventoHistorialCliente {
   > | null
   metadata: Record<string, unknown>
   modulo: string | null
+  oculto?: boolean
 }
 
 /**
@@ -51,7 +52,8 @@ export interface EventoHistorialHumanizado {
   metadata?: Record<string, unknown>
   datosAnteriores?: Record<string, unknown> | null
   datosNuevos?: Record<string, unknown> | null
-  modulo?: string // Módulo al que pertenece el evento
+  modulo?: string
+  oculto?: boolean
 }
 
 /**

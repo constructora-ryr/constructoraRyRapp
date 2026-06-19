@@ -43,7 +43,8 @@ class HistorialClienteService {
    */
   async obtenerHistorial(
     clienteId: string,
-    limit = 200
+    limit = 200,
+    incluirOcultos = false
   ): Promise<EventoHistorialCliente[]> {
     try {
       // ── PASO 1: Obtener eventos via RPC (1 round-trip) ──────────────
@@ -55,6 +56,7 @@ class HistorialClienteService {
       )('obtener_historial_cliente', {
         p_cliente_id: clienteId,
         p_limit: limit,
+        p_incluir_ocultos: incluirOcultos,
       })
 
       if (rpcError) {
@@ -75,6 +77,7 @@ class HistorialClienteService {
         cambios_especificos: Record<string, unknown> | null
         metadata: Record<string, unknown> | null
         modulo: string | null
+        oculto: boolean
       }>
 
       // ── PASO 2: Filtrar UPDATEs de negociaciones con solo campos técnicos ─
@@ -140,6 +143,7 @@ class HistorialClienteService {
           cambios_especificos: evento.cambios_especificos,
           metadata: evento.metadata,
           modulo: evento.modulo,
+          oculto: evento.oculto ?? false,
         }
       }) as unknown as EventoHistorialCliente[]
     } catch (error) {
@@ -324,6 +328,24 @@ class HistorialClienteService {
       const body = await res.json().catch(() => ({}))
       throw new Error(
         (body as { error?: string }).error ?? 'Error al ocultar evento'
+      )
+    }
+  }
+
+  /**
+   * Restaura un evento oculto para que vuelva a aparecer en el historial.
+   * Solo Administradores pueden llamarlo — el endpoint lo valida.
+   */
+  async restaurarEvento(eventoId: string): Promise<void> {
+    const res = await fetch('/api/historial/restaurar', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ evento_id: eventoId }),
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error(
+        (body as { error?: string }).error ?? 'Error al restaurar evento'
       )
     }
   }
