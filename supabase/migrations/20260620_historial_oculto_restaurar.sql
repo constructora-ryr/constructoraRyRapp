@@ -10,6 +10,9 @@
 
 BEGIN;
 
+-- Eliminar versión anterior (2 params) para evitar ambigüedad
+DROP FUNCTION IF EXISTS obtener_historial_cliente(UUID, INT);
+
 CREATE OR REPLACE FUNCTION obtener_historial_cliente(
   p_cliente_id      UUID,
   p_limit           INT     DEFAULT 200,
@@ -94,7 +97,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION obtener_historial_cliente IS
+COMMENT ON FUNCTION obtener_historial_cliente(UUID, INT, BOOLEAN) IS
 'Retorna eventos de audit_log relacionados con un cliente.
 p_incluir_ocultos=TRUE muestra también los eventos ocultos (solo admins).
 Requiere rol Administrador o permiso RBAC clientes.ver_historial.';
