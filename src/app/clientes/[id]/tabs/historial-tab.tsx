@@ -65,6 +65,7 @@ export function HistorialTab({ clienteId, clienteNombre }: HistorialTabProps) {
     setCategoria,
     limpiarFiltros,
     tieneAplicados,
+    ocultarEvento,
   } = useHistorialCliente({ clienteId, habilitado: tienePermiso })
 
   // Aplanar eventos para calcular permisos
@@ -225,6 +226,7 @@ export function HistorialTab({ clienteId, clienteNombre }: HistorialTabProps) {
                 onEditarNota={handleEditarNota}
                 onEliminarNota={handleEliminarNota}
                 notasEditables={notasEditables}
+                onOcultarEvento={esAdmin ? ocultarEvento : undefined}
               />
             ))}
           </AnimatePresence>

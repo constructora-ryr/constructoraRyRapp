@@ -310,6 +310,23 @@ class HistorialClienteService {
       return []
     }
   }
+  /**
+   * Oculta un evento del historial (soft-hide vía API route).
+   * Solo Administradores pueden llamarlo — el endpoint lo valida.
+   */
+  async ocultarEvento(eventoId: string): Promise<void> {
+    const res = await fetch('/api/historial/ocultar', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ evento_id: eventoId }),
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error(
+        (body as { error?: string }).error ?? 'Error al ocultar evento'
+      )
+    }
+  }
 }
 
 export const historialClienteService = new HistorialClienteService()

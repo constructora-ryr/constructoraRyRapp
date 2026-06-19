@@ -7,7 +7,8 @@
 
 import { useMemo, useState } from 'react'
 
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 
 import { formatDateForDisplay } from '@/lib/utils/date.utils'
 
@@ -32,6 +33,8 @@ export function useHistorialCliente({
   habilitado = true,
   limit = 200,
 }: UseHistorialClienteProps) {
+  const queryClient = useQueryClient()
+
   // ========== ESTADO ==========
   const [filtros, setFiltros] = useState<FiltrosHistorial>({})
   const [busqueda, setBusqueda] = useState('')
@@ -354,6 +357,33 @@ export function useHistorialCliente({
     refetch: () => {
       refetchEventos()
       refetchNotas()
+    },
+
+    ocultarEvento: async (eventoId: string) => {
+      // Actualización optimista: saca el evento del cache antes de la llamada
+      const queryKey = ['historial-cliente', clienteId, limit]
+      const prevData =
+        queryClient.getQueryData<
+          import('../types/historial.types').EventoHistorialCliente[]
+        >(queryKey)
+
+      queryClient.setQueryData(
+        queryKey,
+        (
+          old: import('../types/historial.types').EventoHistorialCliente[] = []
+        ) => old.filter(e => e.id !== eventoId)
+      )
+
+      try {
+        await historialClienteService.ocultarEvento(eventoId)
+        toast.success('Evento ocultado del historial')
+      } catch (err) {
+        // Rollback si falla
+        queryClient.setQueryData(queryKey, prevData)
+        toast.error(
+          err instanceof Error ? err.message : 'No se pudo ocultar el evento'
+        )
+      }
     },
   }
 }

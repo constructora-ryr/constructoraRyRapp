@@ -8,7 +8,7 @@
 import { useState } from 'react'
 
 import { motion } from 'framer-motion'
-import { Clock, Edit, Eye, Star, Trash2, User } from 'lucide-react'
+import { Clock, Edit, Eye, EyeOff, Star, Trash2, User } from 'lucide-react'
 
 import type { EventoHistorialHumanizado } from '@/modules/clientes/types/historial.types'
 import { RichTextContent } from '@/shared/components/rich-text/RichTextContent'
@@ -25,6 +25,7 @@ interface TimelineEventoCardProps {
   onEditarNota?: (notaId: string) => void
   onEliminarNota?: (notaId: string) => void
   notasEditables?: Set<string>
+  onOcultarEvento?: (eventoId: string) => void
 }
 
 export function TimelineEventoCard({
@@ -32,8 +33,10 @@ export function TimelineEventoCard({
   onEditarNota,
   onEliminarNota,
   notasEditables,
+  onOcultarEvento,
 }: TimelineEventoCardProps) {
   const [showDetalle, setShowDetalle] = useState(false)
+  const [ocultando, setOcultando] = useState(false)
   const colores = coloresEvento[evento.color] || coloresEvento.gray
 
   const esNota = evento.metadata?.esNota === true
@@ -156,6 +159,24 @@ export function TimelineEventoCard({
                   </span>
                 ) : null}
               </div>
+
+              {/* Botón ocultar — solo admins (onOcultarEvento definido), solo eventos automáticos */}
+              {onOcultarEvento && !esNota ? (
+                <button
+                  type='button'
+                  disabled={ocultando}
+                  onClick={async () => {
+                    setOcultando(true)
+                    await onOcultarEvento(evento.id)
+                    setOcultando(false)
+                  }}
+                  className='inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50 dark:text-white/30 dark:hover:bg-white/[0.06] dark:hover:text-white/60'
+                  title='Ocultar este evento del historial'
+                >
+                  <EyeOff className='h-3 w-3' />
+                  {ocultando ? 'Ocultando…' : 'Ocultar'}
+                </button>
+              ) : null}
 
               {/* Acciones de nota */}
               {esNota && puedeEditar && notaId ? (
