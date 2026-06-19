@@ -110,13 +110,19 @@ export function useModalRegistroPago({
   const cancelledRef = useRef(false)
   // Ref síncrono — previene doble submit antes de que React re-renderice el botón disabled
   const submittingRef = useRef(false)
+  // Rastrea si el modal ya estaba abierto para evitar resetear durante refetch
+  const prevOpenRef = useRef(false)
 
   // React Query mutation para registrar abono
   const registrarAbonoMutation = useRegistrarAbonoMutation()
 
   // ── Reset de estado cuando el modal se abre ─────────────────────────────────
+  // IMPORTANTE: solo resetea en la transición closed→open, no cuando las props
+  // cambian mientras el modal ya está visible (ej: refetch tras registrar abono).
   useEffect(() => {
-    if (!open) return
+    const justOpened = open && !prevOpenRef.current
+    prevOpenRef.current = open
+    if (!justOpened) return
     const fuente = fuenteInicial ?? fuentesPago[0]
     const initial = buildInitialState(fuente, fechaMinima, montoPrecargado)
     setFuenteSeleccionadaState(fuente)
