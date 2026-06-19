@@ -21,6 +21,7 @@ import {
 } from '@/shared/components/ui/dialog'
 
 import type { FuentePagoConAbonos } from '../../types'
+import { formatearNumeroRecibo } from '../../utils/formato-recibo'
 import type { AbonoParaDetalle } from '../abono-detalle-modal/useAbonoDetalle'
 
 import { CampoMontoPago } from './CampoMontoPago'
@@ -147,7 +148,7 @@ export function ModalRegistroPago(props: ModalRegistroPagoProps) {
 
   // ── Formato del número de recibo ─────────────────────────────────────────
   const numRecibo = abonoRegistrado
-    ? `RYR-${String(abonoRegistrado.numero_recibo).padStart(4, '0')}`
+    ? formatearNumeroRecibo(abonoRegistrado.numero_recibo)
     : ''
 
   // ── Pantalla de éxito ─────────────────────────────────────────────────────
