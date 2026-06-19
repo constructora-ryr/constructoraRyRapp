@@ -86,30 +86,27 @@ export function sanitizeActualizarClienteDTO(
     sanitized.numero_documento = sanitizeString(datos.numero_documento) || ''
 
   if (datos.telefono !== undefined)
-    sanitized.telefono = sanitizeString(datos.telefono) ?? undefined
+    sanitized.telefono = sanitizeString(datos.telefono)
   if (datos.telefono_alternativo !== undefined)
-    sanitized.telefono_alternativo =
-      sanitizeString(datos.telefono_alternativo) ?? undefined
+    sanitized.telefono_alternativo = sanitizeString(datos.telefono_alternativo)
   if (datos.email !== undefined)
     sanitized.email = datos.email
-      ? (sanitizeString(datos.email)?.toLowerCase() ?? undefined)
-      : undefined
+      ? (sanitizeString(datos.email)?.toLowerCase() ?? null)
+      : null
   if (datos.direccion !== undefined)
-    sanitized.direccion = sanitizeString(datos.direccion) ?? undefined
+    sanitized.direccion = sanitizeString(datos.direccion)
   if (datos.ciudad !== undefined)
     sanitized.ciudad = sanitizeString(datos.ciudad) ?? undefined
   if (datos.departamento !== undefined)
     sanitized.departamento = sanitizeString(datos.departamento) ?? undefined
-  if (datos.notas !== undefined)
-    sanitized.notas = sanitizeString(datos.notas) ?? undefined
+  if (datos.notas !== undefined) sanitized.notas = sanitizeString(datos.notas)
 
   // ⚠️ CRÍTICO: Validar que el campo no sea undefined antes de sanitizar
   if (datos.fecha_nacimiento !== undefined)
-    sanitized.fecha_nacimiento =
-      sanitizeDate(datos.fecha_nacimiento) ?? undefined
+    sanitized.fecha_nacimiento = sanitizeDate(datos.fecha_nacimiento)
   if (datos.estado_civil !== undefined)
     sanitized.estado_civil =
-      sanitizeEnum(datos.estado_civil, VALID_ESTADOS_CIVILES) ?? undefined
+      sanitizeEnum(datos.estado_civil, VALID_ESTADOS_CIVILES) ?? null
 
   // Estado (si se está actualizando)
   if (datos.estado !== undefined) sanitized.estado = datos.estado

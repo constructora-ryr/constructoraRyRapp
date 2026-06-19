@@ -484,9 +484,27 @@ export interface CrearClienteDTO {
   }
 }
 
-export interface ActualizarClienteDTO extends Partial<CrearClienteDTO> {
+export interface ActualizarClienteDTO
+  extends Omit<
+    Partial<CrearClienteDTO>,
+    | 'telefono'
+    | 'telefono_alternativo'
+    | 'email'
+    | 'direccion'
+    | 'notas'
+    | 'fecha_nacimiento'
+    | 'estado_civil'
+  > {
   estado?: EstadoCliente
-  documento_identidad_titulo?: string | null // Permitir actualizar título
+  documento_identidad_titulo?: string | null
+  // Campos opcionales con null explícito para poder borrarlos desde edición
+  telefono?: string | null
+  telefono_alternativo?: string | null
+  email?: string | null
+  direccion?: string | null
+  notas?: string | null
+  fecha_nacimiento?: string | null
+  estado_civil?: EstadoCivil | null
 }
 
 export interface CrearInteresDTO {

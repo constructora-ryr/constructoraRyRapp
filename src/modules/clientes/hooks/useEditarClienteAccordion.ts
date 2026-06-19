@@ -478,17 +478,15 @@ export function useEditarClienteAccordion(clienteId: string) {
         apellidos: values.apellidos,
         tipo_documento: values.tipo_documento as TipoDocumento,
         numero_documento: values.numero_documento,
-        fecha_nacimiento: values.fecha_nacimiento || undefined,
-        estado_civil: (values.estado_civil || undefined) as
-          | EstadoCivil
-          | undefined,
-        telefono: values.telefono || undefined,
-        telefono_alternativo: values.telefono_alternativo || undefined,
-        email: values.email || undefined,
-        direccion: values.direccion || undefined,
+        fecha_nacimiento: values.fecha_nacimiento || null,
+        estado_civil: (values.estado_civil || null) as EstadoCivil | null,
+        telefono: values.telefono || null,
+        telefono_alternativo: values.telefono_alternativo || null,
+        email: values.email || null,
+        direccion: values.direccion || null,
         departamento: values.departamento,
         ciudad: values.ciudad,
-        notas: values.notas || undefined,
+        notas: values.notas || null,
       }
 
       const sanitized = sanitizeActualizarClienteDTO(dto)
