@@ -1,22 +1,6 @@
-/**
- * ============================================
- * HOOK: Sistema Profesional de Inactividad
- * ============================================
- *
- * Sistema de nivel enterprise con:
- * - ⚠️ Advertencias escalonadas (3 niveles)
- * - 🔔 Modal de advertencia final con countdown
- * - 📊 Tracking detallado de actividad
- * - 🔄 Sistema de "keep alive" robusto
- * - 📝 Logs profesionales
- * - 💾 Estado persistente
- *
- * Sin problemas de closures ni stale references.
- */
-
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 
 import { useAuth } from '@/contexts/auth-context'
 import { useLogoutMutation } from '@/hooks/auth'
@@ -24,13 +8,9 @@ import { useLogoutMutation } from '@/hooks/auth'
 export type IdleWarningLevel = 'info' | 'warning' | 'critical'
 
 export interface IdleTimerConfig {
-  /** Tiempo total de inactividad en minutos (default: 60) */
   timeoutMinutes?: number
-  /** Habilitar sistema (default: true) */
   enabled?: boolean
-  /** Si hay una modal de advertencia abierta (default: false) */
   modalIsOpen?: boolean
-  /** Callbacks de notificación */
   onWarning?: (
     level: IdleWarningLevel,
     remainingMinutes: number,
@@ -48,12 +28,18 @@ interface IdleTimerState {
 
 const ACTIVITY_EVENTS = [
   'mousedown',
-  // 'mousemove', // ❌ Removido: muy costoso (se dispara cientos de veces/seg)
   'keydown',
   'scroll',
   'touchstart',
   'click',
 ] as const
+
+// Porcentajes del tiempo total en los que se dispara cada nivel de advertencia
+const WARNING_LEVELS = {
+  info: 0.833, // 50 min en 60 min
+  warning: 0.917, // 55 min en 60 min
+  critical: 0.967, // 58 min en 60 min
+}
 
 export function useIdleTimer(config: IdleTimerConfig = {}) {
   const {
@@ -67,7 +53,7 @@ export function useIdleTimer(config: IdleTimerConfig = {}) {
   const { user } = useAuth()
   const logoutMutation = useLogoutMutation()
 
-  // ✅ Estado en refs para evitar closures
+  // ── Refs de estado (sin closures) ────────────────────────
   const stateRef = useRef<IdleTimerState>({
     lastActivity: Date.now(),
     warningShown: { info: false, warning: false, critical: false },
@@ -78,52 +64,49 @@ export function useIdleTimer(config: IdleTimerConfig = {}) {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Convertir a milisegundos
-  const TIMEOUT_MS = timeoutMinutes * 60 * 1000
+  // ── Refs de config — actualizados en cada render, sin disparar effects ──
+  // (Técnica "last-render ref": rompe la cadena de deps que resetea el timer)
+  const timeoutMsRef = useRef(timeoutMinutes * 60 * 1000)
+  const onWarningRef = useRef(onWarning)
+  const onTimeoutRef = useRef(onTimeout)
+  const modalIsOpenRef = useRef(modalIsOpen)
+  const logoutMutationRef = useRef(logoutMutation)
 
-  // Niveles de advertencia (porcentajes del tiempo total)
-  // ✅ PRODUCCIÓN: Niveles de advertencia para 60 minutos
-  const WARNING_LEVELS = useMemo(
-    () => ({
-      info: 0.833, // 83.3% del tiempo (50 min en 60 min)
-      warning: 0.917, // 91.7% del tiempo (55 min en 60 min)
-      critical: 0.967, // 96.7% del tiempo (58 min en 60 min)
-    }),
-    []
-  )
+  timeoutMsRef.current = timeoutMinutes * 60 * 1000
+  onWarningRef.current = onWarning
+  onTimeoutRef.current = onTimeout
+  modalIsOpenRef.current = modalIsOpen
+  logoutMutationRef.current = logoutMutation
 
-  /**
-   * Ejecutar logout con logging detallado
-   */
+  // userId primitivo — el efecto solo se remonta cuando el usuario cambia,
+  // NO cuando Supabase refresca el JWT (que crea un nuevo objeto user)
+  const userId = user?.id ?? null
+
+  // ── executeLogout: deps vacías, todo via refs ─────────────
   const executeLogout = useCallback(() => {
     const state = stateRef.current
-
-    if (state.logoutExecuted) {
-      return
-    }
-
+    if (state.logoutExecuted) return
     state.logoutExecuted = true
 
-    // Limpiar timers
     if (timeoutRef.current) clearTimeout(timeoutRef.current)
     if (checkIntervalRef.current) clearInterval(checkIntervalRef.current)
 
-    // Guardar motivo de cierre en sessionStorage
     sessionStorage.setItem('logout_reason', 'inactivity')
     sessionStorage.setItem('logout_timestamp', Date.now().toString())
 
-    // Callback opcional
-    onTimeout?.()
+    // Si hay callback externo úsalo (maneja el logout real).
+    // Si no, fallback al mutation directo.
+    if (onTimeoutRef.current) {
+      onTimeoutRef.current()
+    } else {
+      logoutMutationRef.current.mutate()
+    }
+  }, []) // ✅ Sin deps — usa solo refs, nunca se recrea
 
-    // Ejecutar logout
-    logoutMutation.mutate()
-  }, [logoutMutation, onTimeout])
-
-  /**
-   * Verificar nivel de inactividad y mostrar advertencias
-   */
+  // ── checkInactivity: deps mínimas ────────────────────────
   const checkInactivity = useCallback(() => {
     const state = stateRef.current
+    const TIMEOUT_MS = timeoutMsRef.current
     const now = Date.now()
     const inactiveTime = now - state.lastActivity
     const progress = inactiveTime / TIMEOUT_MS
@@ -131,97 +114,74 @@ export function useIdleTimer(config: IdleTimerConfig = {}) {
     const remainingSeconds = Math.floor(remainingMs / 1000)
     const remainingMinutes = Math.ceil(remainingMs / 1000 / 60)
 
-    // Verificar si se superó el tiempo límite
     if (progress >= 1.0) {
       executeLogout()
       return
     }
 
-    // Determinar nivel actual
-
     if (progress >= WARNING_LEVELS.critical) {
       if (!state.warningShown.critical) {
         state.warningShown.critical = true
-        onWarning?.('critical', remainingMinutes, remainingSeconds)
+        onWarningRef.current?.('critical', remainingMinutes, remainingSeconds)
       }
     } else if (progress >= WARNING_LEVELS.warning) {
       if (!state.warningShown.warning) {
         state.warningShown.warning = true
-        onWarning?.('warning', remainingMinutes, remainingSeconds)
+        onWarningRef.current?.('warning', remainingMinutes, remainingSeconds)
       }
-    } else if (progress >= WARNING_LEVELS.info) {
-      // 🚨 NO mostrar advertencia INFO si ya se mostró WARNING o CRITICAL
-      if (
-        !state.warningShown.info &&
-        !state.warningShown.warning &&
-        !state.warningShown.critical
-      ) {
-        state.warningShown.info = true
-        onWarning?.('info', remainingMinutes, remainingSeconds)
-      }
+    } else if (
+      progress >= WARNING_LEVELS.info &&
+      !state.warningShown.info &&
+      !state.warningShown.warning &&
+      !state.warningShown.critical
+    ) {
+      state.warningShown.info = true
+      onWarningRef.current?.('info', remainingMinutes, remainingSeconds)
     }
-  }, [TIMEOUT_MS, WARNING_LEVELS, onWarning, executeLogout])
+  }, [executeLogout]) // ✅ Solo executeLogout (también estable)
 
-  /**
-   * Reiniciar actividad (llamado por usuario o eventos)
-   */
+  // ── resetActivity: estable ────────────────────────────────
   const resetActivity = useCallback(() => {
     const state = stateRef.current
 
-    // Actualizar estado
     state.lastActivity = Date.now()
     state.warningShown = { info: false, warning: false, critical: false }
 
-    // Limpiar timers antiguos
     if (timeoutRef.current) clearTimeout(timeoutRef.current)
     if (checkIntervalRef.current) clearInterval(checkIntervalRef.current)
 
-    // ✅ PRODUCCIÓN: Verificar cada 15s (buen balance entre precisión y performance)
-    const checkInterval = 15000
-    checkIntervalRef.current = setInterval(checkInactivity, checkInterval)
+    checkIntervalRef.current = setInterval(checkInactivity, 15_000)
+    // Fallback de seguridad: si el interval falla, logout forzado
+    timeoutRef.current = setTimeout(executeLogout, timeoutMsRef.current + 5_000)
+  }, [checkInactivity, executeLogout]) // ✅ Ambas estables
 
-    // Timeout de seguridad (por si falla el interval)
-    timeoutRef.current = setTimeout(executeLogout, TIMEOUT_MS + 5000)
-  }, [checkInactivity, executeLogout, TIMEOUT_MS])
-
-  /**
-   * Manejar actividad del usuario
-   */
+  // ── handleUserActivity: estable ───────────────────────────
   const handleUserActivity = useCallback(() => {
-    if (!user || !enabled) return
-
     const state = stateRef.current
 
-    // 🚨 Si ya se mostró warning/critical O hay modal abierta, ignorar actividad automática
-    // Solo el botón "Mantener sesión activa" puede resetear el timer
+    // Ignorar si warning/critical ya fue mostrado o si hay modal abierta.
+    // Solo el botón "Mantener sesión activa" puede resetear desde ese punto.
     if (
       state.warningShown.warning ||
       state.warningShown.critical ||
-      modalIsOpen
+      modalIsOpenRef.current // ← ref, no prop directa
     ) {
       return
     }
 
-    // Throttle agresivo: solo actualizar si pasaron más de 10 segundos
-    // (reduce carga de CPU sin afectar UX)
-    const now = Date.now()
-    if (now - state.lastActivity < 10000) return
+    // Throttle: solo actualizar si pasaron más de 10 segundos
+    if (Date.now() - state.lastActivity < 10_000) return
 
     resetActivity()
-  }, [user, enabled, modalIsOpen, resetActivity])
+  }, [resetActivity]) // ✅ Estable
 
-  /**
-   * API pública: Mantener sesión activa (botón manual)
-   */
   const keepAlive = useCallback(() => {
     resetActivity()
   }, [resetActivity])
 
-  /**
-   * API pública: Obtener tiempo restante
-   */
   const getRemainingTime = useCallback(() => {
     const state = stateRef.current
+    const TIMEOUT_MS = timeoutMsRef.current
     const elapsed = Date.now() - state.lastActivity
     const remaining = Math.max(0, TIMEOUT_MS - elapsed)
 
@@ -231,25 +191,23 @@ export function useIdleTimer(config: IdleTimerConfig = {}) {
       remainingSeconds: Math.ceil(remaining / 1000),
       progress: elapsed / TIMEOUT_MS,
     }
-  }, [TIMEOUT_MS])
+  }, [])
 
-  /**
-   * Effect principal: Inicializar y limpiar
-   */
+  // ── Effect principal: solo se remonta al login/logout real ─
   useEffect(() => {
-    if (!user || !enabled) {
-      // Resetear estado al cerrar sesión
+    if (!userId || !enabled) {
       stateRef.current = {
         lastActivity: Date.now(),
         warningShown: { info: false, warning: false, critical: false },
         logoutExecuted: false,
         pageVisible: true,
       }
-
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+      if (checkIntervalRef.current) clearInterval(checkIntervalRef.current)
       return
     }
 
-    // Resetear estado al iniciar sesión
+    // Resetear al iniciar sesión
     stateRef.current.logoutExecuted = false
     stateRef.current.warningShown = {
       info: false,
@@ -257,46 +215,28 @@ export function useIdleTimer(config: IdleTimerConfig = {}) {
       critical: false,
     }
 
-    // Iniciar timers
     resetActivity()
 
-    // Agregar event listeners
     ACTIVITY_EVENTS.forEach(event => {
       document.addEventListener(event, handleUserActivity, { passive: true })
     })
 
-    // Page Visibility API
     const handleVisibilityChange = () => {
-      const isVisible = !document.hidden
-      stateRef.current.pageVisible = isVisible
+      stateRef.current.pageVisible = !document.hidden
     }
-
     document.addEventListener('visibilitychange', handleVisibilityChange)
 
-    // Cleanup
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current)
       if (checkIntervalRef.current) clearInterval(checkIntervalRef.current)
-
       ACTIVITY_EVENTS.forEach(event => {
         document.removeEventListener(event, handleUserActivity)
       })
-
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [
-    user,
-    enabled,
-    timeoutMinutes,
-    modalIsOpen,
-    handleUserActivity,
-    resetActivity,
-    WARNING_LEVELS,
-  ])
+    // ✅ userId (primitivo) en vez de user (objeto): el effect NO se remonta
+    //    cuando Supabase refresca el JWT y cambia la referencia del objeto user
+  }, [userId, enabled, handleUserActivity, resetActivity])
 
-  return {
-    keepAlive,
-    getRemainingTime,
-    resetActivity,
-  }
+  return { keepAlive, getRemainingTime, resetActivity }
 }
