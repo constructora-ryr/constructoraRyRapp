@@ -51,6 +51,7 @@ export function humanizarEvento(
     datosAnteriores: evento.datos_anteriores,
     datosNuevos: evento.datos_nuevos,
     modulo: evento.modulo ?? undefined,
+    oculto: evento.oculto ?? false,
   }
 }
 
