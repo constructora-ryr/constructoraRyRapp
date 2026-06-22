@@ -26,7 +26,7 @@ const METRICAS = (e: EstadisticasAbonos) =>
       Icon: Receipt,
     },
     {
-      label: 'Abonado este Mes',
+      label: 'Recaudado este Mes',
       value: formatCurrency(e.montoEsteMes),
       Icon: Calendar,
     },
