@@ -106,13 +106,12 @@ export default function DashboardContent(_props: DashboardContentProps) {
   }
 
   const mesActual = new Date().toLocaleString('es-CO', { month: 'long' })
-  const recaudoMillones = Math.round(s.recaudoMes / 1_000_000)
 
   const kpis = [
     {
       label: 'Proyectos',
-      value: s.proyectos.activos,
-      sub: `${s.proyectos.completados} finalizado${s.proyectos.completados !== 1 ? 's' : ''}`,
+      value: s.proyectos.total,
+      sub: `${s.proyectos.activos} en ejecución · ${s.proyectos.completados} finalizado${s.proyectos.completados !== 1 ? 's' : ''}`,
       icon: Building2,
       accentText: 'text-emerald-600 dark:text-emerald-400',
       sparkline: 'M0,20 Q15,5 30,15 T60,10 T100,18',
@@ -127,16 +126,16 @@ export default function DashboardContent(_props: DashboardContentProps) {
     },
     {
       label: 'Clientes',
-      value: s.clientes.activos,
-      sub: `${s.clientes.interesados} interesado${s.clientes.interesados !== 1 ? 's' : ''}`,
+      value: s.clientes.total,
+      sub: `${s.clientes.activos} activo${s.clientes.activos !== 1 ? 's' : ''} · ${s.clientes.propietarios} propietario${s.clientes.propietarios !== 1 ? 's' : ''}`,
       icon: Users,
       accentText: 'text-cyan-600 dark:text-cyan-400',
       sparkline: 'M0,25 Q15,10 35,20 T70,5 T100,15',
     },
     {
       label: 'Recaudo',
-      value: recaudoMillones,
-      sub: `millones en ${mesActual}`,
+      value: s.recaudoMes,
+      sub: `COP en ${mesActual}`,
       icon: DollarSign,
       accentText: 'text-violet-600 dark:text-violet-400',
       sparkline: 'M0,10 Q20,25 40,15 T75,25 T100,8',
