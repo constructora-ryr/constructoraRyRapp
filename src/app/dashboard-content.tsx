@@ -111,7 +111,18 @@ export default function DashboardContent(_props: DashboardContentProps) {
     {
       label: 'Proyectos',
       value: s.proyectos.total,
-      sub: `${s.proyectos.activos} en ejecución · ${s.proyectos.completados} finalizado${s.proyectos.completados !== 1 ? 's' : ''}`,
+      sub: '',
+      subItems: [
+        { label: `${s.proyectos.activos} en ejecución`, dot: 'bg-emerald-500' },
+        ...(s.proyectos.completados > 0
+          ? [
+              {
+                label: `${s.proyectos.completados} finalizado${s.proyectos.completados !== 1 ? 's' : ''}`,
+                dot: 'bg-violet-500',
+              },
+            ]
+          : []),
+      ],
       icon: Building2,
       accentText: 'text-emerald-600 dark:text-emerald-400',
       sparkline: 'M0,20 Q15,5 30,15 T60,10 T100,18',
@@ -127,7 +138,49 @@ export default function DashboardContent(_props: DashboardContentProps) {
     {
       label: 'Clientes',
       value: s.clientes.total,
-      sub: `${s.clientes.activos} activo${s.clientes.activos !== 1 ? 's' : ''} · ${s.clientes.propietarios} propietario${s.clientes.propietarios !== 1 ? 's' : ''}`,
+      sub: '',
+      subItems: [
+        ...(s.clientes.activos > 0
+          ? [
+              {
+                label: `${s.clientes.activos} activo${s.clientes.activos !== 1 ? 's' : ''}`,
+                dot: 'bg-emerald-500',
+              },
+            ]
+          : []),
+        ...(s.clientes.interesados > 0
+          ? [
+              {
+                label: `${s.clientes.interesados} interesado${s.clientes.interesados !== 1 ? 's' : ''}`,
+                dot: 'bg-amber-500',
+              },
+            ]
+          : []),
+        ...(s.clientes.propietarios > 0
+          ? [
+              {
+                label: `${s.clientes.propietarios} propietario${s.clientes.propietarios !== 1 ? 's' : ''}`,
+                dot: 'bg-cyan-500',
+              },
+            ]
+          : []),
+        ...(s.clientes.inactivos > 0
+          ? [
+              {
+                label: `${s.clientes.inactivos} inactivo${s.clientes.inactivos !== 1 ? 's' : ''}`,
+                dot: 'bg-slate-400',
+              },
+            ]
+          : []),
+        ...(s.clientes.renunciaron > 0
+          ? [
+              {
+                label: `${s.clientes.renunciaron} renunció${s.clientes.renunciaron !== 1 ? 'aron' : ''}`,
+                dot: 'bg-rose-400',
+              },
+            ]
+          : []),
+      ],
       icon: Users,
       accentText: 'text-cyan-600 dark:text-cyan-400',
       sparkline: 'M0,25 Q15,10 35,20 T70,5 T100,15',

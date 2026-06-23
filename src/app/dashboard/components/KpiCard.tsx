@@ -4,10 +4,16 @@ import { memo, type ElementType } from 'react'
 
 import { AnimatedCounter } from './AnimatedCounter'
 
+export interface KpiSubItem {
+  label: string
+  dot: string
+}
+
 interface KpiCardProps {
   label: string
   value: number
   sub: string
+  subItems?: KpiSubItem[]
   icon: ElementType
   accentText: string
   sparkline: string
@@ -18,6 +24,7 @@ function KpiCardComponent({
   label,
   value,
   sub,
+  subItems,
   icon: Icon,
   accentText,
   sparkline,
@@ -57,6 +64,7 @@ function KpiCardComponent({
           {label.split(' ')[0]}
         </span>
       </div>
+
       <div className='relative z-10'>
         {loading ? (
           <div className='h-8 w-16 animate-pulse rounded bg-slate-200 dark:bg-white/10' />
@@ -66,7 +74,25 @@ function KpiCardComponent({
             className='text-3xl font-semibold tracking-tight text-slate-900 dark:text-white'
           />
         )}
-        <p className='mt-1 text-xs text-slate-500 dark:text-white/40'>{sub}</p>
+
+        {subItems && subItems.length > 0 ? (
+          <div className='mt-2 flex flex-wrap gap-x-3 gap-y-1'>
+            {subItems.map(item => (
+              <span key={item.label} className='flex items-center gap-1.5'>
+                <span
+                  className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${item.dot}`}
+                />
+                <span className='text-xs text-slate-500 dark:text-white/40'>
+                  {item.label}
+                </span>
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className='mt-1 text-xs text-slate-500 dark:text-white/40'>
+            {sub}
+          </p>
+        )}
       </div>
     </div>
   )
