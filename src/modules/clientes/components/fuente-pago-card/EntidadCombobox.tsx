@@ -172,18 +172,18 @@ export function EntidadCombobox({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.12 }}
-            className='absolute z-50 mt-1.5 w-full overflow-hidden rounded-xl border-2 border-gray-200 bg-white shadow-2xl shadow-cyan-500/10 backdrop-blur-xl dark:border-gray-700 dark:bg-gray-800'
+            className='absolute z-50 mt-1.5 w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-600 dark:bg-gray-800'
           >
             {filtered.length > 0 ? (
               <>
-                <div className='border-b border-gray-200 bg-gray-50 px-3 py-1.5 dark:border-gray-700 dark:bg-gray-900'>
-                  <p className='text-[10px] font-medium text-gray-500 dark:text-gray-400'>
+                <div className='border-b border-gray-100 bg-gray-50 px-3 py-1.5 dark:border-gray-700 dark:bg-gray-900'>
+                  <p className='text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500'>
                     {filtered.length} entidad{filtered.length !== 1 ? 'es' : ''}
                   </p>
                 </div>
                 <div
                   ref={listRef}
-                  className='max-h-[220px] overflow-y-auto p-1.5'
+                  className='max-h-[220px] overflow-y-auto p-1'
                 >
                   {filtered.map((opt, index) => {
                     const isSelected =
@@ -195,17 +195,19 @@ export function EntidadCombobox({
                         type='button'
                         onClick={() => handleSelect(opt)}
                         onMouseEnter={() => setHighlightedIndex(index)}
-                        className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-all ${
-                          isHighlighted
-                            ? 'bg-cyan-50 dark:bg-cyan-900/30'
-                            : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                        className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors ${
+                          isSelected
+                            ? 'bg-cyan-50 dark:bg-cyan-950/60'
+                            : isHighlighted
+                              ? 'bg-gray-100 dark:bg-gray-700'
+                              : 'hover:bg-gray-50 dark:hover:bg-gray-700/60'
                         }`}
                       >
                         <Building2
-                          className={`h-4 w-4 flex-shrink-0 ${isSelected ? 'text-cyan-500' : 'text-gray-400'}`}
+                          className={`h-4 w-4 flex-shrink-0 ${isSelected ? 'text-cyan-500' : 'text-gray-400 dark:text-gray-500'}`}
                         />
                         <span
-                          className={`text-sm ${isSelected ? 'font-semibold text-cyan-600 dark:text-cyan-400' : 'text-gray-900 dark:text-white'}`}
+                          className={`flex-1 text-sm ${isSelected ? 'font-semibold text-cyan-600 dark:text-cyan-400' : 'font-medium text-gray-800 dark:text-gray-100'}`}
                         >
                           {opt.label}
                         </span>
