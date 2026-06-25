@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 
 import { AlertTriangle, Lock, Minus, Plus } from 'lucide-react'
 
+import { EntidadCombobox } from '@/modules/clientes/components/fuente-pago-card/EntidadCombobox'
 import type { RestriccionesFuente } from '@/shared/utils/reglas-cierre-financiero'
 
 import type { AjusteLocal } from '../../hooks'
@@ -154,23 +155,14 @@ export function FilaFuente({
         {!ajuste.paraEliminar && mostrarEntidad ? (
           <div className='mt-2'>
             {entidades.length > 0 ? (
-              <select
+              <EntidadCombobox
+                opciones={entidades.map(e => ({ value: e, label: e }))}
                 value={ajuste.entidadEditable}
-                onChange={e => onCambioEntidad(ajuste.id, e.target.value)}
+                onChange={v => onCambioEntidad(ajuste.id, v)}
                 disabled={!restricciones.puedeEditarEntidad}
-                className={`w-full rounded-lg border px-2.5 py-1.5 text-xs text-gray-700 focus:border-cyan-500 focus:outline-none dark:text-gray-200 dark:[color-scheme:dark] ${
-                  hasEntidadError
-                    ? 'border-red-400 bg-red-50 dark:border-red-600 dark:bg-red-900/30'
-                    : 'border-gray-200 bg-gray-50 dark:border-gray-600 dark:bg-gray-700'
-                } ${!restricciones.puedeEditarEntidad ? 'cursor-not-allowed opacity-60' : ''}`}
-              >
-                <option value=''>Seleccionar entidad financiera... *</option>
-                {entidades.map(e => (
-                  <option key={e} value={e}>
-                    {e}
-                  </option>
-                ))}
-              </select>
+                placeholder='Seleccionar entidad financiera...'
+                error={hasEntidadError}
+              />
             ) : (
               <input
                 type='text'
