@@ -19,15 +19,19 @@ interface BannerDocumentoRequeridoProps {
   onSubirDocumento?: () => void
 
   /**
-   * 'bloqueante' (default): Cliente Interesado sin cédula — banner rojo, bloquea asignación de vivienda
-   * 'advertencia': Cliente Activo con vivienda asignada pero sin cédula — banner ámbar suave, expediente incompleto
+   * 'bloqueante' (default): banner rojo/naranja prominente
+   * 'advertencia': banner ámbar suave (usar solo cuando el botón de subida no está disponible)
    */
   variant?: 'bloqueante' | 'advertencia'
+
+  /** Texto descriptivo personalizado. Si no se pasa, se usa el mensaje por defecto. */
+  mensaje?: string
 }
 
 export function BannerDocumentoRequerido({
   onSubirDocumento,
   variant = 'bloqueante',
+  mensaje,
 }: BannerDocumentoRequeridoProps) {
   if (variant === 'advertencia') {
     return (
@@ -47,10 +51,17 @@ export function BannerDocumentoRequerido({
             </h4>
             <p className='text-xs leading-relaxed text-amber-800 dark:text-amber-300'>
               El expediente de este cliente está incompleto. Sube la cédula o
-              pasaporte usando el botón{' '}
-              <strong>&quot;Subir Cédula/Pasaporte&quot;</strong> en la esquina
-              superior para mantener el registro actualizado.
+              pasaporte para mantener el registro actualizado.
             </p>
+            {onSubirDocumento && (
+              <button
+                onClick={onSubirDocumento}
+                className='mt-2 inline-flex items-center gap-1.5 rounded-lg border border-amber-400 bg-white px-3 py-1.5 text-xs font-semibold text-amber-700 shadow-sm transition-all hover:bg-amber-50 active:scale-95 dark:border-amber-600 dark:bg-amber-900/40 dark:text-amber-300 dark:hover:bg-amber-900/60'
+              >
+                <IdCard className='h-3.5 w-3.5' />
+                Subir Cédula / Pasaporte
+              </button>
+            )}
           </div>
         </div>
       </motion.div>
@@ -77,8 +88,8 @@ export function BannerDocumentoRequerido({
               Documento de Identidad Requerido
             </h3>
             <p className='text-sm leading-relaxed text-white/90'>
-              Para asignar una vivienda a este cliente primero debes subir su
-              cédula o pasaporte.
+              {mensaje ??
+                'Para asignar una vivienda a este cliente primero debes subir su cédula o pasaporte.'}
             </p>
           </div>
           {onSubirDocumento && (

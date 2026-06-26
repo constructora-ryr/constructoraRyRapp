@@ -59,6 +59,7 @@ export function DocumentosPapeleraContextual({
         queryKey: ['documentos-eliminados-contextual', entidadId],
       })
       queryClient.invalidateQueries({ queryKey: ['documentos'] })
+      queryClient.invalidateQueries({ queryKey: ['documentos-pendientes'] })
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Error al restaurar')

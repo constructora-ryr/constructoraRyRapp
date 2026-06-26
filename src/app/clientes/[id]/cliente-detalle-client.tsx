@@ -32,7 +32,7 @@ import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-import { construirURLCliente } from '@/lib/utils/slug.utils'
+import { getShortId } from '@/lib/utils/slug.utils'
 import { formatNombreCompleto } from '@/lib/utils/string.utils'
 import {
   ModalRegistrarInteres,
@@ -156,7 +156,7 @@ export default function ClienteDetalleClient({
   }, [activeTab])
 
   const handleEditar = () => {
-    router.push(`/clientes/${clienteId}/editar`)
+    router.push(`/clientes/${getShortId(clienteId)}/editar`)
   }
 
   const handleEliminar = async () => {
@@ -189,15 +189,7 @@ export default function ClienteDetalleClient({
   })
 
   // ✅ Hook de asignación de vivienda con validación centralizada
-  const clienteSlug = cliente
-    ? construirURLCliente({
-        id: clienteUUID ?? '',
-        nombres: cliente.nombres,
-        apellidos: cliente.apellidos,
-      })
-        .split('/')
-        .pop()
-    : ''
+  const clienteSlug = clienteUUID ? getShortId(clienteUUID) : ''
 
   const {
     tieneCedula: tieneCedulaAsignacion,

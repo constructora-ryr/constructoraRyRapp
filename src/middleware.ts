@@ -244,7 +244,7 @@ export async function middleware(req: NextRequest) {
     // 6. OBTENER ROL Y PERMISOS DEL JWT (EDGE RUNTIME COMPATIBLE)
     // ============================================
 
-    let rol = 'Administrador de Obra'
+    let rol = '' // se llenará desde JWT o BD — sin default hardcodeado
     let nombres = ''
     let email = user.email || ''
     let permisosCache: string[] = [] // ✅ Cache de permisos desde JWT
@@ -275,7 +275,7 @@ export async function middleware(req: NextRequest) {
           const payload = JSON.parse(jsonPayload)
 
           // Leer claims custom del payload
-          rol = payload.user_rol || 'Administrador de Obra'
+          rol = payload.user_rol || '' // vacío si el hook no inyectó el claim
           nombres = payload.user_nombres || ''
           email = payload.user_email || user.email || ''
 
@@ -294,12 +294,32 @@ export async function middleware(req: NextRequest) {
     // 7. VERIFICAR PERMISOS PARA LA RUTA (JWT CACHE o FALLBACK BD)
     // ============================================
 
-    // IMPORTANTE: El JWT puede estar obsoleto si se actualizaron permisos después del login.
-    // Por eso SIEMPRE validamos contra BD para rutas protegidas, no solo si cache está vacío.
-    // Esto asegura que cambios de permisos en admin sean efectivos inmediatamente.
+    // Si el JWT no tiene el rol (hook no configurado en este entorno o JWT stale),
+    // obtener el rol real desde la tabla usuarios como fuente de verdad.
+    // Esto garantiza que el sistema funcione aunque el hook no esté activo en dev.
+    if (!rol) {
+      try {
+        const { data: userData } = await supabase
+          .from('usuarios')
+          .select('rol')
+          .eq('id', user.id)
+          .single()
 
-    // Si el usuario no es Admin, siempre consultar BD como fuente de verdad
-    // El JWT es solo una optimización para evitar queries frecuentes, pero NO es confiable
+        rol = userData?.rol || 'Vendedor'
+        debugLog('⚠️ JWT sin user_rol, rol obtenido desde BD', {
+          rol,
+          pathname,
+        })
+      } catch {
+        rol = 'Vendedor'
+        debugLog('⚠️ Error obteniendo rol desde BD, fallback a Vendedor', {
+          pathname,
+        })
+      }
+    }
+
+    // Si el usuario no es Admin, siempre consultar BD para permisos como fuente de verdad.
+    // El JWT es solo una optimización; cambios de permisos deben ser inmediatos.
     if (rol !== 'Administrador') {
       try {
         const { data: permisosBD } = await supabase
@@ -309,7 +329,6 @@ export async function middleware(req: NextRequest) {
           .eq('permitido', true)
 
         if (permisosBD && permisosBD.length > 0) {
-          // ✅ SIEMPRE usar permisos de BD (no confiar en JWT stale)
           permisosCache = permisosBD.map(p => `${p.modulo}.${p.accion}`)
           debugLog('✅ Permisos validados desde BD (fuente de verdad)', {
             rol,
@@ -317,7 +336,6 @@ export async function middleware(req: NextRequest) {
             pathname,
           })
         } else {
-          // Si la BD retorna nada, usuario sin permisos
           permisosCache = []
           debugLog('⚠️ Usuario sin permisos registrados en BD', {
             rol,
@@ -325,13 +343,11 @@ export async function middleware(req: NextRequest) {
           })
         }
       } catch (error) {
-        // Si falla la consulta BD, FALLBACK a JWT como último recurso
-        // No bloquear completamente, dejar que el usuario intente
+        // Si falla la consulta BD, usar lo que haya en el JWT como último recurso
         debugLog('⚠️ Error consultando BD, usando JWT como fallback', {
           rol,
           error: (error as Error).message,
         })
-        // permisosCache ya tiene valores del JWT
       }
     }
 

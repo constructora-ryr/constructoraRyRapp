@@ -111,13 +111,18 @@ export class DocumentosPapeleraService {
     const tabla = config.tabla
     const fk = config.fkSubidoPor
 
+    const joinEntidad =
+      tipoEntidad === 'cliente'
+        ? ', cliente:clientes!cliente_id(nombres, apellidos, negociaciones:negociaciones!negociaciones_cliente_id_fkey(vivienda:viviendas!negociaciones_vivienda_id_fkey(numero, manzana:manzanas!manzana_id(nombre))))'
+        : tipoEntidad === 'vivienda'
+          ? ', vivienda:viviendas!vivienda_id(numero, manzana:manzanas!manzana_id(nombre), negociacion:negociaciones!negociacion_id(cliente:clientes!cliente_id(nombres, apellidos)))'
+          : ', proyectos:proyectos!proyecto_id(nombre)'
+
     const { data, error } = await supabase
       .from(tabla)
       .select(
-        `
-        *,
-        usuario:usuarios!${fk} (nombres, apellidos, email)
-      `
+        `*,
+        usuario:usuarios!${fk} (nombres, apellidos, email)${joinEntidad}`
       )
       .eq('estado', 'eliminado')
       .eq('es_version_actual', true)
@@ -238,19 +243,89 @@ export class DocumentosPapeleraService {
       }
     }
 
-    if (documentosARestaurar.length > 0) {
-      const { error: updateError } = await supabase
+    // Para documentos de cliente: verificar si el "slot" que ocupaba este documento
+    // ya está tomado por uno más reciente. Si es así, restaurar sin las marcas
+    // del slot para que no haya dos documentos reclamando el mismo lugar.
+    //
+    // Slots posibles:
+    //   - Cédula: es_documento_identidad = true (uno por cliente)
+    //   - Requisito de fuente: requisito_config_id + fuente_pago_relacionada
+    let slotOcupado = false
+    const camposALimpiar: {
+      es_documento_identidad?: boolean
+      requisito_config_id?: string | null
+      fuente_pago_relacionada?: string | null
+    } = {}
+
+    if (tipoEntidad === 'cliente') {
+      const { data: docInfo } = await supabase
+        .from('documentos_cliente' as const)
+        .select(
+          'es_documento_identidad, cliente_id, requisito_config_id, fuente_pago_relacionada'
+        )
+        .eq('id', documentoId)
+        .single()
+
+      if (docInfo?.cliente_id) {
+        // Slot 1: cédula
+        if (docInfo.es_documento_identidad) {
+          const { count } = await supabase
+            .from('documentos_cliente' as const)
+            .select('id', { count: 'exact', head: true })
+            .eq('cliente_id', docInfo.cliente_id)
+            .eq('es_documento_identidad', true)
+            .eq('estado', 'activo')
+
+          if ((count ?? 0) > 0) {
+            slotOcupado = true
+            camposALimpiar.es_documento_identidad = false
+          }
+        }
+
+        // Slot 2: requisito de fuente de pago
+        if (docInfo.requisito_config_id) {
+          let q = supabase
+            .from('documentos_cliente' as const)
+            .select('id', { count: 'exact', head: true })
+            .eq('cliente_id', docInfo.cliente_id)
+            .eq('requisito_config_id', docInfo.requisito_config_id)
+            .eq('estado', 'activo')
+
+          if (docInfo.fuente_pago_relacionada) {
+            q = q.eq('fuente_pago_relacionada', docInfo.fuente_pago_relacionada)
+          }
+
+          const { count } = await q
+
+          if ((count ?? 0) > 0) {
+            slotOcupado = true
+            camposALimpiar.requisito_config_id = null
+            camposALimpiar.fuente_pago_relacionada = null
+          }
+        }
+      }
+    }
+
+    const ids =
+      documentosARestaurar.length > 0 ? documentosARestaurar : [documentoId]
+
+    if (slotOcupado) {
+      const { error } = await supabase
+        .from('documentos_cliente' as const)
+        .update({ estado: 'activo', ...camposALimpiar })
+        .in('id', ids)
+      if (error) throw error
+    } else if (documentosARestaurar.length > 0) {
+      const { error } = await supabase
         .from(tabla)
         .update({ estado: 'activo' })
         .in('id', documentosARestaurar)
-
-      if (updateError) throw updateError
+      if (error) throw error
     } else {
       const { error } = await supabase
         .from(tabla)
         .update({ estado: 'activo' })
         .eq('id', documentoId)
-
       if (error) throw error
     }
   }

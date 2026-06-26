@@ -13,6 +13,7 @@ export interface ConfirmacionEliminarState {
   isOpen: boolean
   detectando: boolean
   esDocumentoCritico: boolean
+  esDocumentoIdentidad: boolean
   entidadAfectada: string | null
   documentoId: string | null
   totalVersiones: number
@@ -22,6 +23,7 @@ const ESTADO_INICIAL: ConfirmacionEliminarState = {
   isOpen: false,
   detectando: false,
   esDocumentoCritico: false,
+  esDocumentoIdentidad: false,
   entidadAfectada: null,
   documentoId: null,
   totalVersiones: 1,
@@ -40,6 +42,7 @@ interface DocumentoParaEliminar {
   fuente_pago_relacionada?: string | null
   metadata?: Record<string, unknown> | null
   entidad?: string | null
+  es_documento_identidad?: boolean | null
 }
 
 async function detectarCriticidad(
@@ -104,6 +107,7 @@ export function useEliminarDocumento() {
       isOpen: true,
       detectando: false,
       esDocumentoCritico: criticidad.esCritico,
+      esDocumentoIdentidad: !!documento.es_documento_identidad,
       entidadAfectada: criticidad.entidad,
       documentoId: documento.id,
       totalVersiones,

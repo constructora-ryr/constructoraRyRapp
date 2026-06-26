@@ -8,7 +8,7 @@ import { AlertTriangle, Wallet } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 import { formatDateForInput } from '@/lib/utils/date.utils'
-import { construirURLCliente } from '@/lib/utils/slug.utils'
+import { getShortId } from '@/lib/utils/slug.utils'
 import { AbonoDetalleModal } from '@/modules/abonos/components/abono-detalle-modal/AbonoDetalleModal'
 import type { AbonoParaDetalle } from '@/modules/abonos/components/abono-detalle-modal/useAbonoDetalle'
 import { ModalEditarAbono } from '@/modules/abonos/components/modal-editar-abono'
@@ -161,14 +161,8 @@ export default function AbonosDetalleClient({
 
   // Construir slug canónico desde los datos resueltos (no desde el parámetro URL)
   const clienteSlug = negociacion
-    ? (construirURLCliente({
-        id: negociacion.cliente.id,
-        nombres: negociacion.cliente.nombres,
-        apellidos: negociacion.cliente.apellidos,
-      })
-        .split('/')
-        .pop() ?? clienteId)
-    : clienteId
+    ? getShortId(negociacion.cliente.id)
+    : getShortId(clienteId)
 
   const handleVolver = () => router.push('/abonos')
 

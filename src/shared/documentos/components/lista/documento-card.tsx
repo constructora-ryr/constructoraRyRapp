@@ -780,32 +780,43 @@ export function DocumentoCard({
             await onRefresh?.()
           })
         }}
-        variant={confirmacionEliminar.esDocumentoCritico ? 'warning' : 'danger'}
+        variant={
+          confirmacionEliminar.esDocumentoIdentidad
+            ? 'warning'
+            : confirmacionEliminar.esDocumentoCritico
+              ? 'warning'
+              : 'danger'
+        }
         title={
-          confirmacionEliminar.esDocumentoCritico
-            ? '¿Eliminar documento crítico?'
-            : '¿Eliminar documento?'
+          confirmacionEliminar.esDocumentoIdentidad
+            ? '¿Eliminar documento de identidad?'
+            : confirmacionEliminar.esDocumentoCritico
+              ? '¿Eliminar documento crítico?'
+              : '¿Eliminar documento?'
         }
         message={
           confirmacionEliminar.detectando
             ? 'Verificando el tipo de documento…'
-            : confirmacionEliminar.esDocumentoCritico
-              ? `Este documento es un requisito obligatorio para el desembolso${
-                  confirmacionEliminar.entidadAfectada
-                    ? ` (${confirmacionEliminar.entidadAfectada})`
-                    : ''
-                }. Al eliminarlo quedará registrado como pendiente nuevamente.\n\nSe moverán a la papelera ${
-                  confirmacionEliminar.totalVersiones > 1
-                    ? `las ${confirmacionEliminar.totalVersiones} versiones`
-                    : 'el documento'
-                }. Puede recuperarlos desde administración.`
-              : `Esta acción moverá el documento${
-                  confirmacionEliminar.totalVersiones > 1
-                    ? ` y sus ${confirmacionEliminar.totalVersiones} versiones`
-                    : ''
-                } a la papelera. Puede recuperarlo desde el panel de administración.`
+            : confirmacionEliminar.esDocumentoIdentidad
+              ? `Este es el documento de identidad del cliente (cédula o pasaporte).\n\nSin él, no podrán realizarse nuevas asignaciones de vivienda. Se moverá a la papelera y solo un usuario con rol de administrador podrá recuperarlo.`
+              : confirmacionEliminar.esDocumentoCritico
+                ? `Este documento es un requisito obligatorio para el desembolso${
+                    confirmacionEliminar.entidadAfectada
+                      ? ` (${confirmacionEliminar.entidadAfectada})`
+                      : ''
+                  }. Al eliminarlo quedará registrado como pendiente nuevamente.\n\nSe moverán a la papelera ${
+                    confirmacionEliminar.totalVersiones > 1
+                      ? `las ${confirmacionEliminar.totalVersiones} versiones`
+                      : 'el documento'
+                  }. Puede recuperarlos desde administración.`
+                : `Esta acción moverá el documento${
+                    confirmacionEliminar.totalVersiones > 1
+                      ? ` y sus ${confirmacionEliminar.totalVersiones} versiones`
+                      : ''
+                  } a la papelera. Puede recuperarlo desde el panel de administración.`
         }
         confirmText={
+          confirmacionEliminar.esDocumentoIdentidad ||
           confirmacionEliminar.esDocumentoCritico
             ? 'Entiendo, eliminar de todas formas'
             : 'Sí, eliminar'

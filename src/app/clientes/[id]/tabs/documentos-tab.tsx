@@ -181,18 +181,18 @@ export function DocumentosTab({ cliente }: DocumentosTabProps) {
           !tieneCedula &&
           !cargandoValidacion &&
           (() => {
-            // Si ya tiene negociación activa (vivienda asignada), mostrar advertencia suave
             const tieneNegociacion =
               (cliente.estadisticas?.negociaciones_activas ?? 0) > 0
             return (
               <BannerDocumentoRequerido
-                variant={tieneNegociacion ? 'advertencia' : 'bloqueante'}
-                onSubirDocumento={
+                variant='bloqueante'
+                mensaje={
                   tieneNegociacion
-                    ? undefined
-                    : canCreate
-                      ? () => mostrarUpload(true)
-                      : undefined
+                    ? 'Se detectó que este cliente tiene una vivienda asignada y una negociación activa, pero aún no tiene su documento de identidad cargado. Es indispensable subirlo para completar el proceso correctamente.'
+                    : undefined
+                }
+                onSubirDocumento={
+                  canCreate ? () => mostrarUpload(true) : undefined
                 }
               />
             )

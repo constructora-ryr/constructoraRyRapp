@@ -71,6 +71,14 @@ export const esDesembolsoUnico = (nombreOCodigo?: string | null) => {
   return !!codigo && codigo !== FUENTE_CODIGO.CUOTA_INICIAL
 }
 
+/**
+ * ¿El desembolso debe ser exactamente igual al monto aprobado?
+ * CH y subsidios: el banco/gobierno gira el 100% en un solo evento.
+ * Excluye Crédito Constructora (tiene plan de cuotas) y Cuota Inicial (múltiples abonos).
+ */
+export const esDesembolsoExacto = (nombreOCodigo?: string | null) =>
+  esDesembolsoUnico(nombreOCodigo) && !esCreditoConstructora(nombreOCodigo)
+
 // ─── Labels contextuales según código ───────────────────────────────────────
 
 interface LabelsContextuales {

@@ -5,6 +5,7 @@ import { ArrowRight, Building2, Home } from 'lucide-react'
 
 import Link from 'next/link'
 
+import { getShortId } from '@/lib/utils/slug.utils'
 import { formatNombreCompleto } from '@/lib/utils/string.utils'
 
 import {
@@ -66,7 +67,7 @@ export function ClienteCard({ negociacion }: ClienteCardProps) {
     .join(' · ')
 
   return (
-    <Link href={`/abonos/${cliente.id}`}>
+    <Link href={`/abonos/${getShortId(cliente.id)}`}>
       <motion.div
         whileHover={{ backgroundColor: 'rgba(16, 185, 129, 0.05)' }}
         transition={{ duration: 0.1 }}

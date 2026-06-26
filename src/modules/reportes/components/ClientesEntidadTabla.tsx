@@ -7,6 +7,7 @@ import { ExternalLink, FileText, Users } from 'lucide-react'
 
 import Link from 'next/link'
 
+import { getShortId } from '@/lib/utils/slug.utils'
 import { DataTable } from '@/shared/components/table/DataTable'
 
 import type {
@@ -243,7 +244,7 @@ function ClientesEntidadTablaComponent({ entidad }: ClientesEntidadTablaProps) {
       cell: ({ row }) => (
         <div className='flex items-center justify-center'>
           <Link
-            href={`/clientes/${row.original.clienteId}`}
+            href={`/clientes/${getShortId(row.original.clienteId)}`}
             onClick={e => e.stopPropagation()}
             className='inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-violet-600 transition-colors hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-950/30'
           >

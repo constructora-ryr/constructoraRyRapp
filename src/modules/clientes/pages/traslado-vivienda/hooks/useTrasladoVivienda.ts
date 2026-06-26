@@ -22,6 +22,7 @@ import { useRouter } from 'next/navigation'
 import { getTodayDateString } from '@/lib/utils/date.utils'
 import { formatCurrency } from '@/lib/utils/format.utils'
 import { logger } from '@/lib/utils/logger'
+import { getShortId } from '@/lib/utils/slug.utils'
 import { useFuentesPago } from '@/modules/clientes/components/asignar-vivienda/hooks/useFuentesPago'
 import { useProyectosViviendas } from '@/modules/clientes/components/asignar-vivienda/hooks/useProyectosViviendas'
 import type {
@@ -601,7 +602,7 @@ export function useTrasladoVivienda({
 
       setShowSuccess(true)
       setTimeout(() => {
-        router.push(`/clientes/${clienteSlug ?? clienteId}`)
+        router.push(`/clientes/${clienteSlug ?? getShortId(clienteId)}`)
       }, 2000)
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Error desconocido'

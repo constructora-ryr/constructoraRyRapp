@@ -21,7 +21,7 @@ import { motion } from 'framer-motion'
 
 import { useRouter } from 'next/navigation'
 
-import { construirURLCliente } from '@/lib/utils/slug.utils'
+import { construirURLCliente, getShortId } from '@/lib/utils/slug.utils'
 import { ModalConfirmacion } from '@/shared'
 import { NoResults } from '@/shared/components/ui/NoResults'
 
@@ -107,7 +107,7 @@ export function ClientesPageMain({
 
   const handleEditarCliente = useCallback(
     (cliente: ClienteResumen) => {
-      router.push(`/clientes/${cliente.id}/editar`)
+      router.push(`/clientes/${getShortId(cliente.id)}/editar`)
     },
     [router]
   )

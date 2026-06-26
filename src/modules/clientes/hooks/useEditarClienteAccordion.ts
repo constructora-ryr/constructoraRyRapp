@@ -29,6 +29,7 @@ import { useForm } from 'react-hook-form'
 import { useRouter } from 'next/navigation'
 
 import { useUnsavedChanges } from '@/contexts/unsaved-changes-context'
+import { getShortId } from '@/lib/utils/slug.utils'
 import type {
   SectionStatus,
   SummaryItem,
@@ -496,7 +497,7 @@ export function useEditarClienteAccordion(clienteId: string) {
       setMessage(null)
       setShowSuccess(true)
       // Redirigir al detalle del cliente, no a la lista
-      setTimeout(() => router.push(`/clientes/${clienteId}`), 1800)
+      setTimeout(() => router.push(`/clientes/${getShortId(clienteId)}`), 1800)
     } catch (error) {
       if (error instanceof Error && error.message.includes('documento')) {
         setError('numero_documento', { type: 'manual', message: error.message })

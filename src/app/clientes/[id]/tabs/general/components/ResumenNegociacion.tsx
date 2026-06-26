@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 
 import { formatCurrency } from '@/lib/utils/format.utils'
+import { getShortId } from '@/lib/utils/slug.utils'
 import type { Negociacion } from '@/modules/clientes/types'
 import { usePermisosQuery } from '@/modules/usuarios/hooks/usePermisosQuery'
 
@@ -118,7 +119,7 @@ export function ResumenNegociacion({
         {/* Right: CTA */}
         {canVerAbonos ? (
           <a
-            href={`/abonos/${clienteId}`}
+            href={`/abonos/${getShortId(clienteId)}`}
             className='flex items-center gap-1.5 rounded-lg border border-cyan-200 bg-cyan-50 px-2.5 py-1.5 text-xs font-semibold text-cyan-700 transition-colors hover:bg-cyan-100 dark:border-cyan-800/50 dark:bg-cyan-900/20 dark:text-cyan-400 dark:hover:bg-cyan-900/40'
           >
             <TrendingUp className='h-3 w-3' />

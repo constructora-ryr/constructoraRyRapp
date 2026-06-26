@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react'
 
-import { AlertTriangle, Lock, Minus, Plus } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Lock, Minus, Plus } from 'lucide-react'
 
 import { EntidadCombobox } from '@/modules/clientes/components/fuente-pago-card/EntidadCombobox'
+import { formatCurrency } from '@/shared/utils/format'
 import type { RestriccionesFuente } from '@/shared/utils/reglas-cierre-financiero'
 
 import type { AjusteLocal } from '../../hooks'
@@ -50,6 +51,39 @@ export function FilaFuente({
     const numero = soloDigitos ? parseInt(soloDigitos, 10) : 0
     setInputValue(soloDigitos ? numero.toLocaleString('es-CO') : '')
     onChange(ajuste.id, numero)
+  }
+
+  // ── Fuente completamente desembolsada → card compacta read-only ──────────
+  if (restricciones.esCompletada && !ajuste.paraEliminar) {
+    return (
+      <div className='flex overflow-hidden rounded-xl border border-gray-200/80 shadow-sm dark:border-gray-700/50'>
+        <div className={`w-1 flex-shrink-0 ${color.barra}`} />
+        <div className='flex flex-1 items-center gap-3 bg-white px-3 py-2.5 dark:bg-gray-800/60'>
+          <div className='min-w-0 flex-1'>
+            <div className='flex flex-wrap items-center gap-1.5'>
+              <p className='text-sm font-semibold text-gray-900 dark:text-white'>
+                {ajuste.tipo}
+              </p>
+              <span className='inline-flex items-center gap-1 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'>
+                <CheckCircle2 className='h-2.5 w-2.5' />
+                Completada
+              </span>
+            </div>
+            {mostrarEntidad && ajuste.entidadEditable && (
+              <p className='mt-0.5 text-xs text-gray-500 dark:text-gray-400'>
+                {ajuste.entidadEditable}
+              </p>
+            )}
+          </div>
+          <p className='flex-shrink-0 text-sm font-bold tabular-nums text-gray-700 dark:text-gray-300'>
+            {formatCurrency(ajuste.montoEditable)}
+          </p>
+          <div className='flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700/50'>
+            <Lock className='h-3.5 w-3.5 text-gray-400 dark:text-gray-500' />
+          </div>
+        </div>
+      </div>
+    )
   }
 
   const hasMessages =
@@ -176,7 +210,7 @@ export function FilaFuente({
           </div>
         ) : null}
 
-        {/* Mensajes de error / bloqueo / advertencia — ancho completo, legibles */}
+        {/* Mensajes de error / bloqueo / advertencia */}
         {hasMessages ? (
           <div className='mt-2 space-y-1'>
             {hasMontoError && restricciones.puedeEditarMonto ? (

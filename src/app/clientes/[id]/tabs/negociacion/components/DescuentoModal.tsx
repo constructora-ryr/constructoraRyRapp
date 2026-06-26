@@ -17,6 +17,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { AnimatePresence, motion } from 'framer-motion'
 import { DollarSign, Percent, Trash2, X } from 'lucide-react'
+import { AlertTriangle } from 'lucide-react'
 import { createPortal } from 'react-dom'
 
 import { formatCurrencyInput, parseCurrency } from '@/modules/viviendas/utils'
@@ -44,6 +45,7 @@ interface DescuentoModalProps {
   descuentoActual: number
   tipoDescuentoActual?: string | null
   motivoDescuentoActual?: string | null
+  esAdmin?: boolean
 }
 
 // ============================================
@@ -59,6 +61,7 @@ export function DescuentoModal({
   descuentoActual,
   tipoDescuentoActual,
   motivoDescuentoActual,
+  esAdmin = false,
 }: DescuentoModalProps) {
   const esEdicion = descuentoActual > 0
 
@@ -108,13 +111,15 @@ export function DescuentoModal({
     if (montoNum <= 0) errs.monto = 'El monto debe ser mayor a $0'
     else if (montoNum >= valorNegociado)
       errs.monto = 'El descuento no puede ser igual o mayor al valor negociado'
-    else if (montoNum > valorNegociado * 0.5)
+    else if (!esAdmin && montoNum > valorNegociado * 0.5)
       errs.monto = 'El descuento no puede superar el 50% del valor negociado'
+    else if (esAdmin && montoNum > valorNegociado * 0.99)
+      errs.monto = 'El descuento no puede superar el 99% del valor negociado'
     if (!motivo.trim()) errs.motivo = 'El motivo es obligatorio'
     else if (motivo.trim().length < 10)
       errs.motivo = 'El motivo debe tener al menos 10 caracteres'
     return errs
-  }, [montoNum, valorNegociado, motivo])
+  }, [montoNum, valorNegociado, motivo, esAdmin])
 
   const puedeGuardar = !errores.monto && !errores.motivo && !isGuardando
 
@@ -278,6 +283,18 @@ export function DescuentoModal({
                     {formatCurrency(nuevoTotal)}
                   </span>
                 </div>
+                {montoNum > 0 ? (
+                  <div className='mt-3 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-700/50 dark:bg-amber-900/20'>
+                    <AlertTriangle className='mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400' />
+                    <p className='text-xs text-amber-700 dark:text-amber-300'>
+                      Al aplicar este descuento se generará un descuadre de{' '}
+                      <strong>{formatCurrency(montoNum)}</strong> en las fuentes
+                      de pago. Deberás corregirlo en el{' '}
+                      <strong>Ajuste de Cierre Financiero</strong> después de
+                      guardar.
+                    </p>
+                  </div>
+                ) : null}
               </div>
             </div>
 

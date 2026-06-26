@@ -22,7 +22,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import { logger } from '@/lib/utils/logger'
-import { construirURLCliente } from '@/lib/utils/slug.utils'
+import { getShortId } from '@/lib/utils/slug.utils'
 import { obtenerFuentesPagoConAbonos } from '@/modules/abonos/services/abonos.service'
 import { negociacionesService } from '@/modules/clientes/services/negociaciones.service'
 import type { Cliente } from '@/modules/clientes/types'
@@ -162,15 +162,7 @@ export function useNegociacionesTab({
    * Navegar a crear negociación
    */
   const navegarACrearNegociacion = useCallback(() => {
-    const clienteSlug = construirURLCliente({
-      id: cliente.id,
-      nombre_completo: cliente.nombre_completo,
-      nombres: cliente.nombres,
-      apellidos: cliente.apellidos,
-    })
-      .split('/')
-      .pop()
-
+    const clienteSlug = getShortId(cliente.id)
     const nombreCliente = cliente.nombre_completo || cliente.nombres || ''
     router.push(
       `/clientes/${clienteSlug}/negociaciones/crear?nombre=${encodeURIComponent(nombreCliente)}`
@@ -181,15 +173,7 @@ export function useNegociacionesTab({
    * Navegar a asignar vivienda (desde FAB)
    */
   const navegarAAsignarVivienda = useCallback(() => {
-    const clienteSlug = construirURLCliente({
-      id: cliente.id,
-      nombre_completo: cliente.nombre_completo,
-      nombres: cliente.nombres,
-      apellidos: cliente.apellidos,
-    })
-      .split('/')
-      .pop()
-
+    const clienteSlug = getShortId(cliente.id)
     const nombreCliente = cliente.nombre_completo || cliente.nombres || ''
     router.push(
       `/clientes/${clienteSlug}/asignar-vivienda?nombre=${encodeURIComponent(nombreCliente)}`

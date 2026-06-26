@@ -397,7 +397,9 @@ export function FuentePagoCard({
             <span
               className={`text-[10px] font-bold ${completada ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-white/60'}`}
             >
-              {pct.toFixed(1)}%
+              {fuente.saldo_pendiente > 0
+                ? `${Math.floor(pct * 10) / 10}%`
+                : `${pct.toFixed(1)}%`}
             </span>
           </div>
         </div>

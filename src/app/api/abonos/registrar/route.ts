@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
     const { data: fuente, error: fuenteError } = await supabase
       .from('fuentes_pago')
       .select(
-        'id, tipo, monto_aprobado, monto_recibido, saldo_pendiente, negociacion_id'
+        'id, tipo, monto_aprobado, monto_recibido, saldo_pendiente, negociacion_id, permite_multiples_abonos'
       )
       .eq('id', fuente_pago_id)
       .single()
@@ -99,6 +99,20 @@ export async function POST(request: NextRequest) {
     if (fuente.negociacion_id !== negociacion_id) {
       return NextResponse.json(
         { error: 'La fuente de pago no pertenece a esta negociación' },
+        { status: 400 }
+      )
+    }
+
+    // Fuentes con desembolso único (permite_multiples_abonos = false):
+    // el monto debe ser exactamente el monto aprobado — ni más, ni menos.
+    if (
+      fuente.permite_multiples_abonos === false &&
+      monto !== fuente.monto_aprobado
+    ) {
+      return NextResponse.json(
+        {
+          error: `El desembolso de "${fuente.tipo}" debe ser exactamente $${fuente.monto_aprobado} (monto aprobado completo). No se permiten desembolsos parciales ni por montos diferentes.`,
+        },
         { status: 400 }
       )
     }

@@ -5,7 +5,7 @@ import { ArrowLeft, Building2, ExternalLink, Home, Star } from 'lucide-react'
 
 import Link from 'next/link'
 
-import { construirURLCliente } from '@/lib/utils/slug.utils'
+import { getShortId } from '@/lib/utils/slug.utils'
 import { formatNombreCompleto } from '@/lib/utils/string.utils'
 import { getAvatarGradient } from '@/modules/abonos/styles/seleccion-cliente.styles'
 import type { NegociacionConAbonos } from '@/modules/abonos/types'
@@ -29,11 +29,7 @@ export function HeaderCliente({
   const estaCompleta =
     negociacion.estado === 'Completada' ||
     (negociacion.saldo_pendiente ?? 1) <= 0
-  const clienteUrl = construirURLCliente({
-    id: cliente.id,
-    nombres: cliente.nombres,
-    apellidos: cliente.apellidos,
-  })
+  const clienteUrl = `/clientes/${getShortId(cliente.id)}`
   const nombreCompleto = formatNombreCompleto(
     `${cliente.nombres} ${cliente.apellidos}`
   )

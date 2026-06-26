@@ -18,6 +18,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { formatDateForDB } from '@/lib/utils/date.utils'
 import { formatCurrency } from '@/lib/utils/format.utils'
+import { getShortId } from '@/lib/utils/slug.utils'
 import { useAsignarViviendaForm } from '@/modules/clientes/components/asignar-vivienda/hooks/useAsignarViviendaForm'
 import { useFuentesPago } from '@/modules/clientes/components/asignar-vivienda/hooks/useFuentesPago'
 import { useProyectosViviendas } from '@/modules/clientes/components/asignar-vivienda/hooks/useProyectosViviendas'
@@ -359,7 +360,7 @@ export function useAsignarViviendaV2({
   )
 
   const handleCancelar = useCallback(() => {
-    router.push(`/clientes/${clienteSlug ?? clienteId}`)
+    router.push(`/clientes/${clienteSlug ?? getShortId(clienteId)}`)
   }, [router, clienteSlug, clienteId])
 
   // ─── Submit final (paso 3) ───────────────────────────
@@ -493,7 +494,7 @@ export function useAsignarViviendaV2({
 
     setShowSuccess(true)
     setTimeout(() => {
-      router.push(`/clientes/${clienteSlug ?? clienteId}`)
+      router.push(`/clientes/${clienteSlug ?? getShortId(clienteId)}`)
     }, 1800)
   }, [
     sumaCierra,

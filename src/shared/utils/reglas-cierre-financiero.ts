@@ -5,7 +5,10 @@
  * Testeable con datos simples.
  */
 
-import { esCreditoConstructora } from '@/shared/constants/fuentes-pago.constants'
+import {
+  esCreditoConstructora,
+  esCuotaInicial,
+} from '@/shared/constants/fuentes-pago.constants'
 import { formatCurrency } from '@/shared/utils/format'
 
 // ─── Types ─────────────────────────────────────────────────
@@ -18,6 +21,8 @@ export interface DatosFuenteParaReglas {
   monto_recibido: number
   /** true si el crédito constructora ya tiene plan de cuotas */
   tienePlanCuotas?: boolean
+  /** Fuente de verdad desde BD: false = desembolso único y exacto (CH, subsidios, tipos custom) */
+  permite_multiples_abonos?: boolean
 }
 
 export interface RestriccionesFuente {
@@ -50,9 +55,20 @@ export function calcularRestriccionesFuente(
   fuente: DatosFuenteParaReglas
 ): RestriccionesFuente {
   const tieneAbonos = fuente.monto_recibido > 0
-  const esCompletada =
-    fuente.monto_recibido >= fuente.monto_aprobado && fuente.monto_aprobado > 0
   const esCredito = esCreditoConstructora(fuente.tipo)
+
+  // Fuentes de desembolso único: si recibieron cualquier monto, el desembolso ya ocurrió
+  // por el total (el banco/gobierno gira exactamente el monto aprobado en un solo evento).
+  // Fuente de verdad: permite_multiples_abonos de BD cuando está disponible;
+  // fallback por código de tipo para compatibilidad con callers sin ese campo.
+  const esDesembolsoUnicoTipo =
+    fuente.permite_multiples_abonos !== undefined
+      ? fuente.permite_multiples_abonos === false && !esCredito
+      : !esCuotaInicial(fuente.tipo) && !esCredito
+  const esCompletada =
+    (fuente.monto_recibido >= fuente.monto_aprobado &&
+      fuente.monto_aprobado > 0) ||
+    (esDesembolsoUnicoTipo && tieneAbonos)
   const esCreditoConPlan = esCredito && (fuente.tienePlanCuotas ?? false)
 
   // Valor para el balance: capital_para_cierre para créditos, monto_aprobado para el resto
@@ -66,8 +82,8 @@ export function calcularRestriccionesFuente(
       puedeEditarEntidad: false,
       montoMinimo: fuente.monto_aprobado,
       razonBloqueoEliminar: 'Fuente completamente desembolsada',
-      razonBloqueoMonto: 'Fuente completamente desembolsada — solo lectura',
-      razonBloqueoEntidad: 'Fuente completamente desembolsada — solo lectura',
+      razonBloqueoMonto: null,
+      razonBloqueoEntidad: null,
       advertencias: [],
       esCompletada: true,
       tieneAbonos: true,

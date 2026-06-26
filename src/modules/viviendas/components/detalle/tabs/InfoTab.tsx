@@ -16,7 +16,7 @@ import {
   User,
 } from 'lucide-react'
 
-import * as styles from '@/app/viviendas/[slug]/vivienda-detalle.styles'
+import * as styles from '@/app/viviendas/[id]/vivienda-detalle.styles'
 import type { Vivienda } from '@/modules/viviendas/types'
 import { formatArea, formatCurrency } from '@/shared/utils'
 

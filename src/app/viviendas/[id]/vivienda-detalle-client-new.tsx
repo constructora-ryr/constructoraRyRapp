@@ -18,6 +18,7 @@ import {
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 
+import { getShortId } from '@/lib/utils/slug.utils'
 import { usePermisosQuery } from '@/modules/usuarios/hooks'
 import { InfoTab } from '@/modules/viviendas/components/detalle/tabs/InfoTab'
 import { useViviendaQuery } from '@/modules/viviendas/hooks/useViviendaQuery'
@@ -359,7 +360,7 @@ export default function ViviendaDetalleClient({
                 onRegistrarAbono={() => {
                   // Navega al módulo de abonos del cliente
                   if (vivienda.clientes?.id) {
-                    router.push(`/abonos/${vivienda.clientes.id}`)
+                    router.push(`/abonos/${getShortId(vivienda.clientes.id)}`)
                   }
                 }}
               />

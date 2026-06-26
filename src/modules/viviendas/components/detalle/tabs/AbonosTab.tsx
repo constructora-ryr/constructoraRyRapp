@@ -15,6 +15,7 @@ import {
 import Link from 'next/link'
 
 import { formatDateCompact } from '@/lib/utils/date.utils'
+import { getShortId } from '@/lib/utils/slug.utils'
 import { formatearNumeroRecibo } from '@/modules/abonos/utils/formato-recibo'
 import { usePermisosQuery } from '@/modules/usuarios/hooks'
 import { useAbonosViviendaTab } from '@/modules/viviendas/hooks/useAbonosViviendaTab'
@@ -118,7 +119,7 @@ export function AbonosTab({ vivienda }: AbonosTabProps) {
           </div>
           {vivienda.clientes && canViewAbonos && (
             <Link
-              href={`/abonos/${vivienda.clientes.id}`}
+              href={`/abonos/${getShortId(vivienda.clientes.id)}`}
               className='inline-flex items-center gap-1.5 rounded-lg border border-orange-200 bg-orange-50 px-3 py-1.5 text-xs font-medium text-orange-700 transition-colors hover:bg-orange-100 dark:border-orange-800 dark:bg-orange-950/30 dark:text-orange-400 dark:hover:bg-orange-950/50'
             >
               <ExternalLink className='h-3.5 w-3.5' />
@@ -209,7 +210,7 @@ export function AbonosTab({ vivienda }: AbonosTabProps) {
           canViewAbonos && (
             <div className='border-t border-gray-100 bg-gray-50/50 px-4 py-3 dark:border-gray-700/50 dark:bg-gray-900/30'>
               <Link
-                href={`/abonos/${vivienda.clientes.id}`}
+                href={`/abonos/${getShortId(vivienda.clientes.id)}`}
                 className='inline-flex items-center gap-1.5 text-xs font-medium text-orange-600 transition-colors hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300'
               >
                 Ver detalle completo en Abonos

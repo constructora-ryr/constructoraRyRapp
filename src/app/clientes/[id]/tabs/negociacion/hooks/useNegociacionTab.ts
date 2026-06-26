@@ -67,6 +67,8 @@ export interface AjusteLocal {
   capital_para_cierre: number | null
   /** Si el crédito constructora ya tiene plan de cuotas */
   tienePlanCuotas: boolean
+  /** Fuente de verdad desde BD: false = desembolso único exacto */
+  permite_multiples_abonos: boolean
 }
 
 export interface FuAlteNueva {

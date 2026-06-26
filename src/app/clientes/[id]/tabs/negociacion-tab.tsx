@@ -834,6 +834,7 @@ export function NegociacionTab({
           descuentoActual={descuento}
           tipoDescuentoActual={negociacion.tipo_descuento}
           motivoDescuentoActual={negociacion.motivo_descuento}
+          esAdmin={esAdminPermisos}
         />
       ) : null}
 

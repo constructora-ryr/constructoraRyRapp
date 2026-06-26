@@ -38,11 +38,20 @@ type DocumentoEliminadoUnificado = {
     numero_vivienda?: string
     numero?: string
     manzana?: { nombre: string } | null
+    negociacion?: {
+      cliente?: { nombres: string; apellidos: string } | null
+    } | null
   } | null
   manzana?: { nombre: string } | null
   numero_vivienda?: string
   numero?: string
-  cliente?: { nombres: string; apellidos: string } | null
+  cliente?: {
+    nombres: string
+    apellidos: string
+    negociaciones?: Array<{
+      vivienda?: { numero: string; manzana?: { nombre: string } }
+    }>
+  } | null
   [key: string]: unknown
 }
 
@@ -138,48 +147,52 @@ export function useDocumentosEliminados() {
     const docViviendas = (
       documentosViviendas as unknown as DocumentoEliminadoUnificado[]
     ).map(doc => {
-      // Determinar nombre de vivienda con formato Mz. X Casa Y
-      let nombreVivienda = 'Sin identificar'
-
-      // Obtener número (puede estar en diferentes ubicaciones)
-      const numeroReal =
-        doc.vivienda?.numero_vivienda ||
-        doc.vivienda?.numero ||
-        doc.numero_vivienda ||
-        doc.numero
-
-      // Obtener manzana (puede estar en vivienda.manzana o en doc.manzana directamente)
       const manzana = doc.vivienda?.manzana || doc.manzana
+      const numero = doc.vivienda?.numero || doc.numero
+      const clienteNeg = doc.vivienda?.negociacion?.cliente
 
-      // Caso 1: Tiene manzana con nombre y número
-      if (manzana?.nombre && numeroReal) {
-        nombreVivienda = `Mz. ${manzana.nombre} Casa ${numeroReal}`
-      }
-      // Caso 2: Solo tiene número
-      else if (numeroReal) {
-        nombreVivienda = `Casa ${numeroReal}`
-      }
-      // Caso 3: Sin datos suficientes
-      else {
-        nombreVivienda = 'Vivienda sin identificar'
-      }
+      // Código compacto: letra manzana + número vivienda (ej: "DTEST-02")
+      const codigoVivienda =
+        manzana?.nombre && numero
+          ? `${manzana.nombre}${numero}`
+          : numero || 'Vivienda sin identificar'
+
+      // Nombre del cliente asignado (vía negociación activa)
+      const nombreCliente = clienteNeg
+        ? `${clienteNeg.nombres} ${clienteNeg.apellidos}`.trim()
+        : null
+
+      const entidad_nombre = nombreCliente
+        ? `${codigoVivienda} - ${nombreCliente}`
+        : codigoVivienda
 
       return {
         ...doc,
         modulo: 'viviendas' as const,
-        entidad_nombre: nombreVivienda,
+        entidad_nombre,
       }
     })
 
     const docClientes = (
       documentosClientes as unknown as DocumentoEliminadoUnificado[]
-    ).map(doc => ({
-      ...doc,
-      modulo: 'clientes' as const,
-      entidad_nombre: doc.cliente
+    ).map(doc => {
+      const nombreCliente = doc.cliente
         ? `${doc.cliente.nombres} ${doc.cliente.apellidos}`.trim()
-        : 'Cliente sin identificar',
-    }))
+        : 'Cliente sin identificar'
+
+      const negociaciones = doc.cliente?.negociaciones
+
+      const negConVivienda = negociaciones?.find(n => n.vivienda?.numero)
+      const codigoVivienda = negConVivienda?.vivienda
+        ? `${negConVivienda.vivienda.manzana?.nombre ?? ''}${negConVivienda.vivienda.numero}`
+        : null
+
+      const entidad_nombre = codigoVivienda
+        ? `${codigoVivienda} - ${nombreCliente}`
+        : nombreCliente
+
+      return { ...doc, modulo: 'clientes' as const, entidad_nombre }
+    })
 
     return [
       ...docProyectos,
@@ -229,6 +242,7 @@ export function useDocumentosEliminados() {
         queryClient.refetchQueries({ queryKey: ['documentos-cliente'] }),
         queryClient.refetchQueries({ queryKey: ['versiones-documento'] }),
         queryClient.refetchQueries({ queryKey: ['versiones-eliminadas'] }),
+        queryClient.refetchQueries({ queryKey: ['documentos-pendientes'] }),
         // 🗑️ Actualizar contador del sidebar
         queryClient.refetchQueries({ queryKey: ['papelera-count-proyectos'] }),
         queryClient.refetchQueries({ queryKey: ['papelera-count-viviendas'] }),

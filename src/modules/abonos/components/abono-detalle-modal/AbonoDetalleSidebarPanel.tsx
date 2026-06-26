@@ -18,7 +18,7 @@ import Link from 'next/link'
 
 import { formatDateForDisplay } from '@/lib/utils/date.utils'
 import { formatCurrency } from '@/lib/utils/format.utils'
-import { construirURLCliente } from '@/lib/utils/slug.utils'
+import { getShortId } from '@/lib/utils/slug.utils'
 import { formatNombreCompleto } from '@/lib/utils/string.utils'
 
 import { formatearNumeroRecibo } from '../../utils/formato-recibo'
@@ -39,11 +39,7 @@ export function AbonoDetalleSidebarPanel({
   viviendaLabel,
   canVerCliente = false,
 }: AbonoDetalleSidebarPanelProps) {
-  const clienteUrl = construirURLCliente({
-    id: abono.cliente.id,
-    nombres: abono.cliente.nombres,
-    apellidos: abono.cliente.apellidos,
-  })
+  const clienteUrl = `/clientes/${getShortId(abono.cliente.id)}`
   return (
     <div className={s.sidebar.container}>
       {/* Pago */}

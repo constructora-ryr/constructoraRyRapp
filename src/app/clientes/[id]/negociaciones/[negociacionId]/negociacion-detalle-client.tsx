@@ -20,6 +20,7 @@ import { toast } from 'sonner'
 
 import { useRouter } from 'next/navigation'
 
+import { getShortId } from '@/lib/utils/slug.utils'
 import { ConfigurarFuentesPago } from '@/modules/clientes/components/negociaciones'
 import { useNegociacion } from '@/modules/clientes/hooks'
 import { CuotasCreditoTab } from '@/modules/fuentes-pago/components/CuotasCreditoTab'
@@ -208,7 +209,7 @@ export default function NegociacionDetalleClient({
             Negociación no encontrada
           </h2>
           <button
-            onClick={() => router.push(`/clientes/${clienteId}`)}
+            onClick={() => router.push(`/clientes/${getShortId(clienteId)}`)}
             className='mt-4 inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-white hover:bg-purple-700'
           >
             <ArrowLeft className='h-4 w-4' />
@@ -272,7 +273,7 @@ export default function NegociacionDetalleClient({
           </button>
           <ChevronRight className='h-4 w-4' />
           <button
-            onClick={() => router.push(`/clientes/${clienteId}`)}
+            onClick={() => router.push(`/clientes/${getShortId(clienteId)}`)}
             className='hover:text-purple-600'
           >
             Cliente

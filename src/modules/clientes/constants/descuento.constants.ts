@@ -16,6 +16,7 @@ export const TIPOS_DESCUENTO = [
   'referido',
   'promocional',
   'forma_pago',
+  'condonacion',
   'otro',
 ] as const
 
@@ -27,5 +28,6 @@ export const LABELS_TIPO_DESCUENTO: Record<TipoDescuento, string> = {
   referido: 'Descuento por Referido',
   promocional: 'Descuento Promocional',
   forma_pago: 'Descuento por Forma de Pago',
+  condonacion: 'Condonación de Deuda',
   otro: 'Otro',
 }
