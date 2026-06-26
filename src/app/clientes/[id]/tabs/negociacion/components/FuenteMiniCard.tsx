@@ -175,6 +175,17 @@ export function FuenteMiniCard({
             <span className='font-medium tabular-nums text-gray-600 dark:text-gray-300'>
               {formatCurrency(recibido)}
             </span>
+            {recibido > 0 && (
+              <span
+                className={`ml-1 font-semibold tabular-nums ${
+                  pctRecibido >= 100
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : 'text-amber-500 dark:text-amber-400'
+                }`}
+              >
+                ({Math.round(pctRecibido)}%)
+              </span>
+            )}
           </span>
           {alertaDocsTexto ? (
             <span className='flex items-center gap-0.5 text-[10px] font-medium text-amber-500 dark:text-amber-400'>
