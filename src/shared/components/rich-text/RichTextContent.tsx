@@ -7,7 +7,7 @@ interface RichTextContentProps {
 
 // Detecta si el contenido es HTML enriquecido o texto plano
 function isRichHtml(content: string): boolean {
-  return /<(h[1-6]|ul|ol|li|strong|em|u|s|mark|blockquote|br)\b/.test(content)
+  return /<(p|h[1-6]|ul|ol|li|strong|em|u|s|mark|blockquote|br)\b/.test(content)
 }
 
 export function RichTextContent({
