@@ -64,6 +64,15 @@ export function useClientesList() {
   const clientesFiltrados = useMemo(() => {
     let resultado = [...clientes]
 
+    // Filtro client-side por estado para evitar flash durante placeholderData:
+    // mientras llega la nueva query, React Query muestra datos del query anterior
+    // que pueden tener estados incorrectos respecto al filtro actual
+    if ((filtros.estado?.length ?? 0) > 0) {
+      resultado = resultado.filter(c =>
+        (filtros.estado as string[]).includes(c.estado)
+      )
+    }
+
     // Cuando se filtra por 'Activo', excluir los que ya son propietarios derivados
     // (estado=Activo en BD pero saldo_pendiente=0 → UI los muestra como Propietario)
     if (filtros.estado?.length === 1 && filtros.estado[0] === 'Activo') {
