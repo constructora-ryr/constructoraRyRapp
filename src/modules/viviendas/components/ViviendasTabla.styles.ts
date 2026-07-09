@@ -21,11 +21,13 @@ export const viviendasTablaStyles = {
   badge: {
     base: 'inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-medium text-[10px] whitespace-nowrap',
     disponible:
-      'bg-green-100 dark:bg-green-950/40 border border-green-300 dark:border-green-800/50 text-green-700 dark:text-green-300',
+      'bg-slate-100 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-600/50 text-slate-600 dark:text-slate-400',
     asignada:
       'bg-blue-100 dark:bg-blue-950/40 border border-blue-300 dark:border-blue-800/50 text-blue-700 dark:text-blue-300',
     entregada:
       'bg-purple-100 dark:bg-purple-950/40 border border-purple-300 dark:border-purple-800/50 text-purple-700 dark:text-purple-300',
+    propietario:
+      'bg-emerald-100 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-300',
     default:
       'bg-gray-100 dark:bg-gray-800/40 border border-gray-300 dark:border-gray-600/50 text-gray-700 dark:text-gray-300',
   },

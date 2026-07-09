@@ -64,6 +64,12 @@ export function useClientesList() {
   const clientesFiltrados = useMemo(() => {
     let resultado = [...clientes]
 
+    // Cuando se filtra por 'Activo', excluir los que ya son propietarios derivados
+    // (estado=Activo en BD pero saldo_pendiente=0 → UI los muestra como Propietario)
+    if (filtros.estado?.length === 1 && filtros.estado[0] === 'Activo') {
+      resultado = resultado.filter(c => (c.vivienda?.saldo_pendiente ?? 1) > 0)
+    }
+
     // Búsqueda local adicional (por si no está en filtros del servidor)
     if (filtros.busqueda) {
       const terminoBusqueda = filtros.busqueda.toLowerCase().trim()
@@ -131,7 +137,7 @@ export function useClientesList() {
     })
 
     return resultado
-  }, [clientes, filtros.busqueda])
+  }, [clientes, filtros.busqueda, filtros.estado])
 
   // =====================================================
   // ESTADÍSTICAS COMPUTADAS

@@ -23,6 +23,7 @@ import { toTitleCase } from '@/lib/utils/string.utils'
 import { DataTable } from '@/shared/components/table/DataTable'
 import { cn } from '@/shared/utils/helpers'
 
+import { ESTADO_LABELS } from '../constants'
 import type { Vivienda } from '../types'
 
 import { viviendasTablaStyles as styles } from './ViviendasTabla.styles'
@@ -169,7 +170,8 @@ export function ViviendasTabla({
                 styles.badge.base,
                 esDisponible && styles.badge.disponible,
                 esAsignada && styles.badge.asignada,
-                (esEntregada || esPropietario) && styles.badge.entregada,
+                esEntregada && styles.badge.entregada,
+                esPropietario && styles.badge.propietario,
                 !esDisponible &&
                   !esAsignada &&
                   !esEntregada &&
@@ -184,7 +186,9 @@ export function ViviendasTabla({
               ) : esEntregada || esPropietario ? (
                 <CheckCircle2 className='h-3 w-3 flex-shrink-0' />
               ) : null}
-              <span>{estado}</span>
+              <span>
+                {ESTADO_LABELS[estado as keyof typeof ESTADO_LABELS] ?? estado}
+              </span>
             </div>
           </div>
         )
