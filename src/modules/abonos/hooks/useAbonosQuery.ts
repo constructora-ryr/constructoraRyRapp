@@ -76,6 +76,7 @@ export interface AbonoCompletoRow {
   proyecto_id: string
   proyecto_nombre: string
   fuente_pago_tipo: string
+  fuente_pago_entidad: string | null
   // Financieros de la negociación (para recibo PDF)
   negociacion_valor_total: number
   negociacion_total_abonado: number
@@ -125,6 +126,7 @@ export interface AbonoConInfo {
   fuente_pago: {
     id: string
     tipo: string
+    entidad: string | null
   }
   // Financieros de la negociación (para recibo PDF)
   negociacion_valor_total: number
@@ -192,6 +194,7 @@ function transformarFila(row: AbonoCompletoRow): AbonoConInfo {
     fuente_pago: {
       id: row.fuente_pago_id || '',
       tipo: row.fuente_pago_tipo || 'N/A',
+      entidad: row.fuente_pago_entidad ?? null,
     },
     negociacion_valor_total: row.negociacion_valor_total ?? 0,
     negociacion_total_abonado: row.negociacion_total_abonado ?? 0,

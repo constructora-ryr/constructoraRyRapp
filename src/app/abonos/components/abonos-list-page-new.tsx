@@ -59,6 +59,7 @@ export function AbonosListPage({
     abonos,
     estadisticas,
     fuentesUnicas,
+    entidadesUnicas,
     filtros,
     actualizarFiltros,
     limpiarFiltros,
@@ -128,6 +129,7 @@ export function AbonosListPage({
           <AbonosListFiltros
             filtros={filtros}
             fuentesUnicas={fuentesUnicas}
+            entidadesUnicas={entidadesUnicas}
             totalFiltrado={totalFiltrado}
             montoTotalFiltrado={estadisticas.montoTotal}
             actualizarFiltros={actualizarFiltros}

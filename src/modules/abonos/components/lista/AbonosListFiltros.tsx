@@ -11,6 +11,7 @@ import { abonosListaStyles as s } from './abonos-lista.styles'
 interface AbonosListFiltrosProps {
   filtros: FiltrosAbonos
   fuentesUnicas: string[]
+  entidadesUnicas: string[]
   totalFiltrado: number
   montoTotalFiltrado: number
   actualizarFiltros: (f: Partial<FiltrosAbonos>) => void
@@ -57,6 +58,7 @@ const RANGOS: { value: RangoFecha; label: string }[] = [
 export function AbonosListFiltros({
   filtros,
   fuentesUnicas,
+  entidadesUnicas,
   totalFiltrado,
   montoTotalFiltrado,
   actualizarFiltros,
@@ -66,7 +68,10 @@ export function AbonosListFiltros({
   toggleMostrarRenunciados,
 }: AbonosListFiltrosProps) {
   const hayFiltrosActivos =
-    filtros.busqueda || filtros.fuente !== 'todas' || filtros.rango !== 'todo'
+    filtros.busqueda ||
+    filtros.fuente !== 'todas' ||
+    filtros.entidad !== 'todas' ||
+    filtros.rango !== 'todo'
 
   return (
     <div className={s.filtros.container}>
@@ -103,6 +108,27 @@ export function AbonosListFiltros({
             </option>
           ))}
         </select>
+
+        {entidadesUnicas.length > 0 && (
+          <>
+            <label htmlFor='filtro-entidad' className='sr-only'>
+              Entidad
+            </label>
+            <select
+              id='filtro-entidad'
+              value={filtros.entidad}
+              onChange={e => actualizarFiltros({ entidad: e.target.value })}
+              className={`${s.filtros.select} min-w-[160px]`}
+            >
+              <option value='todas'>Todas las entidades</option>
+              {entidadesUnicas.map(e => (
+                <option key={e} value={e}>
+                  {e}
+                </option>
+              ))}
+            </select>
+          </>
+        )}
       </div>
 
       {/* Fila 2: botones de rango ─────────────────────────────────────── */}

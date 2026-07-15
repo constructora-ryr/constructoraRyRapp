@@ -22,6 +22,7 @@ export type RangoFecha =
 export interface FiltrosAbonos {
   busqueda: string
   fuente: string // nombre de fuente o 'todas'
+  entidad: string // nombre de entidad o 'todas'
   rango: RangoFecha
   fechaDesde: string // YYYY-MM-DD, solo para 'personalizado'
   fechaHasta: string // YYYY-MM-DD, solo para 'personalizado'
@@ -62,6 +63,7 @@ export function useAbonosList() {
   const [filtros, setFiltros] = useState<FiltrosAbonos>({
     busqueda: '',
     fuente: 'todas',
+    entidad: 'todas',
     rango: 'todo',
     fechaDesde: '',
     fechaHasta: '',
@@ -89,6 +91,7 @@ export function useAbonosList() {
   const {
     busqueda,
     fuente,
+    entidad,
     rango,
     fechaDesde,
     fechaHasta,
@@ -103,6 +106,7 @@ export function useAbonosList() {
   }, [
     busqueda,
     fuente,
+    entidad,
     rango,
     fechaDesde,
     fechaHasta,
@@ -156,6 +160,13 @@ export function useAbonosList() {
     if (filtros.fuente && filtros.fuente !== 'todas') {
       resultado = resultado.filter(
         abono => abono.fuente_pago.tipo === filtros.fuente
+      )
+    }
+
+    // Filtro por entidad (Comfenalco, Comfandi, etc.)
+    if (filtros.entidad && filtros.entidad !== 'todas') {
+      resultado = resultado.filter(
+        abono => abono.fuente_pago.entidad === filtros.entidad
       )
     }
 
@@ -258,13 +269,22 @@ export function useAbonosList() {
 
   // ─── Control de filtros ───────────────────────────────────────────────────
   const actualizarFiltros = (nuevosFiltros: Partial<FiltrosAbonos>) => {
-    setFiltros(prev => ({ ...prev, ...nuevosFiltros }))
+    setFiltros(prev => ({
+      ...prev,
+      ...nuevosFiltros,
+      // Al cambiar fuente, resetear entidad para no quedar con filtro huérfano
+      ...(nuevosFiltros.fuente !== undefined &&
+      nuevosFiltros.entidad === undefined
+        ? { entidad: 'todas' }
+        : {}),
+    }))
   }
 
   const limpiarFiltros = () => {
     setFiltros({
       busqueda: '',
       fuente: 'todas',
+      entidad: 'todas',
       rango: 'todo',
       fechaDesde: '',
       fechaHasta: '',
@@ -297,12 +317,26 @@ export function useAbonosList() {
     return Array.from(set).sort()
   }, [abonos])
 
+  // Entidades únicas según la fuente actualmente seleccionada
+  const entidadesUnicas = useMemo(() => {
+    const base =
+      filtros.fuente !== 'todas'
+        ? abonos.filter(a => a.fuente_pago.tipo === filtros.fuente)
+        : abonos
+    const set = new Set<string>()
+    base.forEach(a => {
+      if (a.fuente_pago.entidad) set.add(a.fuente_pago.entidad)
+    })
+    return Array.from(set).sort()
+  }, [abonos, filtros.fuente])
+
   return {
     abonos: abonosPaginados,
     abonosCompletos: abonos,
     totalSinFiltrar: abonos.length,
     estadisticas,
     fuentesUnicas,
+    entidadesUnicas,
     filtros,
     actualizarFiltros,
     limpiarFiltros,
