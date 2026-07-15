@@ -48,6 +48,7 @@ export interface AbonoParaDetalle {
   fuente_pago: {
     id: string
     tipo: string
+    entidad?: string | null
   }
 }
 

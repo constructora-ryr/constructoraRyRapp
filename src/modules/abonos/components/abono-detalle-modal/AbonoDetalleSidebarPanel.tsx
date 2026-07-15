@@ -105,6 +105,11 @@ export function AbonoDetalleSidebarPanel({
             <span className={s.sidebar.fuentePill}>
               {abono.fuente_pago?.tipo}
             </span>
+            {abono.fuente_pago?.entidad && (
+              <p className='mt-0.5 text-[11px] text-gray-500 dark:text-gray-400'>
+                {abono.fuente_pago.entidad}
+              </p>
+            )}
           </div>
         </div>
       </div>
