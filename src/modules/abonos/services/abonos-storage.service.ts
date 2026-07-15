@@ -14,6 +14,8 @@ const MIME_TO_EXT: Record<string, string> = {
   'application/pdf': 'pdf',
 }
 
+const MIME_VALIDOS = Object.keys(MIME_TO_EXT)
+
 /**
  * Genera el path de storage para un comprobante.
  * Formato: negociaciones/{negociacionId}/fuentes/{fuentePagoId}/{YYYYMMDD}-{timestamp}.{ext}
@@ -23,7 +25,12 @@ export function generarPathComprobante(
   fuentePagoId: string,
   archivo: File
 ): string {
-  const ext = MIME_TO_EXT[archivo.type] || 'bin'
+  const ext = MIME_TO_EXT[archivo.type]
+  if (!ext) {
+    throw new Error(
+      `Tipo de archivo no permitido: ${archivo.type}. Solo se aceptan JPG, PNG, WebP o PDF.`
+    )
+  }
   const hoy = new Date()
   const yyyymmdd =
     hoy.getFullYear().toString() +
@@ -40,6 +47,12 @@ export async function subirComprobante(
   path: string,
   archivo: File
 ): Promise<string> {
+  if (!MIME_VALIDOS.includes(archivo.type)) {
+    throw new Error(
+      `Tipo de archivo no permitido: ${archivo.type}. Solo se aceptan JPG, PNG, WebP o PDF.`
+    )
+  }
+
   const { error } = await supabase.storage.from(BUCKET).upload(path, archivo, {
     cacheControl: '3600',
     upsert: false,

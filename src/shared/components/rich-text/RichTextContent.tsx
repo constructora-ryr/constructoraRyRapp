@@ -1,13 +1,36 @@
 'use client'
 
+import DOMPurify from 'dompurify'
+
 interface RichTextContentProps {
   html: string
   className?: string
 }
 
+const ALLOWED_TAGS = [
+  'p',
+  'h2',
+  'h3',
+  'ul',
+  'ol',
+  'li',
+  'strong',
+  'em',
+  'u',
+  's',
+  'mark',
+  'blockquote',
+  'br',
+]
+
 // Detecta si el contenido es HTML enriquecido o texto plano
 function isRichHtml(content: string): boolean {
   return /<(p|h[1-6]|ul|ol|li|strong|em|u|s|mark|blockquote|br)\b/.test(content)
+}
+
+function sanitize(html: string): string {
+  if (typeof window === 'undefined') return html
+  return DOMPurify.sanitize(html, { ALLOWED_TAGS, ALLOWED_ATTR: [] })
 }
 
 export function RichTextContent({
@@ -51,7 +74,7 @@ export function RichTextContent({
       `}</style>
       <div
         className={`rich-nota-content text-sm leading-relaxed ${className}`}
-        dangerouslySetInnerHTML={{ __html: html }}
+        dangerouslySetInnerHTML={{ __html: sanitize(html) }}
       />
     </>
   )

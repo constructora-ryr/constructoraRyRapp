@@ -228,6 +228,35 @@ export async function middleware(req: NextRequest) {
     debugLog('✅ Usuario autenticado', { email: user.email, pathname })
 
     // ============================================
+    // 4b. VERIFICAR ESTADO DE LA CUENTA (DB)
+    // ============================================
+    // El JWT puede seguir siendo válido aunque el usuario esté Bloqueado/Inactivo.
+    // Consultamos la DB como fuente de verdad para el estado de la cuenta.
+    // Esto corre para todos los usuarios, incluyendo Administradores.
+    try {
+      const { data: cuentaData } = await supabase
+        .from('usuarios')
+        .select('estado')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (!cuentaData || cuentaData.estado !== 'Activo') {
+        debugLog('🚫 Cuenta bloqueada o inactiva', {
+          estado: cuentaData?.estado,
+          pathname,
+        })
+        const redirectUrl = req.nextUrl.clone()
+        redirectUrl.pathname = '/login'
+        return NextResponse.redirect(redirectUrl)
+      }
+    } catch {
+      // Si falla la consulta de estado, denegar acceso por seguridad
+      const redirectUrl = req.nextUrl.clone()
+      redirectUrl.pathname = '/login'
+      return NextResponse.redirect(redirectUrl)
+    }
+
+    // ============================================
     // 5. SI ESTÁ EN /login CON SESIÓN → Permitir (el componente manejará la redirección)
     // ============================================
 
