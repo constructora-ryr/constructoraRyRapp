@@ -95,13 +95,18 @@ export function AbonoFila({
             ? `Mz.${abono.vivienda.manzana.identificador} Casa No. ${abono.vivienda.numero}`
             : `N°${abono.vivienda.numero}`}
         </p>
-        <div className='mt-1.5 flex flex-wrap items-center gap-1.5'>
-          <span className='text-[11px] text-gray-400 dark:text-gray-500'>
-            {abono.proyecto.nombre}
-          </span>
-          <span className='text-[10px] text-gray-300 dark:text-gray-700'>
-            /
-          </span>
+        <p className='mt-0.5 text-[11px] text-gray-400 dark:text-gray-500'>
+          {abono.proyecto.nombre}
+        </p>
+      </td>
+
+      {/* Método + Fuente ─────────────────────────────────── */}
+      <td className={s.fila.metodoCell}>
+        <span className={s.fila.metodoBadge}>
+          <MetodoIcon metodo={abono.metodo_pago} />
+          {abono.metodo_pago ?? '—'}
+        </span>
+        <div className='mt-1.5 flex flex-wrap items-center gap-1'>
           <span className={s.fila.fuentePill}>{abono.fuente_pago.tipo}</span>
           {abono.fuente_pago.entidad && (
             <span className='text-[10px] font-medium text-gray-500 dark:text-gray-400'>
@@ -109,14 +114,6 @@ export function AbonoFila({
             </span>
           )}
         </div>
-      </td>
-
-      {/* Método ─────────────────────────────────────────── */}
-      <td className={s.fila.metodoCell}>
-        <span className={s.fila.metodoBadge}>
-          <MetodoIcon metodo={abono.metodo_pago} />
-          {abono.metodo_pago ?? '—'}
-        </span>
       </td>
 
       {/* Monto ──────────────────────────────────────────── */}
