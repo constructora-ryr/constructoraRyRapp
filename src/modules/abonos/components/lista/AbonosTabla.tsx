@@ -98,8 +98,9 @@ export function AbonosTabla({
             </th>
             <th className={s.tabla.th}>Cliente</th>
             <th className={s.tabla.th}>Vivienda</th>
-            <th className={`w-36 ${s.tabla.th}`}>Método</th>
-            <th className={`w-40 ${s.tabla.thRight}`}>Monto</th>
+            <th className={`w-44 ${s.tabla.th}`}>Fuente</th>
+            <th className={`w-32 ${s.tabla.th}`}>Método</th>
+            <th className={`w-36 ${s.tabla.thRight}`}>Monto</th>
             {canEdit || canAnular ? <th className='w-20 px-4 py-3' /> : null}
           </tr>
         </thead>

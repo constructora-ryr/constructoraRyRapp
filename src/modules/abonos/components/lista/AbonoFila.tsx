@@ -100,16 +100,24 @@ export function AbonoFila({
         </p>
       </td>
 
-      {/* Método + Fuente ─────────────────────────────────── */}
+      {/* Fuente ─────────────────────────────────────────── */}
+      <td className='px-4 py-3'>
+        <p className='text-xs font-medium text-gray-700 dark:text-gray-300'>
+          {abono.fuente_pago.tipo}
+        </p>
+        {abono.fuente_pago.entidad && (
+          <p className='mt-0.5 text-[10px] text-gray-400 dark:text-gray-500'>
+            {abono.fuente_pago.entidad}
+          </p>
+        )}
+      </td>
+
+      {/* Método ─────────────────────────────────────────── */}
       <td className={s.fila.metodoCell}>
         <span className={s.fila.metodoBadge}>
           <MetodoIcon metodo={abono.metodo_pago} />
           {abono.metodo_pago ?? '—'}
         </span>
-        <p className='mt-1 text-[10px] text-gray-400 dark:text-gray-500'>
-          {abono.fuente_pago.tipo}
-          {abono.fuente_pago.entidad && ` · ${abono.fuente_pago.entidad}`}
-        </p>
       </td>
 
       {/* Monto ──────────────────────────────────────────── */}
