@@ -106,14 +106,10 @@ export function AbonoFila({
           <MetodoIcon metodo={abono.metodo_pago} />
           {abono.metodo_pago ?? '—'}
         </span>
-        <div className='mt-1.5 flex flex-wrap items-center gap-1'>
-          <span className={s.fila.fuentePill}>{abono.fuente_pago.tipo}</span>
-          {abono.fuente_pago.entidad && (
-            <span className='text-[10px] font-medium text-gray-500 dark:text-gray-400'>
-              · {abono.fuente_pago.entidad}
-            </span>
-          )}
-        </div>
+        <p className='mt-1 text-[10px] text-gray-400 dark:text-gray-500'>
+          {abono.fuente_pago.tipo}
+          {abono.fuente_pago.entidad && ` · ${abono.fuente_pago.entidad}`}
+        </p>
       </td>
 
       {/* Monto ──────────────────────────────────────────── */}
