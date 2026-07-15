@@ -9,6 +9,10 @@
 -- Verificado: anon y authenticated tienen EXECUTE = true.
 -- La función es SECURITY DEFINER (corre como superuser).
 -- Cualquier usuario autenticado puede ejecutar SQL arbitrario.
+-- El permiso viene de PUBLIC (default al crear funciones en PostgreSQL).
+-- Revocar de PUBLIC elimina el acceso para todos los roles que heredan de él
+-- (anon, authenticated). Revocar de los roles individuales no es suficiente.
+REVOKE EXECUTE ON FUNCTION exec_sql(TEXT) FROM PUBLIC;
 REVOKE EXECUTE ON FUNCTION exec_sql(TEXT) FROM authenticated;
 REVOKE EXECUTE ON FUNCTION exec_sql(TEXT) FROM anon;
 -- service_role mantiene acceso (uso legítimo server-side).
@@ -45,16 +49,17 @@ USING (
     EXISTS (
       SELECT 1 FROM usuarios
       WHERE id = auth.uid()
-        AND rol = 'Administrador'
-        AND estado = 'Activo'
+        AND rol = 'Administrador'::rol_usuario
+        AND estado = 'Activo'::estado_usuario
     )
     OR
     -- Usuarios con permiso abonos.ver activos
+    -- Nota: permisos_rol.rol es TEXT, usuarios.rol es enum rol_usuario → cast necesario
     EXISTS (
       SELECT 1 FROM permisos_rol pr
-      JOIN usuarios u ON u.rol = pr.rol
+      JOIN usuarios u ON u.rol::text = pr.rol
       WHERE u.id = auth.uid()
-        AND u.estado = 'Activo'
+        AND u.estado = 'Activo'::estado_usuario
         AND pr.modulo = 'abonos'
         AND pr.accion = 'ver'
         AND pr.permitido = true
