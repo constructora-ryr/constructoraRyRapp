@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 
 import { useRouter } from 'next/navigation'
 
-import { construirURLVivienda } from '@/lib/utils/slug.utils'
+import { construirURLVivienda, getShortId } from '@/lib/utils/slug.utils'
 import { Modal } from '@/shared/components/ui/Modal'
 import { NoResults } from '@/shared/components/ui/NoResults'
 
@@ -100,12 +100,7 @@ export function ViviendasPageMain({
   // HANDLER: EDITAR VIVIENDA — navega a página propia
   // ============================================
   const handleEditarVivienda = (vivienda: Vivienda) => {
-    const url = construirURLVivienda(
-      { id: vivienda.id, numero: vivienda.numero },
-      vivienda.manzanas?.nombre || undefined,
-      vivienda.manzanas?.proyectos?.nombre || undefined
-    )
-    router.push(`${url}/editar`)
+    router.push(`/viviendas/${getShortId(vivienda.id)}/editar`)
   }
 
   // Buscar en viviendasFiltradas para que funcione en ambas vistas
