@@ -34,7 +34,9 @@ import type { AuditLogRecord } from '../types'
 import { getAccionLabel, tiempoTranscurrido } from '../utils/formatters'
 
 import {
+  AbonoDetalleRender,
   ClienteDetalleRender,
+  DocumentoClienteDetalleRender,
   DocumentoDetalleRender,
   DocumentoReemplazoDetalleRender,
   GenericoDetalleRender,
@@ -61,16 +63,16 @@ export function DetalleAuditoriaModal({
     mostrarSeccionJson,
   } = useDetalleAuditoria(registro)
 
-  // Sistema inteligente de renderers modulares
+  // Sistema de renderers: primero tabla (específico), luego módulo (general)
   const renderDetallesModulo = () => {
     const metadata = datosFormateados.metadata
 
-    // Detectar reemplazo de archivos (tipo_operacion específico)
+    // 1. Reemplazo de archivos (tipo_operacion específico)
     if (metadata.tipo_operacion === 'reemplazo_archivo_admin') {
       return <DocumentoReemplazoDetalleRender metadata={metadata} />
     }
 
-    // Usar sistema modular para proyectos (con factory pattern)
+    // 2. Proyectos (factory pattern)
     if (registro.modulo === 'proyectos') {
       const RendererComponent = getAuditoriaRenderer(
         registro.modulo,
@@ -85,22 +87,30 @@ export function DetalleAuditoriaModal({
       )
     }
 
-    // Edición de documento de cliente → renderer específico con diff
-    if (
-      registro.tabla === 'documentos_cliente' &&
-      registro.accion === 'UPDATE' &&
-      metadata.tipo_operacion === 'edicion_documento'
-    ) {
-      return (
-        <ActualizacionDocumentoClienteRenderer
-          metadata={metadata}
-          datosNuevos={registro.datosNuevos}
-          datosAnteriores={registro.datosAnteriores}
-        />
-      )
+    // 3. Routing por tabla (más específico que módulo)
+    if (registro.tabla === 'abonos_historial') {
+      return <AbonoDetalleRender metadata={metadata} accion={registro.accion} />
     }
 
-    // Renders legacy para otros módulos (mantener compatibilidad)
+    if (registro.tabla === 'documentos_cliente') {
+      // Edición con diff estructurado
+      if (
+        registro.accion === 'UPDATE' &&
+        metadata.tipo_operacion === 'edicion_documento'
+      ) {
+        return (
+          <ActualizacionDocumentoClienteRenderer
+            metadata={metadata}
+            datosNuevos={registro.datosNuevos}
+            datosAnteriores={registro.datosAnteriores}
+          />
+        )
+      }
+      // CREATE / DELETE / UPDATE genérico de documento
+      return <DocumentoClienteDetalleRender registro={registro} />
+    }
+
+    // 4. Routing por módulo para tablas principales
     switch (registro.modulo) {
       case 'viviendas':
         return <ViviendaDetalleRender metadata={metadata} />
@@ -111,7 +121,12 @@ export function DetalleAuditoriaModal({
       case 'documentos':
         return <DocumentoDetalleRender registro={registro} />
       default:
-        return <GenericoDetalleRender registro={registro} />
+        // Sin renderer específico: los datos están en el acordeón técnico de abajo
+        return (
+          <p className='text-sm italic text-gray-500 dark:text-gray-400'>
+            Ver datos técnicos (JSON) más abajo para el detalle completo.
+          </p>
+        )
     }
   }
 
