@@ -6,7 +6,7 @@
  * ✅ Sin lógica
  */
 
-import { CheckCircle2, Edit3, Trash2 } from 'lucide-react'
+import { CheckCircle2, Edit3, Trash2, XCircle } from 'lucide-react'
 
 interface AccionBadgeProps {
   accion: string
@@ -49,6 +49,18 @@ export function AccionBadge({ accion }: AccionBadgeProps) {
         font-bold shadow-md text-xs
       `.trim(),
       label: 'Eliminación',
+    },
+    ANULAR: {
+      icon: XCircle,
+      className: `
+        inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg
+        bg-gradient-to-r from-orange-500/20 to-red-500/20
+        dark:from-orange-500/20 dark:to-red-500/20
+        border border-orange-500/30
+        text-orange-700 dark:text-orange-400
+        font-bold shadow-md text-xs
+      `.trim(),
+      label: 'Anulación',
     },
   }
 

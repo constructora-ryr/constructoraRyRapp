@@ -49,7 +49,7 @@ export interface RendererAuditoriaProps {
 /**
  * Tipos de acción en auditoría
  */
-export type AccionAuditoria = 'CREATE' | 'UPDATE' | 'DELETE'
+export type AccionAuditoria = 'CREATE' | 'UPDATE' | 'DELETE' | 'ANULAR'
 
 /**
  * Módulos de la aplicación

@@ -1,6 +1,6 @@
 'use client'
 
-import { FileText, Tag, Upload, Trash2, Edit } from 'lucide-react'
+import { Edit, FileText, Tag, Trash2, Upload } from 'lucide-react'
 
 import type { AuditLogRecord } from '../../types'
 
@@ -9,12 +9,51 @@ interface DocumentoClienteDetalleRenderProps {
 }
 
 function getStr(
-  obj: Record<string, unknown> | null,
+  obj: Record<string, unknown> | null | undefined,
   key: string
 ): string | null {
   if (!obj) return null
   const val = obj[key]
   return val != null ? String(val) : null
+}
+
+type IconConfig = {
+  icon: typeof FileText
+  label: string
+  color: string
+  iconColor: string
+}
+
+const ACCION_CONFIGS: Record<string, IconConfig> = {
+  CREATE: {
+    icon: Upload,
+    label: 'Documento Cargado',
+    color:
+      'border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-800 dark:bg-cyan-950/30 dark:text-cyan-300',
+    iconColor: 'text-cyan-600 dark:text-cyan-400',
+  },
+  UPDATE: {
+    icon: Edit,
+    label: 'Documento Actualizado',
+    color:
+      'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300',
+    iconColor: 'text-amber-600 dark:text-amber-400',
+  },
+  DELETE: {
+    icon: Trash2,
+    label: 'Documento Eliminado',
+    color:
+      'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300',
+    iconColor: 'text-red-600 dark:text-red-400',
+  },
+}
+
+const ACCION_FALLBACK: IconConfig = {
+  icon: FileText,
+  label: 'Documento',
+  color:
+    'border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-300',
+  iconColor: 'text-gray-500',
 }
 
 export function DocumentoClienteDetalleRender({
@@ -25,45 +64,21 @@ export function DocumentoClienteDetalleRender({
       ? registro.datosAnteriores
       : registro.datosNuevos
 
+  const meta = registro.metadata as Record<string, unknown>
+
   const titulo =
-    getStr(datos, 'titulo') ||
-    getStr(registro.metadata as Record<string, unknown>, 'titulo') ||
-    'Documento sin título'
+    getStr(datos, 'titulo') || getStr(meta, 'titulo') || 'Documento sin título'
 
   const descripcion = getStr(datos, 'descripcion')
   const estado = getStr(datos, 'estado')
   const version = getStr(datos, 'version')
 
-  const accionConfig = {
-    CREATE: {
-      icon: Upload,
-      label: 'Documento Cargado',
-      color:
-        'border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-800 dark:bg-cyan-950/30 dark:text-cyan-300',
-      iconColor: 'text-cyan-600 dark:text-cyan-400',
-    },
-    UPDATE: {
-      icon: Edit,
-      label: 'Documento Actualizado',
-      color:
-        'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300',
-      iconColor: 'text-amber-600 dark:text-amber-400',
-    },
-    DELETE: {
-      icon: Trash2,
-      label: 'Documento Eliminado',
-      color:
-        'border-red-200 bg-red-50 text-redred-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300',
-      iconColor: 'text-red-600 dark:text-red-400',
-    },
-  }[registro.accion] ?? {
-    icon: FileText,
-    label: 'Documento',
-    color:
-      'border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-300',
-    iconColor: 'text-gray-500',
-  }
+  const camposActualizadosRaw = meta?.campos_actualizados
+  const camposActualizados: string[] = Array.isArray(camposActualizadosRaw)
+    ? camposActualizadosRaw
+    : []
 
+  const accionConfig = ACCION_CONFIGS[registro.accion] ?? ACCION_FALLBACK
   const IconAccion = accionConfig.icon
 
   return (
@@ -117,6 +132,24 @@ export function DocumentoClienteDetalleRender({
           <p className='rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-300'>
             {descripcion}
           </p>
+        </div>
+      )}
+
+      {camposActualizados.length > 0 && (
+        <div className='space-y-1'>
+          <label className='text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400'>
+            Campos Actualizados
+          </label>
+          <div className='flex flex-wrap gap-1.5'>
+            {camposActualizados.map((c: string) => (
+              <span
+                key={c}
+                className='rounded-md bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'
+              >
+                {c}
+              </span>
+            ))}
+          </div>
         </div>
       )}
     </div>

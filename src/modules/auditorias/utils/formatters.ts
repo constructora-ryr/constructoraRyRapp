@@ -53,6 +53,8 @@ export function getAccionLabel(accion: string): string {
       return 'Actualización'
     case 'DELETE':
       return 'Eliminación'
+    case 'ANULAR':
+      return 'Anulación'
     default:
       return accion
   }

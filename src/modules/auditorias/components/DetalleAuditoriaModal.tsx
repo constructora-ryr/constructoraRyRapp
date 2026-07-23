@@ -115,9 +115,16 @@ export function DetalleAuditoriaModal({
       case 'viviendas':
         return <ViviendaDetalleRender metadata={metadata} />
       case 'clientes':
-        return <ClienteDetalleRender metadata={metadata} />
+        return (
+          <ClienteDetalleRender metadata={metadata} accion={registro.accion} />
+        )
       case 'negociaciones':
-        return <NegociacionDetalleRender metadata={metadata} />
+        return (
+          <NegociacionDetalleRender
+            metadata={metadata}
+            accion={registro.accion}
+          />
+        )
       case 'documentos':
         return <DocumentoDetalleRender registro={registro} />
       default:

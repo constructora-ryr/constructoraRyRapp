@@ -1,20 +1,58 @@
-/**
- * ClienteDetalleRender - Renderizado de detalles de auditoría para módulo Clientes
- *
- * ✅ Componente presentacional puro
- * ✅ < 100 líneas
- * ✅ Sin lógica compleja
- */
+'use client'
 
-import { MapPin, Phone, User, Users } from 'lucide-react'
+import { Edit3, MapPin, Phone, User, Users } from 'lucide-react'
 
 interface ClienteDetalleRenderProps {
   metadata: Record<string, unknown>
+  accion?: string
 }
 
-export function ClienteDetalleRender({ metadata }: ClienteDetalleRenderProps) {
+export function ClienteDetalleRender({
+  metadata,
+  accion,
+}: ClienteDetalleRenderProps) {
   const get = (key: string, fallback = 'N/A'): string =>
     metadata[key] != null ? String(metadata[key]) : fallback
+
+  if (accion === 'UPDATE') {
+    const nombre = get('cliente_nombre')
+    const camposRaw = metadata.campos_modificados
+    const campos: string[] = Array.isArray(camposRaw) ? camposRaw : []
+
+    return (
+      <div className='space-y-4'>
+        <div className='flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-800 dark:bg-blue-950/30'>
+          <Edit3 className='h-5 w-5 text-blue-600 dark:text-blue-400' />
+          <div>
+            <p className='text-xs font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400'>
+              Perfil Actualizado
+            </p>
+            <p className='text-base font-bold text-blue-700 dark:text-blue-300'>
+              {nombre}
+            </p>
+          </div>
+        </div>
+
+        {campos.length > 0 && (
+          <div className='space-y-1'>
+            <label className='text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400'>
+              Campos Modificados ({campos.length})
+            </label>
+            <div className='flex flex-wrap gap-1.5'>
+              {campos.map((c: string) => (
+                <span
+                  key={c}
+                  className='rounded-md bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                >
+                  {c}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div className='space-y-4'>
