@@ -206,83 +206,45 @@ class AuditoriasService {
   }
 
   /**
-   * Obtener estadísticas generales
+   * Obtener estadísticas generales (4 queries paralelas)
    */
   async obtenerEstadisticas(): Promise<EstadisticasAuditoria> {
-    // Total de eventos
-    const { count: totalEventos } = await supabase
-      .from('audit_log')
-      .select('*', { count: 'exact', head: true })
-
-    // Eventos hoy
     const hoy = new Date()
     hoy.setHours(0, 0, 0, 0)
-    const { count: eventosHoy } = await supabase
-      .from('audit_log')
-      .select('*', { count: 'exact', head: true })
-      .gte('fecha_evento', hoy.toISOString())
 
-    // Eventos esta semana
-    const inicioSemana = new Date()
-    inicioSemana.setDate(inicioSemana.getDate() - inicioSemana.getDay())
-    inicioSemana.setHours(0, 0, 0, 0)
-    const { count: eventosSemana } = await supabase
-      .from('audit_log')
-      .select('*', { count: 'exact', head: true })
-      .gte('fecha_evento', inicioSemana.toISOString())
+    const [
+      { count: totalEventos },
+      { count: eventosHoy },
+      { count: eliminacionesTotales },
+      { data: usuariosData },
+    ] = await Promise.all([
+      supabase.from('audit_log').select('*', { count: 'exact', head: true }),
+      supabase
+        .from('audit_log')
+        .select('*', { count: 'exact', head: true })
+        .gte('fecha_evento', hoy.toISOString()),
+      supabase
+        .from('audit_log')
+        .select('*', { count: 'exact', head: true })
+        .eq('accion', 'DELETE'),
+      supabase
+        .from('audit_log')
+        .select('usuario_id')
+        .not('usuario_id', 'is', null)
+        .limit(500),
+    ])
 
-    // Eventos este mes
-    const inicioMes = new Date()
-    inicioMes.setDate(1)
-    inicioMes.setHours(0, 0, 0, 0)
-    const { count: eventosMes } = await supabase
-      .from('audit_log')
-      .select('*', { count: 'exact', head: true })
-      .gte('fecha_evento', inicioMes.toISOString())
-
-    // Usuarios activos (distintos)
-    const { data: usuariosData } = await supabase
-      .from('audit_log')
-      .select('usuario_id')
-      .not('usuario_id', 'is', null)
-
-    const usuariosUnicos = new Set(usuariosData?.map(u => u.usuario_id) || [])
-
-    // Módulo más activo
-    const resumenModulos = await this.obtenerResumenModulos()
-    const moduloMasActivo =
-      resumenModulos.length > 0 ? resumenModulos[0].modulo : 'N/A'
-
-    // Acción más común
-    const { data: acciones } = await supabase.from('audit_log').select('accion')
-
-    const conteoaccion = acciones?.reduce(
-      (acc: Record<string, number>, item) => {
-        acc[item.accion] = (acc[item.accion] || 0) + 1
-        return acc
-      },
-      {} as Record<string, number>
-    )
-
-    const accionMasComun: AccionAuditoria =
-      (Object.entries(conteoaccion || {}).sort(
-        ([, a], [, b]) => (b as number) - (a as number)
-      )[0]?.[0] as AccionAuditoria) || 'CREATE'
-
-    // Total de eliminaciones
-    const { count: eliminacionesTotales } = await supabase
-      .from('audit_log')
-      .select('*', { count: 'exact', head: true })
-      .eq('accion', 'DELETE')
+    const usuariosActivos = new Set((usuariosData || []).map(u => u.usuario_id))
+      .size
 
     return {
       totalEventos: totalEventos || 0,
       eventosHoy: eventosHoy || 0,
-      eventosSemana: eventosSemana || 0,
-      eventosMes: eventosMes || 0,
-      usuariosActivos: usuariosUnicos.size,
-      moduloMasActivo,
-      accionMasComun,
+      eventosSemana: 0,
+      eventosMes: 0,
+      usuariosActivos,
+      moduloMasActivo: 'N/A',
+      accionMasComun: 'CREATE',
       eliminacionesTotales: eliminacionesTotales || 0,
     }
   }

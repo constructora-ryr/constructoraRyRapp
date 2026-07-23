@@ -9,6 +9,7 @@ import { logger } from '@/lib/utils/logger'
 import type {
   ActualizarNotaDTO,
   CrearNotaDTO,
+  NotaGlobalConCliente,
   NotaHistorialConUsuario,
 } from '../types/notas-historial.types'
 
@@ -255,6 +256,65 @@ class NotasHistorialService {
         error instanceof Error ? error.message : 'Error desconocido'
       logger.error('❌ [NOTAS] Error eliminando nota:', error)
       return { success: false, error: mensaje }
+    }
+  }
+
+  /**
+   * Obtener las N notas más recientes de todos los clientes (feed global)
+   */
+  async obtenerNotasRecientesGlobal(
+    limite = 100
+  ): Promise<NotaGlobalConCliente[]> {
+    try {
+      const { data: notas, error } = await supabase
+        .from('notas_historial_cliente')
+        .select(
+          'id,cliente_id,titulo,contenido,es_importante,fecha_creacion,fecha_actualizacion,creado_por,actualizado_por'
+        )
+        .order('fecha_creacion', { ascending: false })
+        .limit(limite)
+
+      if (error) throw error
+      if (!notas || notas.length === 0) return []
+
+      const clienteIds = [...new Set(notas.map(n => n.cliente_id))]
+      const usuarioIds = [...new Set(notas.map(n => n.creado_por))]
+
+      const [{ data: clientes }, { data: usuarios }] = await Promise.all([
+        supabase
+          .from('clientes')
+          .select('id,nombres,apellidos')
+          .in('id', clienteIds),
+        supabase
+          .from('usuarios')
+          .select('id,email,nombres,apellidos')
+          .in('id', usuarioIds),
+      ])
+
+      const clientesMap = new Map((clientes || []).map(c => [c.id, c]))
+      const usuariosMap = new Map((usuarios || []).map(u => [u.id, u]))
+
+      return notas.map(nota => {
+        const cliente = clientesMap.get(nota.cliente_id)
+        const creador = usuariosMap.get(nota.creado_por)
+        return {
+          ...nota,
+          cliente: cliente || {
+            id: nota.cliente_id,
+            nombres: 'Cliente',
+            apellidos: 'eliminado',
+          },
+          creador: creador || {
+            id: nota.creado_por,
+            email: 'Desconocido',
+            nombres: 'Usuario',
+            apellidos: 'eliminado',
+          },
+        } as NotaGlobalConCliente
+      })
+    } catch (error) {
+      logger.error('❌ [NOTAS] Error obteniendo feed global:', error)
+      return []
     }
   }
 

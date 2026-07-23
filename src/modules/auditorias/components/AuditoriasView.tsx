@@ -1,20 +1,3 @@
-/**
- * AuditoriasView - Vista principal del módulo de Auditorías
- *
- * ✅ DISEÑO ESTANDARIZADO (basado en módulo de Abonos):
- * - Header Hero con gradiente azul/índigo/púrpura
- * - 4 Tarjetas de métricas con glassmorphism
- * - Filtros sticky con backdrop blur
- * - Tabla con diseño premium
- * - Modo oscuro completo
- * - Responsive design
- *
- * ✅ PROTEGIDA POR MIDDLEWARE
- * - Recibe permisos como props desde Server Component
- * - No necesita validar autenticación (ya validada)
- * - Solo maneja UI y lógica de negocio
- */
-
 'use client'
 
 import { useState } from 'react'
@@ -28,6 +11,8 @@ import {
   Edit3,
   Eye,
   FileText,
+  MessageSquare,
+  Search,
   Trash2,
   User,
   X,
@@ -46,7 +31,10 @@ import type {
 } from '../types'
 import { formatearFecha, getAccionLabel } from '../utils/formatters'
 
+import { ActividadClientesView } from './ActividadClientesView'
 import { DetalleAuditoriaModal } from './DetalleAuditoriaModal'
+
+type TabActiva = 'sistema' | 'clientes'
 
 interface AuditoriasViewProps {
   canCreate?: boolean
@@ -66,23 +54,29 @@ export function AuditoriasView({
   const {
     registros,
     estadisticas,
-    resumenModulos: _resumenModulos,
-    eliminacionesMasivas: _eliminacionesMasivas,
     cargando,
     error: _error,
     filtros,
     paginaActual,
+    totalRegistros,
     totalPaginas,
     aplicarFiltros,
     limpiarFiltros,
     cambiarPagina,
-    refrescar: _refrescar,
   } = useAuditorias()
 
   const [registroDetalle, setRegistroDetalle] =
     useState<AuditoriaRegistro | null>(null)
+  const [tabActiva, setTabActiva] = useState<TabActiva>('sistema')
 
-  // Mostrar loading skeleton SOLO en carga inicial (sin datos previos)
+  const hayFiltros = Boolean(
+    filtros.modulo ||
+      filtros.accion ||
+      filtros.fechaDesde ||
+      filtros.fechaHasta ||
+      filtros.busqueda
+  )
+
   if (cargando && registros.length === 0 && !estadisticas) {
     return (
       <div className={styles.container.page}>
@@ -105,7 +99,7 @@ export function AuditoriasView({
   return (
     <div className={styles.container.page}>
       <div className={styles.container.content}>
-        {/* 🎨 HEADER HERO */}
+        {/* HEADER */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -130,13 +124,13 @@ export function AuditoriasView({
               </div>
               <span className={styles.header.badge}>
                 <FileText className='h-4 w-4' />
-                {registros.length} Evento{registros.length !== 1 ? 's' : ''}
+                {totalRegistros.toLocaleString()} Eventos
               </span>
             </div>
           </div>
         </motion.div>
 
-        {/* 📊 MÉTRICAS PREMIUM */}
+        {/* MÉTRICAS */}
         {estadisticas && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -144,7 +138,6 @@ export function AuditoriasView({
             transition={{ delay: 0.1 }}
             className={styles.metricas.grid}
           >
-            {/* Total Eventos */}
             <motion.div
               whileHover={{ scale: 1.02, y: -4 }}
               transition={{ type: 'spring', stiffness: 300 }}
@@ -155,7 +148,7 @@ export function AuditoriasView({
               />
               <div className={styles.metricas.content}>
                 <div
-                  className={`${styles.metricas.iconCircle} bg-gradient-to-br ${metricasIconColors.totalEventos.gradient} shadow-teal-500/50`}
+                  className={`${styles.metricas.iconCircle} bg-gradient-to-br ${metricasIconColors.totalEventos.gradient}`}
                 >
                   <FileText className={styles.metricas.icon} />
                 </div>
@@ -170,7 +163,6 @@ export function AuditoriasView({
               </div>
             </motion.div>
 
-            {/* Creaciones */}
             <motion.div
               whileHover={{ scale: 1.02, y: -4 }}
               transition={{ type: 'spring', stiffness: 300 }}
@@ -181,7 +173,7 @@ export function AuditoriasView({
               />
               <div className={styles.metricas.content}>
                 <div
-                  className={`${styles.metricas.iconCircle} bg-gradient-to-br ${metricasIconColors.creates.gradient} shadow-green-500/50`}
+                  className={`${styles.metricas.iconCircle} bg-gradient-to-br ${metricasIconColors.creates.gradient}`}
                 >
                   <CheckCircle2 className={styles.metricas.icon} />
                 </div>
@@ -196,7 +188,6 @@ export function AuditoriasView({
               </div>
             </motion.div>
 
-            {/* Actualizaciones */}
             <motion.div
               whileHover={{ scale: 1.02, y: -4 }}
               transition={{ type: 'spring', stiffness: 300 }}
@@ -207,7 +198,7 @@ export function AuditoriasView({
               />
               <div className={styles.metricas.content}>
                 <div
-                  className={`${styles.metricas.iconCircle} bg-gradient-to-br ${metricasIconColors.updates.gradient} shadow-purple-500/50`}
+                  className={`${styles.metricas.iconCircle} bg-gradient-to-br ${metricasIconColors.updates.gradient}`}
                 >
                   <User className={styles.metricas.icon} />
                 </div>
@@ -222,7 +213,6 @@ export function AuditoriasView({
               </div>
             </motion.div>
 
-            {/* Eliminaciones */}
             <motion.div
               whileHover={{ scale: 1.02, y: -4 }}
               transition={{ type: 'spring', stiffness: 300 }}
@@ -233,7 +223,7 @@ export function AuditoriasView({
               />
               <div className={styles.metricas.content}>
                 <div
-                  className={`${styles.metricas.iconCircle} bg-gradient-to-br ${metricasIconColors.deletes.gradient} shadow-orange-500/50`}
+                  className={`${styles.metricas.iconCircle} bg-gradient-to-br ${metricasIconColors.deletes.gradient}`}
                 >
                   <AlertTriangle className={styles.metricas.icon} />
                 </div>
@@ -250,269 +240,307 @@ export function AuditoriasView({
           </motion.div>
         )}
 
-        {/* 🔍 FILTROS PREMIUM */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className={styles.filtros.container}
-        >
-          <div className={styles.filtros.grid}>
-            {/* Módulo */}
-            <div className={styles.filtros.selectWrapper}>
-              <label className={styles.filtros.label}>Módulo</label>
-              <select
-                className={styles.filtros.select}
-                value={filtros.modulo || ''}
-                onChange={e =>
-                  aplicarFiltros({
-                    modulo: e.target.value as ModuloAplicacion | undefined,
-                  })
-                }
-              >
-                <option value=''>Todos los módulos</option>
-                <option value='proyectos'>Proyectos</option>
-                <option value='viviendas'>Viviendas</option>
-                <option value='clientes'>Clientes</option>
-                <option value='negociaciones'>Negociaciones</option>
-                <option value='abonos'>Abonos</option>
-              </select>
-            </div>
-
-            {/* Acción */}
-            <div className={styles.filtros.selectWrapper}>
-              <label className={styles.filtros.label}>Acción</label>
-              <select
-                className={styles.filtros.select}
-                value={filtros.accion || ''}
-                onChange={e =>
-                  aplicarFiltros({
-                    accion: e.target.value as AccionAuditoria | undefined,
-                  })
-                }
-              >
-                <option value=''>Todas las acciones</option>
-                <option value='CREATE'>Creaciones</option>
-                <option value='UPDATE'>Actualizaciones</option>
-                <option value='DELETE'>Eliminaciones</option>
-              </select>
-            </div>
-
-            {/* Fecha Desde */}
-            <div className={styles.filtros.selectWrapper}>
-              <label className={styles.filtros.label}>Desde</label>
-              <input
-                type='date'
-                className={styles.filtros.select}
-                value={filtros.fechaDesde || ''}
-                onChange={e => aplicarFiltros({ fechaDesde: e.target.value })}
-              />
-            </div>
-
-            {/* Fecha Hasta */}
-            <div className={styles.filtros.selectWrapper}>
-              <label className={styles.filtros.label}>Hasta</label>
-              <input
-                type='date'
-                className={styles.filtros.select}
-                value={filtros.fechaHasta || ''}
-                onChange={e => aplicarFiltros({ fechaHasta: e.target.value })}
-              />
-            </div>
-          </div>
-
-          <div className={styles.filtros.footer}>
-            <p className={styles.filtros.resultCount}>
-              {registros.length} registro{registros.length !== 1 ? 's' : ''}{' '}
-              encontrado{registros.length !== 1 ? 's' : ''}
-            </p>
-            {(filtros.modulo ||
-              filtros.accion ||
-              filtros.fechaDesde ||
-              filtros.fechaHasta) && (
-              <button
-                className={styles.filtros.clearButton}
-                onClick={limpiarFiltros}
-              >
-                Limpiar filtros
-              </button>
-            )}
-          </div>
-        </motion.div>
-
-        {/* 📋 TABLA DE AUDITORÍAS */}
-        {registros.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className={styles.empty.container}
+        {/* PESTAÑAS */}
+        <div className='flex gap-1 rounded-2xl border border-gray-200/50 bg-white/80 p-1 shadow-sm backdrop-blur-xl dark:border-gray-700/50 dark:bg-gray-800/80'>
+          <button
+            onClick={() => setTabActiva('sistema')}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all ${
+              tabActiva === 'sistema'
+                ? 'bg-gradient-to-r from-teal-500 to-cyan-600 text-white shadow-md'
+                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
+            }`}
           >
-            <div className={styles.empty.iconWrapper}>
-              <div className={styles.empty.iconGlow} />
-              <div className={styles.empty.iconCircle}>
-                <FileText className={styles.empty.icon} />
-              </div>
-            </div>
-            <h3 className={styles.empty.title}>
-              No hay registros de auditoría
-            </h3>
-            <p className={styles.empty.description}>
-              {filtros.modulo ||
-              filtros.accion ||
-              filtros.fechaDesde ||
-              filtros.fechaHasta
-                ? 'No se encontraron registros con los filtros aplicados. Intenta ajustar los criterios de búsqueda.'
-                : 'Los registros de auditoría aparecerán aquí cuando se realicen operaciones en el sistema.'}
-            </p>
-            {(filtros.modulo ||
-              filtros.accion ||
-              filtros.fechaDesde ||
-              filtros.fechaHasta) && (
-              <button onClick={limpiarFiltros} className={styles.empty.button}>
-                <X className='h-4 w-4' />
-                Limpiar filtros
-              </button>
-            )}
-          </motion.div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className={styles.tabla.container}
+            <Activity className='h-4 w-4' />
+            Registro del Sistema
+          </button>
+          <button
+            onClick={() => setTabActiva('clientes')}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all ${
+              tabActiva === 'clientes'
+                ? 'bg-gradient-to-r from-teal-500 to-cyan-600 text-white shadow-md'
+                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
+            }`}
           >
-            <div className={styles.tabla.wrapper}>
-              <table className={styles.tabla.table}>
-                <thead className={styles.tabla.thead}>
-                  <tr>
-                    <th className={styles.tabla.th}>Fecha/Hora</th>
-                    <th className={styles.tabla.th}>Acción</th>
-                    <th className={styles.tabla.th}>Módulo</th>
-                    <th className={styles.tabla.th}>Tabla</th>
-                    <th className={styles.tabla.th}>Usuario</th>
-                    <th className={styles.tabla.th}>Detalles</th>
-                  </tr>
-                </thead>
-                <tbody className={styles.tabla.tbody}>
-                  <AnimatePresence mode='popLayout'>
-                    {registros.map((registro, index) => (
-                      <motion.tr
-                        key={registro.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{
-                          delay: index * 0.03,
-                          type: 'spring',
-                          stiffness: 300,
-                          damping: 25,
-                        }}
-                        className={styles.tabla.tr}
-                      >
-                        <td
-                          className={`${styles.tabla.td} ${styles.tabla.tdTexto}`}
-                        >
-                          <div className='flex items-center gap-1.5 text-xs'>
-                            <Calendar className='h-3.5 w-3.5 text-gray-400 dark:text-gray-500' />
-                            {formatearFecha(registro.fechaEvento)}
-                          </div>
-                        </td>
-                        <td className={styles.tabla.td}>
-                          <span
-                            className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold ${getAccionBadgeStyles(registro.accion)}`}
-                          >
-                            {registro.accion === 'CREATE' && (
-                              <CheckCircle2 className='h-3.5 w-3.5' />
-                            )}
-                            {registro.accion === 'UPDATE' && (
-                              <Edit3 className='h-3.5 w-3.5' />
-                            )}
-                            {registro.accion === 'DELETE' && (
-                              <Trash2 className='h-3.5 w-3.5' />
-                            )}
-                            {getAccionLabel(registro.accion)}
-                          </span>
-                        </td>
-                        <td
-                          className={`${styles.tabla.td} ${styles.tabla.tdTexto}`}
-                        >
-                          <span className='font-medium capitalize'>
-                            {registro.modulo || '-'}
-                          </span>
-                        </td>
-                        <td className={styles.tabla.td}>
-                          <code className='rounded bg-gray-100 px-2 py-1 font-mono text-xs text-gray-900 dark:bg-gray-900/50 dark:text-gray-100'>
-                            {registro.tabla}
-                          </code>
-                        </td>
-                        <td
-                          className={`${styles.tabla.td} ${styles.tabla.tdSubtexto}`}
-                        >
-                          <div className='flex items-center gap-1.5 text-xs'>
-                            <User className='h-3.5 w-3.5' />
-                            <div className='flex flex-col'>
-                              <span className='font-medium'>
-                                {registro.usuarioNombres ||
-                                  registro.usuarioEmail}
-                              </span>
-                              {registro.usuarioNombres && (
-                                <span className='text-[10px] text-gray-500 dark:text-gray-500'>
-                                  {registro.usuarioEmail}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                        <td className={styles.tabla.td}>
-                          <button
-                            onClick={() => setRegistroDetalle(registro)}
-                            className='inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
-                          >
-                            <Eye className='h-3.5 w-3.5' />
-                            Ver
-                          </button>
-                        </td>
-                      </motion.tr>
-                    ))}
-                  </AnimatePresence>
-                </tbody>
-              </table>
-            </div>
+            <MessageSquare className='h-4 w-4' />
+            Actividad de Clientes
+          </button>
+        </div>
 
-            {/* Paginación (si aplica) */}
-            {totalPaginas > 1 && (
-              <div className='flex items-center justify-between border-t border-gray-200 px-6 py-4 dark:border-gray-700'>
-                <p className='text-xs font-medium text-gray-600 dark:text-gray-400'>
-                  Mostrando {(paginaActual - 1) * 50 + 1} -{' '}
-                  {Math.min(paginaActual * 50, registros.length)} de{' '}
-                  {registros.length}
-                </p>
-                <div className='flex items-center gap-2'>
-                  <button
-                    onClick={() => cambiarPagina(paginaActual - 1)}
-                    disabled={paginaActual === 1}
-                    className='rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
-                  >
-                    Anterior
-                  </button>
-                  <span className='px-2 text-xs text-gray-600 dark:text-gray-400'>
-                    Página {paginaActual} de {totalPaginas}
-                  </span>
-                  <button
-                    onClick={() => cambiarPagina(paginaActual + 1)}
-                    disabled={paginaActual === totalPaginas}
-                    className='rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
-                  >
-                    Siguiente
-                  </button>
+        {/* CONTENIDO POR PESTAÑA */}
+        <AnimatePresence mode='wait'>
+          {tabActiva === 'sistema' ? (
+            <motion.div
+              key='sistema'
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.15 }}
+              className='space-y-4'
+            >
+              {/* FILTROS */}
+              <div className={styles.filtros.container}>
+                {/* Buscador full-width */}
+                <div className='relative mb-3'>
+                  <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400' />
+                  <input
+                    type='text'
+                    placeholder='Buscar por email, tabla o ID de registro...'
+                    className={`${styles.filtros.select} pl-9`}
+                    value={filtros.busqueda || ''}
+                    onChange={e => aplicarFiltros({ busqueda: e.target.value })}
+                  />
+                </div>
+
+                <div className='grid grid-cols-2 gap-3 md:grid-cols-4'>
+                  <div className={styles.filtros.selectWrapper}>
+                    <label className={styles.filtros.label}>Módulo</label>
+                    <select
+                      className={styles.filtros.select}
+                      value={filtros.modulo || ''}
+                      onChange={e =>
+                        aplicarFiltros({
+                          modulo:
+                            (e.target.value as ModuloAplicacion) || undefined,
+                        })
+                      }
+                    >
+                      <option value=''>Todos</option>
+                      <option value='proyectos'>Proyectos</option>
+                      <option value='viviendas'>Viviendas</option>
+                      <option value='clientes'>Clientes</option>
+                      <option value='negociaciones'>Negociaciones</option>
+                      <option value='abonos'>Abonos</option>
+                    </select>
+                  </div>
+
+                  <div className={styles.filtros.selectWrapper}>
+                    <label className={styles.filtros.label}>Acción</label>
+                    <select
+                      className={styles.filtros.select}
+                      value={filtros.accion || ''}
+                      onChange={e =>
+                        aplicarFiltros({
+                          accion:
+                            (e.target.value as AccionAuditoria) || undefined,
+                        })
+                      }
+                    >
+                      <option value=''>Todas</option>
+                      <option value='CREATE'>Creaciones</option>
+                      <option value='UPDATE'>Actualizaciones</option>
+                      <option value='DELETE'>Eliminaciones</option>
+                    </select>
+                  </div>
+
+                  <div className={styles.filtros.selectWrapper}>
+                    <label className={styles.filtros.label}>Desde</label>
+                    <input
+                      type='date'
+                      className={styles.filtros.select}
+                      value={filtros.fechaDesde || ''}
+                      onChange={e =>
+                        aplicarFiltros({ fechaDesde: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div className={styles.filtros.selectWrapper}>
+                    <label className={styles.filtros.label}>Hasta</label>
+                    <input
+                      type='date'
+                      className={styles.filtros.select}
+                      value={filtros.fechaHasta || ''}
+                      onChange={e =>
+                        aplicarFiltros({ fechaHasta: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.filtros.footer}>
+                  <p className={styles.filtros.resultCount}>
+                    {totalRegistros.toLocaleString()} registro
+                    {totalRegistros !== 1 ? 's' : ''} encontrado
+                    {totalRegistros !== 1 ? 's' : ''}
+                  </p>
+                  {hayFiltros && (
+                    <button
+                      className={styles.filtros.clearButton}
+                      onClick={limpiarFiltros}
+                    >
+                      Limpiar filtros
+                    </button>
+                  )}
                 </div>
               </div>
-            )}
-          </motion.div>
-        )}
+
+              {/* TABLA */}
+              {registros.length === 0 ? (
+                <div className={styles.empty.container}>
+                  <div className={styles.empty.iconWrapper}>
+                    <div className={styles.empty.iconGlow} />
+                    <div className={styles.empty.iconCircle}>
+                      <FileText className={styles.empty.icon} />
+                    </div>
+                  </div>
+                  <h3 className={styles.empty.title}>
+                    No hay registros de auditoría
+                  </h3>
+                  <p className={styles.empty.description}>
+                    {hayFiltros
+                      ? 'No se encontraron registros con los filtros aplicados.'
+                      : 'Los registros aparecerán aquí cuando se realicen operaciones en el sistema.'}
+                  </p>
+                  {hayFiltros && (
+                    <button
+                      onClick={limpiarFiltros}
+                      className={styles.empty.button}
+                    >
+                      <X className='h-4 w-4' />
+                      Limpiar filtros
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className={styles.tabla.container}>
+                  <div className={styles.tabla.wrapper}>
+                    <table className={styles.tabla.table}>
+                      <thead className={styles.tabla.thead}>
+                        <tr>
+                          <th className={styles.tabla.th}>Fecha/Hora</th>
+                          <th className={styles.tabla.th}>Acción</th>
+                          <th className={styles.tabla.th}>Módulo</th>
+                          <th className={styles.tabla.th}>Tabla</th>
+                          <th className={styles.tabla.th}>Usuario</th>
+                          <th className={styles.tabla.th}>Detalles</th>
+                        </tr>
+                      </thead>
+                      <tbody className={styles.tabla.tbody}>
+                        <AnimatePresence mode='popLayout'>
+                          {registros.map((registro, index) => (
+                            <motion.tr
+                              key={registro.id}
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, scale: 0.95 }}
+                              transition={{ delay: index * 0.03 }}
+                              className={styles.tabla.tr}
+                            >
+                              <td
+                                className={`${styles.tabla.td} ${styles.tabla.tdTexto}`}
+                              >
+                                <div className='flex items-center gap-1.5 text-xs'>
+                                  <Calendar className='h-3.5 w-3.5 text-gray-400' />
+                                  {formatearFecha(registro.fechaEvento)}
+                                </div>
+                              </td>
+                              <td className={styles.tabla.td}>
+                                <span
+                                  className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold ${getAccionBadgeStyles(registro.accion)}`}
+                                >
+                                  {registro.accion === 'CREATE' && (
+                                    <CheckCircle2 className='h-3.5 w-3.5' />
+                                  )}
+                                  {registro.accion === 'UPDATE' && (
+                                    <Edit3 className='h-3.5 w-3.5' />
+                                  )}
+                                  {registro.accion === 'DELETE' && (
+                                    <Trash2 className='h-3.5 w-3.5' />
+                                  )}
+                                  {getAccionLabel(registro.accion)}
+                                </span>
+                              </td>
+                              <td
+                                className={`${styles.tabla.td} ${styles.tabla.tdTexto}`}
+                              >
+                                <span className='font-medium capitalize'>
+                                  {registro.modulo || '-'}
+                                </span>
+                              </td>
+                              <td className={styles.tabla.td}>
+                                <code className='rounded bg-gray-100 px-2 py-1 font-mono text-xs text-gray-900 dark:bg-gray-900/50 dark:text-gray-100'>
+                                  {registro.tabla}
+                                </code>
+                              </td>
+                              <td
+                                className={`${styles.tabla.td} ${styles.tabla.tdSubtexto}`}
+                              >
+                                <div className='flex items-center gap-1.5 text-xs'>
+                                  <User className='h-3.5 w-3.5' />
+                                  <div className='flex flex-col'>
+                                    <span className='font-medium'>
+                                      {registro.usuarioNombres ||
+                                        registro.usuarioEmail}
+                                    </span>
+                                    {registro.usuarioNombres && (
+                                      <span className='text-[10px] text-gray-500'>
+                                        {registro.usuarioEmail}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </td>
+                              <td className={styles.tabla.td}>
+                                <button
+                                  onClick={() => setRegistroDetalle(registro)}
+                                  className='inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                                >
+                                  <Eye className='h-3.5 w-3.5' />
+                                  Ver
+                                </button>
+                              </td>
+                            </motion.tr>
+                          ))}
+                        </AnimatePresence>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {totalPaginas > 1 && (
+                    <div className='flex items-center justify-between border-t border-gray-200 px-6 py-4 dark:border-gray-700'>
+                      <p className='text-xs font-medium text-gray-600 dark:text-gray-400'>
+                        Mostrando {(paginaActual - 1) * 50 + 1}–
+                        {Math.min(paginaActual * 50, totalRegistros)} de{' '}
+                        {totalRegistros.toLocaleString()}
+                      </p>
+                      <div className='flex items-center gap-2'>
+                        <button
+                          onClick={() => cambiarPagina(paginaActual - 1)}
+                          disabled={paginaActual === 1}
+                          className='rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                        >
+                          Anterior
+                        </button>
+                        <span className='px-2 text-xs text-gray-600 dark:text-gray-400'>
+                          Página {paginaActual} de {totalPaginas}
+                        </span>
+                        <button
+                          onClick={() => cambiarPagina(paginaActual + 1)}
+                          disabled={paginaActual === totalPaginas}
+                          className='rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                        >
+                          Siguiente
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </motion.div>
+          ) : (
+            <motion.div
+              key='clientes'
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.15 }}
+            >
+              <ActividadClientesView />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* 🎭 MODAL DE DETALLES MEJORADO */}
       <AnimatePresence>
         {registroDetalle && (
           <DetalleAuditoriaModal

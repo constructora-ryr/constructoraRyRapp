@@ -42,3 +42,17 @@ export interface ActualizarNotaDTO {
   contenido?: string
   es_importante?: boolean
 }
+
+export interface NotaGlobalConCliente extends NotaHistorialCliente {
+  cliente: {
+    id: string
+    nombres: string
+    apellidos: string
+  }
+  creador: {
+    id: string
+    email: string
+    nombres: string
+    apellidos: string
+  }
+}
