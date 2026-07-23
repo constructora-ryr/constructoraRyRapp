@@ -292,7 +292,10 @@ class NotasHistorialService {
             .in('id', usuarioIds),
           supabase
             .from('negociaciones')
-            .select('cliente_id,viviendas(numero,manzanas(nombre))')
+            .select(
+              'cliente_id,viviendas!negociaciones_vivienda_id_fkey(numero,manzanas!manzana_id(nombre))'
+            )
+            .not('estado', 'in', '("Cancelada","Renuncia")')
             .in('cliente_id', clienteIds),
         ])
 
