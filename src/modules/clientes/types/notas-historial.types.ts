@@ -49,6 +49,10 @@ export interface NotaGlobalConCliente extends NotaHistorialCliente {
     nombres: string
     apellidos: string
   }
+  vivienda?: {
+    numero: string
+    manzana: string
+  } | null
   creador: {
     id: string
     email: string

@@ -76,6 +76,7 @@ export function TimelineEventoCard({
   return (
     <>
       <motion.div
+        id={esNota && notaId ? `evento-${notaId}` : undefined}
         initial={styles.animations.slideIn.initial}
         animate={styles.animations.slideIn.animate}
         transition={{ duration: 0.3 }}

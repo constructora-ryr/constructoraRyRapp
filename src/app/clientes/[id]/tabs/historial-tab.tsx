@@ -11,7 +11,7 @@
 
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { useQueryClient } from '@tanstack/react-query'
 import { AnimatePresence } from 'framer-motion'
@@ -70,6 +70,27 @@ export function HistorialTab({ clienteId, clienteNombre }: HistorialTabProps) {
     ocultarEvento,
     restaurarEvento,
   } = useHistorialCliente({ clienteId, habilitado: tienePermiso })
+
+  // Scroll a nota específica si viene desde Actividad de Clientes
+  useEffect(() => {
+    if (isLoading) return
+    const notaIntent = sessionStorage.getItem('cliente-nota-intent')
+    if (!notaIntent) return
+    sessionStorage.removeItem('cliente-nota-intent')
+    const timer = setTimeout(() => {
+      const el = document.getElementById(`evento-${notaIntent}`)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        el.style.transition = 'outline 0.4s ease'
+        el.style.outline = '2px solid #0d9488'
+        el.style.borderRadius = '12px'
+        setTimeout(() => {
+          el.style.outline = ''
+        }, 2000)
+      }
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [isLoading])
 
   // Aplanar eventos para calcular permisos
   const todosLosEventos = useMemo(() => {

@@ -280,19 +280,44 @@ class NotasHistorialService {
       const clienteIds = [...new Set(notas.map(n => n.cliente_id))]
       const usuarioIds = [...new Set(notas.map(n => n.creado_por))]
 
-      const [{ data: clientes }, { data: usuarios }] = await Promise.all([
-        supabase
-          .from('clientes')
-          .select('id,nombres,apellidos')
-          .in('id', clienteIds),
-        supabase
-          .from('usuarios')
-          .select('id,email,nombres,apellidos')
-          .in('id', usuarioIds),
-      ])
+      const [{ data: clientes }, { data: usuarios }, { data: negociaciones }] =
+        await Promise.all([
+          supabase
+            .from('clientes')
+            .select('id,nombres,apellidos')
+            .in('id', clienteIds),
+          supabase
+            .from('usuarios')
+            .select('id,email,nombres,apellidos')
+            .in('id', usuarioIds),
+          supabase
+            .from('negociaciones')
+            .select('cliente_id,viviendas(numero,manzanas(nombre))')
+            .in('cliente_id', clienteIds),
+        ])
 
       const clientesMap = new Map((clientes || []).map(c => [c.id, c]))
       const usuariosMap = new Map((usuarios || []).map(u => [u.id, u]))
+
+      type NegConVivienda = {
+        cliente_id: string
+        viviendas: {
+          numero: string
+          manzanas: { nombre: string } | null
+        } | null
+      }
+      const viviendasMap = new Map<
+        string,
+        { numero: string; manzana: string }
+      >()
+      for (const neg of (negociaciones as NegConVivienda[] | null) || []) {
+        if (!viviendasMap.has(neg.cliente_id) && neg.viviendas?.manzanas) {
+          viviendasMap.set(neg.cliente_id, {
+            numero: neg.viviendas.numero,
+            manzana: neg.viviendas.manzanas.nombre,
+          })
+        }
+      }
 
       return notas.map(nota => {
         const cliente = clientesMap.get(nota.cliente_id)
@@ -304,6 +329,7 @@ class NotasHistorialService {
             nombres: 'Cliente',
             apellidos: 'eliminado',
           },
+          vivienda: viviendasMap.get(nota.cliente_id) ?? null,
           creador: creador || {
             id: nota.creado_por,
             email: 'Desconocido',

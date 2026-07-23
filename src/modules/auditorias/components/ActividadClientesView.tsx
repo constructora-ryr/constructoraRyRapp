@@ -5,13 +5,18 @@ import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { AlertCircle, MessageSquare, Search, Star, User } from 'lucide-react'
 
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
+import { getShortId } from '@/lib/utils/slug.utils'
 import type { NotaGlobalConCliente } from '@/modules/clientes/types/notas-historial.types'
 
 import { useActividadClientesQuery } from '../hooks/useActividadClientes'
 
 type Grupo = 'Hoy' | 'Ayer' | 'Esta semana' | 'Este mes' | 'Más antiguo'
+
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]+>/g, '').trim()
+}
 
 function getGrupo(fechaStr: string): Grupo {
   const fecha = new Date(fechaStr)
@@ -30,13 +35,17 @@ function tiempoRelativo(fechaStr: string): string {
   const ahora = new Date()
   const diffMs = ahora.getTime() - fecha.getTime()
   const diffMin = Math.floor(diffMs / 60_000)
-  if (diffMin < 1) return 'Ahora mismo'
-  if (diffMin < 60) return `Hace ${diffMin} min`
+  const exacta = fecha.toLocaleDateString('es-CO', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+  if (diffMin < 1) return `Ahora mismo · ${exacta}`
+  if (diffMin < 60) return `Hace ${diffMin} min · ${exacta}`
   const diffH = Math.floor(diffMin / 60)
-  if (diffH < 24) return `Hace ${diffH}h`
+  if (diffH < 24) return `Hace ${diffH}h · ${exacta}`
   const diffD = Math.floor(diffH / 24)
-  if (diffD < 30) return `Hace ${diffD}d`
-  return fecha.toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })
+  return `Hace ${diffD} día${diffD !== 1 ? 's' : ''} · ${exacta}`
 }
 
 const ORDEN_GRUPOS: Grupo[] = [
@@ -48,9 +57,16 @@ const ORDEN_GRUPOS: Grupo[] = [
 ]
 
 export function ActividadClientesView() {
+  const router = useRouter()
   const { data: notas = [], isLoading } = useActividadClientesQuery(150)
   const [busqueda, setBusqueda] = useState('')
   const [soloImportantes, setSoloImportantes] = useState(false)
+
+  const handleNotaClick = (nota: NotaGlobalConCliente) => {
+    sessionStorage.setItem('cliente-tab-intent', 'historial')
+    sessionStorage.setItem('cliente-nota-intent', nota.id)
+    router.push(`/clientes/${getShortId(nota.cliente_id)}`)
+  }
 
   const notasFiltradas = useMemo(() => {
     let resultado = notas
@@ -60,7 +76,7 @@ export function ActividadClientesView() {
       resultado = resultado.filter(
         n =>
           n.titulo.toLowerCase().includes(q) ||
-          n.contenido.toLowerCase().includes(q) ||
+          stripHtml(n.contenido).toLowerCase().includes(q) ||
           `${n.cliente.nombres} ${n.cliente.apellidos}`
             .toLowerCase()
             .includes(q)
@@ -155,86 +171,91 @@ export function ActividadClientesView() {
           </div>
 
           <div className='space-y-2'>
-            {notasGrupo.map((nota, idx) => (
-              <motion.div
-                key={nota.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.02 }}
-                className='group flex gap-3 rounded-2xl border border-gray-200/50 bg-white/80 p-4 shadow-sm backdrop-blur-xl transition-shadow hover:shadow-md dark:border-gray-700/50 dark:bg-gray-800/80'
-              >
-                {/* Indicador de importancia */}
-                <div className='mt-0.5 flex-shrink-0'>
-                  {nota.es_importante ? (
-                    <div className='flex h-8 w-8 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/30'>
-                      <Star className='h-4 w-4 fill-amber-500 text-amber-500' />
-                    </div>
-                  ) : (
-                    <div className='flex h-8 w-8 items-center justify-center rounded-xl bg-teal-50 dark:bg-teal-900/20'>
-                      <MessageSquare className='h-4 w-4 text-teal-500' />
-                    </div>
-                  )}
-                </div>
+            {notasGrupo.map((nota, idx) => {
+              const nombreCliente = nota.vivienda
+                ? `${nota.vivienda.manzana}${nota.vivienda.numero} — ${nota.cliente.nombres} ${nota.cliente.apellidos}`
+                : `${nota.cliente.nombres} ${nota.cliente.apellidos}`
 
-                {/* Contenido */}
-                <div className='min-w-0 flex-1'>
-                  <div className='flex flex-wrap items-center gap-x-2 gap-y-0.5'>
-                    <Link
-                      href={`/clientes/${nota.cliente_id}`}
-                      className='text-sm font-semibold text-gray-900 hover:text-teal-600 dark:text-gray-100 dark:hover:text-teal-400'
-                    >
-                      {nota.cliente.nombres} {nota.cliente.apellidos}
-                    </Link>
-                    <span className='text-gray-300 dark:text-gray-600'>·</span>
-                    <span className='text-xs font-medium text-gray-700 dark:text-gray-300'>
-                      {nota.titulo}
-                    </span>
-                  </div>
-
-                  {nota.contenido && (
-                    <p className='mt-1 line-clamp-2 text-xs text-gray-500 dark:text-gray-400'>
-                      {nota.contenido}
-                    </p>
-                  )}
-
-                  <div className='mt-2 flex items-center gap-3 text-[11px] text-gray-400 dark:text-gray-500'>
-                    <span className='inline-flex items-center gap-1'>
-                      <User className='h-3 w-3' />
-                      {nota.creador.nombres} {nota.creador.apellidos}
-                    </span>
-                    <span>{tiempoRelativo(nota.fecha_creacion)}</span>
-                    {nota.fecha_actualizacion &&
-                      nota.fecha_actualizacion !== nota.fecha_creacion && (
-                        <span className='flex items-center gap-0.5 text-gray-300 dark:text-gray-600'>
-                          <AlertCircle className='h-3 w-3' />
-                          editada
-                        </span>
-                      )}
-                  </div>
-                </div>
-
-                {/* Flecha al cliente */}
-                <Link
-                  href={`/clientes/${nota.cliente_id}`}
-                  className='flex-shrink-0 self-center text-gray-300 transition-colors group-hover:text-teal-500 dark:text-gray-600 dark:group-hover:text-teal-400'
-                  aria-label={`Ver cliente ${nota.cliente.nombres}`}
+              return (
+                <motion.div
+                  key={nota.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.02 }}
+                  onClick={() => handleNotaClick(nota)}
+                  role='button'
+                  tabIndex={0}
+                  onKeyDown={e => e.key === 'Enter' && handleNotaClick(nota)}
+                  className='group flex cursor-pointer gap-3 rounded-2xl border border-gray-200/50 bg-white/80 p-4 shadow-sm backdrop-blur-xl transition-shadow hover:shadow-md dark:border-gray-700/50 dark:bg-gray-800/80'
                 >
-                  <svg
-                    className='h-4 w-4'
-                    fill='none'
-                    viewBox='0 0 24 24'
-                    stroke='currentColor'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth={2}
-                      d='M9 5l7 7-7 7'
-                    />
-                  </svg>
-                </Link>
-              </motion.div>
-            ))}
+                  {/* Indicador de importancia */}
+                  <div className='mt-0.5 flex-shrink-0'>
+                    {nota.es_importante ? (
+                      <div className='flex h-8 w-8 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/30'>
+                        <Star className='h-4 w-4 fill-amber-500 text-amber-500' />
+                      </div>
+                    ) : (
+                      <div className='flex h-8 w-8 items-center justify-center rounded-xl bg-teal-50 dark:bg-teal-900/20'>
+                        <MessageSquare className='h-4 w-4 text-teal-500' />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Contenido */}
+                  <div className='min-w-0 flex-1'>
+                    <div className='flex flex-wrap items-center gap-x-2 gap-y-0.5'>
+                      <span className='text-sm font-semibold text-gray-900 group-hover:text-teal-600 dark:text-gray-100 dark:group-hover:text-teal-400'>
+                        {nombreCliente}
+                      </span>
+                      <span className='text-gray-300 dark:text-gray-600'>
+                        ·
+                      </span>
+                      <span className='text-xs font-medium text-gray-700 dark:text-gray-300'>
+                        {nota.titulo}
+                      </span>
+                    </div>
+
+                    {nota.contenido && (
+                      <p className='mt-1 line-clamp-2 text-xs text-gray-500 dark:text-gray-400'>
+                        {stripHtml(nota.contenido)}
+                      </p>
+                    )}
+
+                    <div className='mt-2 flex flex-wrap items-center gap-3 text-[11px] text-gray-400 dark:text-gray-500'>
+                      <span className='inline-flex items-center gap-1'>
+                        <User className='h-3 w-3' />
+                        {nota.creador.nombres} {nota.creador.apellidos}
+                      </span>
+                      <span>{tiempoRelativo(nota.fecha_creacion)}</span>
+                      {nota.fecha_actualizacion &&
+                        nota.fecha_actualizacion !== nota.fecha_creacion && (
+                          <span className='flex items-center gap-0.5 text-gray-300 dark:text-gray-600'>
+                            <AlertCircle className='h-3 w-3' />
+                            editada
+                          </span>
+                        )}
+                    </div>
+                  </div>
+
+                  {/* Flecha */}
+                  <div className='flex-shrink-0 self-center text-gray-300 transition-colors group-hover:text-teal-500 dark:text-gray-600 dark:group-hover:text-teal-400'>
+                    <svg
+                      className='h-4 w-4'
+                      fill='none'
+                      viewBox='0 0 24 24'
+                      stroke='currentColor'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={2}
+                        d='M9 5l7 7-7 7'
+                      />
+                    </svg>
+                  </div>
+                </motion.div>
+              )
+            })}
           </div>
         </div>
       ))}
