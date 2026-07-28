@@ -7,10 +7,10 @@
 
 import type { Metadata } from 'next'
 
-import { forbidden } from 'next/navigation'
+import { forbidden, notFound } from 'next/navigation'
 
 import { getServerPermissions } from '@/lib/auth/server'
-import { resolverSlugCliente } from '@/lib/utils/slug.utils'
+import { resolverSlugClienteServer } from '@/lib/utils/slug.server'
 import { TrasladoViviendaPage } from '@/modules/clientes/pages/traslado-vivienda'
 
 export const metadata: Metadata = {
@@ -34,7 +34,12 @@ export default async function Page({ params, searchParams }: PageProps) {
   const { id } = await params
   const search = await searchParams
 
-  const clienteUUID = (await resolverSlugCliente(id)) || id
+  const clienteUUID = await resolverSlugClienteServer(id)
+
+  if (!clienteUUID) {
+    notFound()
+  }
+
   const negociacionId = search.negociacion_id ?? ''
 
   return (

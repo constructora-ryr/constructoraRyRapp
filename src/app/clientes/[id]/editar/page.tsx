@@ -1,11 +1,7 @@
-/**
- * Página: Editar Cliente (Accordion Wizard)
- * Server Component — obtiene permisos y delega a Client Component
- *
- * ✅ REGLA #-11: Edición en página propia, no en modal
- */
+import { notFound } from 'next/navigation'
 
 import { getServerPermissions } from '@/lib/auth/server'
+import { resolverSlugClienteServer } from '@/lib/utils/slug.server'
 import { EditarClienteAccordionView } from '@/modules/clientes/components/EditarClienteAccordionView'
 
 interface PageProps {
@@ -14,9 +10,19 @@ interface PageProps {
 
 export default async function EditarClientePage({ params }: PageProps) {
   const { id } = await params
+
+  const clienteUUID = await resolverSlugClienteServer(id)
+
+  if (!clienteUUID) {
+    notFound()
+  }
+
   const permisos = await getServerPermissions('clientes')
 
   return (
-    <EditarClienteAccordionView clienteId={id} canEdit={permisos.canEdit} />
+    <EditarClienteAccordionView
+      clienteId={clienteUUID}
+      canEdit={permisos.canEdit}
+    />
   )
 }
