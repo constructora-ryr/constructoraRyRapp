@@ -72,3 +72,9 @@ export async function resolverSlugViviendaServer(
 ): Promise<string | null> {
   return resolverSlugAUUIDServer(slugOUUID, 'viviendas')
 }
+
+export async function resolverSlugNegociacionServer(
+  slugOUUID: string
+): Promise<string | null> {
+  return resolverSlugAUUIDServer(slugOUUID, 'negociaciones')
+}

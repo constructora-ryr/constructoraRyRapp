@@ -1,6 +1,9 @@
 import { notFound } from 'next/navigation'
 
-import { resolverSlugClienteServer } from '@/lib/utils/slug.server'
+import {
+  resolverSlugClienteServer,
+  resolverSlugNegociacionServer,
+} from '@/lib/utils/slug.server'
 
 import NegociacionDetalleClient from './negociacion-detalle-client'
 
@@ -14,16 +17,19 @@ interface PageProps {
 export default async function NegociacionDetallePage({ params }: PageProps) {
   const { id, negociacionId } = await params
 
-  const clienteUUID = await resolverSlugClienteServer(id)
+  const [clienteUUID, negociacionUUID] = await Promise.all([
+    resolverSlugClienteServer(id),
+    resolverSlugNegociacionServer(negociacionId),
+  ])
 
-  if (!clienteUUID) {
+  if (!clienteUUID || !negociacionUUID) {
     notFound()
   }
 
   return (
     <NegociacionDetalleClient
       clienteId={clienteUUID}
-      negociacionId={negociacionId}
+      negociacionId={negociacionUUID}
     />
   )
 }
