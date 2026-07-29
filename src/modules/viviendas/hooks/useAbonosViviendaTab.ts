@@ -23,10 +23,6 @@ export const abonosViviendaKeys = {
 // DATA FETCHING
 // ============================================
 
-/**
- * Obtiene abonos activos de la negociacion activa de una vivienda.
- * Filtra por vivienda_id + negociacion_estado = 'Activa' + estado abono = 'Activo'
- */
 async function fetchAbonosViviendaActivos(
   viviendaId: string
 ): Promise<AbonoConInfo[]> {
@@ -34,7 +30,6 @@ async function fetchAbonosViviendaActivos(
     .from('vista_abonos_completos')
     .select('*')
     .eq('vivienda_id', viviendaId)
-    .eq('negociacion_estado', 'Activa')
     .eq('estado', 'Activo')
     .order('fecha_abono', { ascending: false })
 

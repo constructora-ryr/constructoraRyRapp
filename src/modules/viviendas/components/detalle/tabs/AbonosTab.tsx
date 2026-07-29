@@ -36,8 +36,7 @@ export function AbonosTab({ vivienda }: AbonosTabProps) {
   const canViewAbonos = esAdmin || puede('abonos', 'ver')
   const { abonos, totalAbonado, cargando } = useAbonosViviendaTab(vivienda.id)
 
-  const saldoPendiente =
-    (vivienda.valor_total || 0) - (vivienda.total_abonado || 0)
+  const saldoPendiente = vivienda.saldo_pendiente ?? vivienda.valor_total
   const porcentaje = vivienda.porcentaje_pagado || 0
 
   return (
@@ -110,10 +109,10 @@ export function AbonosTab({ vivienda }: AbonosTabProps) {
             </div>
             <div>
               <h3 className='text-sm font-semibold text-gray-900 dark:text-white'>
-                {`Abonos de Negociaci\u00F3n Activa`}
+                Historial de Abonos
               </h3>
               <p className='text-xs text-gray-500 dark:text-gray-400'>
-                {`Pagos registrados en la negociaci\u00F3n vigente`}
+                Pagos registrados en esta vivienda
               </p>
             </div>
           </div>
@@ -145,10 +144,11 @@ export function AbonosTab({ vivienda }: AbonosTabProps) {
               <Receipt className='h-7 w-7 text-orange-400 dark:text-orange-500' />
             </div>
             <p className='mb-1 text-sm font-semibold text-gray-700 dark:text-gray-300'>
-              {`No hay abonos en la negociaci\u00F3n activa`}
+              No hay abonos registrados
             </p>
             <p className='max-w-xs text-center text-xs text-gray-500 dark:text-gray-400'>
-              {`Los abonos registrados a la negociaci\u00F3n vigente de esta vivienda aparecer\u00E1n aqu\u00ED`}
+              Los abonos registrados para esta vivienda aparecer\u00E1n
+              aqu\u00ED
             </p>
           </div>
         ) : (

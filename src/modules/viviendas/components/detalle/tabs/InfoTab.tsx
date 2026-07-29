@@ -16,7 +16,10 @@ import {
   User,
 } from 'lucide-react'
 
+import Link from 'next/link'
+
 import * as styles from '@/app/viviendas/[id]/vivienda-detalle.styles'
+import { getShortId } from '@/lib/utils/slug.utils'
 import type { Vivienda } from '@/modules/viviendas/types'
 import { formatArea, formatCurrency } from '@/shared/utils'
 
@@ -357,9 +360,12 @@ export function InfoTab({ vivienda }: InfoTabProps) {
                   <p className='text-xs font-semibold uppercase tracking-wide text-orange-600 dark:text-orange-400'>
                     Cliente Asignado
                   </p>
-                  <p className='mt-0.5 text-base font-bold text-gray-900 dark:text-white'>
+                  <Link
+                    href={`/clientes/${getShortId(vivienda.clientes.id)}`}
+                    className='mt-0.5 inline-block text-base font-bold text-gray-900 underline-offset-2 hover:text-orange-600 hover:underline dark:text-white dark:hover:text-orange-400'
+                  >
                     {vivienda.clientes.nombre_completo}
-                  </p>
+                  </Link>
                 </div>
               </div>
               <div className='flex items-center gap-4 border-t border-orange-200 pt-3 dark:border-orange-800'>
