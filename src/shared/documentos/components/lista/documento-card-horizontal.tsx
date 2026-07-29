@@ -223,8 +223,8 @@ export function DocumentoCardHorizontal({
       <div className='flex min-w-0 flex-1 flex-col'>
         <div className='flex items-center gap-2'>
           <span
-            className='text-sm font-semibold text-gray-900 dark:text-white'
-            title={documento.descripcion || undefined}
+            className='truncate text-sm font-semibold text-gray-900 dark:text-white'
+            title={documento.titulo}
           >
             {documento.titulo}
           </span>
