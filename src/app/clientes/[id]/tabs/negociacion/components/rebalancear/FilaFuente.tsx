@@ -53,8 +53,12 @@ export function FilaFuente({
     onChange(ajuste.id, numero)
   }
 
-  // ── Fuente completamente desembolsada → card compacta read-only ──────────
-  if (restricciones.esCompletada && !ajuste.paraEliminar) {
+  // ── Fuente completamente desembolsada y no editable → card compacta read-only ──
+  if (
+    restricciones.esCompletada &&
+    !restricciones.puedeEditarMonto &&
+    !ajuste.paraEliminar
+  ) {
     return (
       <div className='flex overflow-hidden rounded-xl border border-gray-200/80 shadow-sm dark:border-gray-700/50'>
         <div className={`w-1 flex-shrink-0 ${color.barra}`} />

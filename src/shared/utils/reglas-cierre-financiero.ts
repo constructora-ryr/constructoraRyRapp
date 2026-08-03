@@ -74,8 +74,32 @@ export function calcularRestriccionesFuente(
   // Valor para el balance: capital_para_cierre para créditos, monto_aprobado para el resto
   const montoParaCierre = fuente.capital_para_cierre ?? fuente.monto_aprobado
 
-  // ── COMPLETADA (100% desembolsada) → todo bloqueado ──
+  // ── COMPLETADA (100% desembolsada) ──
   if (esCompletada) {
+    // Cuota Inicial: permite aumentar el monto aunque esté completada.
+    // Caso de uso: cliente aporta más recursos propios para compensar
+    // una reducción en el crédito hipotecario. El mínimo es lo ya recibido.
+    if (esCuotaInicial(fuente.tipo)) {
+      const recibidoStr = formatCurrency(fuente.monto_recibido)
+      return {
+        puedeEliminar: false,
+        puedeEditarMonto: true,
+        puedeEditarEntidad: false,
+        montoMinimo: fuente.monto_recibido,
+        razonBloqueoEliminar: `Ya recibió ${recibidoStr} en abonos`,
+        razonBloqueoMonto: null,
+        razonBloqueoEntidad: null,
+        advertencias: [
+          `Ya recibido: ${recibidoStr}. Puede aumentar si el cliente aporta más recursos propios.`,
+        ],
+        esCompletada: true,
+        tieneAbonos: true,
+        esCreditoConPlan,
+        montoParaCierre,
+      }
+    }
+
+    // Resto de fuentes completadas → todo bloqueado
     return {
       puedeEliminar: false,
       puedeEditarMonto: false,
