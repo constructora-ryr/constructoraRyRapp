@@ -61,7 +61,7 @@ export function useModalAjusteState({
       fuentesPago.map(f => ({
         id: f.id,
         tipo: f.tipo,
-        montoOriginal: f.monto_aprobado,
+        montoOriginal: f.capital_para_cierre ?? f.monto_aprobado,
         montoEditable: f.capital_para_cierre ?? f.monto_aprobado,
         entidad: f.entidad ?? '',
         entidadEditable: f.entidad ?? '',
