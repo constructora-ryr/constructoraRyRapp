@@ -189,9 +189,10 @@ export function validarRebalanceo(
     })
   }
 
-  // Montos mínimos
+  // Montos mínimos — se omiten fuentes completadas porque son inmutables
   for (const a of ajustes) {
     if (a.paraEliminar) continue
+    if (a.restricciones.esCompletada) continue
     if (a.montoEditable < a.restricciones.montoMinimo) {
       errores.push({
         campo: a.id,
