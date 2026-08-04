@@ -29,6 +29,7 @@ import {
 import { LoadingState } from '@/shared/components/layout/LoadingState'
 import { ConfirmacionModal } from '@/shared/components/modals'
 import { EmptyState } from '@/shared/components/ui/EmptyState'
+import { FormSelect } from '@/shared/components/ui/form-select'
 
 import { useDocumentosEliminados } from '../../hooks'
 import type { DocumentoProyecto } from '../../types/documento.types'
@@ -213,7 +214,7 @@ export function DocumentosEliminadosLista() {
           {/* Filtro por módulo */}
           <div className='relative'>
             <Filter className='pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500' />
-            <select
+            <FormSelect
               value={moduloFiltro}
               onChange={e =>
                 setModuloFiltro(
@@ -224,7 +225,7 @@ export function DocumentosEliminadosLista() {
                     | 'clientes'
                 )
               }
-              className='w-full appearance-none rounded-lg border-2 border-gray-200 bg-gray-50 py-2 pl-10 pr-3 text-sm transition-all focus:border-red-500 focus:ring-2 focus:ring-red-500/20 dark:border-gray-700 dark:bg-gray-900/50'
+              className='w-full rounded-lg border-2 border-gray-200 bg-gray-50 py-2 pl-10 text-sm transition-all focus:border-red-500 focus:ring-2 focus:ring-red-500/20 dark:border-gray-700 dark:bg-gray-900/50'
               aria-label='Filtrar por módulo'
             >
               <option value='todos'>Todos los módulos</option>
@@ -233,26 +234,26 @@ export function DocumentosEliminadosLista() {
                   {config.label}
                 </option>
               ))}
-            </select>
+            </FormSelect>
           </div>
 
           {/* Ordenamiento */}
           <div className='relative'>
             <TrendingDown className='pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500' />
-            <select
+            <FormSelect
               value={ordenamiento}
               onChange={e =>
                 setOrdenamiento(
                   e.target.value as 'recientes' | 'antiguos' | 'alfabetico'
                 )
               }
-              className='w-full appearance-none rounded-lg border-2 border-gray-200 bg-gray-50 py-2 pl-10 pr-3 text-sm transition-all focus:border-red-500 focus:ring-2 focus:ring-red-500/20 dark:border-gray-700 dark:bg-gray-900/50'
+              className='w-full rounded-lg border-2 border-gray-200 bg-gray-50 py-2 pl-10 text-sm transition-all focus:border-red-500 focus:ring-2 focus:ring-red-500/20 dark:border-gray-700 dark:bg-gray-900/50'
               aria-label='Ordenar por'
             >
               <option value='recientes'>Más recientes primero</option>
               <option value='antiguos'>Más antiguos primero</option>
               <option value='alfabetico'>Orden alfabético</option>
-            </select>
+            </FormSelect>
           </div>
         </div>
 

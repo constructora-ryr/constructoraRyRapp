@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { AlertCircle, Archive, X } from 'lucide-react'
 
+import { FormSelect } from '@/shared/components/ui/form-select'
 import { type ModuleName } from '@/shared/config/module-themes'
 
 import { MOTIVOS_ARCHIVADO } from '../../constants/archivado.constants'
@@ -117,7 +118,7 @@ export function ArchivarDocumentoModal({
                   Motivo de archivado:{' '}
                   <span className={styles.content.form.required}>*</span>
                 </label>
-                <select
+                <FormSelect
                   value={motivoCategoria}
                   onChange={e => handleChangeMotivoCategoria(e.target.value)}
                   disabled={procesando}
@@ -129,7 +130,7 @@ export function ArchivarDocumentoModal({
                       {motivo.label}
                     </option>
                   ))}
-                </select>
+                </FormSelect>
               </div>
 
               {/* Detalle adicional */}

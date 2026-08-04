@@ -11,6 +11,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { CheckCircle, Loader2 } from 'lucide-react'
 import { createPortal } from 'react-dom'
 
+import { FormSelect } from '@/shared/components/ui/form-select'
 import { useMarcarEstadoVersion } from '@/shared/documentos/hooks/useMarcarEstadoVersion'
 
 // ============================================================================
@@ -183,7 +184,7 @@ export function MarcarEstadoVersionModal({
                 >
                   Versión correcta (opcional)
                 </label>
-                <select
+                <FormSelect
                   id='version-correcta'
                   value={versionCorrectaId}
                   onChange={e => setVersionCorrectaId(e.target.value)}
@@ -197,7 +198,7 @@ export function MarcarEstadoVersionModal({
                         Versión {version.version} - {version.titulo}
                       </option>
                     ))}
-                </select>
+                </FormSelect>
                 <p className='mt-1.5 text-xs text-gray-500 dark:text-gray-400'>
                   Selecciona la versión que corrige este error
                 </p>

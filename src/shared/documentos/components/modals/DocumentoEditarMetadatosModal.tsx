@@ -17,6 +17,7 @@ import {
   AccordionWizardTextarea,
   getAccordionWizardStyles,
 } from '@/shared/components/accordion-wizard'
+import { FormSelect } from '@/shared/components/ui/form-select'
 import { moduleThemes, type ModuleName } from '@/shared/config/module-themes'
 import { cn } from '@/shared/utils/helpers'
 
@@ -187,7 +188,7 @@ export function DocumentoEditarMetadatosModal({
                         <Folder size={14} />
                         Categoria
                       </label>
-                      <select
+                      <FormSelect
                         value={categoriaId}
                         onChange={e => setCategoriaId(e.target.value)}
                         disabled={editando}
@@ -205,7 +206,7 @@ export function DocumentoEditarMetadatosModal({
                             {cat.nombre}
                           </option>
                         ))}
-                      </select>
+                      </FormSelect>
                     </div>
 
                     {/* Fechas */}
