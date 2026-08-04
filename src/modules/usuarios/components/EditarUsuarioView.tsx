@@ -10,6 +10,8 @@
 import { motion } from 'framer-motion'
 import { AlertCircle, ArrowLeft, Loader2, Save, UserCog } from 'lucide-react'
 
+import { FormSelect } from '@/shared/components/ui/form-select'
+
 import { useEditarUsuario } from '../hooks/useEditarUsuario'
 import { usuariosPageStyles as styles } from '../styles/usuarios-page.styles'
 import {
@@ -195,7 +197,7 @@ export function EditarUsuarioView({ id }: EditarUsuarioViewProps) {
                 <label htmlFor='rol' className={s.labelRequired}>
                   Rol
                 </label>
-                <select
+                <FormSelect
                   id='rol'
                   value={form.rol}
                   onChange={e => handleChange('rol', e.target.value as Rol)}
@@ -206,14 +208,14 @@ export function EditarUsuarioView({ id }: EditarUsuarioViewProps) {
                       {rol.label}
                     </option>
                   ))}
-                </select>
+                </FormSelect>
               </div>
 
               <div className={s.field}>
                 <label htmlFor='estado' className={s.labelRequired}>
                   Estado
                 </label>
-                <select
+                <FormSelect
                   id='estado'
                   value={form.estado}
                   onChange={e =>
@@ -226,7 +228,7 @@ export function EditarUsuarioView({ id }: EditarUsuarioViewProps) {
                       {estado.label}
                     </option>
                   ))}
-                </select>
+                </FormSelect>
               </div>
             </div>
 

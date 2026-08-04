@@ -19,6 +19,8 @@ import {
   UserPlus,
 } from 'lucide-react'
 
+import { FormSelect } from '@/shared/components/ui/form-select'
+
 import { useNuevoUsuario } from '../hooks/useNuevoUsuario'
 import { usuariosPageStyles as styles } from '../styles/usuarios-page.styles'
 import { ROLES_UI, type Rol } from '../types'
@@ -310,7 +312,7 @@ export function NuevoUsuarioView() {
                 <label htmlFor='rol' className={s.labelRequired}>
                   Rol
                 </label>
-                <select
+                <FormSelect
                   id='rol'
                   value={form.rol}
                   onChange={e => handleChange('rol', e.target.value as Rol)}
@@ -321,7 +323,7 @@ export function NuevoUsuarioView() {
                       {rol.label}
                     </option>
                   ))}
-                </select>
+                </FormSelect>
                 <p className={s.helperText}>
                   El rol determina qué módulos y acciones puede realizar el
                   usuario.

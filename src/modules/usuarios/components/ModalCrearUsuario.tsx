@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { AlertCircle, Mail, Send } from 'lucide-react'
 
 import { logger } from '@/lib/utils/logger'
+import { FormSelect } from '@/shared/components/ui/form-select'
 
 import {
   ROLES,
@@ -222,7 +223,7 @@ export function ModalCrearUsuario({
             <label className={styles.form.label}>
               Rol <span className={styles.form.labelRequired}>*</span>
             </label>
-            <select
+            <FormSelect
               className={styles.form.select}
               value={formulario.rol}
               onChange={e =>
@@ -234,7 +235,7 @@ export function ModalCrearUsuario({
                   {rol.label} - {rol.descripcion}
                 </option>
               ))}
-            </select>
+            </FormSelect>
           </div>
 
           {/* Footer */}

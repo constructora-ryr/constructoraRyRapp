@@ -28,6 +28,7 @@ import {
 } from 'lucide-react'
 
 import { logger } from '@/lib/utils/logger'
+import { FormSelect } from '@/shared/components/ui/form-select'
 
 import {
   useActualizarPermisoMutation,
@@ -180,7 +181,7 @@ export function PermisosMatrixCompact() {
         </div>
 
         {/* Filtro Rol */}
-        <select
+        <FormSelect
           value={filtroRol}
           onChange={e => setFiltroRol(e.target.value as Rol | 'todos')}
           className='rounded-lg border-2 border-gray-200 bg-gray-50 px-3 py-1.5 text-sm transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-200'
@@ -190,10 +191,10 @@ export function PermisosMatrixCompact() {
           <option value='Contabilidad'>📊 Contabilidad</option>
           <option value='Administrador de Obra'>👁️ Admin. Obra</option>
           <option value='Gerencia'>💼 Gerencia</option>
-        </select>
+        </FormSelect>
 
         {/* Filtro Módulo */}
-        <select
+        <FormSelect
           value={filtroModulo}
           onChange={e => setFiltroModulo(e.target.value)}
           className='rounded-lg border-2 border-gray-200 bg-gray-50 px-3 py-1.5 text-sm transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-200'
@@ -204,7 +205,7 @@ export function PermisosMatrixCompact() {
               {mod}
             </option>
           ))}
-        </select>
+        </FormSelect>
 
         {/* Limpiar Filtros */}
         {filtroRol !== 'todos' || filtroModulo !== 'todos' || busqueda ? (

@@ -16,6 +16,7 @@ import { useEffect, useState } from 'react'
 import { AlertCircle } from 'lucide-react'
 
 import { logger } from '@/lib/utils/logger'
+import { FormSelect } from '@/shared/components/ui/form-select'
 
 import {
   ESTADOS_USUARIO,
@@ -221,7 +222,7 @@ export function ModalEditarUsuario({
           <label className={styles.form.label}>
             Rol <span className={styles.form.labelRequired}>*</span>
           </label>
-          <select
+          <FormSelect
             className={styles.form.select}
             value={formulario.rol}
             onChange={e =>
@@ -233,7 +234,7 @@ export function ModalEditarUsuario({
                 {rol.label} - {rol.descripcion}
               </option>
             ))}
-          </select>
+          </FormSelect>
         </div>
 
         {/* Estado */}
@@ -241,7 +242,7 @@ export function ModalEditarUsuario({
           <label className={styles.form.label}>
             Estado <span className={styles.form.labelRequired}>*</span>
           </label>
-          <select
+          <FormSelect
             className={styles.form.select}
             value={formulario.estado}
             onChange={e =>
@@ -256,7 +257,7 @@ export function ModalEditarUsuario({
                 {estado.label}
               </option>
             ))}
-          </select>
+          </FormSelect>
         </div>
 
         {/* Footer */}

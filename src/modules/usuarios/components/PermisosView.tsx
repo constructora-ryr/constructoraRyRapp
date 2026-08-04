@@ -57,6 +57,8 @@ import {
   X,
 } from 'lucide-react'
 
+import { FormSelect } from '@/shared/components/ui/form-select'
+
 import {
   ETIQUETA_ACCION,
   ETIQUETA_MODULO,
@@ -487,7 +489,7 @@ export function PermisosView() {
               aria-label='Buscar permisos'
             />
           </div>
-          <select
+          <FormSelect
             value={filtroModulo}
             onChange={e => setFiltroModulo(e.target.value)}
             className='rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-200'
@@ -499,7 +501,7 @@ export function PermisosView() {
                 {ETIQUETA_MODULO[mod] ?? mod}
               </option>
             ))}
-          </select>
+          </FormSelect>
           {hayFiltrosActivos ? (
             <button
               onClick={limpiarFiltros}
