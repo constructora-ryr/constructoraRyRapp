@@ -312,7 +312,13 @@ export async function listar(filtros?: FiltrosViviendas): Promise<Vivienda[]> {
 
   if (filtros?.proyecto_id) query = query.eq('proyecto_id', filtros.proyecto_id)
   if (filtros?.manzana_id) query = query.eq('manzana_id', filtros.manzana_id)
-  if (filtros?.estado) query = query.eq('estado', filtros.estado)
+  if (filtros?.estado) {
+    if (filtros.estado === 'Vendidas') {
+      query = query.neq('estado', 'Disponible')
+    } else {
+      query = query.eq('estado', filtros.estado)
+    }
+  }
 
   const { data, error } = await query
 

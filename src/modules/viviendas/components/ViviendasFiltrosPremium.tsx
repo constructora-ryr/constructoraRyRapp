@@ -105,6 +105,7 @@ export function ViviendasFiltrosPremium({
             className={styles.select}
           >
             <option value=''>Todos los estados</option>
+            <option value='Vendidas'>🏠 Vendidas</option>
             <option value='Disponible'>🟢 Disponible</option>
             <option value='Asignada'>🔵 Asignada</option>
             <option value='Entregada'>🟣 Escriturada</option>
