@@ -575,7 +575,7 @@ export function NegociacionTab({
             {negociacion?.id ? (
               <button
                 onClick={() => setHistorialNegOpen(true)}
-                title='Ver historial de cambios al plan financiero'
+                title='Ver historial de la negociación'
                 className='flex h-6 w-6 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-violet-50 hover:text-violet-600 dark:hover:bg-violet-900/20 dark:hover:text-violet-400'
               >
                 <History className='h-3.5 w-3.5' />

@@ -24,7 +24,6 @@ function useHistorialNegociacion(negociacionId: string | undefined) {
         )
         .eq('registro_id', negociacionId as string)
         .eq('tabla', 'negociaciones')
-        .contains('metadata', { accion_tipo: 'rebalanceo_plan_financiero' })
         .order('fecha_evento', { ascending: false })
         .limit(50)
 
@@ -111,7 +110,7 @@ export function HistorialNegociacionModal({
                     Historial de cambios
                   </h2>
                   <p className='text-xs text-gray-400 dark:text-gray-500'>
-                    Ajustes al plan financiero
+                    Cambios registrados en esta negociación
                   </p>
                 </div>
               </div>
@@ -138,7 +137,7 @@ export function HistorialNegociacionModal({
                     Sin cambios registrados
                   </p>
                   <p className='mt-1 text-xs text-gray-400 dark:text-gray-500'>
-                    Los ajustes al plan financiero aparecerán aquí
+                    Los cambios a esta negociación aparecerán aquí
                   </p>
                 </div>
               ) : (
