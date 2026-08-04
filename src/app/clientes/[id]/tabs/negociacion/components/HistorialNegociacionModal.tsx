@@ -24,6 +24,7 @@ function useHistorialNegociacion(negociacionId: string | undefined) {
         )
         .eq('registro_id', negociacionId as string)
         .eq('tabla', 'negociaciones')
+        .neq('accion', 'CREATE')
         .order('fecha_evento', { ascending: false })
         .limit(50)
 
