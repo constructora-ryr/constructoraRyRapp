@@ -30,6 +30,7 @@ import { AlertCircle, CheckCircle2, Info, Loader2 } from 'lucide-react'
 import { type FieldError, type UseFormRegisterReturn } from 'react-hook-form'
 
 import { cn } from '@/lib/utils'
+import { FormSelect as StyledSelect } from '@/shared/components/ui/form-select'
 
 // ============================================================================
 // TIPOS
@@ -412,7 +413,7 @@ export function FormSelect({
         {required && <span className='ml-1 text-red-500'>*</span>}
       </label>
 
-      <select
+      <StyledSelect
         {...register}
         id={name}
         disabled={disabled}
@@ -437,7 +438,7 @@ export function FormSelect({
             {option.label}
           </option>
         ))}
-      </select>
+      </StyledSelect>
 
       <div className='min-h-[20px]' role='alert' aria-live='polite'>
         {hasError && (

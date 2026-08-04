@@ -23,6 +23,7 @@ import {
 } from '@tanstack/react-table'
 import { ChevronDown, ChevronUp, ChevronsUpDown } from 'lucide-react'
 
+import { FormSelect } from '@/shared/components/ui/form-select'
 import { cn } from '@/shared/utils/helpers'
 
 interface DataTableProps<TData> {
@@ -239,7 +240,7 @@ export function DataTable<TData>({
               <span className='text-xs text-gray-600 dark:text-gray-400'>
                 Mostrar:
               </span>
-              <select
+              <FormSelect
                 value={table.getState().pagination.pageSize}
                 onChange={e => {
                   table.setPageSize(Number(e.target.value))
@@ -252,7 +253,7 @@ export function DataTable<TData>({
                 {data.length > 100 && (
                   <option value={data.length}>Todos ({data.length})</option>
                 )}
-              </select>
+              </FormSelect>
             </div>
           </div>
 

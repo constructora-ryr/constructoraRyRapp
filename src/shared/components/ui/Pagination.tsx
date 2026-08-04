@@ -7,6 +7,8 @@
 
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
+import { FormSelect } from '@/shared/components/ui/form-select'
+
 function getPaginationPages(
   current: number,
   total: number
@@ -66,7 +68,7 @@ export function Pagination({
             <span className='text-xs text-gray-400 dark:text-gray-500'>
               Ver
             </span>
-            <select
+            <FormSelect
               value={itemsPerPage}
               onChange={e => onItemsPerPageChange(Number(e.target.value))}
               className='rounded-md border border-gray-200 bg-white px-2 py-1 text-xs font-medium text-gray-600 focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400/30 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300'
@@ -77,7 +79,7 @@ export function Pagination({
                 </option>
               ))}
               {showAllOption ? <option value={totalItems}>Todos</option> : null}
-            </select>
+            </FormSelect>
             <span className='text-xs text-gray-400 dark:text-gray-500'>
               por pagina
             </span>
