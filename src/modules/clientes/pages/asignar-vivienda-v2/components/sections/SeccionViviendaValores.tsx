@@ -8,7 +8,6 @@ import {
   Building2,
   Calculator,
   Calendar,
-  ChevronDown,
   DollarSign,
   FileText,
   Tag,
@@ -30,6 +29,7 @@ import {
   LABELS_TIPO_DESCUENTO,
   TIPOS_DESCUENTO,
 } from '@/modules/clientes/constants/descuento.constants'
+import { FormSelect } from '@/shared/components/ui/form-select'
 
 import { styles as s } from '../../styles'
 
@@ -134,32 +134,29 @@ export function SeccionViviendaValores({
         {/* Proyecto */}
         <div>
           <label className={s.field.label}>Proyecto</label>
-          <div className={s.field.selectWrapper}>
-            <select
-              className={s.field.select}
-              value={proyectoSeleccionado}
-              onChange={e => {
-                setProyectoSeleccionado(e.target.value)
-                setValue('proyecto_id', e.target.value)
-                setViviendaId('')
-                setValue('vivienda_id', '')
-                onClearErrorApi?.()
-              }}
-              disabled={cargandoProyectos || proyectos.length === 0}
-            >
-              <option value=''>
-                {!cargandoProyectos && proyectos.length === 0
-                  ? 'Sin proyectos disponibles'
-                  : 'Seleccionar proyecto'}
+          <FormSelect
+            className={s.field.select}
+            value={proyectoSeleccionado}
+            onChange={e => {
+              setProyectoSeleccionado(e.target.value)
+              setValue('proyecto_id', e.target.value)
+              setViviendaId('')
+              setValue('vivienda_id', '')
+              onClearErrorApi?.()
+            }}
+            disabled={cargandoProyectos || proyectos.length === 0}
+          >
+            <option value=''>
+              {!cargandoProyectos && proyectos.length === 0
+                ? 'Sin proyectos disponibles'
+                : 'Seleccionar proyecto'}
+            </option>
+            {proyectos.map(p => (
+              <option key={p.id} value={p.id}>
+                {p.nombre}
               </option>
-              {proyectos.map(p => (
-                <option key={p.id} value={p.id}>
-                  {p.nombre}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className={s.field.selectArrow} />
-          </div>
+            ))}
+          </FormSelect>
           {errors.proyecto_id && (
             <p className={s.field.error}>
               <AlertCircle className='h-3 w-3' />
@@ -353,24 +350,21 @@ export function SeccionViviendaValores({
                   {/* Tipo descuento */}
                   <div>
                     <label className={s.field.label}>Tipo de descuento</label>
-                    <div className={s.field.selectWrapper}>
-                      <select
-                        className={s.field.select}
-                        {...register('tipo_descuento')}
-                        onChange={e => {
-                          setValue('tipo_descuento', e.target.value)
-                          onClearErrorApi?.()
-                        }}
-                      >
-                        <option value=''>Seleccionar tipo</option>
-                        {TIPOS_DESCUENTO.map(t => (
-                          <option key={t} value={t}>
-                            {LABELS_TIPO_DESCUENTO[t]}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown className={s.field.selectArrow} />
-                    </div>
+                    <FormSelect
+                      className={s.field.select}
+                      {...register('tipo_descuento')}
+                      onChange={e => {
+                        setValue('tipo_descuento', e.target.value)
+                        onClearErrorApi?.()
+                      }}
+                    >
+                      <option value=''>Seleccionar tipo</option>
+                      {TIPOS_DESCUENTO.map(t => (
+                        <option key={t} value={t}>
+                          {LABELS_TIPO_DESCUENTO[t]}
+                        </option>
+                      ))}
+                    </FormSelect>
                     {errors.tipo_descuento && (
                       <p className={s.field.error}>
                         <AlertCircle className='h-3 w-3' />

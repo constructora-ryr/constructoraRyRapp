@@ -5,7 +5,6 @@ import {
   AlertCircle,
   Building2,
   CheckCircle2,
-  ChevronRight,
   DollarSign,
   Home,
   MessageSquare,
@@ -13,6 +12,7 @@ import {
 } from 'lucide-react'
 
 import { pageStyles as s } from '@/modules/clientes/pages/asignar-vivienda/styles'
+import { FormSelect } from '@/shared/components/ui/form-select'
 
 import type { ProyectoBasico, ViviendaDetalle } from '../types'
 
@@ -134,24 +134,21 @@ export function Paso1InfoBasica({
             Proyecto
             <span className='ml-0.5 text-red-500'>*</span>
           </label>
-          <div className='relative'>
-            <select
-              value={proyectoSeleccionado}
-              onChange={e => onProyectoChange(e.target.value)}
-              disabled={cargandoProyectos || !!viviendaIdProp}
-              className={getInputClasses(
-                mostrarErrores && proyectos.length > 0 && !proyectoSeleccionado
-              )}
-            >
-              <option value=''>Selecciona un proyecto</option>
-              {proyectos.map(p => (
-                <option key={p.id} value={p.id}>
-                  {p.nombre}
-                </option>
-              ))}
-            </select>
-            <ChevronRight className='pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 rotate-90 text-gray-400' />
-          </div>
+          <FormSelect
+            value={proyectoSeleccionado}
+            onChange={e => onProyectoChange(e.target.value)}
+            disabled={cargandoProyectos || !!viviendaIdProp}
+            className={getInputClasses(
+              mostrarErrores && proyectos.length > 0 && !proyectoSeleccionado
+            )}
+          >
+            <option value=''>Selecciona un proyecto</option>
+            {proyectos.map(p => (
+              <option key={p.id} value={p.id}>
+                {p.nombre}
+              </option>
+            ))}
+          </FormSelect>
           {mostrarErrores && proyectos.length > 0 && !proyectoSeleccionado && (
             <p className='mt-1 flex items-center gap-1 text-xs text-red-600 dark:text-red-400'>
               <AlertCircle className='h-3 w-3' />

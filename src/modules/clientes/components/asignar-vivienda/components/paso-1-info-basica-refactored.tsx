@@ -14,7 +14,6 @@ import {
   AlertCircle,
   Building2,
   CheckCircle2,
-  ChevronRight,
   DollarSign,
   Home,
   Info,
@@ -33,6 +32,7 @@ import type {
 
 import { formatNombreCompleto } from '@/lib/utils/string.utils'
 import { pageStyles as s } from '@/modules/clientes/pages/asignar-vivienda/styles'
+import { FormSelect } from '@/shared/components/ui/form-select'
 
 import type { AsignarViviendaFormData } from '../schemas'
 import type { ProyectoBasico, ViviendaDetalle } from '../types'
@@ -202,25 +202,22 @@ export function Paso1InfoBasicaRefactored({
             Proyecto
             <span className='ml-0.5 text-red-500'>*</span>
           </label>
-          <div className='relative'>
-            <select
-              {...register('proyecto_id')}
-              disabled={cargandoProyectos || !!viviendaIdProp}
-              onChange={e => {
-                setValue('proyecto_id', e.target.value)
-                onProyectoChange(e.target.value)
-              }}
-              className={getInputClasses('proyecto_id')}
-            >
-              <option value=''>Selecciona un proyecto</option>
-              {proyectos.map(p => (
-                <option key={p.id} value={p.id}>
-                  {p.nombre}
-                </option>
-              ))}
-            </select>
-            <ChevronRight className='pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 rotate-90 text-gray-400' />
-          </div>
+          <FormSelect
+            {...register('proyecto_id')}
+            disabled={cargandoProyectos || !!viviendaIdProp}
+            onChange={e => {
+              setValue('proyecto_id', e.target.value)
+              onProyectoChange(e.target.value)
+            }}
+            className={getInputClasses('proyecto_id')}
+          >
+            <option value=''>Selecciona un proyecto</option>
+            {proyectos.map(p => (
+              <option key={p.id} value={p.id}>
+                {p.nombre}
+              </option>
+            ))}
+          </FormSelect>
           {showError('proyecto_id') && (
             <p className='mt-1 flex items-center gap-1 text-xs text-red-600 dark:text-red-400'>
               <AlertCircle className='h-3 w-3' />
@@ -412,23 +409,20 @@ export function Paso1InfoBasicaRefactored({
                           *
                         </span>
                       </label>
-                      <div className='relative'>
-                        <select
-                          {...register('tipo_descuento')}
-                          onChange={e =>
-                            setValue('tipo_descuento', e.target.value)
-                          }
-                          className={getInputClasses('tipo_descuento')}
-                        >
-                          <option value=''>Selecciona un tipo</option>
-                          {tiposDescuento.map(tipo => (
-                            <option key={tipo.value} value={tipo.value}>
-                              {tipo.label}
-                            </option>
-                          ))}
-                        </select>
-                        <ChevronRight className='pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 rotate-90 text-gray-400' />
-                      </div>
+                      <FormSelect
+                        {...register('tipo_descuento')}
+                        onChange={e =>
+                          setValue('tipo_descuento', e.target.value)
+                        }
+                        className={getInputClasses('tipo_descuento')}
+                      >
+                        <option value=''>Selecciona un tipo</option>
+                        {tiposDescuento.map(tipo => (
+                          <option key={tipo.value} value={tipo.value}>
+                            {tipo.label}
+                          </option>
+                        ))}
+                      </FormSelect>
                       {showError('tipo_descuento') && (
                         <p className='mt-1 flex items-center gap-1 text-xs text-red-600 dark:text-red-400'>
                           <AlertCircle className='h-3 w-3' />
