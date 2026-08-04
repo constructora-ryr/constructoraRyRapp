@@ -29,6 +29,7 @@ import { SeccionFuentesPago } from '@/modules/clientes/pages/asignar-vivienda-v2
 import type { FuenteConAbonos } from '@/modules/clientes/services/traslado-vivienda.service'
 import type { TipoFuentePago } from '@/modules/clientes/types'
 import type { TipoFuentePagoConCampos } from '@/modules/configuracion/types/campos-dinamicos.types'
+import { FormSelect } from '@/shared/components/ui/form-select'
 
 import { styles as s } from '../../styles'
 
@@ -131,7 +132,7 @@ export function SeccionDestinoFuentes({
           <label className={s.label.base}>
             Proyecto <span className={s.label.required}>*</span>
           </label>
-          <select
+          <FormSelect
             value={proyectoSeleccionado}
             onChange={e => {
               setProyectoSeleccionado(e.target.value)
@@ -150,7 +151,7 @@ export function SeccionDestinoFuentes({
                 {p.nombre}
               </option>
             ))}
-          </select>
+          </FormSelect>
         </div>
 
         {/* Vivienda Combobox */}

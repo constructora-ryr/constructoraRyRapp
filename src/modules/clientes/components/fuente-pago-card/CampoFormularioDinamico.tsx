@@ -21,6 +21,7 @@ import type {
   CampoConfig,
   ValorCampo,
 } from '@/modules/configuracion/types/campos-dinamicos.types'
+import { FormSelect } from '@/shared/components/ui/form-select'
 
 import { EntidadCombobox } from './EntidadCombobox'
 
@@ -240,7 +241,7 @@ export const CampoFormularioDinamico = forwardRef<
         // ======== SELECT CUSTOM ========
         case 'select_custom':
           return (
-            <select
+            <FormSelect
               value={(value as string) || ''}
               onChange={e => onChange(e.target.value)}
               disabled={disabled}
@@ -253,7 +254,7 @@ export const CampoFormularioDinamico = forwardRef<
                   {opcion.label}
                 </option>
               ))}
-            </select>
+            </FormSelect>
           )
 
         // ======== CHECKBOX ========

@@ -13,6 +13,8 @@ import {
   X,
 } from 'lucide-react'
 
+import { FormSelect } from '@/shared/components/ui/form-select'
+
 interface FuentePago {
   id?: string
   tipo: string
@@ -225,7 +227,7 @@ export function FuentesPagoEditarModal({
                           <label className='mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400'>
                             Tipo de Fuente *
                           </label>
-                          <select
+                          <FormSelect
                             value={fuente.tipo || ''}
                             onChange={e =>
                               actualizarFuente(index, 'tipo', e.target.value)
@@ -247,7 +249,7 @@ export function FuentesPagoEditarModal({
                             <option value='Recursos Propios'>
                               Recursos Propios
                             </option>
-                          </select>
+                          </FormSelect>
                         </div>
 
                         {/* Entidad */}

@@ -2,6 +2,8 @@
 
 import { MessageSquare } from 'lucide-react'
 
+import { FormSelect } from '@/shared/components/ui/form-select'
+
 import { MOTIVOS_AJUSTE } from '../../hooks'
 
 interface SeccionMotivoProps {
@@ -29,10 +31,10 @@ export function SeccionMotivo({
         Motivo del cambio <span className='text-red-400'>*</span>
       </label>
 
-      <select
+      <FormSelect
         value={motivo}
         onChange={e => onMotivoChange(e.target.value)}
-        className='w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:[color-scheme:dark]'
+        className='w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-white'
       >
         <option value=''>Seleccionar motivo...</option>
         {MOTIVOS_AJUSTE.map(m => (
@@ -40,7 +42,7 @@ export function SeccionMotivo({
             {m}
           </option>
         ))}
-      </select>
+      </FormSelect>
 
       {motivoRequiereNotas && (
         <textarea

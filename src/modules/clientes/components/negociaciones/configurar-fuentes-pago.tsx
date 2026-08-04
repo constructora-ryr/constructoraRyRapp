@@ -36,6 +36,7 @@ import {
 
 import { CreditoConstructoraForm } from '@/modules/fuentes-pago/components/CreditoConstructoraForm'
 import { SectionLoadingSpinner } from '@/shared/components/ui'
+import { FormSelect } from '@/shared/components/ui/form-select'
 import {
   esCreditoHipotecario,
   esCuotaInicial,
@@ -501,7 +502,7 @@ export function ConfigurarFuentesPago({
                             )}
                           </label>
                           {esCreditoHipotecario(fuente.tipo) ? (
-                            <select
+                            <FormSelect
                               value={fuente.entidad || ''}
                               onChange={e =>
                                 actualizarFuente(
@@ -530,9 +531,9 @@ export function ConfigurarFuentesPago({
                               <option value='Banco Popular'>
                                 Banco Popular
                               </option>
-                            </select>
+                            </FormSelect>
                           ) : esSubsidioCajaCompensacion(fuente.tipo) ? (
-                            <select
+                            <FormSelect
                               value={fuente.entidad || ''}
                               onChange={e =>
                                 actualizarFuente(
@@ -559,7 +560,7 @@ export function ConfigurarFuentesPago({
                               </option>
                               <option value='COMPENSAR'>COMPENSAR</option>
                               <option value='COLSUBSIDIO'>COLSUBSIDIO</option>
-                            </select>
+                            </FormSelect>
                           ) : (
                             <input
                               type='text'

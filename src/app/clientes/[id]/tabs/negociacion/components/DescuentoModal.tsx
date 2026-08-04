@@ -21,6 +21,7 @@ import { AlertTriangle } from 'lucide-react'
 import { createPortal } from 'react-dom'
 
 import { formatCurrencyInput, parseCurrency } from '@/modules/viviendas/utils'
+import { FormSelect } from '@/shared/components/ui/form-select'
 import { formatCurrency } from '@/shared/utils/format'
 
 import {
@@ -226,7 +227,7 @@ export function DescuentoModal({
                 <label htmlFor='descuento-tipo' className={styles.body.label}>
                   Tipo de descuento *
                 </label>
-                <select
+                <FormSelect
                   id='descuento-tipo'
                   value={tipo}
                   onChange={e => setTipo(e.target.value as TipoDescuento)}
@@ -237,7 +238,7 @@ export function DescuentoModal({
                       {LABELS_TIPO_DESCUENTO[t]}
                     </option>
                   ))}
-                </select>
+                </FormSelect>
               </div>
 
               {/* Motivo */}

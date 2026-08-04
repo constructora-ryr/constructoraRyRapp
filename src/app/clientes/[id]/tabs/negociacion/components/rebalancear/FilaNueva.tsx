@@ -4,6 +4,7 @@ import { useState } from 'react'
 
 import { AlertTriangle, Info, X } from 'lucide-react'
 
+import { FormSelect } from '@/shared/components/ui/form-select'
 import { esCreditoConstructora } from '@/shared/constants/fuentes-pago.constants'
 
 import type { FuAlteNueva } from '../../hooks'
@@ -112,10 +113,10 @@ export function FilaNueva({
         {mostrarEntidad ? (
           <div className='mt-2'>
             {entidades.length > 0 ? (
-              <select
+              <FormSelect
                 value={fuente.entidad}
                 onChange={e => onChange(index, 'entidad', e.target.value)}
-                className={`w-full rounded-lg border px-2.5 py-1.5 text-xs text-gray-700 focus:border-cyan-500 focus:outline-none dark:text-gray-300 dark:[color-scheme:dark] ${
+                className={`w-full rounded-lg border px-2.5 py-1.5 text-xs text-gray-700 focus:border-cyan-500 focus:outline-none dark:text-gray-300 ${
                   hasEntidadError
                     ? 'border-red-400 bg-red-50 dark:border-red-600 dark:bg-red-900/20'
                     : 'border-gray-200 bg-white dark:border-gray-600 dark:bg-gray-700/60'
@@ -127,7 +128,7 @@ export function FilaNueva({
                     {e}
                   </option>
                 ))}
-              </select>
+              </FormSelect>
             ) : (
               <input
                 type='text'
