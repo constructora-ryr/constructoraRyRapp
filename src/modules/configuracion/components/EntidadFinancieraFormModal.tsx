@@ -34,6 +34,8 @@ import {
 } from 'lucide-react'
 import { createPortal } from 'react-dom'
 
+import { FormSelect } from '@/shared/components/ui/form-select'
+
 import { useEntidadFinancieraFormModal } from '../hooks/useEntidadFinancieraFormModal'
 import type { EntidadFinanciera } from '../types/entidades-financieras.types'
 import {
@@ -206,7 +208,7 @@ export function EntidadFinancieraFormModal({
                         (categorización visual)
                       </span>
                     </label>
-                    <select
+                    <FormSelect
                       {...register('tipo')}
                       className={styles.select.base}
                     >
@@ -215,7 +217,7 @@ export function EntidadFinancieraFormModal({
                           {tipo}
                         </option>
                       ))}
-                    </select>
+                    </FormSelect>
                     {errors.tipo ? (
                       <p className={styles.input.error}>
                         {errors.tipo.message}
@@ -427,7 +429,7 @@ export function EntidadFinancieraFormModal({
                     </label>
                     <div className={styles.colorPicker.container}>
                       <Palette className={styles.colorPicker.icon} />
-                      <select
+                      <FormSelect
                         {...register('color')}
                         className={styles.select.withIcon}
                       >
@@ -436,7 +438,7 @@ export function EntidadFinancieraFormModal({
                             {color.charAt(0).toUpperCase() + color.slice(1)}
                           </option>
                         ))}
-                      </select>
+                      </FormSelect>
                       <div
                         className={`${styles.colorPicker.preview} ${colorClasses[selectedColor]}`}
                       />

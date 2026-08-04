@@ -14,6 +14,8 @@ import { AlertCircle, DollarSign, FileText, Tag, Type } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
+import { FormSelect } from '@/shared/components/ui/form-select'
+
 import {
   configuracionService,
   type ConfiguracionRecargo,
@@ -100,7 +102,7 @@ export function FormularioConfiguracion({
         </label>
         <div className='relative'>
           <Tag className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400' />
-          <select
+          <FormSelect
             {...register('tipo')}
             disabled={esEdicion}
             className='w-full rounded-lg border-2 border-gray-200 bg-gray-50 py-2.5 pl-10 pr-4 transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900/50'
@@ -111,7 +113,7 @@ export function FormularioConfiguracion({
                 {tipo.label}
               </option>
             ))}
-          </select>
+          </FormSelect>
         </div>
         {errors.tipo && (
           <p className='flex items-center gap-1 text-xs text-red-600 dark:text-red-400'>

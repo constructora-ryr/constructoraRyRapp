@@ -16,6 +16,8 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { AlertCircle, Check, Loader2, X } from 'lucide-react'
 
+import { FormSelect } from '@/shared/components/ui/form-select'
+
 import { useTipoFuentePagoFormModal } from '../hooks/useTipoFuentePagoFormModal'
 import type { TipoFuentePago } from '../types'
 import { TIPO_FUENTE_PAGO_LIMITS } from '../types'
@@ -205,7 +207,7 @@ export function TipoFuentePagoFormModal({
               <div className={s.grid.twoColumns}>
                 <div className={s.input.container}>
                   <label className={s.input.label}>Color</label>
-                  <select
+                  <FormSelect
                     {...register('color')}
                     className={s.input.field}
                     disabled={isPending}
@@ -220,12 +222,12 @@ export function TipoFuentePagoFormModal({
                     <option value='indigo'>Índigo</option>
                     <option value='yellow'>Amarillo</option>
                     <option value='emerald'>Esmeralda</option>
-                  </select>
+                  </FormSelect>
                 </div>
 
                 <div className={s.input.container}>
                   <label className={s.input.label}>Icono</label>
-                  <select
+                  <FormSelect
                     {...register('icono')}
                     className={s.input.field}
                     disabled={isPending}
@@ -242,7 +244,7 @@ export function TipoFuentePagoFormModal({
                     <option value='DollarSign'>DollarSign (Dólar)</option>
                     <option value='Banknote'>Banknote (Billete)</option>
                     <option value='HandCoins'>HandCoins (Monedas)</option>
-                  </select>
+                  </FormSelect>
                 </div>
               </div>
 

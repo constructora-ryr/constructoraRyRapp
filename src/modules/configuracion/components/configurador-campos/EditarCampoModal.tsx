@@ -12,6 +12,8 @@
 import { motion } from 'framer-motion'
 import { AlertCircle, Plus, Save, X } from 'lucide-react'
 
+import { FormSelect } from '@/shared/components/ui/form-select'
+
 import type {
   CampoConfig,
   RolCampo,
@@ -148,7 +150,7 @@ export function EditarCampoModal({
               <label className={s.editor.label}>
                 Tipo de Campo <span className={s.editor.required}>*</span>
               </label>
-              <select
+              <FormSelect
                 value={tipo}
                 onChange={e => setTipo(e.target.value as TipoCampoDinamico)}
                 className={s.editor.select}
@@ -158,7 +160,7 @@ export function EditarCampoModal({
                     {t.label}
                   </option>
                 ))}
-              </select>
+              </FormSelect>
             </div>
 
             {/* Rol */}
@@ -166,7 +168,7 @@ export function EditarCampoModal({
               <label className={s.editor.label}>
                 Rol del Campo <span className={s.editor.required}>*</span>
               </label>
-              <select
+              <FormSelect
                 value={rol}
                 onChange={e => setRol(e.target.value as RolCampo)}
                 className={s.editor.select}
@@ -176,7 +178,7 @@ export function EditarCampoModal({
                     {r.label}
                   </option>
                 ))}
-              </select>
+              </FormSelect>
               {errores.rol && (
                 <div className={s.editor.error}>
                   <AlertCircle className={s.editor.errorIcon} />

@@ -25,6 +25,7 @@ import {
 
 import { useModal } from '@/shared/components/modals'
 import { SectionLoadingSpinner } from '@/shared/components/ui'
+import { FormSelect } from '@/shared/components/ui/form-select'
 
 import {
   useEliminarEntidadFinanciera,
@@ -289,7 +290,7 @@ export function EntidadesFinancierasLista() {
           {/* Filtro Tipo */}
           <div className='relative flex w-full items-center gap-2 lg:w-auto'>
             <Filter className='h-4 w-4 text-gray-400' />
-            <select
+            <FormSelect
               value={tipoFilter}
               onChange={e =>
                 setTipoFilter(e.target.value as TipoEntidadFinanciera | 'Todos')
@@ -302,11 +303,11 @@ export function EntidadesFinancierasLista() {
                   {tipo}
                 </option>
               ))}
-            </select>
+            </FormSelect>
           </div>
 
           {/* Filtro Estado */}
-          <select
+          <FormSelect
             value={estadoFilter}
             onChange={e =>
               setEstadoFilter(
@@ -318,7 +319,7 @@ export function EntidadesFinancierasLista() {
             <option value='Todos'>Todos</option>
             <option value='Activas'>Activas</option>
             <option value='Inactivas'>Inactivas</option>
-          </select>
+          </FormSelect>
 
           {/* Botón Nuevo */}
           <button
