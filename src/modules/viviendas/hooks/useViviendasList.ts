@@ -73,9 +73,15 @@ export function useViviendasList() {
     }
 
     if (filtros.estado) {
-      resultado = resultado.filter(
-        vivienda => vivienda.estado === filtros.estado
-      )
+      if (filtros.estado === 'Vendidas') {
+        resultado = resultado.filter(
+          vivienda => vivienda.estado !== 'Disponible'
+        )
+      } else {
+        resultado = resultado.filter(
+          vivienda => vivienda.estado === filtros.estado
+        )
+      }
     }
 
     return resultado
