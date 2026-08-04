@@ -3,6 +3,8 @@
 import { motion } from 'framer-motion'
 import { Search, X } from 'lucide-react'
 
+import { FilterDropdown } from '@/shared/components/ui/filter-dropdown'
+
 import { renunciasStyles as styles } from '../styles/renuncias.styles'
 import type { EstadoRenuncia, FiltrosRenuncias } from '../types'
 
@@ -19,6 +21,16 @@ interface RenunciasFiltrosPremiumProps {
   proyectos: Proyecto[]
 }
 
+const ESTADO_OPTIONS = [
+  { value: 'todos', label: 'Todos los estados' },
+  {
+    value: 'Pendiente Devolución',
+    label: 'Pendiente Devolución',
+    dot: 'bg-yellow-400',
+  },
+  { value: 'Cerrada', label: 'Cerrada', dot: 'bg-green-400' },
+]
+
 export function RenunciasFiltrosPremium({
   filtros,
   onFiltrosChange,
@@ -30,6 +42,11 @@ export function RenunciasFiltrosPremium({
     (filtros.busqueda && filtros.busqueda.length > 0) ||
     (filtros.estado && filtros.estado !== 'todos') ||
     (filtros.proyecto_id && filtros.proyecto_id.length > 0)
+
+  const proyectoOptions = [
+    { value: '', label: 'Todos los proyectos' },
+    ...proyectos.map(p => ({ value: p.id, label: p.nombre })),
+  ]
 
   return (
     <motion.div
@@ -58,48 +75,26 @@ export function RenunciasFiltrosPremium({
         </div>
 
         {/* Estado */}
-        <div>
-          <label className={styles.filtros.label} htmlFor='renuncias-estado'>
-            Estado
-          </label>
-          <select
-            id='renuncias-estado'
-            value={filtros.estado ?? 'todos'}
-            onChange={e =>
-              onFiltrosChange({
-                ...filtros,
-                estado: e.target.value as EstadoRenuncia | 'todos',
-              })
-            }
-            className={styles.filtros.select}
-          >
-            <option value='todos'>Todos los estados</option>
-            <option value='Pendiente Devolución'>Pendiente Devolución</option>
-            <option value='Cerrada'>Cerrada</option>
-          </select>
-        </div>
+        <FilterDropdown
+          value={filtros.estado ?? 'todos'}
+          placeholder='Todos los estados'
+          options={ESTADO_OPTIONS}
+          allValue='todos'
+          onChange={v =>
+            onFiltrosChange({
+              ...filtros,
+              estado: v as EstadoRenuncia | 'todos',
+            })
+          }
+        />
 
         {/* Proyecto */}
-        <div>
-          <label className={styles.filtros.label} htmlFor='renuncias-proyecto'>
-            Proyecto
-          </label>
-          <select
-            id='renuncias-proyecto'
-            value={filtros.proyecto_id ?? ''}
-            onChange={e =>
-              onFiltrosChange({ ...filtros, proyecto_id: e.target.value })
-            }
-            className={styles.filtros.select}
-          >
-            <option value=''>Todos los proyectos</option>
-            {proyectos.map(p => (
-              <option key={p.id} value={p.id}>
-                {p.nombre}
-              </option>
-            ))}
-          </select>
-        </div>
+        <FilterDropdown
+          value={filtros.proyecto_id ?? ''}
+          placeholder='Todos los proyectos'
+          options={proyectoOptions}
+          onChange={v => onFiltrosChange({ ...filtros, proyecto_id: v })}
+        />
       </div>
 
       {/* Footer */}

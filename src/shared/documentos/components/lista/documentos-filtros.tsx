@@ -3,8 +3,9 @@
 import { useMemo, useState } from 'react'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { Filter, Pin, Search, SlidersHorizontal, X } from 'lucide-react'
+import { Pin, Search, SlidersHorizontal, X } from 'lucide-react'
 
+import { FilterDropdown } from '@/shared/components/ui/filter-dropdown'
 import { moduleThemes, type ModuleName } from '@/shared/config/module-themes'
 
 import { useDocumentosStore } from '../../store/documentos.store'
@@ -151,22 +152,18 @@ export function DocumentosFiltros({
               <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
                 {/* Filtro por categoría */}
                 <div>
-                  <label className='mb-1.5 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-300'>
-                    <Filter size={14} />
-                    Categoría
-                  </label>
-                  <select
+                  <FilterDropdown
                     value={categoriaFiltro || ''}
-                    onChange={e => setFiltroCategoria(e.target.value || null)}
-                    className={`w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm transition-all ${theme.classes.focus.ring} dark:border-gray-700 dark:bg-gray-800`}
-                  >
-                    <option value=''>Todas las categorías</option>
-                    {categorias.map(categoria => (
-                      <option key={categoria.id} value={categoria.id}>
-                        {categoria.nombre}
-                      </option>
-                    ))}
-                  </select>
+                    placeholder='Todas las categorías'
+                    options={[
+                      { value: '', label: 'Todas las categorías' },
+                      ...categorias.map(c => ({
+                        value: c.id,
+                        label: c.nombre,
+                      })),
+                    ]}
+                    onChange={v => setFiltroCategoria(v || null)}
+                  />
                 </div>
               </div>
             </div>

@@ -3,6 +3,7 @@
 import { Check, Search } from 'lucide-react'
 
 import { formatCurrency } from '@/lib/utils/format.utils'
+import { FilterDropdown } from '@/shared/components/ui/filter-dropdown'
 
 import type { FiltrosAbonos, RangoFecha } from '../../hooks/useAbonosList'
 
@@ -92,42 +93,28 @@ export function AbonosListFiltros({
           />
         </div>
 
-        <label htmlFor='filtro-fuente' className='sr-only'>
-          Fuente de pago
-        </label>
-        <select
-          id='filtro-fuente'
+        <FilterDropdown
           value={filtros.fuente}
-          onChange={e => actualizarFiltros({ fuente: e.target.value })}
-          className={`${s.filtros.select} min-w-[180px]`}
-        >
-          <option value='todas'>Todas las fuentes</option>
-          {fuentesUnicas.map(f => (
-            <option key={f} value={f}>
-              {f}
-            </option>
-          ))}
-        </select>
+          placeholder='Todas las fuentes'
+          allValue='todas'
+          options={[
+            { value: 'todas', label: 'Todas las fuentes' },
+            ...fuentesUnicas.map(f => ({ value: f, label: f })),
+          ]}
+          onChange={v => actualizarFiltros({ fuente: v })}
+        />
 
         {entidadesUnicas.length > 0 && (
-          <>
-            <label htmlFor='filtro-entidad' className='sr-only'>
-              Entidad
-            </label>
-            <select
-              id='filtro-entidad'
-              value={filtros.entidad}
-              onChange={e => actualizarFiltros({ entidad: e.target.value })}
-              className={`${s.filtros.select} min-w-[160px]`}
-            >
-              <option value='todas'>Todas las entidades</option>
-              {entidadesUnicas.map(e => (
-                <option key={e} value={e}>
-                  {e}
-                </option>
-              ))}
-            </select>
-          </>
+          <FilterDropdown
+            value={filtros.entidad}
+            placeholder='Todas las entidades'
+            allValue='todas'
+            options={[
+              { value: 'todas', label: 'Todas las entidades' },
+              ...entidadesUnicas.map(e => ({ value: e, label: e })),
+            ]}
+            onChange={v => actualizarFiltros({ entidad: v })}
+          />
         )}
       </div>
 

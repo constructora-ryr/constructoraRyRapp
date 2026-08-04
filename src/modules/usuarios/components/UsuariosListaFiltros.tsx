@@ -1,19 +1,27 @@
-/**
- * UsuariosListaFiltros — Barra de filtros sticky del módulo de usuarios
- * ✅ Búsqueda + filtro rol + filtro estado
- * ✅ Sticky con glassmorphism
- * ✅ Labels sr-only (accesibilidad)
- * ✅ Contador de resultados y limpiar filtros
- */
-
 'use client'
 
 import { AnimatePresence, motion } from 'framer-motion'
 import { Search, X } from 'lucide-react'
 
+import { FilterDropdown } from '@/shared/components/ui/filter-dropdown'
+
 import { usuariosPageStyles as styles } from '../styles/usuarios-page.styles'
 import type { EstadoUsuario, Rol } from '../types'
 import { ESTADOS_USUARIO_UI, ROLES_UI } from '../types'
+
+const ROL_OPTIONS = [
+  { value: '', label: 'Todos los roles' },
+  ...ROLES_UI.map(r => ({ value: r.value, label: r.label })),
+]
+
+const ESTADO_OPTIONS = [
+  { value: '', label: 'Todos los estados' },
+  ...ESTADOS_USUARIO_UI.map(e => ({
+    value: e.value,
+    label: e.label,
+    dot: e.dotClass,
+  })),
+]
 
 interface UsuariosListaFiltrosProps {
   busqueda: string
@@ -75,46 +83,20 @@ export function UsuariosListaFiltros({
         </div>
 
         {/* Filtro Rol */}
-        <div>
-          <label htmlFor='usuarios-rol' className='sr-only'>
-            Filtrar por rol
-          </label>
-          <select
-            id='usuarios-rol'
-            value={rolFiltro}
-            onChange={e => onRolFiltroChange(e.target.value as Rol | '')}
-            className={styles.filtros.select}
-          >
-            <option value=''>Todos los roles</option>
-            {ROLES_UI.map(r => (
-              <option key={r.value} value={r.value}>
-                {r.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <FilterDropdown
+          value={rolFiltro}
+          placeholder='Todos los roles'
+          options={ROL_OPTIONS}
+          onChange={v => onRolFiltroChange(v as Rol | '')}
+        />
 
         {/* Filtro Estado */}
-        <div>
-          <label htmlFor='usuarios-estado' className='sr-only'>
-            Filtrar por estado
-          </label>
-          <select
-            id='usuarios-estado'
-            value={estadoFiltro}
-            onChange={e =>
-              onEstadoFiltroChange(e.target.value as EstadoUsuario | '')
-            }
-            className={styles.filtros.select}
-          >
-            <option value=''>Todos los estados</option>
-            {ESTADOS_USUARIO_UI.map(e => (
-              <option key={e.value} value={e.value}>
-                {e.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <FilterDropdown
+          value={estadoFiltro}
+          placeholder='Todos los estados'
+          options={ESTADO_OPTIONS}
+          onChange={v => onEstadoFiltroChange(v as EstadoUsuario | '')}
+        />
       </div>
 
       {/* Footer */}

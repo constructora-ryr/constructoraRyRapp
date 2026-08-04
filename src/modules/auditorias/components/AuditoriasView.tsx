@@ -18,6 +18,8 @@ import {
   X,
 } from 'lucide-react'
 
+import { FilterDropdown } from '@/shared/components/ui/filter-dropdown'
+
 import { useAuditorias } from '../hooks/useAuditorias'
 import {
   getAccionBadgeStyles,
@@ -294,42 +296,42 @@ export function AuditoriasView({
                 <div className='grid grid-cols-2 gap-3 md:grid-cols-4'>
                   <div className={styles.filtros.selectWrapper}>
                     <label className={styles.filtros.label}>Módulo</label>
-                    <select
-                      className={styles.filtros.select}
+                    <FilterDropdown
                       value={filtros.modulo || ''}
-                      onChange={e =>
+                      placeholder='Todos'
+                      options={[
+                        { value: '', label: 'Todos' },
+                        { value: 'proyectos', label: 'Proyectos' },
+                        { value: 'viviendas', label: 'Viviendas' },
+                        { value: 'clientes', label: 'Clientes' },
+                        { value: 'negociaciones', label: 'Negociaciones' },
+                        { value: 'abonos', label: 'Abonos' },
+                      ]}
+                      onChange={v =>
                         aplicarFiltros({
-                          modulo:
-                            (e.target.value as ModuloAplicacion) || undefined,
+                          modulo: (v as ModuloAplicacion) || undefined,
                         })
                       }
-                    >
-                      <option value=''>Todos</option>
-                      <option value='proyectos'>Proyectos</option>
-                      <option value='viviendas'>Viviendas</option>
-                      <option value='clientes'>Clientes</option>
-                      <option value='negociaciones'>Negociaciones</option>
-                      <option value='abonos'>Abonos</option>
-                    </select>
+                    />
                   </div>
 
                   <div className={styles.filtros.selectWrapper}>
                     <label className={styles.filtros.label}>Acción</label>
-                    <select
-                      className={styles.filtros.select}
+                    <FilterDropdown
                       value={filtros.accion || ''}
-                      onChange={e =>
+                      placeholder='Todas'
+                      options={[
+                        { value: '', label: 'Todas' },
+                        { value: 'CREATE', label: 'Creaciones' },
+                        { value: 'UPDATE', label: 'Actualizaciones' },
+                        { value: 'DELETE', label: 'Eliminaciones' },
+                      ]}
+                      onChange={v =>
                         aplicarFiltros({
-                          accion:
-                            (e.target.value as AccionAuditoria) || undefined,
+                          accion: (v as AccionAuditoria) || undefined,
                         })
                       }
-                    >
-                      <option value=''>Todas</option>
-                      <option value='CREATE'>Creaciones</option>
-                      <option value='UPDATE'>Actualizaciones</option>
-                      <option value='DELETE'>Eliminaciones</option>
-                    </select>
+                    />
                   </div>
 
                   <div className={styles.filtros.selectWrapper}>
