@@ -280,7 +280,7 @@ export default function ViviendaDetalleClient({
                     <button
                       className={styles.headerClasses.actionButton}
                       onClick={() =>
-                        router.push(window.location.pathname + '/editar')
+                        router.push(`/viviendas/${viviendaId}/editar`)
                       }
                       title='Editar vivienda'
                     >
