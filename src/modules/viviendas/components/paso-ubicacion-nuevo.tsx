@@ -17,6 +17,7 @@ import type {
   UseFormWatch,
 } from 'react-hook-form'
 
+import { FormSelect } from '@/shared/components/ui/form-select'
 import { cn } from '@/shared/utils/helpers'
 
 import { usePasoUbicacion } from '../hooks/usePasoUbicacion'
@@ -136,7 +137,7 @@ export function PasoUbicacionNuevo({
           <>
             <div className={styles.field.inputWrapper}>
               <Building2 className={styles.field.inputIcon} />
-              <select
+              <FormSelect
                 {...register('proyecto_id')}
                 id='proyecto_id'
                 disabled={cargandoProyectos}
@@ -151,7 +152,7 @@ export function PasoUbicacionNuevo({
                     {proyecto.nombre}
                   </option>
                 ))}
-              </select>
+              </FormSelect>
             </div>
             {errors.proyecto_id && (
               <motion.div
@@ -190,7 +191,7 @@ export function PasoUbicacionNuevo({
           <>
             <div className={styles.field.inputWrapper}>
               <MapPin className={styles.field.inputIcon} />
-              <select
+              <FormSelect
                 {...register('manzana_id')}
                 id='manzana_id'
                 disabled={!proyectoSeleccionado || cargandoManzanas}
@@ -218,7 +219,7 @@ export function PasoUbicacionNuevo({
                     disponibles)
                   </option>
                 ))}
-              </select>
+              </FormSelect>
             </div>
             {errors.manzana_id && (
               <motion.div
@@ -265,7 +266,7 @@ export function PasoUbicacionNuevo({
           <>
             <div className={styles.field.inputWrapper}>
               <Home className={styles.field.inputIcon} />
-              <select
+              <FormSelect
                 {...register('numero')}
                 id='numero'
                 disabled={
@@ -288,7 +289,7 @@ export function PasoUbicacionNuevo({
                     Casa Número {num}
                   </option>
                 ))}
-              </select>
+              </FormSelect>
             </div>
             {errors.numero && (
               <motion.div

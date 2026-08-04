@@ -8,6 +8,7 @@ import type {
   UseFormReturn,
 } from 'react-hook-form'
 
+import { FormSelect } from '@/shared/components/ui/form-select'
 import { cn } from '@/shared/utils/helpers'
 
 import type { ProyectoFormSchema } from '../../hooks/useProyectosForm'
@@ -42,7 +43,7 @@ export function FormSeccionEstadoFechas({
         </label>
         <div className={styles.field.inputWrapper}>
           <Building2 className={styles.field.inputIcon} />
-          <select
+          <FormSelect
             {...register('estado')}
             className={cn(
               styles.field.select,
@@ -61,7 +62,7 @@ export function FormSeccionEstadoFechas({
             <option value='en_construccion'>En Construcción</option>
             <option value='completado'>Completado</option>
             <option value='pausado'>Pausado</option>
-          </select>
+          </FormSelect>
           {touchedFields.estado && (
             <div className='pointer-events-none absolute right-10 top-1/2 -translate-y-1/2'>
               {errors.estado ? (

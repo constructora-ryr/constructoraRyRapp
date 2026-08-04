@@ -18,6 +18,7 @@ import type {
   UseFormWatch,
 } from 'react-hook-form'
 
+import { FormSelect } from '@/shared/components/ui/form-select'
 import { cn } from '@/shared/utils/helpers'
 
 import type { ProyectoFormSchema } from '../../hooks/useProyectosForm'
@@ -134,7 +135,7 @@ export function FormSeccionInfoGeneral({
             </label>
             <div className={styles.field.inputWrapper}>
               <MapPin className={styles.field.inputIcon} />
-              <select
+              <FormSelect
                 {...register('departamento')}
                 className={cn(
                   styles.field.input,
@@ -154,9 +155,9 @@ export function FormSeccionInfoGeneral({
                     {d}
                   </option>
                 ))}
-              </select>
+              </FormSelect>
               {touchedFields.departamento && (
-                <div className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2'>
+                <div className='pointer-events-none absolute right-9 top-1/2 -translate-y-1/2'>
                   {errors.departamento ? (
                     <AlertCircle className='h-5 w-5 text-red-500' />
                   ) : (
@@ -189,7 +190,7 @@ export function FormSeccionInfoGeneral({
             </label>
             <div className={styles.field.inputWrapper}>
               <MapPin className={styles.field.inputIcon} />
-              <select
+              <FormSelect
                 {...register('ciudad')}
                 disabled={!departamentoSeleccionado}
                 className={cn(
@@ -215,9 +216,9 @@ export function FormSeccionInfoGeneral({
                     {c}
                   </option>
                 ))}
-              </select>
+              </FormSelect>
               {touchedFields.ciudad && (
-                <div className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2'>
+                <div className='pointer-events-none absolute right-9 top-1/2 -translate-y-1/2'>
                   {errors.ciudad ? (
                     <AlertCircle className='h-5 w-5 text-red-500' />
                   ) : (

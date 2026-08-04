@@ -16,6 +16,7 @@ import type {
   UseFormWatch,
 } from 'react-hook-form'
 
+import { FormSelect } from '@/shared/components/ui/form-select'
 import { cn } from '@/shared/utils/helpers'
 
 import type { ViviendaSchemaType } from '../schemas/vivienda.schemas'
@@ -175,7 +176,7 @@ export function PasoFinancieroNuevo({
             </label>
             <div className={styles.field.inputWrapper}>
               <TrendingUp className={styles.field.inputIcon} />
-              <select
+              <FormSelect
                 {...register('recargo_esquinera', { valueAsNumber: true })}
                 id='recargo_esquinera'
                 disabled={bloqueado}
@@ -192,7 +193,7 @@ export function PasoFinancieroNuevo({
                     {recargo.nombre} - {formatCurrency(recargo.valor)}
                   </option>
                 ))}
-              </select>
+              </FormSelect>
             </div>
             {errors.recargo_esquinera && (
               <motion.div

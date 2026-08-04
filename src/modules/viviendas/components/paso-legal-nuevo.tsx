@@ -12,6 +12,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { AlertCircle, FileText, Hash, MapPin, Maximize } from 'lucide-react'
 import type { FieldErrors, UseFormRegister } from 'react-hook-form'
 
+import { FormSelect } from '@/shared/components/ui/form-select'
 import { cn } from '@/shared/utils/helpers'
 
 import type { ViviendaSchemaType } from '../schemas/vivienda.schemas'
@@ -274,7 +275,7 @@ export function PasoLegalNuevo({ register, errors }: PasoLegalProps) {
         </label>
         <div className={styles.field.inputWrapper}>
           <Hash className={styles.field.inputIcon} />
-          <select
+          <FormSelect
             {...register('tipo_vivienda')}
             id='tipo_vivienda'
             className={cn(
@@ -285,7 +286,7 @@ export function PasoLegalNuevo({ register, errors }: PasoLegalProps) {
             <option value=''>Selecciona un tipo</option>
             <option value='Regular'>Regular</option>
             <option value='Irregular'>Irregular</option>
-          </select>
+          </FormSelect>
         </div>
         {errors.tipo_vivienda && (
           <motion.div
