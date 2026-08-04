@@ -1,4 +1,5 @@
 export { AbonosRecientes } from './AbonosRecientes'
+export { HistorialNegociacionModal } from './HistorialNegociacionModal'
 export { EditarActaModal } from './EditarActaModal'
 export { BarraFinanciera } from './BarraFinanciera'
 export { DescuentoModal } from './DescuentoModal'

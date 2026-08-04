@@ -21,6 +21,7 @@ import {
   DollarSign,
   FileText,
   FileX,
+  History,
   Home,
   Lock,
   Pencil,
@@ -55,6 +56,7 @@ import {
   DescuentoModal,
   EditarActaModal,
   FuenteMiniCard,
+  HistorialNegociacionModal,
   NegociacionCerradaRenuncia,
   SinNegociacion,
 } from './negociacion/components'
@@ -95,6 +97,9 @@ export function NegociacionTab({
     numeroReferencia: string | null
     fechaActa: string | null
   } | null>(null)
+
+  // ── Estado para historial de negociación ─────────────────────────────────
+  const [historialNegOpen, setHistorialNegOpen] = useState(false)
 
   // ── Estado para modal de renuncia ───────────────────────────────────────
   const [modalRenunciaOpen, setModalRenunciaOpen] = useState(false)
@@ -566,6 +571,16 @@ export function NegociacionTab({
                 Cubierto
               </span>
             ) : null}
+            {/* Historial de cambios */}
+            {negociacion?.id ? (
+              <button
+                onClick={() => setHistorialNegOpen(true)}
+                title='Ver historial de cambios al plan financiero'
+                className='flex h-6 w-6 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-violet-50 hover:text-violet-600 dark:hover:bg-violet-900/20 dark:hover:text-violet-400'
+              >
+                <History className='h-3.5 w-3.5' />
+              </button>
+            ) : null}
           </div>
           {puedeDescuento || puedeAjustar ? (
             <div className='flex items-center gap-2'>
@@ -806,6 +821,13 @@ export function NegociacionTab({
           />
         </div>
       </motion.div>
+
+      {/* Modal: Historial de cambios al plan financiero */}
+      <HistorialNegociacionModal
+        isOpen={historialNegOpen}
+        onClose={() => setHistorialNegOpen(false)}
+        negociacionId={negociacion?.id}
+      />
 
       {/* Modal: Redistribuir montos */}
       {puedeAjustar ? (
