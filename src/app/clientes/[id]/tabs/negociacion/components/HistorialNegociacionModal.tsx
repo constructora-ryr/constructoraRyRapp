@@ -24,6 +24,7 @@ function useHistorialNegociacion(negociacionId: string | undefined) {
         )
         .eq('registro_id', negociacionId as string)
         .eq('tabla', 'negociaciones')
+        .contains('metadata', { accion_tipo: 'rebalanceo_plan_financiero' })
         .order('fecha_evento', { ascending: false })
         .limit(50)
 
