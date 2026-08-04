@@ -39,7 +39,8 @@ export interface CrearNegociacionDTO {
 export interface ActualizarNegociacionDTO {
   estado?: EstadoNegociacion
   valor_negociado?: number
-  descuento_aplicado?: number
+  /** null limpia el campo en BD (quitar descuento) */
+  descuento_aplicado?: number | null
   /** null limpia el campo en BD (quitar descuento) */
   tipo_descuento?: string | null
   /** null limpia el campo en BD (quitar descuento) */
@@ -149,7 +150,10 @@ export function sanitizeActualizarNegociacionDTO(
     sanitized.valor_negociado = sanitizeNumber(datos.valor_negociado)
   }
   if (datos.descuento_aplicado !== undefined) {
-    sanitized.descuento_aplicado = sanitizeNumber(datos.descuento_aplicado)
+    // null o 0 → null explícito en BD (no 0), para que el trigger de auditoría
+    // no registre null→0 como un "cambio de descuento"
+    const n = sanitizeNumber(datos.descuento_aplicado)
+    sanitized.descuento_aplicado = n !== undefined && n > 0 ? n : null
   }
   if (datos.tipo_descuento !== undefined) {
     // null explícito limpia el campo en BD; string vacío también queda null

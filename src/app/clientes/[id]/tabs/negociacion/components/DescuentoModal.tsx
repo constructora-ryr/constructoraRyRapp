@@ -136,7 +136,7 @@ export function DescuentoModal({
 
   const handleQuitarDescuento = useCallback(() => {
     onGuardar({
-      descuento_aplicado: 0,
+      descuento_aplicado: null,
       tipo_descuento: null,
       motivo_descuento: null,
     })

@@ -25,7 +25,8 @@ import { negociacionesService } from '@/modules/clientes/services/negociaciones.
 export { LABELS_TIPO_DESCUENTO, TIPOS_DESCUENTO, type TipoDescuento }
 
 export interface DatosDescuento {
-  descuento_aplicado: number
+  /** null limpia el campo en BD al quitar el descuento */
+  descuento_aplicado: number | null
   /** null cuando se elimina el descuento (limpia el campo en BD) */
   tipo_descuento: TipoDescuento | null
   /** null cuando se elimina el descuento (limpia el campo en BD) */
