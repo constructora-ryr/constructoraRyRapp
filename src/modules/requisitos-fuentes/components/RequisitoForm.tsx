@@ -22,6 +22,8 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { ChevronDown, Save, X } from 'lucide-react'
 import { toast } from 'sonner'
 
+import { FormSelect } from '@/shared/components/ui/form-select'
+
 import { requisitosConfigStyles as styles } from '../styles/requisitos-config.styles'
 import type { CrearRequisitoDTO, RequisitoFuenteConfig } from '../types'
 import { CATEGORIAS_DOCUMENTO, NIVELES_VALIDACION } from '../types'
@@ -303,7 +305,7 @@ export function RequisitoForm({
         {/* ── NIVEL DE VALIDACIÓN ── */}
         <div>
           <label className={styles.form.label}>Nivel de Validación *</label>
-          <select
+          <FormSelect
             name='nivel_validacion'
             value={formData.nivel_validacion}
             onChange={handleChange}
@@ -315,7 +317,7 @@ export function RequisitoForm({
                 {nivel.label}
               </option>
             ))}
-          </select>
+          </FormSelect>
         </div>
 
         {/* ── OPCIONES AVANZADAS (acordeón) ── */}
@@ -362,7 +364,7 @@ export function RequisitoForm({
                     <label className={styles.form.label}>
                       Categoría de documento
                     </label>
-                    <select
+                    <FormSelect
                       name='categoria_documento'
                       value={formData.categoria_documento}
                       onChange={handleChange}
@@ -374,7 +376,7 @@ export function RequisitoForm({
                           {categoria}
                         </option>
                       ))}
-                    </select>
+                    </FormSelect>
                   </div>
                 </div>
               </motion.div>

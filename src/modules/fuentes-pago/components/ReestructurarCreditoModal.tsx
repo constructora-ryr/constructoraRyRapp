@@ -25,6 +25,7 @@ import type {
   ParametrosReestructuracion,
 } from '@/modules/fuentes-pago/types'
 import { calcularTablaAmortizacion } from '@/modules/fuentes-pago/utils/calculos-credito'
+import { FormSelect } from '@/shared/components/ui/form-select'
 
 const MOTIVOS_REESTRUCTURACION = [
   'Dificultad económica del cliente',
@@ -389,7 +390,7 @@ export function ReestructurarCreditoModal({
               <label className='mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300'>
                 Motivo de reestructuración
               </label>
-              <select
+              <FormSelect
                 value={motivo}
                 onChange={e => setMotivo(e.target.value)}
                 className='w-full rounded-lg border-2 border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white'
@@ -399,7 +400,7 @@ export function ReestructurarCreditoModal({
                     {m}
                   </option>
                 ))}
-              </select>
+              </FormSelect>
             </div>
 
             <div>
