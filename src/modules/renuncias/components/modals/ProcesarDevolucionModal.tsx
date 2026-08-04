@@ -23,6 +23,7 @@ import {
   formatDateForInput,
   getTodayDateString,
 } from '@/lib/utils/date.utils'
+import { FormSelect } from '@/shared/components/ui/form-select'
 
 import { useModalProcesarDevolucion } from '../../hooks/useModalProcesarDevolucion'
 import type { MetodoDevolucion, RenunciaConInfo } from '../../types'
@@ -371,7 +372,7 @@ export function ProcesarDevolucionModal({
             <label className={s.label}>
               Método de devolución <span className='text-red-500'>*</span>
             </label>
-            <select
+            <FormSelect
               className={s.select}
               value={metodoDevolucion}
               onChange={e =>
@@ -383,7 +384,7 @@ export function ProcesarDevolucionModal({
                   {m}
                 </option>
               ))}
-            </select>
+            </FormSelect>
           </div>
 
           {/* Número comprobante */}

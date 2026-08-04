@@ -7,7 +7,6 @@ import {
   AlertTriangle,
   Ban,
   CheckCircle,
-  ChevronDown,
   Home,
   Loader2,
   PartyPopper,
@@ -18,6 +17,7 @@ import {
 } from 'lucide-react'
 
 import { formatDateCompact } from '@/lib/utils/date.utils'
+import { FormSelect } from '@/shared/components/ui/form-select'
 
 import type { MotivoAnulacion } from '../../types'
 import { formatearNumeroRecibo } from '../../utils/formato-recibo'
@@ -436,25 +436,22 @@ export function ModalAnularAbono({
               Motivo de la anulación
               <span className={s.form.labelRequired}>*</span>
             </label>
-            <div className='relative'>
-              <select
-                id='motivo-categoria'
-                className={s.form.select}
-                value={motivoCategoria}
-                onChange={e =>
-                  handleMotivoChange(e.target.value as MotivoAnulacion | '')
-                }
-                disabled={anulando}
-              >
-                <option value=''>Seleccionar motivo…</option>
-                {motivos.map(m => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className='pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400' />
-            </div>
+            <FormSelect
+              id='motivo-categoria'
+              className={s.form.select}
+              value={motivoCategoria}
+              onChange={e =>
+                handleMotivoChange(e.target.value as MotivoAnulacion | '')
+              }
+              disabled={anulando}
+            >
+              <option value=''>Seleccionar motivo…</option>
+              {motivos.map(m => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </FormSelect>
           </div>
 
           {/* Detalle libre — memoizado para no re-renderizar el padre en cada tecla */}

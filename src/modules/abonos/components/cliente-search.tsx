@@ -1,6 +1,8 @@
 'use client'
 
-import { ArrowUpDown, Building2, ChevronDown, Search, X } from 'lucide-react'
+import { ArrowUpDown, Building2, Search, X } from 'lucide-react'
+
+import { FormSelect } from '@/shared/components/ui/form-select'
 
 import { seleccionClienteStyles as styles } from '../styles/seleccion-cliente.styles'
 
@@ -91,21 +93,18 @@ export function ClienteSearch({
         {proyectos.length > 0 ? (
           <div className={styles.search.controlGroup}>
             <Building2 className={styles.search.controlIcon} />
-            <div className={styles.search.selectWrapper}>
-              <select
-                value={proyectoFiltro}
-                onChange={e => onProyectoFiltroChange?.(e.target.value)}
-                className={`${styles.search.select} ${proyectoFiltro ? styles.search.selectActive : ''}`}
-              >
-                <option value=''>Todos los proyectos</option>
-                {proyectos.map(p => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className={styles.search.selectIcon} />
-            </div>
+            <FormSelect
+              value={proyectoFiltro}
+              onChange={e => onProyectoFiltroChange?.(e.target.value)}
+              className={`${styles.search.select} ${proyectoFiltro ? styles.search.selectActive : ''}`}
+            >
+              <option value=''>Todos los proyectos</option>
+              {proyectos.map(p => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </FormSelect>
           </div>
         ) : null}
 
@@ -116,21 +115,18 @@ export function ClienteSearch({
         {/* Ordenamiento */}
         <div className={styles.search.controlGroup}>
           <ArrowUpDown className={styles.search.controlIcon} />
-          <div className={styles.search.selectWrapper}>
-            <select
-              value={ordenar}
-              onChange={e => onOrdenarChange?.(e.target.value as OrdenClientes)}
-              className={`${styles.search.select} ${ordenar !== 'urgente' ? styles.search.selectActive : ''}`}
-            >
-              <option value='urgente'>↑ Más urgente primero</option>
-              <option value='mayor_pago'>↓ Más avanzado (mayor %)</option>
-              <option value='nombre_az'>A → Z &nbsp; Nombre</option>
-              <option value='nombre_za'>Z → A &nbsp; Nombre</option>
-              <option value='vivienda_asc'>Vivienda: A1, A2, B1...</option>
-              <option value='mayor_saldo'>Mayor saldo pendiente ($)</option>
-            </select>
-            <ChevronDown className={styles.search.selectIcon} />
-          </div>
+          <FormSelect
+            value={ordenar}
+            onChange={e => onOrdenarChange?.(e.target.value as OrdenClientes)}
+            className={`${styles.search.select} ${ordenar !== 'urgente' ? styles.search.selectActive : ''}`}
+          >
+            <option value='urgente'>↑ Más urgente primero</option>
+            <option value='mayor_pago'>↓ Más avanzado (mayor %)</option>
+            <option value='nombre_az'>A → Z &nbsp; Nombre</option>
+            <option value='nombre_za'>Z → A &nbsp; Nombre</option>
+            <option value='vivienda_asc'>Vivienda: A1, A2, B1...</option>
+            <option value='mayor_saldo'>Mayor saldo pendiente ($)</option>
+          </FormSelect>
         </div>
       </div>
 
