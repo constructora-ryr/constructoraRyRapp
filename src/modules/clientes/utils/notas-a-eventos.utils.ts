@@ -46,10 +46,11 @@ export function convertirNotaAEvento(
     metadata: {
       esNota: true,
       notaId: nota.id,
-      creadoPor: nota.creado_por, // ✅ Para verificación sincrónica de permisos
+      creadoPor: nota.creado_por,
       esImportante: nota.es_importante,
       actualizado: !!nota.fecha_actualizacion,
       fechaActualizacion: nota.fecha_actualizacion,
+      documentoVinculado: nota.documento_vinculado ?? null,
     },
   }
 }

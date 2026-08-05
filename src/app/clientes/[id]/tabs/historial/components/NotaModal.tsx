@@ -1,19 +1,27 @@
-/**
- * NotaModal - Modal para crear/editar notas manuales en el historial
- * Permite agregar contexto adicional al timeline del cliente
- */
-
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
+import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { AlertCircle, FileEdit, Loader2, Save, Star, X } from 'lucide-react'
+import {
+  AlertCircle,
+  FileEdit,
+  FileText,
+  Loader2,
+  Paperclip,
+  Save,
+  Search,
+  Star,
+  X,
+} from 'lucide-react'
 import { createPortal } from 'react-dom'
 
+import { supabase } from '@/lib/supabase/client'
 import { logger } from '@/lib/utils/logger'
 import { useNotaPorId } from '@/modules/clientes/hooks/useNotaPorId'
 import { useNotasHistorial } from '@/modules/clientes/hooks/useNotasHistorial'
+import type { DocumentoVinculado } from '@/modules/clientes/types/notas-historial.types'
 import { RichTextEditor } from '@/shared/components/rich-text/RichTextEditor'
 
 interface NotaModalProps {
@@ -24,7 +32,6 @@ interface NotaModalProps {
   notaId?: string | null
 }
 
-// Extrae texto plano del HTML para validar longitud mínima
 function extractText(html: string): string {
   return html.replace(/<[^>]*>/g, '').trim()
 }
@@ -39,23 +46,70 @@ export function NotaModal({
   const [titulo, setTitulo] = useState('')
   const [contenido, setContenido] = useState('')
   const [esImportante, setEsImportante] = useState(false)
+  const [documentoVinculadoId, setDocumentoVinculadoId] = useState<
+    string | null
+  >(null)
+  const [documentoVinculado, setDocumentoVinculado] =
+    useState<DocumentoVinculado | null>(null)
+  const [pickerAbierto, setPickerAbierto] = useState(false)
+  const [busquedaDoc, setBusquedaDoc] = useState('')
 
   const modoEdicion = !!notaId
   const { crearNota, actualizarNota, isCreando, isActualizando } =
     useNotasHistorial(clienteId)
   const { data: notaData } = useNotaPorId(notaId)
 
+  const { data: documentosCliente = [] } = useQuery({
+    queryKey: ['documentos-cliente-picker', clienteId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('documentos_cliente')
+        .select('id,titulo,nombre_archivo,tipo_mime,url_storage,estado')
+        .eq('cliente_id', clienteId)
+        .eq('es_version_actual', true)
+        .neq('estado', 'eliminado')
+        .order('fecha_creacion', { ascending: false })
+      return (data || []) as DocumentoVinculado[]
+    },
+    enabled: isOpen,
+    staleTime: 30_000,
+  })
+
+  const documentosFiltrados = useMemo(() => {
+    if (!busquedaDoc.trim()) return documentosCliente
+    const q = busquedaDoc.toLowerCase()
+    return documentosCliente.filter(d => d.titulo.toLowerCase().includes(q))
+  }, [documentosCliente, busquedaDoc])
+
   useEffect(() => {
     if (notaData && modoEdicion) {
       setTitulo(notaData.titulo)
       setContenido(notaData.contenido)
       setEsImportante(notaData.es_importante)
+      setDocumentoVinculadoId(notaData.documento_vinculado_id)
+      setDocumentoVinculado(notaData.documento_vinculado ?? null)
     } else if (!modoEdicion) {
       setTitulo('')
       setContenido('')
       setEsImportante(false)
+      setDocumentoVinculadoId(null)
+      setDocumentoVinculado(null)
     }
+    setPickerAbierto(false)
+    setBusquedaDoc('')
   }, [notaData, modoEdicion])
+
+  const handleSeleccionarDocumento = (doc: DocumentoVinculado) => {
+    setDocumentoVinculadoId(doc.id)
+    setDocumentoVinculado(doc)
+    setPickerAbierto(false)
+    setBusquedaDoc('')
+  }
+
+  const handleQuitarDocumento = () => {
+    setDocumentoVinculadoId(null)
+    setDocumentoVinculado(null)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -72,6 +126,7 @@ export function NotaModal({
             titulo: titulo.trim(),
             contenido: contenido.trim(),
             es_importante: esImportante,
+            documento_vinculado_id: documentoVinculadoId,
           },
         })
       } else {
@@ -80,6 +135,7 @@ export function NotaModal({
           titulo: titulo.trim(),
           contenido: contenido.trim(),
           es_importante: esImportante,
+          documento_vinculado_id: documentoVinculadoId,
         })
       }
 
@@ -87,6 +143,8 @@ export function NotaModal({
         setTitulo('')
         setContenido('')
         setEsImportante(false)
+        setDocumentoVinculadoId(null)
+        setDocumentoVinculado(null)
         onClose()
       }
     } catch (error) {
@@ -146,7 +204,10 @@ export function NotaModal({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className='space-y-4 p-6'>
+        <form
+          onSubmit={handleSubmit}
+          className='max-h-[75vh] space-y-4 overflow-y-auto p-6'
+        >
           <div>
             <label className='mb-2 block text-sm font-semibold text-gray-700 dark:text-gray-300'>
               Título de la nota *
@@ -177,6 +238,87 @@ export function NotaModal({
             />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
               {textoPlano.length} caracteres (mínimo 10)
+            </p>
+          </div>
+
+          {/* Documento vinculado */}
+          <div>
+            <label className='mb-2 block text-sm font-semibold text-gray-700 dark:text-gray-300'>
+              Documento vinculado{' '}
+              <span className='font-normal text-gray-400'>(opcional)</span>
+            </label>
+
+            {documentoVinculado ? (
+              <div className='flex items-center gap-3 rounded-lg border-2 border-indigo-200 bg-indigo-50 px-4 py-3 dark:border-indigo-800 dark:bg-indigo-950/30'>
+                <FileText className='h-4 w-4 shrink-0 text-indigo-600 dark:text-indigo-400' />
+                <span className='flex-1 truncate text-sm font-medium text-indigo-900 dark:text-indigo-100'>
+                  {documentoVinculado.titulo}
+                </span>
+                <button
+                  type='button'
+                  onClick={handleQuitarDocumento}
+                  className='rounded-md p-1 text-indigo-500 transition-colors hover:bg-indigo-100 hover:text-indigo-700 dark:hover:bg-indigo-900'
+                  title='Quitar vínculo'
+                >
+                  <X className='h-4 w-4' />
+                </button>
+              </div>
+            ) : (
+              <div className='relative'>
+                <button
+                  type='button'
+                  onClick={() => setPickerAbierto(v => !v)}
+                  className='flex items-center gap-2 rounded-lg border-2 border-dashed border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:border-indigo-400 hover:text-indigo-600 dark:border-gray-600 dark:text-gray-400 dark:hover:border-indigo-500 dark:hover:text-indigo-400'
+                >
+                  <Paperclip className='h-4 w-4' />
+                  Vincular documento del cliente
+                </button>
+
+                {pickerAbierto && (
+                  <div className='absolute left-0 top-full z-10 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800'>
+                    <div className='border-b border-gray-100 p-2 dark:border-gray-700'>
+                      <div className='flex items-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-1.5 dark:border-gray-600 dark:bg-gray-900'>
+                        <Search className='h-3.5 w-3.5 text-gray-400' />
+                        <input
+                          autoFocus
+                          type='text'
+                          value={busquedaDoc}
+                          onChange={e => setBusquedaDoc(e.target.value)}
+                          placeholder='Buscar documento...'
+                          className='flex-1 bg-transparent text-xs outline-none'
+                        />
+                      </div>
+                    </div>
+                    <div className='max-h-48 overflow-y-auto'>
+                      {documentosFiltrados.length === 0 ? (
+                        <p className='px-4 py-3 text-xs text-gray-500 dark:text-gray-400'>
+                          {documentosCliente.length === 0
+                            ? 'Este cliente no tiene documentos'
+                            : 'Sin coincidencias'}
+                        </p>
+                      ) : (
+                        documentosFiltrados.map(doc => (
+                          <button
+                            key={doc.id}
+                            type='button'
+                            onClick={() => handleSeleccionarDocumento(doc)}
+                            className='flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-950/30'
+                          >
+                            <FileText className='h-4 w-4 shrink-0 text-indigo-500' />
+                            <span className='truncate text-gray-800 dark:text-gray-200'>
+                              {doc.titulo}
+                            </span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            <p className='mt-1 text-xs text-gray-400 dark:text-gray-500'>
+              Vincula un comprobante o soporte relevante para acceder desde esta
+              nota
             </p>
           </div>
 

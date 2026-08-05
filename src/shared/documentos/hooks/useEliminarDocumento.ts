@@ -17,6 +17,7 @@ export interface ConfirmacionEliminarState {
   entidadAfectada: string | null
   documentoId: string | null
   totalVersiones: number
+  notasVinculadas: number
 }
 
 const ESTADO_INICIAL: ConfirmacionEliminarState = {
@@ -27,6 +28,7 @@ const ESTADO_INICIAL: ConfirmacionEliminarState = {
   entidadAfectada: null,
   documentoId: null,
   totalVersiones: 1,
+  notasVinculadas: 0,
 }
 
 const TABLAS_POR_ENTIDAD: Record<TipoEntidad, TablaDocumento> = {
@@ -97,10 +99,19 @@ export function useEliminarDocumento() {
     documento: DocumentoParaEliminar,
     tipoEntidad: TipoEntidad = 'cliente'
   ) => {
-    // Detectar primero, abrir después → sin flash de modal intermedio
-    const [criticidad, totalVersiones] = await Promise.all([
+    const contarNotasVinculadas = async (): Promise<number> => {
+      if (tipoEntidad !== 'cliente') return 0
+      const { count } = await supabase
+        .from('notas_historial_cliente')
+        .select('*', { count: 'exact', head: true })
+        .eq('documento_vinculado_id', documento.id)
+      return count ?? 0
+    }
+
+    const [criticidad, totalVersiones, notasVinculadas] = await Promise.all([
       detectarCriticidad(documento),
       contarVersionesActivas(documento, tipoEntidad),
+      contarNotasVinculadas(),
     ])
 
     setConfirmacion({
@@ -111,6 +122,7 @@ export function useEliminarDocumento() {
       entidadAfectada: criticidad.entidad,
       documentoId: documento.id,
       totalVersiones,
+      notasVinculadas,
     })
   }
 

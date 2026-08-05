@@ -24,7 +24,7 @@ class NotasHistorialService {
       const { data: nota, error } = await supabase
         .from('notas_historial_cliente')
         .select(
-          'id,cliente_id,titulo,contenido,es_importante,fecha_creacion,fecha_actualizacion,creado_por,actualizado_por'
+          'id,cliente_id,titulo,contenido,es_importante,fecha_creacion,fecha_actualizacion,creado_por,actualizado_por,documento_vinculado_id,documento_vinculado:documentos_cliente!documento_vinculado_id(id,titulo,nombre_archivo,tipo_mime,url_storage,estado)'
         )
         .eq('id', notaId)
         .single()
@@ -65,7 +65,7 @@ class NotasHistorialService {
       const { data: notas, error } = await supabase
         .from('notas_historial_cliente')
         .select(
-          'id,cliente_id,titulo,contenido,es_importante,fecha_creacion,fecha_actualizacion,creado_por,actualizado_por'
+          'id,cliente_id,titulo,contenido,es_importante,fecha_creacion,fecha_actualizacion,creado_por,actualizado_por,documento_vinculado_id,documento_vinculado:documentos_cliente!documento_vinculado_id(id,titulo,nombre_archivo,tipo_mime,url_storage,estado)'
         )
         .eq('cliente_id', clienteId)
         .order('fecha_creacion', { ascending: false })
@@ -154,6 +154,7 @@ class NotasHistorialService {
           contenido: datos.contenido.trim(),
           es_importante: datos.es_importante || false,
           creado_por: user.id,
+          documento_vinculado_id: datos.documento_vinculado_id ?? null,
         })
         .select()
         .single()
@@ -209,6 +210,7 @@ class NotasHistorialService {
         titulo?: string
         contenido?: string
         es_importante?: boolean
+        documento_vinculado_id?: string | null
       }
       const actualizacion: NotaActualizacion = {
         actualizado_por: user.id,
@@ -219,6 +221,9 @@ class NotasHistorialService {
         actualizacion.contenido = datos.contenido.trim()
       if (datos.es_importante !== undefined)
         actualizacion.es_importante = datos.es_importante
+      if ('documento_vinculado_id' in datos)
+        actualizacion.documento_vinculado_id =
+          datos.documento_vinculado_id ?? null
 
       const { error } = await supabase
         .from('notas_historial_cliente')
@@ -269,7 +274,7 @@ class NotasHistorialService {
       const { data: notas, error } = await supabase
         .from('notas_historial_cliente')
         .select(
-          'id,cliente_id,titulo,contenido,es_importante,fecha_creacion,fecha_actualizacion,creado_por,actualizado_por'
+          'id,cliente_id,titulo,contenido,es_importante,fecha_creacion,fecha_actualizacion,creado_por,actualizado_por,documento_vinculado_id'
         )
         .order('fecha_creacion', { ascending: false })
         .limit(limite)

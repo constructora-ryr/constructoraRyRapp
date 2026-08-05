@@ -662,27 +662,32 @@ export function DocumentoCardHorizontal({
               ? '¿Eliminar documento crítico?'
               : '¿Eliminar documento?'
         }
-        message={
-          confirmacionEliminar.detectando
-            ? 'Verificando el tipo de documento…'
-            : confirmacionEliminar.esDocumentoIdentidad
-              ? `Este es el documento de identidad del cliente (cédula o pasaporte).\n\nSin él, no podrán realizarse nuevas asignaciones de vivienda. Se moverá a la papelera y solo un usuario con rol de administrador podrá recuperarlo.`
-              : confirmacionEliminar.esDocumentoCritico
-                ? `Este documento es un requisito obligatorio para el desembolso${
-                    confirmacionEliminar.entidadAfectada
-                      ? ` (${confirmacionEliminar.entidadAfectada})`
-                      : ''
-                  }. Al eliminarlo quedará registrado como pendiente nuevamente.\n\nSe moverán a la papelera ${
-                    confirmacionEliminar.totalVersiones > 1
-                      ? `las ${confirmacionEliminar.totalVersiones} versiones`
-                      : 'el documento'
-                  }. Puede recuperarlos desde administración.`
-                : `Esta acción moverá el documento${
-                    confirmacionEliminar.totalVersiones > 1
-                      ? ` y sus ${confirmacionEliminar.totalVersiones} versiones`
-                      : ''
-                  } a la papelera. Puede recuperarlo desde el panel de administración.`
-        }
+        message={(() => {
+          const notasMsg =
+            confirmacionEliminar.notasVinculadas > 0
+              ? `\n\nEste documento está vinculado a ${confirmacionEliminar.notasVinculadas === 1 ? '1 nota' : `${confirmacionEliminar.notasVinculadas} notas`} del historial. El vínculo desaparecerá pero las notas se conservarán.`
+              : ''
+
+          if (confirmacionEliminar.detectando)
+            return 'Verificando el tipo de documento…'
+          if (confirmacionEliminar.esDocumentoIdentidad)
+            return `Este es el documento de identidad del cliente (cédula o pasaporte).\n\nSin él, no podrán realizarse nuevas asignaciones de vivienda. Se moverá a la papelera y solo un usuario con rol de administrador podrá recuperarlo.${notasMsg}`
+          if (confirmacionEliminar.esDocumentoCritico)
+            return `Este documento es un requisito obligatorio para el desembolso${
+              confirmacionEliminar.entidadAfectada
+                ? ` (${confirmacionEliminar.entidadAfectada})`
+                : ''
+            }. Al eliminarlo quedará registrado como pendiente nuevamente.\n\nSe moverán a la papelera ${
+              confirmacionEliminar.totalVersiones > 1
+                ? `las ${confirmacionEliminar.totalVersiones} versiones`
+                : 'el documento'
+            }. Puede recuperarlos desde administración.${notasMsg}`
+          return `Esta acción moverá el documento${
+            confirmacionEliminar.totalVersiones > 1
+              ? ` y sus ${confirmacionEliminar.totalVersiones} versiones`
+              : ''
+          } a la papelera. Puede recuperarlo desde el panel de administración.${notasMsg}`
+        })()}
         confirmText={
           confirmacionEliminar.esDocumentoIdentidad ||
           confirmacionEliminar.esDocumentoCritico

@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "13.0.5"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -140,6 +140,9 @@ export type Database = {
           ip_address: unknown
           metadata: Json | null
           modulo: string | null
+          oculto: boolean
+          oculto_en: string | null
+          oculto_por: string | null
           registro_id: string
           tabla: string
           user_agent: string | null
@@ -158,6 +161,9 @@ export type Database = {
           ip_address?: unknown
           metadata?: Json | null
           modulo?: string | null
+          oculto?: boolean
+          oculto_en?: string | null
+          oculto_por?: string | null
           registro_id: string
           tabla: string
           user_agent?: string | null
@@ -176,6 +182,9 @@ export type Database = {
           ip_address?: unknown
           metadata?: Json | null
           modulo?: string | null
+          oculto?: boolean
+          oculto_en?: string | null
+          oculto_por?: string | null
           registro_id?: string
           tabla?: string
           user_agent?: string | null
@@ -977,6 +986,107 @@ export type Database = {
             columns: ["subido_por"]
             isOneToOne: false
             referencedRelation: "vista_usuarios_completos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documentos_pendientes: {
+        Row: {
+          categoria_id: string
+          cliente_id: string
+          completado_por: string | null
+          estado: string | null
+          fecha_completado: string | null
+          fecha_creacion: string | null
+          fecha_limite: string | null
+          fuente_pago_id: string
+          id: string
+          metadata: Json | null
+          prioridad: string | null
+          recordatorios_enviados: number | null
+          tipo_documento: string
+          ultima_notificacion: string | null
+        }
+        Insert: {
+          categoria_id: string
+          cliente_id: string
+          completado_por?: string | null
+          estado?: string | null
+          fecha_completado?: string | null
+          fecha_creacion?: string | null
+          fecha_limite?: string | null
+          fuente_pago_id: string
+          id?: string
+          metadata?: Json | null
+          prioridad?: string | null
+          recordatorios_enviados?: number | null
+          tipo_documento: string
+          ultima_notificacion?: string | null
+        }
+        Update: {
+          categoria_id?: string
+          cliente_id?: string
+          completado_por?: string | null
+          estado?: string | null
+          fecha_completado?: string | null
+          fecha_creacion?: string | null
+          fecha_limite?: string | null
+          fuente_pago_id?: string
+          id?: string
+          metadata?: Json | null
+          prioridad?: string | null
+          recordatorios_enviados?: number | null
+          tipo_documento?: string
+          ultima_notificacion?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documentos_pendientes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documentos_pendientes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "vista_clientes_resumen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documentos_pendientes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "vista_viviendas_completas"
+            referencedColumns: ["cliente_id_data"]
+          },
+          {
+            foreignKeyName: "documentos_pendientes_completado_por_fkey"
+            columns: ["completado_por"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documentos_pendientes_completado_por_fkey"
+            columns: ["completado_por"]
+            isOneToOne: false
+            referencedRelation: "vista_usuarios_completos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documentos_pendientes_fuente_pago_id_fkey"
+            columns: ["fuente_pago_id"]
+            isOneToOne: false
+            referencedRelation: "fuentes_pago"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documentos_pendientes_fuente_pago_id_fkey"
+            columns: ["fuente_pago_id"]
+            isOneToOne: false
+            referencedRelation: "fuentes_pago_con_entidad"
             referencedColumns: ["id"]
           },
         ]
@@ -1907,6 +2017,7 @@ export type Database = {
           cliente_id: string
           contenido: string
           creado_por: string
+          documento_vinculado_id: string | null
           es_importante: boolean | null
           fecha_actualizacion: string | null
           fecha_creacion: string | null
@@ -1918,6 +2029,7 @@ export type Database = {
           cliente_id: string
           contenido: string
           creado_por: string
+          documento_vinculado_id?: string | null
           es_importante?: boolean | null
           fecha_actualizacion?: string | null
           fecha_creacion?: string | null
@@ -1929,6 +2041,7 @@ export type Database = {
           cliente_id?: string
           contenido?: string
           creado_por?: string
+          documento_vinculado_id?: string | null
           es_importante?: boolean | null
           fecha_actualizacion?: string | null
           fecha_creacion?: string | null
@@ -1983,6 +2096,13 @@ export type Database = {
             columns: ["creado_por"]
             isOneToOne: false
             referencedRelation: "vista_usuarios_completos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notas_historial_cliente_documento_vinculado_id_fkey"
+            columns: ["documento_vinculado_id"]
+            isOneToOne: false
+            referencedRelation: "documentos_cliente"
             referencedColumns: ["id"]
           },
         ]
@@ -2549,6 +2669,159 @@ export type Database = {
           },
         ]
       }
+      viviendas_historial_estados: {
+        Row: {
+          created_at: string | null
+          estado_anterior: string
+          estado_nuevo: string
+          fecha_cambio: string | null
+          id: string
+          metadata: Json | null
+          motivo: string
+          usuario_id: string | null
+          vivienda_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          estado_anterior: string
+          estado_nuevo: string
+          fecha_cambio?: string | null
+          id?: string
+          metadata?: Json | null
+          motivo: string
+          usuario_id?: string | null
+          vivienda_id: string
+        }
+        Update: {
+          created_at?: string | null
+          estado_anterior?: string
+          estado_nuevo?: string
+          fecha_cambio?: string | null
+          id?: string
+          metadata?: Json | null
+          motivo?: string
+          usuario_id?: string | null
+          vivienda_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "viviendas_historial_estados_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "viviendas_historial_estados_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "vista_usuarios_completos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "viviendas_historial_estados_vivienda_id_fkey"
+            columns: ["vivienda_id"]
+            isOneToOne: false
+            referencedRelation: "vista_abonos_completos"
+            referencedColumns: ["vivienda_id"]
+          },
+          {
+            foreignKeyName: "viviendas_historial_estados_vivienda_id_fkey"
+            columns: ["vivienda_id"]
+            isOneToOne: false
+            referencedRelation: "vista_viviendas_completas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "viviendas_historial_estados_vivienda_id_fkey"
+            columns: ["vivienda_id"]
+            isOneToOne: false
+            referencedRelation: "viviendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      viviendas_historial_matriculas: {
+        Row: {
+          abonos_snapshot: Json | null
+          created_at: string | null
+          documentos_snapshot: Json | null
+          fecha_cambio: string | null
+          id: string
+          matricula_anterior: string
+          matricula_nueva: string
+          motivo: string
+          negociaciones_snapshot: Json | null
+          nivel_riesgo: string | null
+          usuario_id: string | null
+          vivienda_id: string
+        }
+        Insert: {
+          abonos_snapshot?: Json | null
+          created_at?: string | null
+          documentos_snapshot?: Json | null
+          fecha_cambio?: string | null
+          id?: string
+          matricula_anterior: string
+          matricula_nueva: string
+          motivo: string
+          negociaciones_snapshot?: Json | null
+          nivel_riesgo?: string | null
+          usuario_id?: string | null
+          vivienda_id: string
+        }
+        Update: {
+          abonos_snapshot?: Json | null
+          created_at?: string | null
+          documentos_snapshot?: Json | null
+          fecha_cambio?: string | null
+          id?: string
+          matricula_anterior?: string
+          matricula_nueva?: string
+          motivo?: string
+          negociaciones_snapshot?: Json | null
+          nivel_riesgo?: string | null
+          usuario_id?: string | null
+          vivienda_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "viviendas_historial_matriculas_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "viviendas_historial_matriculas_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "vista_usuarios_completos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "viviendas_historial_matriculas_vivienda_id_fkey"
+            columns: ["vivienda_id"]
+            isOneToOne: false
+            referencedRelation: "vista_abonos_completos"
+            referencedColumns: ["vivienda_id"]
+          },
+          {
+            foreignKeyName: "viviendas_historial_matriculas_vivienda_id_fkey"
+            columns: ["vivienda_id"]
+            isOneToOne: false
+            referencedRelation: "vista_viviendas_completas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "viviendas_historial_matriculas_vivienda_id_fkey"
+            columns: ["vivienda_id"]
+            isOneToOne: false
+            referencedRelation: "viviendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       fuentes_pago_con_entidad: {
@@ -2829,6 +3102,7 @@ export type Database = {
           fecha_actualizacion: string | null
           fecha_anulacion: string | null
           fecha_creacion: string | null
+          fuente_pago_entidad: string | null
           fuente_pago_id: string | null
           fuente_pago_tipo: string | null
           id: string | null
@@ -2848,6 +3122,7 @@ export type Database = {
           numero_referencia: string | null
           proyecto_id: string | null
           proyecto_nombre: string | null
+          registrado_por_nombre: string | null
           usuario_registro: string | null
           vivienda_id: string | null
           vivienda_numero: string | null
@@ -3147,6 +3422,7 @@ export type Database = {
           total_abonado: number | null
           valor_base: number | null
           valor_total: number | null
+          valor_total_pagar: number | null
         }
         Relationships: [
           {
@@ -3291,6 +3567,24 @@ export type Database = {
           tipo: string
         }[]
       }
+      get_schema_columns: {
+        Args: never
+        Returns: {
+          column_name: string
+          default_val: string
+          nullable: string
+          table_name: string
+          tipo: string
+        }[]
+      }
+      get_storage_sizes: {
+        Args: never
+        Returns: {
+          archivos: number
+          bucket_id: string
+          total_bytes: number
+        }[]
+      }
       get_valor_total_original: {
         Args: { negociacion_id: string }
         Returns: number
@@ -3336,7 +3630,11 @@ export type Database = {
         }[]
       }
       obtener_historial_cliente: {
-        Args: { p_cliente_id: string; p_limit?: number }
+        Args: {
+          p_cliente_id: string
+          p_incluir_ocultos?: boolean
+          p_limit?: number
+        }
         Returns: {
           accion: string
           cambios_especificos: Json
@@ -3346,6 +3644,7 @@ export type Database = {
           id: string
           metadata: Json
           modulo: string
+          oculto: boolean
           registro_id: string
           tabla: string
           usuario_email: string
