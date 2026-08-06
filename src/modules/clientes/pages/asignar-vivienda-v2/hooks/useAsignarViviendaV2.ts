@@ -366,133 +366,138 @@ export function useAsignarViviendaV2({
   // ─── Submit final (paso 3) ───────────────────────────
   const handleSubmitFinal = useCallback(async () => {
     setErrorApi(null)
+    setIsValidating(true)
 
-    // Guardia: las fuentes deben seguir cerrando. El usuario puede haber
-    // modificado el descuento (paso 1) después de configurar fuentes (paso 2)
-    // sin pasar por irSiguiente, dejando un desbalance silencioso.
-    if (!sumaCierra) {
-      setErrorApi(
-        'Las fuentes de pago no alcanzan el total a financiar. Regresa al paso 2 y ajusta los montos.'
-      )
-      return
-    }
-
-    // Fix 2: verificar que la vivienda sigue disponible en el momento del submit
-    const supabase = createClient()
-    const { data: viviendaActual, error: errVivienda } = await supabase
-      .from('viviendas')
-      .select('estado')
-      .eq('id', viviendaId)
-      .single()
-
-    const checkVivienda = validarViviendaDisponible(
-      errVivienda ? null : (viviendaActual?.estado as EstadoVivienda | null)
-    )
-    if (!checkVivienda.ok) {
-      setErrorApi(checkVivienda.error ?? 'Error verificando vivienda.')
-      return
-    }
-
-    // Fix 1: verificar que el cliente no tenga ya una negociación activa
-    const { data: negActiva, error: errNeg } = await supabase
-      .from('negociaciones')
-      .select('id')
-      .eq('cliente_id', clienteId)
-      .in('estado', ['Activa', 'Suspendida'])
-      .maybeSingle()
-
-    if (errNeg) {
-      setErrorApi(
-        'No se pudo verificar el estado del cliente. Intenta de nuevo.'
-      )
-      return
-    }
-    const checkNeg = validarSinNegociacionActiva(negActiva)
-    if (!checkNeg.ok) {
-      setErrorApi(checkNeg.error ?? 'Negociación activa existente.')
-      return
-    }
-
-    const fuentesDTO: CrearFuentePagoDTO[] = fuentes
-      .filter(
-        (f): f is FuentePagoConfiguracion & { config: FuentePagoConfig } =>
-          f.enabled && f.config !== null
-      )
-      .map(f => {
-        const tipoConCampos = tiposConCampos.find(t => t.nombre === f.tipo)
-        const camposConfig = tipoConCampos?.configuracion_campos?.campos ?? []
-        const monto = obtenerMonto(f.config, camposConfig)
-        const generaCuotas =
-          tipoConCampos?.logica_negocio?.genera_cuotas === true
-        // Resolver nombre e ID de entidad financiera
-        const entidadNombre =
-          (entidades.find(e => e.value === f.config.entidad)?.label ??
-            f.config.entidad) ||
-          undefined
-        const entidadId =
-          f.config.entidad_financiera_id ||
-          entidades.find(e => e.label === entidadNombre)?.value ||
-          undefined
-
-        // El campo de fecha varía según el tipo ("fecha_acta" vs "fecha_resolucion"), buscamos por tipo 'date'.
-        const tipoConCamposActual = tiposConCampos.find(
-          t => t.nombre === f.tipo
+    try {
+      // Guardia: las fuentes deben seguir cerrando. El usuario puede haber
+      // modificado el descuento (paso 1) después de configurar fuentes (paso 2)
+      // sin pasar por irSiguiente, dejando un desbalance silencioso.
+      if (!sumaCierra) {
+        setErrorApi(
+          'Las fuentes de pago no alcanzan el total a financiar. Regresa al paso 2 y ajusta los montos.'
         )
-        const camposConfigActual =
-          tipoConCamposActual?.configuracion_campos?.campos ?? []
-        const fechaCampo = camposConfigActual.find(c => c.tipo === 'date')
-        const fechaActaVal = fechaCampo
-          ? f.config.campos?.[fechaCampo.nombre]
-          : undefined
-        const fechaActa =
-          fechaActaVal && String(fechaActaVal).trim() !== ''
-            ? String(fechaActaVal)
-            : undefined
+        return
+      }
 
-        return {
-          tipo: f.tipo,
-          monto_aprobado: monto,
-          capital_para_cierre: f.config.capital_para_cierre ?? undefined,
-          parametrosCredito: f.config.parametrosCredito ?? undefined,
-          entidad: entidadNombre,
-          entidad_financiera_id: entidadId,
-          numero_referencia: f.config.numero_referencia || undefined,
-          fecha_acta: fechaActa,
-          permite_multiples_abonos:
-            generaCuotas || (f.config.permite_multiples_abonos ?? false),
-        }
+      // Fix 2: verificar que la vivienda sigue disponible en el momento del submit
+      const supabase = createClient()
+      const { data: viviendaActual, error: errVivienda } = await supabase
+        .from('viviendas')
+        .select('estado')
+        .eq('id', viviendaId)
+        .single()
+
+      const checkVivienda = validarViviendaDisponible(
+        errVivienda ? null : (viviendaActual?.estado as EstadoVivienda | null)
+      )
+      if (!checkVivienda.ok) {
+        setErrorApi(checkVivienda.error ?? 'Error verificando vivienda.')
+        return
+      }
+
+      // Fix 1: verificar que el cliente no tenga ya una negociación activa
+      const { data: negActiva, error: errNeg } = await supabase
+        .from('negociaciones')
+        .select('id')
+        .eq('cliente_id', clienteId)
+        .in('estado', ['Activa', 'Suspendida'])
+        .maybeSingle()
+
+      if (errNeg) {
+        setErrorApi(
+          'No se pudo verificar el estado del cliente. Intenta de nuevo.'
+        )
+        return
+      }
+      const checkNeg = validarSinNegociacionActiva(negActiva)
+      if (!checkNeg.ok) {
+        setErrorApi(checkNeg.error ?? 'Negociación activa existente.')
+        return
+      }
+
+      const fuentesDTO: CrearFuentePagoDTO[] = fuentes
+        .filter(
+          (f): f is FuentePagoConfiguracion & { config: FuentePagoConfig } =>
+            f.enabled && f.config !== null
+        )
+        .map(f => {
+          const tipoConCampos = tiposConCampos.find(t => t.nombre === f.tipo)
+          const camposConfig = tipoConCampos?.configuracion_campos?.campos ?? []
+          const monto = obtenerMonto(f.config, camposConfig)
+          const generaCuotas =
+            tipoConCampos?.logica_negocio?.genera_cuotas === true
+          // Resolver nombre e ID de entidad financiera
+          const entidadNombre =
+            (entidades.find(e => e.value === f.config.entidad)?.label ??
+              f.config.entidad) ||
+            undefined
+          const entidadId =
+            f.config.entidad_financiera_id ||
+            entidades.find(e => e.label === entidadNombre)?.value ||
+            undefined
+
+          // El campo de fecha varía según el tipo ("fecha_acta" vs "fecha_resolucion"), buscamos por tipo 'date'.
+          const tipoConCamposActual = tiposConCampos.find(
+            t => t.nombre === f.tipo
+          )
+          const camposConfigActual =
+            tipoConCamposActual?.configuracion_campos?.campos ?? []
+          const fechaCampo = camposConfigActual.find(c => c.tipo === 'date')
+          const fechaActaVal = fechaCampo
+            ? f.config.campos?.[fechaCampo.nombre]
+            : undefined
+          const fechaActa =
+            fechaActaVal && String(fechaActaVal).trim() !== ''
+              ? String(fechaActaVal)
+              : undefined
+
+          return {
+            tipo: f.tipo,
+            monto_aprobado: monto,
+            capital_para_cierre: f.config.capital_para_cierre ?? undefined,
+            parametrosCredito: f.config.parametrosCredito ?? undefined,
+            entidad: entidadNombre,
+            entidad_financiera_id: entidadId,
+            numero_referencia: f.config.numero_referencia || undefined,
+            fecha_acta: fechaActa,
+            permite_multiples_abonos:
+              generaCuotas || (f.config.permite_multiples_abonos ?? false),
+          }
+        })
+
+      // valor_negociado debe ser el precio PRE-descuento, porque useCrearNegociacion
+      // calcula el total a financiar como (valor_negociado - descuento_aplicado)
+      // y lo compara contra la suma de fuentes. Enviar el valor post-descuento
+      // causaría una doble resta y fallaría la validación.
+      const valorPreDescuento = valorTotal + descuentoAplicado
+
+      const result = await crearNegociacion({
+        cliente_id: clienteId,
+        vivienda_id: viviendaId,
+        valor_negociado: valorPreDescuento,
+        descuento_aplicado: descuentoAplicado,
+        tipo_descuento: tipoDescuento || undefined,
+        motivo_descuento: motivoDescuento || undefined,
+        valor_escritura_publica: valorEscrituraPublica ?? undefined,
+        notas: notas ?? '',
+        fecha_negociacion: fechaNegociacion
+          ? formatDateForDB(fechaNegociacion)
+          : undefined,
+        fuentes_pago: fuentesDTO,
       })
 
-    // valor_negociado debe ser el precio PRE-descuento, porque useCrearNegociacion
-    // calcula el total a financiar como (valor_negociado - descuento_aplicado)
-    // y lo compara contra la suma de fuentes. Enviar el valor post-descuento
-    // causaría una doble resta y fallaría la validación.
-    const valorPreDescuento = valorTotal + descuentoAplicado
+      if (!result) return
 
-    const result = await crearNegociacion({
-      cliente_id: clienteId,
-      vivienda_id: viviendaId,
-      valor_negociado: valorPreDescuento,
-      descuento_aplicado: descuentoAplicado,
-      tipo_descuento: tipoDescuento || undefined,
-      motivo_descuento: motivoDescuento || undefined,
-      valor_escritura_publica: valorEscrituraPublica ?? undefined,
-      notas: notas ?? '',
-      fecha_negociacion: fechaNegociacion
-        ? formatDateForDB(fechaNegociacion)
-        : undefined,
-      fuentes_pago: fuentesDTO,
-    })
+      toast.success('¡Vivienda asignada exitosamente!', {
+        description:
+          'La negociación ha sido registrada y la vivienda asignada al cliente.',
+        duration: 5000,
+      })
 
-    if (!result) return
-
-    toast.success('¡Vivienda asignada exitosamente!', {
-      description:
-        'La negociación ha sido registrada y la vivienda asignada al cliente.',
-      duration: 5000,
-    })
-
-    setShowSuccess(true)
+      setShowSuccess(true)
+    } finally {
+      setIsValidating(false)
+    }
     setTimeout(() => {
       router.push(`/clientes/${clienteSlug ?? getShortId(clienteId)}`)
     }, 1800)
