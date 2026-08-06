@@ -126,10 +126,11 @@ export function useCrearNegociacion(): UseCrearNegociacionReturn {
           (sum, f) => sum + (f.capital_para_cierre ?? f.monto_aprobado),
           0
         )
-        if (Math.abs(sumaFuentes - valorTotal) > 0.01) {
-          // Tolerancia de 1 centavo por redondeo
+        if (sumaFuentes < valorTotal - 0.01) {
+          // Solo bloquear cuando las fuentes no alcanzan el total (déficit).
+          // El excedente (fuentes > valor) es válido — se devuelve al cliente.
           errores.push(
-            `La suma de fuentes de pago ($${sumaFuentes.toLocaleString()}) debe ser igual al valor total ($${valorTotal.toLocaleString()})`
+            `La suma de fuentes de pago ($${sumaFuentes.toLocaleString()}) no alcanza el valor total ($${valorTotal.toLocaleString()})`
           )
         }
 
