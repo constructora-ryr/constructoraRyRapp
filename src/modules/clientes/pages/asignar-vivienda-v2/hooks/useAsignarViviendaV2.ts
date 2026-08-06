@@ -55,7 +55,7 @@ export const PASOS_ASIGNACION: WizardStepConfig[] = [
     id: 2,
     title: 'Fuentes de Pago',
     description:
-      'Configura cómo se financiará la vivienda. Las fuentes deben cubrir el valor total.',
+      'Configura cómo se financiará la vivienda. Las fuentes deben cubrir al menos el valor total.',
     icon: Banknote,
   },
   {
@@ -372,7 +372,7 @@ export function useAsignarViviendaV2({
     // sin pasar por irSiguiente, dejando un desbalance silencioso.
     if (!sumaCierra) {
       setErrorApi(
-        'Las fuentes de pago no cubren el total a financiar. Regresa al paso 2 y ajusta los montos.'
+        'Las fuentes de pago no alcanzan el total a financiar. Regresa al paso 2 y ajusta los montos.'
       )
       return
     }

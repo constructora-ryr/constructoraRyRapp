@@ -253,7 +253,11 @@ export function SeccionFuentesPago({
           </span>
           <span
             className={`${s.fuentes.totalesValue} ${
-              diferencia !== 0 ? 'text-rose-500' : 'text-emerald-500'
+              diferencia > 0
+                ? 'text-rose-500'
+                : diferencia < 0
+                  ? 'text-amber-500'
+                  : 'text-emerald-500'
             }`}
           >
             {diferencia !== 0 ? formatCurrency(Math.abs(diferencia)) : '—'}
@@ -262,17 +266,21 @@ export function SeccionFuentesPago({
 
         <div className={s.fuentes.totalesDivider} />
 
-        {sumaCierra ? (
+        {sumaCierra && diferencia === 0 ? (
           <p className={s.fuentes.okMsg}>
             <Check className={s.fuentes.okIcon} />
             Puedes continuar
           </p>
+        ) : sumaCierra && diferencia < 0 ? (
+          <p className='flex items-center gap-1.5 text-sm text-amber-600 dark:text-amber-400'>
+            <AlertTriangle className='h-4 w-4 shrink-0' />
+            Excedente de {formatCurrency(Math.abs(diferencia))} — el cliente
+            recibirá devolución
+          </p>
         ) : (
           <p className={s.fuentes.errMsg}>
             <AlertCircle className={s.fuentes.errIcon} />
-            {diferencia > 0
-              ? `Falta cubrir ${formatCurrency(diferencia)}`
-              : `Exceso de ${formatCurrency(Math.abs(diferencia))}`}
+            Falta cubrir {formatCurrency(diferencia)}
           </p>
         )}
       </div>

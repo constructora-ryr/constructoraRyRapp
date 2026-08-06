@@ -8,7 +8,7 @@
  *
  * Formula:  totalParaCierre = Σ (capital_para_cierre ?? monto_aprobado)
  *           diferencia      = valorVivienda − totalParaCierre
- *           estaBalanceado  = |diferencia| < TOLERANCE
+ *           estaBalanceado  = diferencia ≤ TOLERANCE  (excedente is valid)
  */
 
 import { useMemo } from 'react'
@@ -56,7 +56,7 @@ export function calcularCierreFinanciero(
     totalParaCierre,
     diferencia,
     porcentajeCubierto,
-    estaBalanceado: Math.abs(diferencia) < TOLERANCE,
+    estaBalanceado: diferencia <= TOLERANCE,
   }
 }
 

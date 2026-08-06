@@ -95,7 +95,7 @@ export function useFuentesPago({
     return valorTotal - totalFuentes
   }, [valorTotal, totalFuentes])
 
-  const sumaCierra = diferencia === 0 && totalFuentes > 0
+  const sumaCierra = diferencia <= 0 && totalFuentes > 0
 
   // Validacion paso 2
   const paso2Valido = useMemo(() => {
