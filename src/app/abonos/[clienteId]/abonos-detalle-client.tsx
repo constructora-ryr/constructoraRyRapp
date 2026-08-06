@@ -16,7 +16,6 @@ import { formatDateForInput } from '@/lib/utils/date.utils'
 import { getShortId } from '@/lib/utils/slug.utils'
 import { AbonoDetalleModal } from '@/modules/abonos/components/abono-detalle-modal/AbonoDetalleModal'
 import type { AbonoParaDetalle } from '@/modules/abonos/components/abono-detalle-modal/useAbonoDetalle'
-import { ProcesarDevolucionExcedenteModal } from '@/modules/abonos/components/devolucion-excedente/ProcesarDevolucionExcedenteModal'
 import { ModalEditarAbono } from '@/modules/abonos/components/modal-editar-abono'
 import { ModalRegistroPago } from '@/modules/abonos/components/modal-registro-pago'
 import type { AbonoHistorial } from '@/modules/abonos/types'
@@ -57,10 +56,7 @@ export default function AbonosDetalleClient({
     handleRegistrarAbono,
     handleCerrarModal,
     handleAbonoRegistrado,
-    recargarDatos,
   } = useAbonosDetalle(clienteId)
-
-  const [modalDevolucionOpen, setModalDevolucionOpen] = useState(false)
 
   // ─── Permisos granulares de abonos ──────────────────────────────────────
   const { esAdmin, puede } = usePermisosQuery()
@@ -287,17 +283,9 @@ export default function AbonosDetalleClient({
                   </p>
                   <p className='mt-0.5 text-xs text-amber-700 dark:text-amber-400'>
                     Las fuentes de pago superan el valor de la negociación.
-                    Registra la devolución al cliente antes de cerrar.
+                    Registra la devolución desde la pestaña de Negociación.
                   </p>
                 </div>
-                {(esAdmin || puede('negociaciones', 'editar')) && (
-                  <button
-                    onClick={() => setModalDevolucionOpen(true)}
-                    className='flex-shrink-0 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white shadow transition-colors hover:bg-amber-600'
-                  >
-                    Registrar
-                  </button>
-                )}
               </div>
             </motion.div>
           )}
@@ -453,20 +441,6 @@ export default function AbonosDetalleClient({
             onSuccess={handleEditarSuccess}
           />
         ) : null}
-
-        {/* Modal de devolución de excedente */}
-        {modalDevolucionOpen && negociacion && excedente > 0 && (
-          <ProcesarDevolucionExcedenteModal
-            negociacionId={negociacion.id}
-            montoExcedente={excedente}
-            nombreCliente={`${negociacion.cliente.nombres} ${negociacion.cliente.apellidos}`}
-            onClose={() => setModalDevolucionOpen(false)}
-            onExitosa={() => {
-              setModalDevolucionOpen(false)
-              recargarDatos()
-            }}
-          />
-        )}
       </div>
     </motion.div>
   )

@@ -14,6 +14,7 @@ import { useCallback, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   AlertTriangle,
+  ArrowDownToLine,
   ArrowRightLeft,
   ArrowUpRight,
   CheckCircle2,
@@ -39,6 +40,7 @@ import { toast } from 'sonner'
 
 import { useRouter } from 'next/navigation'
 
+import { ProcesarDevolucionExcedenteModal } from '@/modules/abonos/components/devolucion-excedente/ProcesarDevolucionExcedenteModal'
 import { ModalEditarAbono } from '@/modules/abonos/components/modal-editar-abono'
 import type { AbonoParaEditar } from '@/modules/abonos/types/editar-abono.types'
 import { negociacionesService } from '@/modules/clientes/services/negociaciones.service'
@@ -100,6 +102,9 @@ export function NegociacionTab({
 
   // ── Estado para historial de negociación ─────────────────────────────────
   const [historialNegOpen, setHistorialNegOpen] = useState(false)
+
+  // ── Estado para modal de devolución de excedente ─────────────────────────
+  const [modalDevolucionOpen, setModalDevolucionOpen] = useState(false)
 
   // ── Estado para modal de renuncia ───────────────────────────────────────
   const [modalRenunciaOpen, setModalRenunciaOpen] = useState(false)
@@ -649,6 +654,67 @@ export function NegociacionTab({
             </div>
           ) : null}
 
+          {/* ✅ Banner excedente — devolución pendiente */}
+          {estaBalanceado &&
+            diferencia < 0 &&
+            negociacion?.excedente_devolucion_estado !== 'procesada' && (
+              <div className='relative overflow-hidden rounded-lg border border-amber-300 bg-gradient-to-r from-amber-50 via-amber-50 to-orange-50 dark:border-amber-700/60 dark:from-amber-950/40 dark:via-amber-950/30 dark:to-orange-950/20'>
+                <div className='absolute left-0 top-0 h-full w-1 bg-amber-500' />
+                <div className='flex items-center gap-3 px-4 py-2.5'>
+                  <div className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/40'>
+                    <ArrowDownToLine className='h-4 w-4 text-amber-600 dark:text-amber-400' />
+                  </div>
+                  <div className='min-w-0 flex-1'>
+                    <p className='text-xs font-bold text-amber-800 dark:text-amber-300'>
+                      Devolución Pendiente —{' '}
+                      {formatCurrency(Math.abs(diferencia))}
+                    </p>
+                    <p className='mt-0.5 text-[10px] text-amber-700 dark:text-amber-400'>
+                      Las fuentes superan el valor de la negociación. Registra
+                      la devolución al cliente.
+                    </p>
+                  </div>
+                  {puedeAjustar ? (
+                    <button
+                      onClick={() => setModalDevolucionOpen(true)}
+                      className='flex-shrink-0 rounded-lg bg-amber-500 px-3 py-1.5 text-[11px] font-semibold text-white shadow transition-colors hover:bg-amber-600'
+                    >
+                      Registrar
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            )}
+
+          {/* ✅ Banner excedente — devolución ya procesada */}
+          {estaBalanceado &&
+            diferencia < 0 &&
+            negociacion?.excedente_devolucion_estado === 'procesada' && (
+              <div className='relative overflow-hidden rounded-lg border border-emerald-300 bg-gradient-to-r from-emerald-50 to-teal-50 dark:border-emerald-700/60 dark:from-emerald-950/40 dark:to-teal-950/20'>
+                <div className='absolute left-0 top-0 h-full w-1 bg-emerald-500' />
+                <div className='flex items-center gap-3 px-4 py-2.5'>
+                  <div className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40'>
+                    <CheckCircle2 className='h-4 w-4 text-emerald-600 dark:text-emerald-400' />
+                  </div>
+                  <div className='min-w-0 flex-1'>
+                    <p className='text-xs font-bold text-emerald-800 dark:text-emerald-300'>
+                      Devolución Registrada —{' '}
+                      {formatCurrency(
+                        negociacion.excedente_devolucion_monto ??
+                          Math.abs(diferencia)
+                      )}
+                    </p>
+                    <p className='mt-0.5 text-[10px] text-emerald-700 dark:text-emerald-400'>
+                      El excedente fue devuelto al cliente.
+                      {negociacion.excedente_devolucion_fecha
+                        ? ` Fecha: ${negociacion.excedente_devolucion_fecha}.`
+                        : ''}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
           {fuentesPago.length === 0 ? (
             <p className='py-4 text-center text-xs text-gray-400 dark:text-gray-500'>
               {puedeAjustar
@@ -955,6 +1021,20 @@ export function NegociacionTab({
           fechaActaInicial={fuenteEditandoActa.fechaActa}
           onClose={() => setFuenteEditandoActa(null)}
           onGuardado={() => refetchFuentes()}
+        />
+      ) : null}
+
+      {/* Modal: Registrar devolución de excedente */}
+      {modalDevolucionOpen && negociacion && diferencia < 0 ? (
+        <ProcesarDevolucionExcedenteModal
+          negociacionId={negociacion.id}
+          montoExcedente={Math.abs(diferencia)}
+          nombreCliente={`${cliente.nombres} ${cliente.apellidos}`}
+          onClose={() => setModalDevolucionOpen(false)}
+          onExitosa={() => {
+            setModalDevolucionOpen(false)
+            void refetchNegociaciones()
+          }}
         />
       ) : null}
     </div>

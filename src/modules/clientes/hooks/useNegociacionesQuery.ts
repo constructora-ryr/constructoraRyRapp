@@ -90,6 +90,17 @@ export interface NegociacionDetalle {
   fecha_negociacion: string
   fecha_creacion?: string
   fecha_completada?: string
+
+  // Devolución de excedente
+  excedente_devolucion_estado?: 'pendiente' | 'procesada' | null
+  excedente_devolucion_monto?: number | null
+  excedente_devolucion_fecha?: string | null
+  excedente_devolucion_metodo?: string | null
+  excedente_devolucion_numero_comprobante?: string | null
+  excedente_devolucion_comprobante_url?: string | null
+  excedente_devolucion_notas?: string | null
+  excedente_devolucion_procesado_por?: string | null
+  excedente_devolucion_procesado_en?: string | null
 }
 
 export interface NegociacionConValores extends NegociacionDetalle {

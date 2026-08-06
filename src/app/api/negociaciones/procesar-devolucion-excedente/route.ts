@@ -5,7 +5,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin'
 import { createRouteClient } from '@/lib/supabase/server-route'
 import { logger } from '@/lib/utils/logger'
 
-const BUCKET = 'comprobantes-abonos'
+const BUCKET = 'devoluciones-excedente'
 
 /**
  * POST /api/negociaciones/procesar-devolucion-excedente
