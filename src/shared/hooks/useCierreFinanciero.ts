@@ -17,6 +17,17 @@ import { useMemo } from 'react'
 
 const TOLERANCE = 1 // COP — standard: $1 tolerance
 
+/**
+ * Regla de negocio compartida: el cierre está balanceado cuando las fuentes
+ * cubren o superan el valor de la vivienda (excedente es válido — se devuelve
+ * al cliente). Solo un déficit rompe el balance.
+ *
+ * @param diferencia valorVivienda − totalParaCierre
+ */
+export function esBalanceadoCierre(diferencia: number): boolean {
+  return diferencia <= TOLERANCE
+}
+
 // ─── Pure calculation (testable without React) ────────────────────
 
 interface FuenteParaCierre {
@@ -56,7 +67,7 @@ export function calcularCierreFinanciero(
     totalParaCierre,
     diferencia,
     porcentajeCubierto,
-    estaBalanceado: diferencia <= TOLERANCE,
+    estaBalanceado: esBalanceadoCierre(diferencia),
   }
 }
 

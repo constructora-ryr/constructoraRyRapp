@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import type { FuentePago } from '@/modules/clientes/services/fuentes-pago.service'
 import { esCreditoConstructora } from '@/shared/constants/fuentes-pago.constants'
+import { esBalanceadoCierre } from '@/shared/hooks/useCierreFinanciero'
 import {
   calcularRestriccionesFuente,
   validarRebalanceo,
@@ -134,7 +135,7 @@ export function useModalAjusteState({
   }, [ajustes, nuevas, restriccionesMap])
 
   const diferencia = valorVivienda - subtotal
-  const estaBalanceado = Math.abs(diferencia) < 1
+  const estaBalanceado = esBalanceadoCierre(diferencia)
 
   const todasFuentesBloqueadas = useMemo(() => {
     const activas = ajustes.filter(a => !a.paraEliminar)

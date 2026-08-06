@@ -9,6 +9,7 @@ import type { FuentePagoConAbonos } from '@/modules/abonos/types'
 import { useDocumentosPendientesObligatorios } from '@/modules/clientes/hooks/useDocumentosPendientesObligatorios'
 import { filtrarPendientesPorFuente } from '@/modules/clientes/utils/documentos-pendientes.utils'
 import { esCreditoConstructora } from '@/shared/constants/fuentes-pago.constants'
+import { calcularCierreFinanciero } from '@/shared/hooks/useCierreFinanciero'
 
 /**
  * Hook personalizado para la lógica de negocio del detalle de abonos
@@ -117,13 +118,10 @@ export function useAbonosDetalle(clienteId: string) {
     // causaría un falso descuadre de exactamente el monto de los intereses.
     const valorVivienda =
       negociacion.valor_total_pagar ?? negociacion.valor_total ?? 0
-    const totalFuentes = (negociacion.fuentes_pago || []).reduce(
-      (sum, f) => sum + (f.capital_para_cierre ?? f.monto_aprobado ?? 0),
-      0
-    )
     const hayDescuadreFinanciero =
       negociacion.fuentes_pago.length > 0 &&
-      Math.abs(totalFuentes - valorVivienda) >= 1
+      !calcularCierreFinanciero(negociacion.fuentes_pago, valorVivienda)
+        .estaBalanceado
 
     const validaciones: Record<
       string,
@@ -218,11 +216,8 @@ export function useAbonosDetalle(clienteId: string) {
       return true
     const valorVivienda =
       negociacion.valor_total_pagar ?? negociacion.valor_total ?? 0
-    const totalFuentes = negociacion.fuentes_pago.reduce(
-      (sum, f) => sum + (f.capital_para_cierre ?? f.monto_aprobado ?? 0),
-      0
-    )
-    return totalFuentes >= valorVivienda - 1
+    return calcularCierreFinanciero(negociacion.fuentes_pago, valorVivienda)
+      .estaBalanceado
   }, [negociacion])
 
   return {

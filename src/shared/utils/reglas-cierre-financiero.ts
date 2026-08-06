@@ -9,6 +9,7 @@ import {
   esCreditoConstructora,
   esCuotaInicial,
 } from '@/shared/constants/fuentes-pago.constants'
+import { esBalanceadoCierre } from '@/shared/hooks/useCierreFinanciero'
 import { formatCurrency } from '@/shared/utils/format'
 
 // ─── Types ─────────────────────────────────────────────────
@@ -201,15 +202,12 @@ export function validarRebalanceo(
 ): ErrorRebalanceo[] {
   const errores: ErrorRebalanceo[] = []
 
-  // Balance
+  // Balance — solo bloquea déficit; excedente es válido (se devuelve al cliente)
   const diferencia = valorVivienda - subtotal
-  if (Math.abs(diferencia) >= 1) {
+  if (!esBalanceadoCierre(diferencia)) {
     errores.push({
       campo: 'balance',
-      mensaje:
-        diferencia > 0
-          ? `Faltan ${formatCurrency(diferencia)} para cubrir el valor de la vivienda`
-          : `Excedente de ${formatCurrency(Math.abs(diferencia))} sobre el valor de la vivienda`,
+      mensaje: `Faltan ${formatCurrency(diferencia)} para cubrir el valor de la vivienda`,
     })
   }
 
