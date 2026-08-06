@@ -311,6 +311,10 @@ export const HEADER_GRADIENTS_POR_TIPO: Record<TipoEventoHistorial, string> = {
   renuncia_devolucion_procesada:
     'bg-gradient-to-r from-green-700 via-emerald-600 to-teal-600',
 
+  // ── Devolución excedente (ámbar → naranja) ────────────────────────────
+  excedente_devolucion_procesada:
+    'bg-gradient-to-r from-amber-600 via-amber-500 to-orange-500',
+
   // ── Módulo Documentos (rojo → rosa → pink) ────────────────────────────
   documento_subido: 'bg-gradient-to-r from-red-600 via-rose-600 to-pink-600',
   documento_actualizado:

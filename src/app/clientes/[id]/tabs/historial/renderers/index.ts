@@ -10,6 +10,7 @@ import { AbonoRegistradoRenderer } from './AbonoRegistradoRenderer'
 import { CambioGenericoRenderer } from './CambioGenericoRenderer'
 import { ClienteActualizadoRenderer } from './ClienteActualizadoRenderer'
 import { ClienteCreadoRenderer } from './ClienteCreadoRenderer'
+import { DevolucionExcedenteRenderer } from './DevolucionExcedenteRenderer'
 import { DevolucionProcesadaRenderer } from './DevolucionProcesadaRenderer'
 import { DocumentoRenderer } from './DocumentoRenderer'
 import { NegociacionActualizadaRenderer } from './NegociacionActualizadaRenderer'
@@ -46,6 +47,9 @@ const RENDERERS: Partial<Record<string, RendererComponent>> = {
   renuncia_aprobada: RenunciaRenderer,
   renuncia_rechazada: RenunciaRenderer,
   renuncia_devolucion_procesada: DevolucionProcesadaRenderer,
+
+  // Devolución excedente
+  excedente_devolucion_procesada: DevolucionExcedenteRenderer,
 
   // Documentos
   documento_subido: DocumentoRenderer,

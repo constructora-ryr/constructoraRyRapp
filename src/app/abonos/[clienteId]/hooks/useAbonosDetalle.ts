@@ -220,6 +220,22 @@ export function useAbonosDetalle(clienteId: string) {
       .estaBalanceado
   }, [negociacion])
 
+  // ✅ Excedente: monto que el cliente pagó de más y debe ser devuelto
+  const excedente = useMemo(() => {
+    if (!negociacion?.fuentes_pago || negociacion.fuentes_pago.length === 0)
+      return 0
+    const valorVivienda =
+      negociacion.valor_total_pagar ?? negociacion.valor_total ?? 0
+    const { diferencia } = calcularCierreFinanciero(
+      negociacion.fuentes_pago,
+      valorVivienda
+    )
+    // diferencia < 0 → excedente (fuentes > valor). Retornamos el valor positivo.
+    return diferencia < 0 ? Math.abs(diferencia) : 0
+  }, [negociacion])
+
+  const estadoDevolucion = negociacion?.excedente_devolucion_estado ?? null
+
   return {
     // Datos
     negociacion,
@@ -237,6 +253,8 @@ export function useAbonosDetalle(clienteId: string) {
     // Validaciones
     validarFuentePago,
     estaBalanceado,
+    excedente,
+    estadoDevolucion,
 
     // Handlers
     handleRegistrarAbono,

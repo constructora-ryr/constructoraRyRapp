@@ -4,6 +4,7 @@
 
 import {
   AlertCircle,
+  ArrowDownToLine,
   ArrowRightLeft,
   CheckCircle,
   CheckCircle2,
@@ -47,6 +48,7 @@ const ICONOS: Record<TipoEventoHistorial, LucideIcon> = {
   renuncia_aprobada: FileCheck,
   renuncia_rechazada: FileX,
   renuncia_devolucion_procesada: CheckCircle2,
+  excedente_devolucion_procesada: ArrowDownToLine,
   interes_registrado: Heart,
   nota_manual: Edit3,
   interes_actualizado: Edit3,
@@ -69,6 +71,7 @@ const COLORES: Record<TipoEventoHistorial, ColorEvento> = {
   abono_editado: 'yellow',
   renuncia_aprobada: 'green',
   renuncia_devolucion_procesada: 'green',
+  excedente_devolucion_procesada: 'yellow',
   documento_subido: 'green',
   interes_registrado: 'green',
 

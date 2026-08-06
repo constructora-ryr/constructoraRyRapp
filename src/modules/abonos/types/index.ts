@@ -113,6 +113,16 @@ export interface Negociacion {
   notas?: string
   fecha_creacion: string
   fecha_actualizacion: string
+  // Devolución de excedente (fuentes > valor_total_pagar)
+  excedente_devolucion_estado?: 'pendiente' | 'procesada' | null
+  excedente_devolucion_monto?: number | null
+  excedente_devolucion_fecha?: string | null
+  excedente_devolucion_metodo?: string | null
+  excedente_devolucion_numero_comprobante?: string | null
+  excedente_devolucion_comprobante_url?: string | null
+  excedente_devolucion_notas?: string | null
+  excedente_devolucion_procesado_por?: string | null
+  excedente_devolucion_procesado_en?: string | null
 }
 
 /**

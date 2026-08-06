@@ -72,6 +72,12 @@ export function detectarTipoEvento(
     }
   }
 
+  // ========== DEVOLUCIÓN EXCEDENTE ==========
+  if (tabla === 'negociaciones' && accion === 'UPDATE') {
+    if (evento.modulo === 'excedente_devolucion_procesada')
+      return 'excedente_devolucion_procesada'
+  }
+
   // ========== INTERÉS ==========
   if (tabla === 'intereses') {
     if (accion === 'CREATE') return 'interes_registrado'

@@ -3,7 +3,12 @@
 import { useCallback, useState } from 'react'
 
 import { motion } from 'framer-motion'
-import { AlertTriangle, Wallet } from 'lucide-react'
+import {
+  AlertTriangle,
+  ArrowDownToLine,
+  CheckCircle2,
+  Wallet,
+} from 'lucide-react'
 
 import { useRouter } from 'next/navigation'
 
@@ -11,12 +16,14 @@ import { formatDateForInput } from '@/lib/utils/date.utils'
 import { getShortId } from '@/lib/utils/slug.utils'
 import { AbonoDetalleModal } from '@/modules/abonos/components/abono-detalle-modal/AbonoDetalleModal'
 import type { AbonoParaDetalle } from '@/modules/abonos/components/abono-detalle-modal/useAbonoDetalle'
+import { ProcesarDevolucionExcedenteModal } from '@/modules/abonos/components/devolucion-excedente/ProcesarDevolucionExcedenteModal'
 import { ModalEditarAbono } from '@/modules/abonos/components/modal-editar-abono'
 import { ModalRegistroPago } from '@/modules/abonos/components/modal-registro-pago'
 import type { AbonoHistorial } from '@/modules/abonos/types'
 import type { AbonoParaEditar } from '@/modules/abonos/types/editar-abono.types'
 import { usePermisosQuery } from '@/modules/usuarios/hooks/usePermisosQuery'
 import { SectionLoadingSpinner } from '@/shared/components/ui'
+import { formatCurrency } from '@/shared/utils/format'
 
 import {
   FuentePagoCard,
@@ -45,10 +52,15 @@ export default function AbonosDetalleClient({
     modalAbonoOpen,
     validarFuentePago,
     estaBalanceado,
+    excedente,
+    estadoDevolucion,
     handleRegistrarAbono,
     handleCerrarModal,
     handleAbonoRegistrado,
+    recargarDatos,
   } = useAbonosDetalle(clienteId)
+
+  const [modalDevolucionOpen, setModalDevolucionOpen] = useState(false)
 
   // ─── Permisos granulares de abonos ──────────────────────────────────────
   const { esAdmin, puede } = usePermisosQuery()
@@ -255,6 +267,73 @@ export default function AbonosDetalleClient({
           </motion.div>
         ) : null}
 
+        {/* Banner de excedente — devolución pendiente */}
+        {estaBalanceado &&
+          excedente > 0 &&
+          estadoDevolucion !== 'procesada' && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className='relative overflow-hidden rounded-xl border border-amber-300 bg-gradient-to-r from-amber-50 via-amber-50 to-orange-50 dark:border-amber-700/60 dark:from-amber-950/40 dark:via-amber-950/30 dark:to-orange-950/20'
+            >
+              <div className='absolute left-0 top-0 h-full w-1 bg-amber-500' />
+              <div className='flex items-center gap-3 px-5 py-3'>
+                <div className='flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/40'>
+                  <ArrowDownToLine className='h-5 w-5 text-amber-600 dark:text-amber-400' />
+                </div>
+                <div className='min-w-0 flex-1'>
+                  <p className='text-sm font-bold text-amber-800 dark:text-amber-300'>
+                    Devolución Pendiente — {formatCurrency(excedente)}
+                  </p>
+                  <p className='mt-0.5 text-xs text-amber-700 dark:text-amber-400'>
+                    Las fuentes de pago superan el valor de la negociación.
+                    Registra la devolución al cliente antes de cerrar.
+                  </p>
+                </div>
+                {(esAdmin || puede('negociaciones', 'editar')) && (
+                  <button
+                    onClick={() => setModalDevolucionOpen(true)}
+                    className='flex-shrink-0 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white shadow transition-colors hover:bg-amber-600'
+                  >
+                    Registrar
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          )}
+
+        {/* Banner de excedente — devolución ya procesada */}
+        {estaBalanceado &&
+          excedente > 0 &&
+          estadoDevolucion === 'procesada' && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className='relative overflow-hidden rounded-xl border border-emerald-300 bg-gradient-to-r from-emerald-50 to-teal-50 dark:border-emerald-700/60 dark:from-emerald-950/40 dark:to-teal-950/20'
+            >
+              <div className='absolute left-0 top-0 h-full w-1 bg-emerald-500' />
+              <div className='flex items-center gap-3 px-5 py-3'>
+                <div className='flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40'>
+                  <CheckCircle2 className='h-5 w-5 text-emerald-600 dark:text-emerald-400' />
+                </div>
+                <div className='min-w-0 flex-1'>
+                  <p className='text-sm font-bold text-emerald-800 dark:text-emerald-300'>
+                    Devolución Registrada —{' '}
+                    {formatCurrency(
+                      negociacion.excedente_devolucion_monto ?? excedente
+                    )}
+                  </p>
+                  <p className='mt-0.5 text-xs text-emerald-700 dark:text-emerald-400'>
+                    El excedente fue devuelto al cliente.{' '}
+                    {negociacion.excedente_devolucion_fecha
+                      ? `Fecha: ${negociacion.excedente_devolucion_fecha}.`
+                      : ''}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
         {/* Fuentes de pago */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
@@ -374,6 +453,20 @@ export default function AbonosDetalleClient({
             onSuccess={handleEditarSuccess}
           />
         ) : null}
+
+        {/* Modal de devolución de excedente */}
+        {modalDevolucionOpen && negociacion && excedente > 0 && (
+          <ProcesarDevolucionExcedenteModal
+            negociacionId={negociacion.id}
+            montoExcedente={excedente}
+            nombreCliente={`${negociacion.cliente.nombres} ${negociacion.cliente.apellidos}`}
+            onClose={() => setModalDevolucionOpen(false)}
+            onExitosa={() => {
+              setModalDevolucionOpen(false)
+              recargarDatos()
+            }}
+          />
+        )}
       </div>
     </motion.div>
   )

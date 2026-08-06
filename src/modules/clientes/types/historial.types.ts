@@ -82,6 +82,8 @@ export type TipoEventoHistorial =
   | 'renuncia_aprobada'
   | 'renuncia_rechazada'
   | 'renuncia_devolucion_procesada'
+  // Devolución de excedente (fuentes > valor_total_pagar, cliente conserva vivienda)
+  | 'excedente_devolucion_procesada'
   // Interés
   | 'interes_registrado'
   // Notas manuales

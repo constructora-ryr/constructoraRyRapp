@@ -406,6 +406,25 @@ export function generarTextos(
       }
     }
 
+    // ========== DEVOLUCIÓN EXCEDENTE ==========
+    case 'excedente_devolucion_procesada': {
+      const montoExc = metadata?.monto_devuelto as number | null | undefined
+      const montoExcStr = montoExc
+        ? `$${Number(montoExc).toLocaleString('es-CO')} devueltos`
+        : null
+      const metodoExc = metadata?.metodo_devolucion
+        ? String(metadata.metodo_devolucion)
+        : null
+      const partes = [montoExcStr, metodoExc].filter(Boolean)
+      return {
+        titulo: 'Devolución de excedente',
+        descripcion:
+          partes.length > 0
+            ? partes.join(' · ')
+            : 'Excedente de pago devuelto al cliente',
+      }
+    }
+
     // ========== INTERÉS ==========
     case 'interes_registrado': {
       const proyectoNombre = metadata?.proyecto_nombre || 'N/A'
