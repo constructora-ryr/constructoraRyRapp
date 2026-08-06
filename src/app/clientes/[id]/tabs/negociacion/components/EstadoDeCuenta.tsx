@@ -62,12 +62,19 @@ export function EstadoDeCuenta({
 
       {open && (
         <div className='px-5 pb-4 pt-1 text-xs'>
-          {/* Desglose del valor comercial */}
-          {tieneExtras ? (
+          {/* Valor comercial del inmueble */}
+          <LineItem
+            label='Valor comercial del inmueble'
+            value={formatCurrency(valorComercial)}
+            bold
+          />
+          {tieneExtras && (
             <>
               <LineItem
-                label='Valor base del inmueble'
+                label='Valor base'
                 value={formatCurrency(valorBase)}
+                valueClass='text-gray-500 dark:text-gray-400'
+                indent
               />
               {gastosNotariales > 0 && (
                 <LineItem
@@ -85,18 +92,7 @@ export function EstadoDeCuenta({
                   indent
                 />
               )}
-              <Rule />
-              <LineItem
-                label='Valor comercial del inmueble'
-                value={formatCurrency(valorComercial)}
-                bold
-              />
             </>
-          ) : (
-            <LineItem
-              label='Valor comercial del inmueble'
-              value={formatCurrency(valorBase)}
-            />
           )}
 
           {/* Descuento */}
