@@ -222,7 +222,7 @@ export function useAbonosDetalle(clienteId: string) {
       (sum, f) => sum + (f.capital_para_cierre ?? f.monto_aprobado ?? 0),
       0
     )
-    return Math.abs(totalFuentes - valorVivienda) < 1
+    return totalFuentes >= valorVivienda - 1
   }, [negociacion])
 
   return {
