@@ -14,7 +14,6 @@ import { useCallback, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   AlertTriangle,
-  ArrowDownToLine,
   ArrowRightLeft,
   ArrowUpRight,
   CheckCircle2,
@@ -55,10 +54,13 @@ import { formatCurrency } from '@/shared/utils/format'
 import {
   AbonosRecientes,
   AjusteCierreFinancieroModal,
+  DescuadreFinancieroAlert,
   DescuentoModal,
   EditarActaModal,
+  ExcedenteDevolucionBanners,
   FuenteMiniCard,
   HistorialNegociacionModal,
+  MarcarEscrituraModal,
   NegociacionCerradaRenuncia,
   SinNegociacion,
 } from './negociacion/components'
@@ -111,8 +113,6 @@ export function NegociacionTab({
 
   // ── Estado para modal de escritura ──────────────────────────────────────
   const [modalEscriturarOpen, setModalEscriturarOpen] = useState(false)
-  const [fechaEscriturar, setFechaEscriturar] = useState('')
-  const [guardandoEscriturar, setGuardandoEscriturar] = useState(false)
 
   // ── Estado para edición inline de valor escritura ────────────────────────
   const [editandoEscritura, setEditandoEscritura] = useState(false)
@@ -184,33 +184,6 @@ export function NegociacionTab({
       setGuardandoEscritura(false)
     }
   }, [valorEscrituraEdit, negociacion, refetchNegociaciones])
-
-  const handleMarcarEscriturada = useCallback(async () => {
-    if (!negociacion?.vivienda?.id || !fechaEscriturar) return
-    setGuardandoEscriturar(true)
-    try {
-      const res = await fetch('/api/viviendas/escriturar', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          vivienda_id: negociacion.vivienda.id,
-          fecha_escritura: fechaEscriturar,
-        }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error ?? 'Error desconocido')
-      toast.success('Vivienda marcada como Escriturada')
-      setModalEscriturarOpen(false)
-      setFechaEscriturar('')
-      await refetchNegociaciones()
-    } catch (err) {
-      toast.error('Error al escriturar', {
-        description: err instanceof Error ? err.message : 'Error desconocido',
-      })
-    } finally {
-      setGuardandoEscriturar(false)
-    }
-  }, [negociacion, fechaEscriturar, refetchNegociaciones])
 
   if (isLoading)
     return (
@@ -319,10 +292,7 @@ export function NegociacionTab({
             negociacion.estado === 'Activa' &&
             vivienda?.estado === 'Asignada' ? (
               <button
-                onClick={() => {
-                  setFechaEscriturar(new Date().toISOString().slice(0, 10))
-                  setModalEscriturarOpen(true)
-                }}
+                onClick={() => setModalEscriturarOpen(true)}
                 className='inline-flex items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-2.5 py-1 text-[11px] font-semibold text-violet-700 transition-all hover:border-violet-300 hover:bg-violet-100 hover:shadow-sm dark:border-violet-800 dark:bg-violet-900/20 dark:text-violet-400 dark:hover:bg-violet-900/40'
               >
                 <Stamp className='h-3.5 w-3.5' />
@@ -619,101 +589,24 @@ export function NegociacionTab({
         <div className='space-y-3 p-3'>
           {/* ⚠️ ALERTA URGENTE: Descuadre financiero */}
           {fuentesPago.length > 0 && !estaBalanceado ? (
-            <div className='relative overflow-hidden rounded-lg border border-red-300 bg-gradient-to-r from-red-50 via-red-50 to-orange-50 dark:border-red-800/60 dark:from-red-950/40 dark:via-red-950/30 dark:to-orange-950/20'>
-              <div className='absolute left-0 top-0 h-full w-1 bg-red-500' />
-              <div className='flex items-center gap-3 px-4 py-2.5'>
-                <div className='relative flex-shrink-0'>
-                  <div className='flex h-8 w-8 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/40'>
-                    <AlertTriangle className='h-4 w-4 text-red-600 dark:text-red-400' />
-                  </div>
-                  <span className='absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-red-50 bg-red-500 dark:border-red-950'>
-                    <span className='absolute inset-0 animate-ping rounded-full bg-red-400 opacity-75' />
-                  </span>
-                </div>
-                <div className='min-w-0 flex-1'>
-                  <p className='text-xs font-bold text-red-800 dark:text-red-300'>
-                    Descuadre en Cierre Financiero — Atención Requerida
-                  </p>
-                  <p className='mt-0.5 text-[10px] text-red-700 dark:text-red-400'>
-                    {diferencia > 0
-                      ? `Faltan ${formatCurrency(diferencia)} para cubrir el valor total.`
-                      : `Sobran ${formatCurrency(Math.abs(diferencia))} en las fuentes de pago.`}{' '}
-                    Los registros de abonos permanecerán bloqueados hasta
-                    resolver el descuadre.
-                  </p>
-                </div>
-                {puedeAjustar ? (
-                  <button
-                    onClick={openAjuste}
-                    className='flex-shrink-0 rounded-lg bg-red-600 px-3 py-1.5 text-[11px] font-semibold text-white shadow-sm transition-colors hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600'
-                  >
-                    Corregir ahora
-                  </button>
-                ) : null}
-              </div>
-            </div>
+            <DescuadreFinancieroAlert
+              diferencia={diferencia}
+              puedeAjustar={puedeAjustar}
+              onCorregir={openAjuste}
+            />
           ) : null}
 
-          {/* ✅ Banner excedente — devolución pendiente */}
-          {estaBalanceado &&
-            diferencia < 0 &&
-            negociacion?.excedente_devolucion_estado !== 'procesada' && (
-              <div className='relative overflow-hidden rounded-lg border border-amber-300 bg-gradient-to-r from-amber-50 via-amber-50 to-orange-50 dark:border-amber-700/60 dark:from-amber-950/40 dark:via-amber-950/30 dark:to-orange-950/20'>
-                <div className='absolute left-0 top-0 h-full w-1 bg-amber-500' />
-                <div className='flex items-center gap-3 px-4 py-2.5'>
-                  <div className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/40'>
-                    <ArrowDownToLine className='h-4 w-4 text-amber-600 dark:text-amber-400' />
-                  </div>
-                  <div className='min-w-0 flex-1'>
-                    <p className='text-xs font-bold text-amber-800 dark:text-amber-300'>
-                      Devolución Pendiente —{' '}
-                      {formatCurrency(Math.abs(diferencia))}
-                    </p>
-                    <p className='mt-0.5 text-[10px] text-amber-700 dark:text-amber-400'>
-                      Las fuentes superan el valor de la negociación. Registra
-                      la devolución al cliente.
-                    </p>
-                  </div>
-                  {puedeAjustar ? (
-                    <button
-                      onClick={() => setModalDevolucionOpen(true)}
-                      className='flex-shrink-0 rounded-lg bg-amber-500 px-3 py-1.5 text-[11px] font-semibold text-white shadow transition-colors hover:bg-amber-600'
-                    >
-                      Registrar
-                    </button>
-                  ) : null}
-                </div>
-              </div>
-            )}
-
-          {/* ✅ Banner excedente — devolución ya procesada */}
-          {estaBalanceado &&
-            diferencia < 0 &&
-            negociacion?.excedente_devolucion_estado === 'procesada' && (
-              <div className='relative overflow-hidden rounded-lg border border-emerald-300 bg-gradient-to-r from-emerald-50 to-teal-50 dark:border-emerald-700/60 dark:from-emerald-950/40 dark:to-teal-950/20'>
-                <div className='absolute left-0 top-0 h-full w-1 bg-emerald-500' />
-                <div className='flex items-center gap-3 px-4 py-2.5'>
-                  <div className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40'>
-                    <CheckCircle2 className='h-4 w-4 text-emerald-600 dark:text-emerald-400' />
-                  </div>
-                  <div className='min-w-0 flex-1'>
-                    <p className='text-xs font-bold text-emerald-800 dark:text-emerald-300'>
-                      Devolución Registrada —{' '}
-                      {formatCurrency(
-                        negociacion.excedente_devolucion_monto ??
-                          Math.abs(diferencia)
-                      )}
-                    </p>
-                    <p className='mt-0.5 text-[10px] text-emerald-700 dark:text-emerald-400'>
-                      El excedente fue devuelto al cliente.
-                      {negociacion.excedente_devolucion_fecha
-                        ? ` Fecha: ${negociacion.excedente_devolucion_fecha}.`
-                        : ''}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
+          {/* ✅ Banners de excedente — pendiente o procesada */}
+          {estaBalanceado ? (
+            <ExcedenteDevolucionBanners
+              diferencia={diferencia}
+              estado={negociacion?.excedente_devolucion_estado}
+              monto={negociacion?.excedente_devolucion_monto}
+              fecha={negociacion?.excedente_devolucion_fecha}
+              puedeAjustar={puedeAjustar}
+              onRegistrar={() => setModalDevolucionOpen(true)}
+            />
+          ) : null}
 
           {fuentesPago.length === 0 ? (
             <p className='py-4 text-center text-xs text-gray-400 dark:text-gray-500'>
@@ -941,63 +834,20 @@ export function NegociacionTab({
       ) : null}
 
       {/* Modal: Marcar como Escriturada */}
-      {modalEscriturarOpen ? (
-        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm'>
-          <div className='w-full max-w-sm rounded-2xl border border-violet-200 bg-white p-6 shadow-2xl dark:border-violet-800/40 dark:bg-gray-900'>
-            <div className='mb-4 flex items-center gap-3'>
-              <div className='flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/30'>
-                <Stamp className='h-5 w-5 text-violet-600 dark:text-violet-400' />
-              </div>
-              <div>
-                <h3 className='text-sm font-bold text-gray-900 dark:text-white'>
-                  Marcar como Escriturada
-                </h3>
-                <p className='text-[11px] text-gray-500 dark:text-gray-400'>
-                  {vivienda
-                    ? `Manzana ${vivienda.manzanas?.nombre} Casa ${vivienda.numero}`
-                    : 'Vivienda asignada'}
-                </p>
-              </div>
-            </div>
-            <p className='mb-4 text-[12px] text-gray-600 dark:text-gray-300'>
-              Esta acción indica que se firmaron las escrituras públicas. La
-              vivienda pasará a estado{' '}
-              <span className='font-semibold text-violet-600 dark:text-violet-400'>
-                Escriturada
-              </span>{' '}
-              y ya no podrá trasladarse.
-            </p>
-            <label className='mb-1 block text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400'>
-              Fecha de escritura
-            </label>
-            <input
-              type='date'
-              value={fechaEscriturar}
-              onChange={e => setFechaEscriturar(e.target.value)}
-              max={new Date().toISOString().slice(0, 10)}
-              className='mb-4 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-400/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white'
-            />
-            <div className='flex gap-2'>
-              <button
-                onClick={() => {
-                  setModalEscriturarOpen(false)
-                  setFechaEscriturar('')
-                }}
-                disabled={guardandoEscriturar}
-                className='flex-1 rounded-lg border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800'
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => void handleMarcarEscriturada()}
-                disabled={!fechaEscriturar || guardandoEscriturar}
-                className='flex-1 rounded-lg bg-violet-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-violet-700 disabled:opacity-50'
-              >
-                {guardandoEscriturar ? 'Guardando...' : 'Confirmar'}
-              </button>
-            </div>
-          </div>
-        </div>
+      {modalEscriturarOpen && vivienda?.id ? (
+        <MarcarEscrituraModal
+          viviendaId={vivienda.id}
+          viviendaLabel={
+            vivienda.manzanas?.nombre
+              ? `Manzana ${vivienda.manzanas.nombre} Casa ${vivienda.numero}`
+              : 'Vivienda asignada'
+          }
+          onClose={() => setModalEscriturarOpen(false)}
+          onExitosa={async () => {
+            setModalEscriturarOpen(false)
+            await refetchNegociaciones()
+          }}
+        />
       ) : null}
 
       {/* Modal: Registrar Renuncia */}
