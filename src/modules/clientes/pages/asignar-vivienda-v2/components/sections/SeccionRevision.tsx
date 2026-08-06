@@ -465,11 +465,24 @@ export function SeccionRevision({
                 <div className='mt-2 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-800/40 dark:bg-amber-950/30'>
                   <AlertTriangle className='mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-amber-500' />
                   <p className='text-xs text-amber-700 dark:text-amber-300'>
-                    Las fuentes suman {formatCurrency(totalFuentes)} pero el
-                    total a financiar es {formatCurrency(valorTotal)}.
-                    {totalFuentes > valorTotal
-                      ? ` Sobra ${formatCurrency(totalFuentes - valorTotal)}.`
-                      : ` Faltan ${formatCurrency(valorTotal - totalFuentes)}.`}
+                    {totalFuentes > valorTotal ? (
+                      <>
+                        Las fuentes suman {formatCurrency(totalFuentes)},
+                        excediendo el total a financiar de{' '}
+                        {formatCurrency(valorTotal)}.{' '}
+                        <strong>
+                          Se deberá realizar una devolución de{' '}
+                          {formatCurrency(totalFuentes - valorTotal)} al
+                          cliente.
+                        </strong>
+                      </>
+                    ) : (
+                      <>
+                        Las fuentes suman {formatCurrency(totalFuentes)} pero el
+                        total a financiar es {formatCurrency(valorTotal)}.{' '}
+                        Faltan {formatCurrency(valorTotal - totalFuentes)}.
+                      </>
+                    )}
                   </p>
                 </div>
               )}
