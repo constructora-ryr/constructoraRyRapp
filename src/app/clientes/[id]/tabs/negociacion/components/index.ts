@@ -1,5 +1,6 @@
 export { AbonosRecientes } from './AbonosRecientes'
 export { DescuadreFinancieroAlert } from './DescuadreFinancieroAlert'
+export { EstadoDeCuenta } from './EstadoDeCuenta'
 export { DescuentoModal } from './DescuentoModal'
 export { EditarActaModal } from './EditarActaModal'
 export { ExcedenteDevolucionBanners } from './ExcedenteDevolucionBanners'

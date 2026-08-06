@@ -57,6 +57,7 @@ import {
   DescuadreFinancieroAlert,
   DescuentoModal,
   EditarActaModal,
+  EstadoDeCuenta,
   ExcedenteDevolucionBanners,
   FuenteMiniCard,
   HistorialNegociacionModal,
@@ -480,6 +481,19 @@ export function NegociacionTab({
             </div>
           </div>
         </div>
+
+        {/* ─── Estado de cuenta desplegable ─── */}
+        <EstadoDeCuenta
+          valorNegociado={negociacion.valor_negociado}
+          descuento={descuento}
+          motivoDescuento={negociacion.motivo_descuento}
+          valorTotalPagar={valorVivienda}
+          fuentes={fuentesPago}
+          diferencia={diferencia}
+          estadoDevolucion={negociacion.excedente_devolucion_estado}
+          montoDevolucion={negociacion.excedente_devolucion_monto}
+          fechaDevolucion={negociacion.excedente_devolucion_fecha}
+        />
       </motion.div>
 
       {/* ─── BANNER: Detalle del descuento aplicado ─── */}
