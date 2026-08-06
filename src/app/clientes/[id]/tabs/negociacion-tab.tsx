@@ -484,7 +484,11 @@ export function NegociacionTab({
 
         {/* ─── Estado de cuenta desplegable ─── */}
         <EstadoDeCuenta
-          valorNegociado={negociacion.valor_negociado}
+          valorBase={vivienda?.valor_base ?? negociacion.valor_negociado}
+          gastosNotariales={vivienda?.gastos_notariales ?? 0}
+          recargoEsquinera={
+            vivienda?.es_esquinera ? (vivienda?.recargo_esquinera ?? 0) : 0
+          }
           descuento={descuento}
           motivoDescuento={negociacion.motivo_descuento}
           valorTotalPagar={valorVivienda}

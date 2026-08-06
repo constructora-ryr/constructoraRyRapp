@@ -13,7 +13,9 @@ interface FuenteItem {
 }
 
 interface EstadoDeCuentaProps {
-  valorNegociado: number
+  valorBase: number
+  gastosNotariales: number
+  recargoEsquinera: number
   descuento: number
   motivoDescuento?: string | null
   valorTotalPagar: number
@@ -25,7 +27,9 @@ interface EstadoDeCuentaProps {
 }
 
 export function EstadoDeCuenta({
-  valorNegociado,
+  valorBase,
+  gastosNotariales,
+  recargoEsquinera,
   descuento,
   motivoDescuento,
   valorTotalPagar,
@@ -37,6 +41,8 @@ export function EstadoDeCuenta({
 }: EstadoDeCuentaProps) {
   const [open, setOpen] = useState(false)
 
+  const tieneExtras = gastosNotariales > 0 || recargoEsquinera > 0
+  const valorComercial = valorBase + gastosNotariales + recargoEsquinera
   const totalFuentes = fuentes.reduce((acc, f) => acc + f.monto_aprobado, 0)
   const excedente = diferencia < 0 ? Math.abs(diferencia) : 0
   const saldoPendiente = diferencia > 1 ? diferencia : 0
@@ -56,17 +62,48 @@ export function EstadoDeCuenta({
 
       {open && (
         <div className='px-5 pb-4 pt-1 text-xs'>
-          {/* Valor del inmueble */}
-          <LineItem
-            label='Valor comercial del inmueble'
-            value={formatCurrency(valorNegociado)}
-          />
+          {/* Desglose del valor comercial */}
+          {tieneExtras ? (
+            <>
+              <LineItem
+                label='Valor base del inmueble'
+                value={formatCurrency(valorBase)}
+              />
+              {gastosNotariales > 0 && (
+                <LineItem
+                  label='+ Gastos notariales'
+                  value={formatCurrency(gastosNotariales)}
+                  valueClass='text-gray-500 dark:text-gray-400'
+                  indent
+                />
+              )}
+              {recargoEsquinera > 0 && (
+                <LineItem
+                  label='+ Recargo esquinera'
+                  value={formatCurrency(recargoEsquinera)}
+                  valueClass='text-gray-500 dark:text-gray-400'
+                  indent
+                />
+              )}
+              <Rule />
+              <LineItem
+                label='Valor comercial del inmueble'
+                value={formatCurrency(valorComercial)}
+                bold
+              />
+            </>
+          ) : (
+            <LineItem
+              label='Valor comercial del inmueble'
+              value={formatCurrency(valorBase)}
+            />
+          )}
 
           {/* Descuento */}
           {descuento > 0 && (
             <LineItem
               label={`− Descuento${motivoDescuento ? ` · ${motivoDescuento}` : ''}`}
-              value={`− ${formatCurrency(descuento)}`}
+              value={`− ${formatCurrency(descuento)}`}
               valueClass='text-violet-600 dark:text-violet-400'
             />
           )}
@@ -111,7 +148,7 @@ export function EstadoDeCuenta({
             (estadoDevolucion === 'procesada' ? (
               <LineItem
                 label={`Excedente devuelto al cliente${fechaDevolucion ? ` · ${fechaDevolucion}` : ''}`}
-                value={`− ${formatCurrency(montoDevolucion ?? excedente)}`}
+                value={`− ${formatCurrency(montoDevolucion ?? excedente)}`}
                 valueClass='text-emerald-600 dark:text-emerald-400'
               />
             ) : (
@@ -128,7 +165,7 @@ export function EstadoDeCuenta({
           <LineItem
             label='Saldo pendiente'
             value={
-              saldoPendiente > 0 ? formatCurrency(saldoPendiente) : '$ 0 ✓'
+              saldoPendiente > 0 ? formatCurrency(saldoPendiente) : '$ 0 ✓'
             }
             bold
             valueClass={
