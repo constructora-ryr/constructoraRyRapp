@@ -1,7 +1,8 @@
 'use client'
 
-import { ArrowDownToLine, CheckCircle2 } from 'lucide-react'
+import { ArrowDownToLine, CheckCircle2, ExternalLink } from 'lucide-react'
 
+import { formatDateForDisplay } from '@/lib/utils/date.utils'
 import { formatCurrency } from '@/shared/utils/format'
 
 interface ExcedenteDevolucionBannersProps {
@@ -9,6 +10,7 @@ interface ExcedenteDevolucionBannersProps {
   estado: 'pendiente' | 'procesada' | null | undefined
   monto: number | null | undefined
   fecha: string | null | undefined
+  comprobanteUrl: string | null | undefined
   puedeAjustar: boolean
   onRegistrar: () => void
 }
@@ -18,12 +20,14 @@ export function ExcedenteDevolucionBanners({
   estado,
   monto,
   fecha,
+  comprobanteUrl,
   puedeAjustar,
   onRegistrar,
 }: ExcedenteDevolucionBannersProps) {
   if (diferencia >= 0) return null
 
   const montoExcedente = Math.abs(diferencia)
+  const fechaFormateada = fecha ? formatDateForDisplay(fecha) : null
 
   if (estado === 'procesada') {
     return (
@@ -39,9 +43,20 @@ export function ExcedenteDevolucionBanners({
             </p>
             <p className='mt-0.5 text-[10px] text-emerald-700 dark:text-emerald-400'>
               El excedente fue devuelto al cliente.
-              {fecha ? ` Fecha: ${fecha}.` : ''}
+              {fechaFormateada ? ` Fecha: ${fechaFormateada}.` : ''}
             </p>
           </div>
+          {comprobanteUrl && (
+            <a
+              href={`/api/negociaciones/comprobante-devolucion?path=${encodeURIComponent(comprobanteUrl)}`}
+              target='_blank'
+              rel='noopener noreferrer'
+              className='flex flex-shrink-0 items-center gap-1.5 rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-emerald-700 shadow-sm transition-colors hover:bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/50'
+            >
+              <ExternalLink className='h-3 w-3' />
+              Ver comprobante
+            </a>
+          )}
         </div>
       </div>
     )

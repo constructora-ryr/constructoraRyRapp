@@ -4,6 +4,7 @@ import { useState } from 'react'
 
 import { ChevronDown } from 'lucide-react'
 
+import { formatDateForDisplay } from '@/lib/utils/date.utils'
 import { formatCurrency } from '@/shared/utils/format'
 
 interface FuenteItem {
@@ -143,7 +144,7 @@ export function EstadoDeCuenta({
           {excedente > 0 &&
             (estadoDevolucion === 'procesada' ? (
               <LineItem
-                label={`Excedente devuelto al cliente${fechaDevolucion ? ` · ${fechaDevolucion}` : ''}`}
+                label={`Excedente devuelto al cliente${fechaDevolucion ? ` · ${formatDateForDisplay(fechaDevolucion)}` : ''}`}
                 value={`− ${formatCurrency(montoDevolucion ?? excedente)}`}
                 valueClass='text-emerald-600 dark:text-emerald-400'
               />

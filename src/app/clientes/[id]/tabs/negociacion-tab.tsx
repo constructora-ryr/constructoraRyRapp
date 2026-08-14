@@ -621,6 +621,7 @@ export function NegociacionTab({
               estado={negociacion?.excedente_devolucion_estado}
               monto={negociacion?.excedente_devolucion_monto}
               fecha={negociacion?.excedente_devolucion_fecha}
+              comprobanteUrl={negociacion?.excedente_devolucion_comprobante_url}
               puedeAjustar={puedeAjustar}
               onRegistrar={() => setModalDevolucionOpen(true)}
             />
