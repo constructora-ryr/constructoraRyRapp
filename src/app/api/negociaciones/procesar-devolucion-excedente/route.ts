@@ -127,6 +127,8 @@ export async function POST(request: NextRequest) {
 
     // Actualizar negociación — cast necesario porque los campos nuevos aún no
     // están en database.types.ts (se generan tras aplicar la migración)
+    // saldo_pendiente se pone a 0 porque el excedente fue devuelto al cliente:
+    // el financiero queda cerrado y no hay saldo pendiente por ninguna parte.
     const updatePayload = {
       excedente_devolucion_estado: 'procesada',
       excedente_devolucion_monto: monto,
@@ -137,6 +139,7 @@ export async function POST(request: NextRequest) {
       excedente_devolucion_notas: notas,
       excedente_devolucion_procesado_por: user.email ?? user.id,
       excedente_devolucion_procesado_en: new Date().toISOString(),
+      saldo_pendiente: 0,
     }
 
     const { error: updateError } = await supabaseAdmin
