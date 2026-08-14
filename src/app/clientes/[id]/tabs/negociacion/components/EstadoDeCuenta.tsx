@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, ScrollText } from 'lucide-react'
 
 import { formatDateForDisplay } from '@/lib/utils/date.utils'
 import { formatCurrency } from '@/shared/utils/format'
@@ -53,11 +53,19 @@ export function EstadoDeCuenta({
       <button
         type='button'
         onClick={() => setOpen(p => !p)}
-        className='flex w-full items-center justify-between px-4 py-1.5 text-[11px] text-gray-400 transition-colors hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300'
+        className='group flex w-full items-center gap-2.5 px-4 py-2.5 transition-colors hover:bg-gray-50/80 dark:hover:bg-gray-800/40'
       >
-        <span>Estado de cuenta</span>
+        <div className='flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md bg-emerald-100 dark:bg-emerald-900/50'>
+          <ScrollText className='h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400' />
+        </div>
+        <span className='flex-1 text-left text-xs font-semibold text-gray-700 dark:text-gray-300'>
+          Estado de cuenta
+        </span>
+        <span className='text-[10px] font-medium text-gray-400 transition-colors group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-400'>
+          {open ? 'Ocultar' : 'Ver desglose'}
+        </span>
         <ChevronDown
-          className={`h-3.5 w-3.5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          className={`h-3.5 w-3.5 flex-shrink-0 text-gray-400 transition-transform duration-200 dark:text-gray-500 ${open ? 'rotate-180' : ''}`}
         />
       </button>
 
