@@ -71,11 +71,13 @@ export function ExcedenteDevolucionBanners({
         </div>
         <div className='min-w-0 flex-1'>
           <p className='text-xs font-bold text-amber-800 dark:text-amber-300'>
-            Devolución Pendiente — {formatCurrency(montoExcedente)}
+            Devolución pendiente al cliente — {formatCurrency(montoExcedente)}
           </p>
-          <p className='mt-0.5 text-[10px] text-amber-700 dark:text-amber-400'>
-            Las fuentes superan el valor de la negociación. Registra la
-            devolución al cliente.
+          <p className='mt-0.5 text-[10px] leading-relaxed text-amber-700 dark:text-amber-400'>
+            Las fuentes de pago registradas suman{' '}
+            {formatCurrency(montoExcedente)} más que el valor total de la
+            negociación. Una vez se completen los desembolsos, ese excedente
+            deberá ser devuelto al cliente.
           </p>
         </div>
         {puedeAjustar ? (
