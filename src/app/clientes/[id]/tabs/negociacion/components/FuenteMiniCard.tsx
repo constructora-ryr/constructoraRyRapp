@@ -12,6 +12,7 @@ import {
 import type { FuentePago } from '@/modules/clientes/services/fuentes-pago.service'
 import {
   esCreditoConstructora,
+  esCreditoHipotecario,
   esSubsidioCajaCompensacion,
   esSubsidioMiCasaYa,
 } from '@/shared/constants/fuentes-pago.constants'
@@ -71,6 +72,7 @@ export function FuenteMiniCard({
 }: FuenteMiniCardProps) {
   const color = getFuenteColor(colorToken)
   const esCredito = esCreditoConstructora(fuente.tipo)
+  const esHipotecario = esCreditoHipotecario(fuente.tipo)
   const esSubsidioConActa =
     esSubsidioCajaCompensacion(fuente.tipo) || esSubsidioMiCasaYa(fuente.tipo)
 
@@ -153,6 +155,10 @@ export function FuenteMiniCard({
               {fuente.fecha_acta
                 ? ` del ${formatFechaActa(fuente.fecha_acta)}`
                 : ''}
+            </span>
+          ) : esHipotecario && fuente.numero_referencia ? (
+            <span className='truncate text-gray-500 dark:text-gray-400'>
+              Ref. {fuente.numero_referencia}
             </span>
           ) : null}
         </p>
