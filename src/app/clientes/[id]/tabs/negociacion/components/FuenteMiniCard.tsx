@@ -59,6 +59,7 @@ interface FuenteMiniCardProps {
   cuotasExpandidas?: boolean
   onToggleCuotas?: () => void
   onEditarActa?: () => void
+  onEditarReferencia?: () => void
 }
 
 export function FuenteMiniCard({
@@ -69,6 +70,7 @@ export function FuenteMiniCard({
   cuotasExpandidas,
   onToggleCuotas,
   onEditarActa,
+  onEditarReferencia,
 }: FuenteMiniCardProps) {
   const color = getFuenteColor(colorToken)
   const esCredito = esCreditoConstructora(fuente.tipo)
@@ -203,7 +205,7 @@ export function FuenteMiniCard({
           ) : null}
         </div>
 
-        {/* ── Zona 7: Botón cuotas (crédito) | Editar acta (subsidio) | spacer ── */}
+        {/* ── Zona 7: Botón cuotas (crédito) | Editar acta (subsidio) | Editar ref (hipotecario) | spacer ── */}
         {esCredito && onToggleCuotas ? (
           <button
             type='button'
@@ -224,6 +226,15 @@ export function FuenteMiniCard({
           >
             <Pencil className='h-3 w-3' />
             Editar N° Acta
+          </button>
+        ) : esHipotecario && onEditarReferencia ? (
+          <button
+            type='button'
+            onClick={onEditarReferencia}
+            className='mt-2 flex w-full items-center gap-1 border-t border-gray-100 pt-2 text-[10px] font-semibold text-cyan-600 transition-colors hover:text-cyan-700 dark:border-gray-700/50 dark:text-cyan-400 dark:hover:text-cyan-300'
+          >
+            <Pencil className='h-3 w-3' />
+            Editar Referencia
           </button>
         ) : (
           <div aria-hidden className='mt-2 h-[37px]' />

@@ -57,6 +57,7 @@ import {
   DescuadreFinancieroAlert,
   DescuentoModal,
   EditarActaModal,
+  EditarReferenciaModal,
   EstadoDeCuenta,
   ExcedenteDevolucionBanners,
   FuenteMiniCard,
@@ -101,6 +102,13 @@ export function NegociacionTab({
     tipo: string
     numeroReferencia: string | null
     fechaActa: string | null
+  } | null>(null)
+
+  // ── Estado para edición de referencia hipotecario (solo admin) ───────────
+  const [fuenteEditandoReferencia, setFuenteEditandoReferencia] = useState<{
+    id: string
+    tipo: string
+    numeroReferencia: string | null
   } | null>(null)
 
   // ── Estado para historial de negociación ─────────────────────────────────
@@ -707,6 +715,16 @@ export function NegociacionTab({
                             })
                         : undefined
                     }
+                    onEditarReferencia={
+                      esAdminPermisos
+                        ? () =>
+                            setFuenteEditandoReferencia({
+                              id: fuente.id,
+                              tipo: fuente.tipo,
+                              numeroReferencia: fuente.numero_referencia,
+                            })
+                        : undefined
+                    }
                   />
                 ))}
               </div>
@@ -835,6 +853,17 @@ export function NegociacionTab({
           tipoDescuentoActual={negociacion.tipo_descuento}
           motivoDescuentoActual={negociacion.motivo_descuento}
           esAdmin={esAdminPermisos}
+        />
+      ) : null}
+
+      {/* Modal Admin: Editar referencia hipotecario */}
+      {esAdminPermisos && fuenteEditandoReferencia ? (
+        <EditarReferenciaModal
+          fuenteId={fuenteEditandoReferencia.id}
+          tipoFuente={fuenteEditandoReferencia.tipo}
+          numeroReferenciaInicial={fuenteEditandoReferencia.numeroReferencia}
+          onClose={() => setFuenteEditandoReferencia(null)}
+          onGuardado={() => refetchFuentes()}
         />
       ) : null}
 
