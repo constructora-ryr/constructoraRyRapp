@@ -148,9 +148,9 @@ export function EstadoDeCuenta({
 
           <Rule />
 
-          {/* Total comprometido en fuentes (el plan) */}
+          {/* Suma total del plan de fuentes */}
           <LineItem
-            label='Total comprometido'
+            label='Suma total de fuentes de pago'
             value={formatCurrency(totalComprometido)}
             bold
           />
