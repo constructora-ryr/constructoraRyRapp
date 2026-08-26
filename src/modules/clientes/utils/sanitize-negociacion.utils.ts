@@ -47,6 +47,7 @@ export interface ActualizarNegociacionDTO {
   motivo_descuento?: string | null
   valor_escritura_publica?: number
   fecha_completada?: string
+  fecha_negociacion?: string
   notas?: string
 }
 
@@ -170,6 +171,10 @@ export function sanitizeActualizarNegociacionDTO(
   if (datos.fecha_completada !== undefined) {
     sanitized.fecha_completada =
       sanitizeDate(datos.fecha_completada) ?? undefined
+  }
+  if (datos.fecha_negociacion !== undefined) {
+    sanitized.fecha_negociacion =
+      sanitizeDate(datos.fecha_negociacion) ?? undefined
   }
   if (datos.notas !== undefined) {
     sanitized.notas = sanitizeString(datos.notas) ?? undefined

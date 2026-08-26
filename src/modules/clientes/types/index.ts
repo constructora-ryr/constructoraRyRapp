@@ -583,6 +583,7 @@ export interface ActualizarNegociacionDTO {
   evidencia_envio_correo_url?: string
   escritura_url?: string
   notas?: string
+  fecha_negociacion?: string
 }
 
 export interface CompletarProcesoDTO {

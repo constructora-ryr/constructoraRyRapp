@@ -16,6 +16,7 @@ import {
   AlertTriangle,
   ArrowRightLeft,
   ArrowUpRight,
+  CalendarDays,
   CheckCircle2,
   CreditCard,
   DollarSign,
@@ -39,6 +40,7 @@ import { toast } from 'sonner'
 
 import { useRouter } from 'next/navigation'
 
+import { formatDateForDisplay } from '@/lib/utils/date.utils'
 import { ProcesarDevolucionExcedenteModal } from '@/modules/abonos/components/devolucion-excedente/ProcesarDevolucionExcedenteModal'
 import { ModalEditarAbono } from '@/modules/abonos/components/modal-editar-abono'
 import type { AbonoParaEditar } from '@/modules/abonos/types/editar-abono.types'
@@ -128,6 +130,11 @@ export function NegociacionTab({
   const [valorEscrituraEdit, setValorEscrituraEdit] = useState('')
   const [guardandoEscritura, setGuardandoEscritura] = useState(false)
 
+  // ── Estado para edición inline de fecha de negociación (solo admin) ──────
+  const [editandoFechaNeg, setEditandoFechaNeg] = useState(false)
+  const [fechaNegEdit, setFechaNegEdit] = useState('')
+  const [guardandoFechaNeg, setGuardandoFechaNeg] = useState(false)
+
   const {
     negociacion,
     valorVivienda,
@@ -193,6 +200,30 @@ export function NegociacionTab({
       setGuardandoEscritura(false)
     }
   }, [valorEscrituraEdit, negociacion, refetchNegociaciones])
+
+  // ── Guardar fecha de negociación (debe estar antes de early returns) ──────
+  const handleGuardarFechaNeg = useCallback(async () => {
+    if (!negociacion) return
+    if (!fechaNegEdit) {
+      toast.error('Selecciona una fecha válida')
+      return
+    }
+    setGuardandoFechaNeg(true)
+    try {
+      await negociacionesService.actualizarNegociacion(negociacion.id, {
+        fecha_negociacion: fechaNegEdit,
+      })
+      toast.success('Fecha de negociación actualizada')
+      setEditandoFechaNeg(false)
+      await refetchNegociaciones()
+    } catch (err) {
+      toast.error('Error al actualizar', {
+        description: err instanceof Error ? err.message : 'Error desconocido',
+      })
+    } finally {
+      setGuardandoFechaNeg(false)
+    }
+  }, [fechaNegEdit, negociacion, refetchNegociaciones])
 
   if (isLoading)
     return (
@@ -281,6 +312,63 @@ export function NegociacionTab({
                 {manzana && numero ? ' · ' : ''}
                 {numero ? `Casa ${numero}` : ''}
               </p>
+            ) : null}
+            {/* Fecha de negociación — editable por admin */}
+            {editandoFechaNeg ? (
+              <div className='mt-1.5 flex items-center gap-1.5'>
+                <input
+                  aria-label='Fecha de inicio de la negociación'
+                  autoFocus
+                  type='date'
+                  className='rounded-md border-2 border-cyan-400 bg-white px-2 py-0.5 text-[11px] font-medium text-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 dark:border-cyan-600 dark:bg-gray-900 dark:text-cyan-300'
+                  disabled={guardandoFechaNeg}
+                  onChange={e => setFechaNegEdit(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') void handleGuardarFechaNeg()
+                    if (e.key === 'Escape') setEditandoFechaNeg(false)
+                  }}
+                  value={fechaNegEdit}
+                />
+                <button
+                  className='rounded bg-cyan-600 px-2 py-0.5 text-[10px] font-semibold text-white hover:bg-cyan-700 disabled:opacity-50'
+                  disabled={guardandoFechaNeg}
+                  onClick={() => void handleGuardarFechaNeg()}
+                  type='button'
+                >
+                  {guardandoFechaNeg ? '...' : 'Guardar'}
+                </button>
+                <button
+                  className='rounded p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
+                  disabled={guardandoFechaNeg}
+                  onClick={() => setEditandoFechaNeg(false)}
+                  type='button'
+                >
+                  <X className='h-3 w-3' />
+                </button>
+              </div>
+            ) : negociacion.fecha_negociacion ? (
+              <div className='mt-1 flex items-center gap-1'>
+                <span className='inline-flex items-center gap-1 rounded-md border border-cyan-100 bg-cyan-50 px-1.5 py-0.5 text-[10px] font-medium text-cyan-600 dark:border-cyan-800/40 dark:bg-cyan-950/30 dark:text-cyan-400'>
+                  <CalendarDays className='h-2.5 w-2.5' />
+                  Inicio: {formatDateForDisplay(negociacion.fecha_negociacion)}
+                </span>
+                {esAdminPermisos ? (
+                  <button
+                    aria-label='Editar fecha de inicio de la negociación'
+                    className='rounded p-0.5 text-gray-300 hover:text-cyan-500 dark:text-gray-600 dark:hover:text-cyan-400'
+                    onClick={() => {
+                      setFechaNegEdit(
+                        negociacion.fecha_negociacion?.substring(0, 10) ?? ''
+                      )
+                      setEditandoFechaNeg(true)
+                    }}
+                    title='Editar fecha de inicio'
+                    type='button'
+                  >
+                    <Pencil className='h-3 w-3' />
+                  </button>
+                ) : null}
+              </div>
             ) : null}
           </div>
           <div className='flex flex-shrink-0 items-center gap-2'>
