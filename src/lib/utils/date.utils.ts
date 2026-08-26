@@ -53,12 +53,12 @@ export function formatDateForDisplay(
 ): string {
   if (!dateString) return ''
 
-  // Si la fecha está en formato YYYY-MM-DD (sin hora), agregar hora del mediodía
-  // para evitar problemas de timezone al parsear
-  let dateToFormat = dateString
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-    dateToFormat = `${dateString}T12:00:00`
-  }
+  // Extraer siempre la parte YYYY-MM-DD y agregarle mediodía local.
+  // Esto evita el desfase de un día cuando Supabase retorna fechas como
+  // "2024-11-12T00:00:00+00:00" (medianoche UTC = día anterior en Bogotá UTC-5).
+  const match = dateString.match(/^(\d{4}-\d{2}-\d{2})/)
+  if (!match) return ''
+  const dateToFormat = `${match[1]}T12:00:00`
 
   const defaultOptions: Intl.DateTimeFormatOptions = {
     day: '2-digit',

@@ -40,7 +40,7 @@ import { toast } from 'sonner'
 
 import { useRouter } from 'next/navigation'
 
-import { formatDateForDisplay } from '@/lib/utils/date.utils'
+import { formatDateForDB, formatDateForDisplay } from '@/lib/utils/date.utils'
 import { ProcesarDevolucionExcedenteModal } from '@/modules/abonos/components/devolucion-excedente/ProcesarDevolucionExcedenteModal'
 import { ModalEditarAbono } from '@/modules/abonos/components/modal-editar-abono'
 import type { AbonoParaEditar } from '@/modules/abonos/types/editar-abono.types'
@@ -211,7 +211,7 @@ export function NegociacionTab({
     setGuardandoFechaNeg(true)
     try {
       await negociacionesService.actualizarNegociacion(negociacion.id, {
-        fecha_negociacion: fechaNegEdit,
+        fecha_negociacion: formatDateForDB(fechaNegEdit),
       })
       toast.success('Fecha de negociación actualizada')
       setEditandoFechaNeg(false)
