@@ -501,6 +501,7 @@ export function NegociacionTab({
           motivoDescuento={negociacion.motivo_descuento}
           valorTotalPagar={valorVivienda}
           fuentes={fuentesPago}
+          totalAbonado={totalAbonadoDisplay}
           diferencia={diferencia}
           estadoDevolucion={negociacion.excedente_devolucion_estado}
           montoDevolucion={negociacion.excedente_devolucion_monto}

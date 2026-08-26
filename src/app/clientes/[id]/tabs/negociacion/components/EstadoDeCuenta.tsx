@@ -21,6 +21,7 @@ interface EstadoDeCuentaProps {
   motivoDescuento?: string | null
   valorTotalPagar: number
   fuentes: FuenteItem[]
+  totalAbonado: number
   diferencia: number
   estadoDevolucion?: 'pendiente' | 'procesada' | null
   montoDevolucion?: number | null
@@ -35,6 +36,7 @@ export function EstadoDeCuenta({
   motivoDescuento,
   valorTotalPagar,
   fuentes,
+  totalAbonado,
   diferencia,
   estadoDevolucion,
   montoDevolucion,
@@ -44,9 +46,14 @@ export function EstadoDeCuenta({
 
   const tieneExtras = gastosNotariales > 0 || recargoEsquinera > 0
   const valorComercial = valorBase + gastosNotariales + recargoEsquinera
-  const totalFuentes = fuentes.reduce((acc, f) => acc + f.monto_aprobado, 0)
+  const totalComprometido = fuentes.reduce(
+    (acc, f) => acc + f.monto_aprobado,
+    0
+  )
+  // Excedente de PLAN (fuentes > precio) — determina el flujo de devolución
   const excedente = diferencia < 0 ? Math.abs(diferencia) : 0
-  const saldoPendiente = diferencia > 1 ? diferencia : 0
+  // Saldo real = lo que falta pagar según abonos registrados
+  const saldoReal = Math.max(0, valorTotalPagar - totalAbonado)
 
   return (
     <div className='border-t border-gray-100 dark:border-gray-700/40'>
@@ -141,14 +148,26 @@ export function EstadoDeCuenta({
 
           <Rule />
 
-          {/* Total recibido */}
+          {/* Total comprometido en fuentes (el plan) */}
           <LineItem
-            label='Total recibido'
-            value={formatCurrency(totalFuentes)}
+            label='Total comprometido'
+            value={formatCurrency(totalComprometido)}
             bold
           />
 
-          {/* Excedente */}
+          {/* Total abonado — pagos reales recibidos */}
+          <LineItem
+            label='Total abonado'
+            value={formatCurrency(totalAbonado)}
+            bold
+            valueClass={
+              totalAbonado >= valorTotalPagar
+                ? 'text-emerald-600 dark:text-emerald-400'
+                : 'text-gray-900 dark:text-white'
+            }
+          />
+
+          {/* Excedente de plan (fuentes > precio) */}
           {excedente > 0 &&
             (estadoDevolucion === 'procesada' ? (
               <LineItem
@@ -166,15 +185,13 @@ export function EstadoDeCuenta({
 
           <Rule />
 
-          {/* Saldo final */}
+          {/* Saldo real = valorTotalPagar - totalAbonado */}
           <LineItem
             label='Saldo pendiente'
-            value={
-              saldoPendiente > 0 ? formatCurrency(saldoPendiente) : '$ 0 ✓'
-            }
+            value={saldoReal > 0 ? formatCurrency(saldoReal) : '$ 0 ✓'}
             bold
             valueClass={
-              saldoPendiente === 0
+              saldoReal === 0
                 ? 'text-emerald-600 dark:text-emerald-400'
                 : 'text-gray-900 dark:text-white'
             }
