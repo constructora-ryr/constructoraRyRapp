@@ -3,6 +3,8 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { Crown, LogOut, Settings } from 'lucide-react'
 
+import Link from 'next/link'
+
 import { ThemeToggle } from '@/components/theme-toggle'
 import { Button } from '@/shared/components/ui/button'
 
@@ -127,11 +129,13 @@ export function SidebarFooter({
         <Button
           variant='ghost'
           size='sm'
-          disabled
-          title='Configuración (próximamente)'
-          className='h-7 w-7 rounded-lg p-0 hover:bg-gray-100/80 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-800/80'
+          asChild
+          title='Mi perfil'
+          className='h-7 w-7 rounded-lg p-0 hover:bg-gray-100/80 dark:hover:bg-gray-800/80'
         >
-          <Settings className='h-3.5 w-3.5' />
+          <Link href='/perfil'>
+            <Settings className='h-3.5 w-3.5' />
+          </Link>
         </Button>
 
         {!isExpanded && (
