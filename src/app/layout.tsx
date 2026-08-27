@@ -1,3 +1,4 @@
+import { dehydrate } from '@tanstack/react-query'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import type { Metadata, Viewport } from 'next'
@@ -14,7 +15,12 @@ import { SessionInterceptor } from '@/components/SessionInterceptor'
 import { ThemeProvider } from '@/components/theme-provider'
 import { AuthProvider } from '@/contexts/auth-context'
 import { UnsavedChangesProvider } from '@/contexts/unsaved-changes-context'
+import { getServerUserProfile } from '@/lib/auth/server'
+import { getQueryClient } from '@/lib/get-query-client'
 import { ReactQueryProvider } from '@/lib/react-query'
+import { permisosKeys } from '@/modules/usuarios/hooks/usePermisosQuery'
+import { obtenerPermisosPorRolServer } from '@/modules/usuarios/services/permisos.service.server'
+import type { Rol } from '@/modules/usuarios/types'
 import {
   AlertModal,
   ConfirmModal,
@@ -63,11 +69,27 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  // Prefetch de permisos en el servidor para hidratar el caché del cliente.
+  // Así el sidebar y los botones tienen permisos disponibles desde el primer
+  // render sin una segunda round-trip al browser.
+  const queryClient = getQueryClient()
+  try {
+    const perfil = await getServerUserProfile()
+    if (perfil && perfil.rol !== 'Administrador') {
+      await queryClient.prefetchQuery({
+        queryKey: permisosKeys.byRol(perfil.rol as Rol),
+        queryFn: () => obtenerPermisosPorRolServer(perfil.rol),
+      })
+    }
+  } catch {
+    // Si falla el prefetch no bloqueamos el render; el cliente carga solo
+  }
+
   return (
     <html lang='es' suppressHydrationWarning>
       <body
@@ -75,7 +97,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <SessionInterceptor>
-          <ReactQueryProvider>
+          <ReactQueryProvider dehydratedState={dehydrate(queryClient)}>
             <AuthProvider>
               {/* Sistema profesional de inactividad */}
               <IdleTimerProvider />

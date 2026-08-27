@@ -15,11 +15,12 @@
 
 'use client'
 
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { useAuth } from '@/contexts/auth-context'
+import { createClient } from '@/lib/supabase/client'
 import { logger } from '@/lib/utils/logger'
 
 import {
@@ -58,9 +59,13 @@ export function usePermisosQuery() {
       }
       return obtenerPermisosPorRol(rol)
     },
-    enabled: !!rol, // Solo ejecutar si hay rol
-    staleTime: 5 * 60 * 1000, // 5 minutos
-    gcTime: 10 * 60 * 1000, // 10 minutos (antes cacheTime)
+    enabled: !!rol,
+    // Los permisos son datos de seguridad — siempre frescos.
+    // Se sirven desde caché mientras el usuario navega en la misma pestaña,
+    // pero se revalidan al volver al foco (cambio de tab/ventana).
+    staleTime: 0,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: true,
   })
 
   /**
@@ -139,6 +144,33 @@ export function usePermisosQuery() {
   }, [rol, permisos])
 
   /**
+   * Realtime: escuchar cambios de permisos del rol actual.
+   * Cuando el admin actualiza permisos, se emite un broadcast al canal
+   * 'permissions-changed'. Si el payload.rol coincide con el rol actual,
+   * se invalida el caché para que React Query refetch silenciosamente.
+   */
+  const queryClient = useQueryClient()
+  useEffect(() => {
+    if (!rol || rol === 'Administrador') return
+
+    const supabase = createClient()
+    const channel = supabase
+      .channel('permissions-changed')
+      .on('broadcast', { event: 'permissions_updated' }, ({ payload }) => {
+        if (payload?.rol === rol) {
+          queryClient.invalidateQueries({
+            queryKey: permisosKeys.byRol(rol as Rol),
+          })
+        }
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [rol, queryClient])
+
+  /**
    * Helpers de rol
    */
   const esAdmin = useMemo(() => rol === 'Administrador', [rol])
@@ -205,8 +237,34 @@ export function useTodosLosPermisosQuery() {
 }
 
 /**
+ * Emite un broadcast de Realtime para que todas las sesiones activas del rol
+ * afectado refresquen su caché de permisos silenciosamente, sin forzar logout.
+ * El middleware siempre consulta BD en cada request, por lo que los cambios
+ * son efectivos de inmediato en el servidor — el broadcast actualiza solo la UI.
+ */
+async function broadcastPermissionsUpdated(rol: string): Promise<void> {
+  const supabase = createClient()
+  const channel = supabase.channel('permissions-changed')
+  await new Promise<void>(resolve => {
+    channel.subscribe(status => {
+      if (status === 'SUBSCRIBED') {
+        channel
+          .send({
+            type: 'broadcast',
+            event: 'permissions_updated',
+            payload: { rol },
+          })
+          .then(() => resolve())
+          .catch(() => resolve()) // no bloquear si falla
+      }
+    })
+  })
+  supabase.removeChannel(channel)
+}
+
+/**
  * Mutation: Actualizar un permiso específico
- * ✅ Invalida sesiones de usuarios afectados
+ * Emite broadcast Realtime para actualizar clientes sin interrumpir sesión.
  */
 export function useActualizarPermisoMutation() {
   const queryClient = useQueryClient()
@@ -223,19 +281,11 @@ export function useActualizarPermisoMutation() {
     }) => {
       const resultado = await actualizarPermiso(id, permitido)
 
-      // ✅ Invalidar sesiones si se proporcionó el rol
       if (rol) {
         try {
-          await fetch('/api/auth/invalidar-sesiones', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ rol }),
-          })
+          await broadcastPermissionsUpdated(rol)
         } catch (error) {
-          logger.warn(
-            '⚠️ [MUTATION] Error invalidando sesiones (no crítico):',
-            error
-          )
+          logger.warn('⚠️ [MUTATION] Error en broadcast de permisos:', error)
         }
       }
 
@@ -243,7 +293,6 @@ export function useActualizarPermisoMutation() {
     },
 
     onSuccess: () => {
-      // Invalidar TODOS los queries de permisos
       queryClient.invalidateQueries({ queryKey: permisosKeys.all })
     },
 
@@ -255,7 +304,7 @@ export function useActualizarPermisoMutation() {
 
 /**
  * Mutation: Actualizar múltiples permisos en lote
- * ✅ Invalida sesiones de usuarios afectados
+ * Emite broadcast Realtime para actualizar clientes sin interrumpir sesión.
  */
 export function useActualizarPermisosEnLoteMutation() {
   const queryClient = useQueryClient()
@@ -270,19 +319,11 @@ export function useActualizarPermisosEnLoteMutation() {
     }) => {
       const resultado = await actualizarPermisosEnLote(actualizaciones)
 
-      // ✅ Invalidar sesiones si se proporcionó el rol
       if (rol) {
         try {
-          await fetch('/api/auth/invalidar-sesiones', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ rol }),
-          })
+          await broadcastPermissionsUpdated(rol)
         } catch (error) {
-          logger.warn(
-            '⚠️ [MUTATION] Error invalidando sesiones (no crítico):',
-            error
-          )
+          logger.warn('⚠️ [MUTATION] Error en broadcast de permisos:', error)
         }
       }
 
@@ -290,7 +331,6 @@ export function useActualizarPermisosEnLoteMutation() {
     },
 
     onSuccess: () => {
-      // Invalidar TODOS los queries de permisos
       queryClient.invalidateQueries({ queryKey: permisosKeys.all })
     },
 

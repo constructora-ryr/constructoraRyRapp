@@ -203,7 +203,7 @@ export const navigationGroups: NavigationGroup[] = [
         icon: FileX,
         color: 'from-red-500 to-rose-500',
         description: 'Cancelaciones',
-        // Renuncias no tiene permiso en BD, accesible para todos con sesión
+        requiredPermission: { modulo: 'renuncias', accion: 'ver' },
       },
     ],
   },

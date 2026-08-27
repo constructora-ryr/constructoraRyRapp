@@ -61,7 +61,7 @@ export const getServerUserProfile = cache(async (): Promise<Usuario | null> => {
   }
 
   const user = session.user
-  let rol = 'Administrador de Obra'
+  let rolFromJwt: string | null = null // null = claim ausente en el JWT
   let nombres = ''
   let email: string = user.email || ''
 
@@ -87,22 +87,21 @@ export const getServerUserProfile = cache(async (): Promise<Usuario | null> => {
         )
         const payload = JSON.parse(jsonPayload)
 
-        // Leer claims custom del payload
-        rol = payload.user_rol || 'Administrador de Obra'
+        // Leer claims custom del payload (null si el hook no los inyectó)
+        rolFromJwt = payload.user_rol || null
         nombres = payload.user_nombres || ''
         email = payload.user_email || user.email || ''
       }
     } catch (error) {
       errorLog('auth-jwt-decode', error)
-      // Fallback a valores por defecto
     }
   }
 
-  // 🔧 FIX: Si access_token está vacío (getSession retornó null porque el cookie
-  // store del Server Component es read-only y no pudo persistir un refresh),
-  // obtener el rol directamente desde la tabla usuarios.
-  // La policy de usuarios tiene USING (true) — todos los autenticados pueden leer.
-  if (!session.access_token) {
+  // 🔧 FIX: Obtener rol desde DB cuando el JWT no tiene el claim user_rol.
+  // Esto cubre: access_token vacío, JWT anterior al hook, o hook no configurado.
+  // La tabla usuarios es siempre la fuente de verdad del rol.
+  let rol = rolFromJwt || 'Administrador de Obra' // fallback de última instancia
+  if (!rolFromJwt) {
     try {
       const supabase = await createServerSupabaseClient()
       const { data: usuarioData } = await supabase
@@ -112,7 +111,7 @@ export const getServerUserProfile = cache(async (): Promise<Usuario | null> => {
         .single()
       if (usuarioData) {
         rol = usuarioData.rol as typeof rol
-        nombres = usuarioData.nombres || ''
+        nombres = usuarioData.nombres || nombres
       }
     } catch (dbError) {
       errorLog('auth-db-rol-fallback', dbError)
@@ -202,13 +201,15 @@ export async function getServerPermissions(modulo?: string) {
   // Si se especifica módulo, consultar permisos específicos desde DB
   if (modulo) {
     const supabase = await createServerSupabaseClient()
-    // ✅ FIX: No filtrar por rol aquí — la RLS de permisos_rol ya filtra
-    // automáticamente por el rol real del usuario en la tabla usuarios.
-    // Esto evita errores cuando el JWT decode falla (access_token vacío)
-    // y perfil.rol cae al default 'Administrador de Obra' incorrecto.
+
+    // Filtrar por rol explícitamente — no depender solo de RLS.
+    // Si el JWT no tiene el claim user_rol, la RLS devolve filas de todos
+    // los roles y canCreate quedaría true para cualquier usuario.
+    // El rol ya viene validado desde getServerUserProfile (JWT o BD).
     const { data: permisos } = await supabase
       .from('permisos_rol')
       .select('accion')
+      .eq('rol', rol)
       .eq('modulo', modulo)
       .eq('permitido', true)
 

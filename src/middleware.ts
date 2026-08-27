@@ -1,8 +1,64 @@
+import { createClient as createSupabaseAdmin } from '@supabase/supabase-js'
+
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 
 import { createMiddlewareClient } from '@/lib/supabase/middleware'
 import { debugLog, errorLog } from '@/lib/utils/logger'
+
+// ============================================================
+// HELPERS: Sesiones activas
+// ============================================================
+
+/** Parsea el User-Agent en strings legibles para humanos */
+function parsearUserAgent(ua: string): {
+  dispositivo: string
+  navegador: string
+} {
+  // Navegador
+  let navegador = 'Navegador desconocido'
+  if (/Edg\//.test(ua)) navegador = 'Edge'
+  else if (/OPR\//.test(ua)) navegador = 'Opera'
+  else if (/Chrome\//.test(ua)) {
+    const v = ua.match(/Chrome\/([\d]+)/)?.[1]
+    navegador = `Chrome${v ? ' ' + v : ''}`
+  } else if (/Firefox\//.test(ua)) {
+    const v = ua.match(/Firefox\/([\d]+)/)?.[1]
+    navegador = `Firefox${v ? ' ' + v : ''}`
+  } else if (/Safari\//.test(ua)) {
+    navegador = 'Safari'
+  }
+
+  // Dispositivo / OS
+  let dispositivo = 'Dispositivo desconocido'
+  if (/iPhone/.test(ua)) dispositivo = 'iPhone'
+  else if (/iPad/.test(ua)) dispositivo = 'iPad'
+  else if (/Android/.test(ua)) dispositivo = 'Android'
+  else if (/Windows NT 10/.test(ua)) dispositivo = 'Windows 11/10'
+  else if (/Windows NT/.test(ua)) dispositivo = 'Windows'
+  else if (/Macintosh/.test(ua)) dispositivo = 'macOS'
+  else if (/Linux/.test(ua)) dispositivo = 'Linux'
+
+  return { dispositivo, navegador }
+}
+
+/** Genera un hash SHA-256 del refresh token para identificar la sesión */
+async function hashToken(token: string): Promise<string> {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(token)
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+  const hashArray = Array.from(new Uint8Array(hashBuffer))
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
+/** Cliente Supabase con service_role para escrituras en sesiones_activas */
+function createAdminClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
+  return createSupabaseAdmin(url, key, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+}
 
 /**
  * ============================================
@@ -282,6 +338,72 @@ export async function middleware(req: NextRequest) {
     const {
       data: { session },
     } = await supabase.auth.getSession()
+
+    // ============================================
+    // 4c. GESTIÓN DE SESIONES ACTIVAS
+    // ============================================
+    // Solo si hay un refresh_token (sesión persistida), registramos/verificamos
+    // la sesión en sesiones_activas. Se hace con service_role para bypasear RLS.
+
+    if (session?.refresh_token) {
+      try {
+        const tokenHash = await hashToken(session.refresh_token)
+        const adminSesiones = createAdminClient()
+
+        // Verificar si esta sesión fue revocada remotamente
+        const { data: sesionData } = await adminSesiones
+          .from('sesiones_activas')
+          .select('id, revocada')
+          .eq('session_token', tokenHash)
+          .maybeSingle()
+
+        if (sesionData?.revocada) {
+          debugLog('🚫 Sesión revocada remotamente', { pathname })
+          await supabase.auth.signOut()
+          const redirectUrl = req.nextUrl.clone()
+          redirectUrl.pathname = '/login'
+          redirectUrl.searchParams.set('revocada', '1')
+          return NextResponse.redirect(redirectUrl)
+        }
+
+        // Registrar o actualizar sesión activa (fire-and-forget, no bloquea)
+        const ua = req.headers.get('user-agent') || ''
+        const ip =
+          req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+          req.headers.get('x-real-ip') ||
+          'desconocida'
+        const { dispositivo, navegador } = parsearUserAgent(ua)
+
+        if (!sesionData) {
+          adminSesiones
+            .from('sesiones_activas')
+            .upsert(
+              {
+                user_id: user.id,
+                session_token: tokenHash,
+                dispositivo,
+                navegador,
+                ip,
+              },
+              { onConflict: 'session_token' }
+            )
+            .then(() => {
+              adminSesiones.rpc('limpiar_sesiones_antiguas', {
+                p_user_id: user.id,
+              })
+            })
+        } else {
+          adminSesiones
+            .from('sesiones_activas')
+            .update({ last_seen_at: new Date().toISOString() })
+            .eq('session_token', tokenHash)
+            // fire-and-forget
+            .then(void 0)
+        }
+      } catch (err) {
+        errorLog('middleware-sesiones-activas', err as Error, { pathname })
+      }
+    }
 
     // Decodificar JWT (compatible con Edge Runtime - sin Buffer)
     if (session?.access_token) {

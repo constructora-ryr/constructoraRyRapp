@@ -2,21 +2,30 @@
 
 import { useState } from 'react'
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import {
+  DehydratedState,
+  HydrationBoundary,
+  QueryClient,
+  QueryClientProvider,
+} from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+
+interface ReactQueryProviderProps {
+  children: React.ReactNode
+  /** Estado deshidratado del servidor para hidratar el caché del cliente. */
+  dehydratedState?: DehydratedState
+}
 
 export function ReactQueryProvider({
   children,
-}: {
-  children: React.ReactNode
-}) {
+  dehydratedState,
+}: ReactQueryProviderProps) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
         defaultOptions: {
           queries: {
-            // NO usar staleTime global - cada query decide su propio staleTime
-            gcTime: 5 * 60 * 1000, // 5 minutos
+            gcTime: 5 * 60 * 1000,
             refetchOnWindowFocus: false,
             retry: 1,
           },
@@ -29,7 +38,9 @@ export function ReactQueryProvider({
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
+      {/* HydrationBoundary vierte los datos prefetchados en el servidor
+          directamente en el caché del cliente, eliminando la segunda consulta. */}
+      <HydrationBoundary state={dehydratedState}>{children}</HydrationBoundary>
       {process.env.NODE_ENV === 'development' && (
         <ReactQueryDevtools initialIsOpen={false} />
       )}
