@@ -202,13 +202,15 @@ export function AbonoDetalleSidebarPanel({
         <>
           <div className={s.sidebar.divider} />
           <div className={s.sidebar.section}>
-            <p className={s.sidebar.sectionTitle}>
+            <p className='flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400'>
               <StickyNote className='h-3 w-3' />
               Observaciones
             </p>
-            <p className='rounded-lg bg-gray-50 p-3 text-xs italic text-gray-600 dark:bg-gray-800 dark:text-gray-400'>
-              &quot;{abono.notas}&quot;
-            </p>
+            <div className='rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-700/50 dark:bg-amber-950/30'>
+              <p className='text-xs leading-relaxed text-amber-900 dark:text-amber-200'>
+                {abono.notas}
+              </p>
+            </div>
           </div>
         </>
       ) : null}
