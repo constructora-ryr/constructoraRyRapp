@@ -53,11 +53,7 @@ class ClientesService {
       query = query.in('estado', filtros.estado)
     }
 
-    if (filtros?.busqueda) {
-      query = query.or(
-        `nombre_completo.ilike.%${filtros.busqueda}%,numero_documento.ilike.%${filtros.busqueda}%,telefono.ilike.%${filtros.busqueda}%,email.ilike.%${filtros.busqueda}%`
-      )
-    }
+    // Búsqueda: se aplica client-side después del merge para incluir número de vivienda
 
     if (filtros?.fecha_desde) {
       query = query.gte('fecha_creacion', filtros.fecha_desde)
@@ -156,7 +152,7 @@ class ClientesService {
     )
 
     // ⚡ TRANSFORMAR Y ENRIQUECER DATOS (O(n) single pass)
-    return (data || []).map(item => {
+    const todos = (data || []).map(item => {
       const itemId = item.id || ''
       const negociacion = itemId ? negociacionesMap.get(itemId) : undefined
       const interes = itemId ? interesesMap.get(itemId) : undefined
@@ -189,6 +185,22 @@ class ClientesService {
         // â­ Datos de interés para clientes Interesados (pre-calculados)
         interes: interes || undefined,
       } as ClienteResumen
+    })
+
+    if (!filtros?.busqueda) return todos
+
+    const q = filtros.busqueda.toLowerCase().trim()
+    return todos.filter(c => {
+      const vivienda = c.vivienda ?? c.interes
+      return (
+        c.nombre_completo.toLowerCase().includes(q) ||
+        c.numero_documento.toLowerCase().includes(q) ||
+        (c.telefono?.toLowerCase().includes(q) ?? false) ||
+        (c.email?.toLowerCase().includes(q) ?? false) ||
+        (vivienda?.numero_vivienda?.toLowerCase().includes(q) ?? false) ||
+        (vivienda?.nombre_manzana?.toLowerCase().includes(q) ?? false) ||
+        (vivienda?.nombre_proyecto?.toLowerCase().includes(q) ?? false)
+      )
     })
   }
 
