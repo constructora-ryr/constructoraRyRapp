@@ -187,21 +187,7 @@ class ClientesService {
       } as ClienteResumen
     })
 
-    if (!filtros?.busqueda) return todos
-
-    const q = filtros.busqueda.toLowerCase().trim()
-    return todos.filter(c => {
-      const vivienda = c.vivienda ?? c.interes
-      return (
-        c.nombre_completo.toLowerCase().includes(q) ||
-        c.numero_documento.toLowerCase().includes(q) ||
-        (c.telefono?.toLowerCase().includes(q) ?? false) ||
-        (c.email?.toLowerCase().includes(q) ?? false) ||
-        (vivienda?.numero_vivienda?.toLowerCase().includes(q) ?? false) ||
-        (vivienda?.nombre_manzana?.toLowerCase().includes(q) ?? false) ||
-        (vivienda?.nombre_proyecto?.toLowerCase().includes(q) ?? false)
-      )
-    })
+    return todos
   }
 
   /**

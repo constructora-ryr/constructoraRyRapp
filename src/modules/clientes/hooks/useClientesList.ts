@@ -94,12 +94,24 @@ export function useClientesList() {
         const matchVivienda = cliente.vivienda
           ? `${cliente.vivienda.nombre_manzana}-${cliente.vivienda.numero_vivienda}`
               .toLowerCase()
+              .includes(terminoBusqueda) ||
+            `${cliente.vivienda.nombre_manzana}${cliente.vivienda.numero_vivienda}`
+              .toLowerCase()
+              .includes(terminoBusqueda) ||
+            (cliente.vivienda.numero_vivienda ?? '')
+              .toLowerCase()
               .includes(terminoBusqueda)
           : false
 
         // Búsqueda en interés (A-1, A-2, etc.)
         const matchInteres = cliente.interes
           ? `${cliente.interes.nombre_manzana}-${cliente.interes.numero_vivienda}`
+              .toLowerCase()
+              .includes(terminoBusqueda) ||
+            `${cliente.interes.nombre_manzana}${cliente.interes.numero_vivienda}`
+              .toLowerCase()
+              .includes(terminoBusqueda) ||
+            (cliente.interes.numero_vivienda ?? '')
               .toLowerCase()
               .includes(terminoBusqueda)
           : false
