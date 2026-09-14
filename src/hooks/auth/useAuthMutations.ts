@@ -68,12 +68,14 @@ export function useLoginMutation() {
       const abortController = new AbortController()
       const perfilTimeout = setTimeout(() => abortController.abort(), 15000)
 
-      const perfilResult = await supabase
-        .from('usuarios')
-        .select('*')
-        .eq('id', authData.user.id)
-        .abortSignal(abortController.signal)
-        .single()
+      const perfilResult = await Promise.resolve(
+        supabase
+          .from('usuarios')
+          .select('*')
+          .eq('id', authData.user.id)
+          .abortSignal(abortController.signal)
+          .single()
+      )
         .catch(() => {
           throw new Error(
             'El servidor tardó demasiado. Intenta de nuevo en unos segundos.'
