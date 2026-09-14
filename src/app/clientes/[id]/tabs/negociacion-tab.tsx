@@ -573,7 +573,10 @@ export function NegociacionTab({
                   {formatCurrency(saldoReal)}
                 </p>
                 <p className='mt-0.5 text-[10px] tabular-nums text-gray-400 dark:text-gray-500'>
-                  {formatCurrency(saldo)} por desembolsar
+                  {formatCurrency(
+                    Math.max(0, totalComprometido - totalAbonadoDisplay)
+                  )}{' '}
+                  por desembolsar
                 </p>
               </div>
             ) : (
