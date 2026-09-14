@@ -138,10 +138,10 @@ export function useAsignarViviendaV2({
     [valorBase, gastosNotariales, recargoEsquinera, descuentoAplicado]
   )
 
-  // Sincronizar valor_negociado en RHF cuando cambia el total
+  // valor_negociado = solo precio base (el trigger DB suma gastos_notariales y recargo_esquinera)
   useEffect(() => {
-    setValue('valor_negociado', valorTotal)
-  }, [valorTotal, setValue])
+    setValue('valor_negociado', valorBase)
+  }, [valorBase, setValue])
 
   // Fix 3: warning al recargar/salir si el formulario tiene datos sin guardar
   useEffect(() => {

@@ -22,6 +22,7 @@ import {
   DollarSign,
   FileText,
   FileX,
+  HelpCircle,
   History,
   Home,
   Lock,
@@ -50,6 +51,7 @@ import { CuotasCreditoTab } from '@/modules/fuentes-pago/components/CuotasCredit
 import { RegistrarRenunciaModal } from '@/modules/renuncias/components/modals/RegistrarRenunciaModal'
 import { usePermisosQuery } from '@/modules/usuarios/hooks/usePermisosQuery'
 import { SectionLoadingSpinner } from '@/shared/components/ui'
+import { Tooltip } from '@/shared/components/ui'
 import { esCreditoConstructora } from '@/shared/constants/fuentes-pago.constants'
 import { formatCurrency } from '@/shared/utils/format'
 
@@ -547,9 +549,15 @@ export function NegociacionTab({
           <div className='px-4 py-2.5'>
             <div className='mb-0.5 flex items-center gap-1'>
               <TrendingUp className='h-3 w-3 text-amber-500' />
-              <span className='text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500'>
-                Saldo
-              </span>
+              <Tooltip
+                content='Fondos de las fuentes de pago que aún no han sido desembolsados (crédito, subsidio, etc.). Cuando existe un excedente a devolver, este valor puede ser mayor al saldo real de deuda. Ver "Saldo real por pagar" en Estado de cuenta para la deuda exacta del cliente.'
+                side='bottom'
+              >
+                <span className='inline-flex cursor-help items-center gap-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500'>
+                  Por cobrar
+                  <HelpCircle className='h-2.5 w-2.5' />
+                </span>
+              </Tooltip>
             </div>
             <p
               className={`text-sm font-bold tabular-nums ${saldo <= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-900 dark:text-white'}`}

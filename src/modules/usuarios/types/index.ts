@@ -95,8 +95,6 @@ export interface Usuario {
 /** Usuario enriquecido desde `vista_usuarios_completos` */
 export interface UsuarioCompleto extends Usuario {
   creado_por_nombre: string | null
-  fecha_registro_auth: string
-  ultimo_login_auth: string | null // alias desde auth.users.last_sign_in_at
 }
 
 // ============================================

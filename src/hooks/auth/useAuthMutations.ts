@@ -64,14 +64,26 @@ export function useLoginMutation() {
 
       successLog('Usuario autenticado con Supabase')
 
-      // 2. Obtener perfil del usuario
-      const { data: perfilData, error: perfilError } = await supabase
+      // 2. Obtener perfil del usuario (con timeout de 15s para evitar hang infinito)
+      const abortController = new AbortController()
+      const perfilTimeout = setTimeout(() => abortController.abort(), 15000)
+
+      const perfilResult = await supabase
         .from('usuarios')
         .select('*')
         .eq('id', authData.user.id)
+        .abortSignal(abortController.signal)
         .single()
+        .catch(() => {
+          throw new Error(
+            'El servidor tardó demasiado. Intenta de nuevo en unos segundos.'
+          )
+        })
+        .finally(() => clearTimeout(perfilTimeout))
 
-      debugLog('ðŸ“¥ Perfil obtenido', {
+      const { data: perfilData, error: perfilError } = perfilResult
+
+      debugLog('ðŸ”¥ Perfil obtenido', {
         hasPerfil: !!perfilData,
         rol: perfilData?.rol,
       })
