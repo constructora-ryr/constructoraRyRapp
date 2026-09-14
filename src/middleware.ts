@@ -236,7 +236,25 @@ export async function middleware(req: NextRequest) {
   }
 
   // ============================================
-  // 2. RUTAS PÚBLICAS → Permitir sin validación
+  // 2a. /login CON SESIÓN ACTIVA → Redirigir al dashboard
+  // ============================================
+  // Las rutas públicas pasan sin validación, pero /login es especial:
+  // si el usuario ya tiene sesión válida, no tiene sentido mostrarle el login.
+
+  if (pathname === '/login') {
+    const tmpRes = NextResponse.next()
+    const supabaseTmp = createMiddlewareClient(req, tmpRes)
+    const {
+      data: { user: existingUser },
+    } = await supabaseTmp.auth.getUser()
+    if (existingUser) {
+      return NextResponse.redirect(new URL('/', req.url))
+    }
+    return tmpRes
+  }
+
+  // ============================================
+  // 2b. OTRAS RUTAS PÚBLICAS → Permitir sin validación
   // ============================================
 
   if (isPublicRoute(pathname)) {
@@ -314,20 +332,7 @@ export async function middleware(req: NextRequest) {
     }
 
     // ============================================
-    // 5. SI ESTÁ EN /login CON SESIÓN → Permitir (el componente manejará la redirección)
-    // ============================================
-
-    // ✅ CORRECCIÓN: No redirigir desde middleware, dejar que useLogin maneje la navegación
-    // Esto evita race conditions entre middleware y router.push()
-    if (pathname === '/login') {
-      debugLog(
-        '🔀 Usuario autenticado en /login, permitiendo (componente redirigirá)'
-      )
-      return res // Permitir acceso, el componente de login manejará la navegación
-    }
-
-    // ============================================
-    // 6. OBTENER ROL Y PERMISOS DEL JWT (EDGE RUNTIME COMPATIBLE)
+    // 5. OBTENER ROL Y PERMISOS DEL JWT (EDGE RUNTIME COMPATIBLE)
     // ============================================
 
     let rol = '' // se llenará desde JWT o BD — sin default hardcodeado
