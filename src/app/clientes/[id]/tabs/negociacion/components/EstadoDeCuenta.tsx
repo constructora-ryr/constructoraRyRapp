@@ -76,68 +76,77 @@ export function EstadoDeCuenta({
       </button>
 
       {open && (
-        <div className='px-5 pb-4 pt-1 text-xs'>
-          {/* ─── 1. Precio del inmueble ─── */}
-          <LineItem
-            label='Precio del inmueble'
-            value={formatCurrency(valorComercial)}
-            bold
-            tooltip='Valor de la vivienda para efectos de escritura pública y crédito hipotecario. Incluye gastos notariales y recargos si aplican.'
-          />
-          {tieneExtras && (
-            <>
-              <LineItem
-                label='Valor base'
-                value={formatCurrency(valorBase)}
-                valueClass='text-gray-500 dark:text-gray-400'
-                indent
-              />
-              {gastosNotariales > 0 && (
-                <LineItem
-                  label='+ Gastos notariales'
-                  value={formatCurrency(gastosNotariales)}
-                  valueClass='text-gray-500 dark:text-gray-400'
-                  indent
-                  tooltip='Costos de escrituración que el cliente asume: notaría, registro, impuestos, etc.'
-                />
-              )}
-              {recargoEsquinera > 0 && (
-                <LineItem
-                  label='+ Recargo esquinera'
-                  value={formatCurrency(recargoEsquinera)}
-                  valueClass='text-gray-500 dark:text-gray-400'
-                  indent
-                />
-              )}
-            </>
-          )}
-
-          {descuento > 0 && (
+        <div className='space-y-2 px-4 pb-4 pt-2 text-xs'>
+          {/* ═══ SECCIÓN 1: Precio del inmueble ═══ */}
+          <div className='rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-gray-700/40 dark:bg-gray-800/40'>
+            <p className='mb-2 text-[9px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500'>
+              Precio del inmueble
+            </p>
             <LineItem
-              label={`− Descuento${motivoDescuento ? ` · ${motivoDescuento}` : ''}`}
-              value={`− ${formatCurrency(descuento)}`}
-              valueClass='text-violet-600 dark:text-violet-400'
+              label='Precio del inmueble'
+              value={formatCurrency(valorComercial)}
+              bold
+              tooltip='Valor de la vivienda para efectos de escritura pública y crédito hipotecario. Incluye gastos notariales y recargos si aplican.'
             />
-          )}
+            {tieneExtras && (
+              <>
+                <LineItem
+                  label='Valor base'
+                  value={formatCurrency(valorBase)}
+                  valueClass='text-gray-500 dark:text-gray-400'
+                  indent
+                />
+                {gastosNotariales > 0 && (
+                  <LineItem
+                    label='+ Gastos notariales'
+                    value={formatCurrency(gastosNotariales)}
+                    valueClass='text-gray-500 dark:text-gray-400'
+                    indent
+                    tooltip='Costos de escrituración que el cliente asume: notaría, registro, impuestos, etc.'
+                  />
+                )}
+                {recargoEsquinera > 0 && (
+                  <LineItem
+                    label='+ Recargo esquinera'
+                    value={formatCurrency(recargoEsquinera)}
+                    valueClass='text-gray-500 dark:text-gray-400'
+                    indent
+                  />
+                )}
+              </>
+            )}
+            {descuento > 0 && (
+              <LineItem
+                label={`− Descuento${motivoDescuento ? ` · ${motivoDescuento}` : ''}`}
+                value={`− ${formatCurrency(descuento)}`}
+                valueClass='text-violet-600 dark:text-violet-400'
+              />
+            )}
+            {(tieneExtras || descuento > 0) && (
+              <div className='my-2 border-t border-dashed border-gray-200 dark:border-gray-700/60' />
+            )}
+            <LineItem
+              label='Lo que el cliente paga'
+              value={formatCurrency(valorTotalPagar)}
+              bold
+              tooltip={
+                descuento > 0
+                  ? `Precio del inmueble (${formatCurrency(valorComercial)}) menos el descuento otorgado (${formatCurrency(descuento)}). Esta es la obligación real del cliente con la constructora.`
+                  : 'Obligación total del cliente con la constructora.'
+              }
+            />
+          </div>
 
-          <Rule />
-
-          {/* ─── 2. Lo que el cliente realmente paga ─── */}
-          <LineItem
-            label='Lo que el cliente paga'
-            value={formatCurrency(valorTotalPagar)}
-            bold
-            tooltip={
-              descuento > 0
-                ? `Precio del inmueble (${formatCurrency(valorComercial)}) menos el descuento otorgado (${formatCurrency(descuento)}). Esta es la obligación real del cliente con la constructora.`
-                : 'Obligación total del cliente con la constructora.'
-            }
-          />
-
-          {/* ─── 3. Fuentes de pago ─── */}
+          {/* ═══ SECCIÓN 2: Fuentes de pago ═══ */}
           {fuentes.length > 0 && (
-            <>
-              <p className='mb-0.5 mt-3 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500'>
+            <div
+              className={`rounded-lg border p-3 ${
+                excedente > 0
+                  ? 'border-amber-100/80 bg-amber-50/50 dark:border-amber-800/30 dark:bg-amber-900/10'
+                  : 'border-gray-100 bg-gray-50 dark:border-gray-700/40 dark:bg-gray-800/40'
+              }`}
+            >
+              <p className='mb-2 text-[9px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500'>
                 Fuentes de pago
               </p>
               {fuentes.map(f => (
@@ -148,75 +157,78 @@ export function EstadoDeCuenta({
                   indent
                 />
               ))}
-            </>
-          )}
-
-          <Rule />
-
-          {/* Suma fuentes */}
-          <LineItem
-            label='Total comprometido en fuentes'
-            value={formatCurrency(totalComprometido)}
-            bold
-            tooltip='Suma de todos los montos aprobados en las fuentes de pago: crédito hipotecario, subsidios, cuota inicial, etc.'
-          />
-
-          {/* Bridge: fuentes → excedente — muestra el cálculo explícito */}
-          {excedente > 0 && (
-            <>
+              <div className='my-2 border-t border-dashed border-gray-200 dark:border-gray-700/60' />
               <LineItem
-                label='− Lo que el cliente paga'
-                value={`− ${formatCurrency(valorTotalPagar)}`}
-                valueClass='text-gray-500 dark:text-gray-400'
-                indent
+                label='Total comprometido en fuentes'
+                value={formatCurrency(totalComprometido)}
+                bold
+                tooltip='Suma de todos los montos aprobados en las fuentes de pago: crédito hipotecario, subsidios, cuota inicial, etc.'
               />
-              <div className='my-1.5 border-t border-dashed border-amber-200 dark:border-amber-800/50' />
-              {estadoDevolucion === 'procesada' ? (
-                <LineItem
-                  label={`Excedente devuelto al cliente${fechaDevolucion ? ` · ${formatDateForDisplay(fechaDevolucion)}` : ''}`}
-                  value={formatCurrency(montoDevolucion ?? excedente)}
-                  bold
-                  valueClass='text-emerald-600 dark:text-emerald-400'
-                  tooltip='Las fuentes de pago superaron el total a pagar por el cliente. Este excedente ya fue devuelto.'
-                />
-              ) : (
-                <LineItem
-                  label='Excedente a devolver al cliente'
-                  value={formatCurrency(excedente)}
-                  bold
-                  valueClass='text-amber-600 dark:text-amber-400'
-                  tooltip={`Las fuentes (${formatCurrency(totalComprometido)}) superan lo que el cliente debe pagar (${formatCurrency(valorTotalPagar)}). Una vez se completen los desembolsos, estos ${formatCurrency(excedente)} deben ser devueltos al cliente.`}
-                />
+              {excedente > 0 && (
+                <>
+                  <LineItem
+                    label={`− Lo que el cliente paga`}
+                    value={`− ${formatCurrency(valorTotalPagar)}`}
+                    valueClass='text-gray-500 dark:text-gray-400'
+                    indent
+                  />
+                  <div className='my-2 border-t border-dashed border-amber-200 dark:border-amber-700/50' />
+                  {estadoDevolucion === 'procesada' ? (
+                    <LineItem
+                      label={`Excedente devuelto al cliente${fechaDevolucion ? ` · ${formatDateForDisplay(fechaDevolucion)}` : ''}`}
+                      value={formatCurrency(montoDevolucion ?? excedente)}
+                      bold
+                      valueClass='text-emerald-600 dark:text-emerald-400'
+                      tooltip='Las fuentes de pago superaron el total a pagar por el cliente. Este excedente ya fue devuelto.'
+                    />
+                  ) : (
+                    <LineItem
+                      label='Excedente a devolver al cliente'
+                      value={formatCurrency(excedente)}
+                      bold
+                      valueClass='text-amber-600 dark:text-amber-400'
+                      tooltip={`Las fuentes (${formatCurrency(totalComprometido)}) superan lo que el cliente debe pagar (${formatCurrency(valorTotalPagar)}). Una vez se completen los desembolsos, estos ${formatCurrency(excedente)} deben ser devueltos al cliente.`}
+                    />
+                  )}
+                </>
               )}
-            </>
+            </div>
           )}
 
-          <Rule />
-
-          {/* ─── 4. Abonos recibidos y saldo real ─── */}
-          <LineItem
-            label='Total abonado'
-            value={formatCurrency(totalAbonado)}
-            bold
-            valueClass={
-              totalAbonado >= valorTotalPagar
-                ? 'text-emerald-600 dark:text-emerald-400'
-                : 'text-gray-900 dark:text-white'
-            }
-            tooltip='Suma de todos los pagos efectivamente recibidos por la constructora hasta ahora.'
-          />
-
-          <LineItem
-            label='Saldo real por pagar'
-            value={saldoReal > 0 ? formatCurrency(saldoReal) : '$ 0 ✓'}
-            bold
-            valueClass={
+          {/* ═══ SECCIÓN 3: Estado de pagos ═══ */}
+          <div
+            className={`rounded-lg border p-3 ${
               saldoReal === 0
-                ? 'text-emerald-600 dark:text-emerald-400'
-                : 'text-gray-900 dark:text-white'
-            }
-            tooltip={`Lo que el cliente aún debe pagar: ${formatCurrency(valorTotalPagar)} (obligación) menos ${formatCurrency(totalAbonado)} ya abonado.`}
-          />
+                ? 'border-emerald-100/80 bg-emerald-50/40 dark:border-emerald-800/30 dark:bg-emerald-900/10'
+                : 'border-gray-100 bg-gray-50 dark:border-gray-700/40 dark:bg-gray-800/40'
+            }`}
+          >
+            <p className='mb-2 text-[9px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500'>
+              Estado de pagos
+            </p>
+            <LineItem
+              label='Total abonado'
+              value={formatCurrency(totalAbonado)}
+              bold
+              valueClass={
+                totalAbonado >= valorTotalPagar
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : 'text-gray-900 dark:text-white'
+              }
+              tooltip='Suma de todos los pagos efectivamente recibidos por la constructora hasta ahora.'
+            />
+            <LineItem
+              label='Saldo real por pagar'
+              value={saldoReal > 0 ? formatCurrency(saldoReal) : '$ 0 ✓'}
+              bold
+              valueClass={
+                saldoReal === 0
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : 'text-gray-900 dark:text-white'
+              }
+              tooltip={`Lo que el cliente aún debe pagar: ${formatCurrency(valorTotalPagar)} (obligación) menos ${formatCurrency(totalAbonado)} ya abonado.`}
+            />
+          </div>
         </div>
       )}
     </div>
@@ -272,11 +284,5 @@ function LineItem({
         {value}
       </span>
     </div>
-  )
-}
-
-function Rule() {
-  return (
-    <div className='my-2 border-t border-dashed border-gray-200 dark:border-gray-700/60' />
   )
 }
