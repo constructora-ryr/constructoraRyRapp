@@ -556,7 +556,7 @@ export function NegociacionTab({
                 >
                   <span className='inline-flex cursor-help items-center gap-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500'>
                     Por cobrar
-                    <HelpCircle className='h-2.5 w-2.5' />
+                    <HelpCircle className='h-3 w-3 text-amber-400 dark:text-amber-500' />
                   </span>
                 </Tooltip>
               ) : (
