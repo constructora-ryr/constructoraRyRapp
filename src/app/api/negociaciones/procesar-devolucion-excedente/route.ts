@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { getServerPermissions } from '@/lib/auth/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
+import type { Database } from '@/lib/supabase/database.types'
 import { createRouteClient } from '@/lib/supabase/server-route'
 import { logger } from '@/lib/utils/logger'
+
+type DocumentoClienteInsert =
+  Database['public']['Tables']['documentos_cliente']['Insert']
 
 const BUCKET = 'devoluciones-excedente'
 
@@ -126,12 +130,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Actualizar negociación — cast necesario porque los campos nuevos aún no
-    // están en database.types.ts (se generan tras aplicar la migración)
-    // saldo_pendiente se pone a 0 porque el excedente fue devuelto al cliente:
-    // el financiero queda cerrado y no hay saldo pendiente por ninguna parte.
-    // No se toca saldo_pendiente: lo calcula el trigger de BD según los desembolsos
-    // reales de las fuentes. Registrar la devolución solo marca el excedente como
-    // procesado; el subsidio puede seguir pendiente de desembolso.
+    // están en database.types.ts (se generan tras aplicar la migración).
+    // No se toca saldo_pendiente: lo recalcula el trigger de BD según los
+    // saldos de fuentes_pago. El subsidio puede seguir pendiente de desembolso.
     const updatePayload = {
       excedente_devolucion_estado: 'procesada',
       excedente_devolucion_monto: monto,
@@ -162,6 +163,69 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
+
+    // Registrar comprobante en sistema de documentos (fire-and-forget)
+    // — permite vincularlo desde el historial del cliente sin re-subirlo
+    void (async () => {
+      try {
+        const docsTimestamp = Date.now()
+        const docsFileName = `${docsTimestamp}.${ext}`
+        const docsFilePath = `${neg.cliente_id}/devoluciones/${negociacion_id}/${docsFileName}`
+
+        const { error: docsUploadError } = await supabaseAdmin.storage
+          .from('documentos-clientes')
+          .upload(docsFilePath, buffer, {
+            contentType: comprobanteFile.type,
+            upsert: false,
+          })
+
+        if (docsUploadError) {
+          logger.warn(
+            '⚠️ Comprobante devolución no copiado a documentos-clientes:',
+            docsUploadError
+          )
+          return
+        }
+
+        const docData: DocumentoClienteInsert = {
+          cliente_id: neg.cliente_id,
+          titulo: 'Comprobante Devolución Excedente',
+          descripcion: notas || null,
+          nombre_archivo: docsFileName,
+          nombre_original: comprobanteFile.name,
+          tamano_bytes: comprobanteFile.size,
+          tipo_mime: comprobanteFile.type,
+          url_storage: docsFilePath,
+          subido_por: user.id,
+          fecha_documento: fecha,
+          es_importante: false,
+          es_documento_identidad: false,
+          tipo_documento: 'comprobante_devolucion_excedente',
+          metadata: { negociacion_id, monto_devolucion: monto },
+          version: 1,
+          es_version_actual: true,
+          estado: 'activo',
+        }
+        const { error: docInsertError } = await supabaseAdmin
+          .from('documentos_cliente')
+          .insert(docData)
+
+        if (docInsertError) {
+          logger.warn(
+            '⚠️ Comprobante subido a documentos-clientes pero no registrado en BD:',
+            docInsertError
+          )
+          void supabaseAdmin.storage
+            .from('documentos-clientes')
+            .remove([docsFilePath])
+        }
+      } catch (err) {
+        logger.warn(
+          '⚠️ Error inesperado al registrar comprobante devolución en documentos:',
+          err
+        )
+      }
+    })()
 
     // Registrar en audit_log (fire-and-forget) para que aparezca en historial del cliente
     void (async () => {
