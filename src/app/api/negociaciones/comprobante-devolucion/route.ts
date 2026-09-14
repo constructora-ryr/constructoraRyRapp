@@ -57,8 +57,14 @@ export async function GET(request: NextRequest) {
     )
   }
 
+  // Paths que empiezan con "negociaciones/" son archivos legacy en el bucket
+  // devoluciones-excedente. Los nuevos viven en documentos-clientes.
+  const bucket = path.startsWith('negociaciones/')
+    ? 'devoluciones-excedente'
+    : 'documentos-clientes'
+
   const { data: signedData, error: signError } = await supabaseAdmin.storage
-    .from('devoluciones-excedente')
+    .from(bucket)
     .createSignedUrl(path, 3600)
 
   if (signError || !signedData?.signedUrl) {
