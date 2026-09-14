@@ -22,6 +22,7 @@ import {
   DollarSign,
   FileText,
   FileX,
+  HelpCircle,
   History,
   Home,
   Lock,
@@ -49,7 +50,7 @@ import type { Cliente } from '@/modules/clientes/types'
 import { CuotasCreditoTab } from '@/modules/fuentes-pago/components/CuotasCreditoTab'
 import { RegistrarRenunciaModal } from '@/modules/renuncias/components/modals/RegistrarRenunciaModal'
 import { usePermisosQuery } from '@/modules/usuarios/hooks/usePermisosQuery'
-import { SectionLoadingSpinner } from '@/shared/components/ui'
+import { SectionLoadingSpinner, Tooltip } from '@/shared/components/ui'
 import { esCreditoConstructora } from '@/shared/constants/fuentes-pago.constants'
 import { formatCurrency } from '@/shared/utils/format'
 
@@ -548,9 +549,21 @@ export function NegociacionTab({
           <div className='px-4 py-2.5'>
             <div className='mb-0.5 flex items-center gap-1'>
               <TrendingUp className='h-3 w-3 text-amber-500' />
-              <span className='text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500'>
-                Por cobrar
-              </span>
+              {diferencia < 0 ? (
+                <Tooltip
+                  content={`Las fuentes de pago (${formatCurrency(saldo)}) superan lo que el cliente debe pagar. El valor principal es la deuda real del cliente con la constructora; el valor secundario es el total que ingresará por desembolsos de fuentes. La diferencia (${formatCurrency(Math.abs(diferencia))}) corresponde al excedente que se debe devolver al cliente.`}
+                  side='bottom'
+                >
+                  <span className='inline-flex cursor-help items-center gap-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500'>
+                    Por cobrar
+                    <HelpCircle className='h-2.5 w-2.5' />
+                  </span>
+                </Tooltip>
+              ) : (
+                <span className='text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500'>
+                  Por cobrar
+                </span>
+              )}
             </div>
             {diferencia < 0 ? (
               <div>
