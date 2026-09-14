@@ -551,7 +551,7 @@ export function NegociacionTab({
               <TrendingUp className='h-3 w-3 text-amber-500' />
               {diferencia < 0 ? (
                 <Tooltip
-                  content={`Los fondos por recibir de las fuentes (${formatCurrency(saldo)}) superan la deuda real del cliente (${formatCurrency(saldoReal)}). La diferencia de ${formatCurrency(Math.abs(diferencia))} es el excedente a devolver.`}
+                  content={`Las fuentes de pago (${formatCurrency(saldo)}) superan lo que el cliente debe pagar. El valor principal es la deuda real del cliente con la constructora; el valor secundario es el total que ingresará por desembolsos de fuentes. La diferencia (${formatCurrency(Math.abs(diferencia))}) corresponde al excedente que se debe devolver al cliente.`}
                   side='bottom'
                 >
                   <span className='inline-flex cursor-help items-center gap-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500'>
