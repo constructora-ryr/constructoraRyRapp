@@ -559,17 +559,9 @@ export function NegociacionTab({
                 >
                   {formatCurrency(saldoReal)}
                 </p>
-                <p className='mt-0.5 text-[9px] text-gray-400 dark:text-gray-500'>
-                  deuda real
+                <p className='mt-0.5 text-[10px] tabular-nums text-gray-400 dark:text-gray-500'>
+                  {formatCurrency(saldo)} por desembolsar
                 </p>
-                <div className='mt-1.5 inline-flex items-center gap-1 rounded-md bg-amber-50 px-1.5 py-0.5 dark:bg-amber-900/20'>
-                  <span className='text-[10px] font-semibold tabular-nums text-amber-600 dark:text-amber-400'>
-                    {formatCurrency(saldo)}
-                  </span>
-                  <span className='text-[9px] text-amber-500/80 dark:text-amber-500/60'>
-                    fuentes
-                  </span>
-                </div>
               </div>
             ) : (
               <p
