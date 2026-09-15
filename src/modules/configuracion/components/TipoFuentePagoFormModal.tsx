@@ -19,6 +19,7 @@ import {
   Wallet,
   X,
 } from 'lucide-react'
+import { createPortal } from 'react-dom'
 
 import { getFuenteColorClasses } from '@/shared/constants/fuentes-pago.constants'
 
@@ -100,9 +101,9 @@ export function TipoFuentePagoFormModal({
     }
   }, [isOpen])
 
-  if (!isOpen) return null
+  if (!isOpen || typeof document === 'undefined') return null
 
-  return (
+  return createPortal(
     <AnimatePresence>
       <div className={s.backdrop}>
         {/* Overlay */}
@@ -400,6 +401,7 @@ export function TipoFuentePagoFormModal({
           </form>
         </motion.div>
       </div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   )
 }
