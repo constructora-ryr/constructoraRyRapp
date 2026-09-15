@@ -100,7 +100,7 @@ export const getServerUserProfile = cache(async (): Promise<Usuario | null> => {
   // 🔧 FIX: Obtener rol desde DB cuando el JWT no tiene el claim user_rol.
   // Esto cubre: access_token vacío, JWT anterior al hook, o hook no configurado.
   // La tabla usuarios es siempre la fuente de verdad del rol.
-  let rol = rolFromJwt || 'Administrador de Obra' // fallback de última instancia
+  let rol = rolFromJwt || '' // si JWT y BD fallan, rol vacío → sin permisos (fail-safe)
   if (!rolFromJwt) {
     try {
       const supabase = await createServerSupabaseClient()
