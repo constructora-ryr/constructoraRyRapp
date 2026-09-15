@@ -330,11 +330,23 @@ export async function procesarDevolucion(
 // SUBIR COMPROBANTE
 // =====================================================
 
+const MIME_TO_EXT_RENUNCIA: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'application/pdf': 'pdf',
+}
+
 export async function subirComprobante(
   file: File,
   renunciaId: string
 ): Promise<string> {
-  const ext = file.name.split('.').pop()
+  const ext = MIME_TO_EXT_RENUNCIA[file.type]
+  if (!ext) {
+    throw new Error(
+      'Tipo de archivo no permitido. Solo se aceptan PDF, JPG, PNG o WebP.'
+    )
+  }
   const filePath = `${renunciaId}/${Date.now()}.${ext}`
 
   const { error } = await supabase.storage
@@ -394,7 +406,12 @@ export async function subirFormularioRenuncia(
   file: File,
   renunciaId: string
 ): Promise<string> {
-  const ext = file.name.split('.').pop()
+  const ext = MIME_TO_EXT_RENUNCIA[file.type]
+  if (!ext) {
+    throw new Error(
+      'Tipo de archivo no permitido. Solo se aceptan PDF, JPG, PNG o WebP.'
+    )
+  }
   // Nombre con timestamp para evitar sobreescritura silenciosa de uploads previos
   const filePath = `${renunciaId}/formulario-${Date.now()}.${ext}`
 
