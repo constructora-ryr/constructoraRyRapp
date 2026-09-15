@@ -3,19 +3,27 @@
 import { useState } from 'react'
 
 import { motion } from 'framer-motion'
+import type { LucideIcon } from 'lucide-react'
 import {
   AlertTriangle,
+  BadgeDollarSign,
   BadgeCheck,
+  Banknote,
   Building2,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
   CreditCard,
+  DollarSign,
   ExternalLink,
   FileWarning,
+  HandCoins,
   Hash,
+  Home,
   Landmark,
   Lock,
+  Shield,
+  Wallet,
 } from 'lucide-react'
 
 import Link from 'next/link'
@@ -23,11 +31,13 @@ import Link from 'next/link'
 import { formatDateForDisplay } from '@/lib/utils/date.utils'
 import type { FuentePagoConAbonos } from '@/modules/abonos/types'
 import { CuotasCreditoTab } from '@/modules/fuentes-pago/components/CuotasCreditoTab'
+import { useTiposFuentePagoConfig } from '@/modules/fuentes-pago/hooks'
 import {
   esCreditoConstructora as checkCreditoConstructora,
   esCuotaInicial as checkCuotaInicial,
   esSubsidioCajaCompensacion as checkSubsidioCaja,
   esSubsidioMiCasaYa as checkSubsidioMCY,
+  getFuenteColorClasses,
 } from '@/shared/constants/fuentes-pago.constants'
 
 interface FuentePagoCardProps {
@@ -56,55 +66,19 @@ const formatCurrency = (v: number) =>
     maximumFractionDigits: 0,
   }).format(v)
 
-const FUENTE_COLORS: Record<
-  string,
-  { accent: string; glow: string; bar: string; icon: string }
-> = {
-  'Crédito con la Constructora': {
-    accent: 'from-violet-500 to-purple-600',
-    glow: 'rgba(139,92,246,0.28)',
-    bar: 'from-violet-400 to-purple-400',
-    icon: 'bg-gradient-to-br from-violet-500 to-purple-600',
-  },
-  'Cuota Inicial': {
-    accent: 'from-emerald-500 to-teal-600',
-    glow: 'rgba(16,185,129,0.28)',
-    bar: 'from-emerald-400 to-teal-400',
-    icon: 'bg-gradient-to-br from-emerald-500 to-teal-600',
-  },
-  'Crédito Hipotecario': {
-    accent: 'from-blue-500 to-indigo-600',
-    glow: 'rgba(59,130,246,0.28)',
-    bar: 'from-blue-400 to-indigo-400',
-    icon: 'bg-gradient-to-br from-blue-500 to-indigo-600',
-  },
-  'Subsidio Mi Casa Ya': {
-    accent: 'from-violet-500 to-purple-600',
-    glow: 'rgba(139,92,246,0.28)',
-    bar: 'from-violet-400 to-purple-400',
-    icon: 'bg-gradient-to-br from-violet-500 to-purple-600',
-  },
-  'Subsidio Caja Compensación': {
-    accent: 'from-pink-500 to-rose-600',
-    glow: 'rgba(236,72,153,0.28)',
-    bar: 'from-pink-400 to-rose-400',
-    icon: 'bg-gradient-to-br from-pink-500 to-rose-600',
-  },
-  Leasing: {
-    accent: 'from-cyan-500 to-blue-600',
-    glow: 'rgba(6,182,212,0.28)',
-    bar: 'from-cyan-400 to-blue-400',
-    icon: 'bg-gradient-to-br from-cyan-500 to-blue-600',
-  },
+// Mapa de nombre de ícono (string BD) → componente Lucide
+const FUENTE_ICON_MAP: Record<string, LucideIcon> = {
+  Wallet,
+  Building2,
+  Home,
+  Shield,
+  CreditCard,
+  Landmark,
+  BadgeDollarSign,
+  DollarSign,
+  Banknote,
+  HandCoins,
 }
-
-const getFuenteColors = (tipo: string) =>
-  FUENTE_COLORS[tipo] ?? {
-    accent: 'from-slate-500 to-gray-600',
-    glow: 'rgba(100,116,139,0.22)',
-    bar: 'from-slate-400 to-gray-400',
-    icon: 'bg-gradient-to-br from-slate-500 to-gray-600',
-  }
 
 export function FuentePagoCard({
   fuente,
@@ -117,6 +91,11 @@ export function FuentePagoCard({
   validacion,
   clienteSlug,
 }: FuentePagoCardProps) {
+  const { getTipoConfig } = useTiposFuentePagoConfig()
+  const tipoConfig = getTipoConfig(fuente.tipo)
+  const colors = getFuenteColorClasses(tipoConfig.color)
+  const FuenteIcon = FUENTE_ICON_MAP[tipoConfig.icono] ?? Banknote
+
   const completada = validacion?.estaCompletamentePagada ?? false
   const esDesembolsoUnico = fuente.permite_multiples_abonos === false
   const esCuotaInicial = checkCuotaInicial(fuente.tipo)
@@ -140,7 +119,6 @@ export function FuentePagoCard({
     !completada &&
     fuente.saldo_pendiente > 0 &&
     !bloqueadoPorDocs
-  const colors = getFuenteColors(fuente.tipo)
 
   const [cuotasExpandidas, setCuotasExpandidas] = useState(false)
 
@@ -189,7 +167,7 @@ export function FuentePagoCard({
             <div
               className={`h-9 w-9 rounded-xl ${colors.icon} flex flex-shrink-0 items-center justify-center shadow-lg`}
             >
-              <CreditCard className='h-4 w-4 text-white' />
+              <FuenteIcon className='h-4 w-4 text-white' />
             </div>
             <div>
               <p className='text-sm font-bold leading-tight text-gray-900 dark:text-white'>

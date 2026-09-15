@@ -24,10 +24,12 @@ import {
   BadgeDollarSign,
   Banknote,
   Building2,
+  CreditCard,
   DollarSign,
-  Gift,
   HandCoins,
   Home,
+  Landmark,
+  Shield,
   Wallet,
 } from 'lucide-react'
 
@@ -113,11 +115,10 @@ export function useFuentePagoCard({
       BadgeDollarSign,
       DollarSign,
       Home,
-      Gift,
       Banknote,
-      Shield: Gift,
-      CreditCard: Building2,
-      Landmark: Building2,
+      Shield,
+      CreditCard,
+      Landmark,
     }),
     []
   )

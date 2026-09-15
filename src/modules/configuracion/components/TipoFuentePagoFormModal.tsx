@@ -1,22 +1,24 @@
-/**
- * Componente: Modal de Formulario de Tipo de Fuente de Pago
- *
- * Modal profesional para crear/editar tipos de fuentes de pago.
- *
- * ✅ REFACTORIZADO según REGLA CRÍTICA #0
- * - Componente < 150 líneas (SOLO UI PRESENTACIONAL)
- * - Lógica en useTipoFuentePagoFormModal.ts
- * - Estilos en TipoFuentePagoFormModal.styles.ts
- *
- * Responsabilidad: UI PRESENTACIONAL (NO LÓGICA)
- */
-
 'use client'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { AlertCircle, Check, Loader2, X } from 'lucide-react'
+import {
+  AlertCircle,
+  BadgeDollarSign,
+  Banknote,
+  Building2,
+  Check,
+  CreditCard,
+  DollarSign,
+  HandCoins,
+  Home,
+  Landmark,
+  Loader2,
+  Shield,
+  Wallet,
+  X,
+} from 'lucide-react'
 
-import { FormSelect } from '@/shared/components/ui/form-select'
+import { getFuenteColorClasses } from '@/shared/constants/fuentes-pago.constants'
 
 import { useTipoFuentePagoFormModal } from '../hooks/useTipoFuentePagoFormModal'
 import type { TipoFuentePago } from '../types'
@@ -24,9 +26,33 @@ import { TIPO_FUENTE_PAGO_LIMITS } from '../types'
 
 import { tipoFuentePagoFormModalStyles as s } from './TipoFuentePagoFormModal.styles'
 
-// =====================================================
-// PROPS
-// =====================================================
+// ─── Opciones de color (clases literales para que Tailwind no las purgue) ────
+const COLORES_OPCIONES = [
+  { valor: 'blue', label: 'Azul', bg: 'bg-blue-500' },
+  { valor: 'indigo', label: 'Índigo', bg: 'bg-indigo-500' },
+  { valor: 'purple', label: 'Púrpura', bg: 'bg-purple-500' },
+  { valor: 'pink', label: 'Rosa', bg: 'bg-pink-500' },
+  { valor: 'red', label: 'Rojo', bg: 'bg-red-500' },
+  { valor: 'orange', label: 'Naranja', bg: 'bg-orange-500' },
+  { valor: 'yellow', label: 'Amarillo', bg: 'bg-yellow-500' },
+  { valor: 'emerald', label: 'Esmeralda', bg: 'bg-emerald-500' },
+  { valor: 'green', label: 'Verde', bg: 'bg-green-500' },
+  { valor: 'cyan', label: 'Cyan', bg: 'bg-cyan-500' },
+] as const
+
+// ─── Opciones de ícono ───────────────────────────────────────────────────────
+const ICONOS_OPCIONES = [
+  { valor: 'Wallet', label: 'Billetera', Icon: Wallet },
+  { valor: 'Building2', label: 'Banco', Icon: Building2 },
+  { valor: 'Home', label: 'Casa', Icon: Home },
+  { valor: 'Shield', label: 'Escudo', Icon: Shield },
+  { valor: 'CreditCard', label: 'Tarjeta', Icon: CreditCard },
+  { valor: 'Landmark', label: 'Institución', Icon: Landmark },
+  { valor: 'BadgeDollarSign', label: 'Insignia $', Icon: BadgeDollarSign },
+  { valor: 'DollarSign', label: 'Dólar', Icon: DollarSign },
+  { valor: 'Banknote', label: 'Billete', Icon: Banknote },
+  { valor: 'HandCoins', label: 'Monedas', Icon: HandCoins },
+] as const
 
 interface TipoFuentePagoFormModalProps {
   isOpen: boolean
@@ -35,18 +61,14 @@ interface TipoFuentePagoFormModalProps {
   onSuccess?: () => void
 }
 
-// =====================================================
-// COMPONENT
-// =====================================================
-
 export function TipoFuentePagoFormModal({
   isOpen,
   onClose,
   tipoFuente,
   onSuccess,
 }: TipoFuentePagoFormModalProps) {
-  // ✅ HOOK CON TODA LA LÓGICA
   const {
+    form,
     isEditing,
     isPending,
     register,
@@ -56,12 +78,22 @@ export function TipoFuentePagoFormModal({
     onSubmit,
   } = useTipoFuentePagoFormModal({ isOpen, onClose, tipoFuente, onSuccess })
 
+  const colorActual = form.watch('color')
+  const iconoActual = form.watch('icono')
+  const nombreActual = form.watch('nombre')
+
+  const colorClases = getFuenteColorClasses(colorActual)
+  const IconoActual =
+    ICONOS_OPCIONES.find(i => i.valor === iconoActual)?.Icon ?? Wallet
+  const colorLabel =
+    COLORES_OPCIONES.find(c => c.valor === colorActual)?.label ?? colorActual
+
   if (!isOpen) return null
 
   return (
     <AnimatePresence>
       <div className={s.backdrop}>
-        {/* Backdrop */}
+        {/* Overlay */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -77,11 +109,21 @@ export function TipoFuentePagoFormModal({
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           className={s.modal}
         >
-          {/* Header */}
+          {/* Header con preview del color/ícono seleccionado */}
           <div className={s.header.container}>
-            <h2 className={s.header.title}>
-              {isEditing ? 'Editar Tipo de Fuente' : 'Nueva Fuente de Pago'}
-            </h2>
+            <div className={s.header.left}>
+              <div className={`${s.header.preview} ${colorClases.icon}`}>
+                <IconoActual className='h-5 w-5 text-white' />
+              </div>
+              <div>
+                <h2 className={s.header.title}>
+                  {isEditing ? 'Editar Tipo de Fuente' : 'Nueva Fuente de Pago'}
+                </h2>
+                {nombreActual ? (
+                  <p className={s.header.subtitle}>{nombreActual}</p>
+                ) : null}
+              </div>
+            </div>
             <button
               onClick={onClose}
               disabled={isPending}
@@ -93,11 +135,10 @@ export function TipoFuentePagoFormModal({
 
           {/* Form */}
           <form onSubmit={handleSubmit(onSubmit)} className={s.form.container}>
-            {/* Información Básica */}
+            {/* ── Información Básica ─────────────────────────────────────── */}
             <div className={s.form.section}>
               <h3 className={s.form.sectionTitle}>Información Básica</h3>
 
-              {/* Nombre */}
               <div className={s.input.container}>
                 <label className={s.input.label}>
                   Nombre <span className={s.input.required}>*</span>
@@ -109,15 +150,14 @@ export function TipoFuentePagoFormModal({
                   className={s.input.field}
                   disabled={isPending}
                 />
-                {errors.nombre && (
+                {errors.nombre ? (
                   <p className={s.input.error}>
                     <AlertCircle className={s.input.errorIcon} />
                     {errors.nombre.message}
                   </p>
-                )}
+                ) : null}
               </div>
 
-              {/* Código */}
               <div className={s.input.container}>
                 <label className={s.input.label}>
                   Código <span className={s.input.required}>*</span>
@@ -130,33 +170,31 @@ export function TipoFuentePagoFormModal({
                   className={s.input.fieldMono}
                   disabled={isPending || isEditing}
                 />
-                {errors.codigo && (
+                {errors.codigo ? (
                   <p className={s.input.error}>
                     <AlertCircle className={s.input.errorIcon} />
                     {errors.codigo.message}
                   </p>
-                )}
+                ) : null}
               </div>
 
-              {/* Descripción */}
               <div className={s.input.container}>
                 <label className={s.input.label}>Descripción</label>
                 <textarea
                   {...register('descripcion')}
-                  rows={3}
+                  rows={2}
                   placeholder='Breve descripción de la fuente de pago...'
                   className={s.input.textarea}
                   disabled={isPending}
                 />
-                {errors.descripcion && (
-                  <p className={s.input.error}>{errors.descripcion.message}</p>
-                )}
               </div>
             </div>
 
-            {/* Configuración */}
+            <div className={s.divider} />
+
+            {/* ── Configuración ──────────────────────────────────────────── */}
             <div className={s.form.section}>
-              <h3 className={s.form.sectionTitle}>Configuración</h3>
+              <h3 className={s.form.sectionTitle}>Comportamiento</h3>
 
               <div className={s.grid.threeColumns}>
                 <label className={s.checkbox.container}>
@@ -168,7 +206,7 @@ export function TipoFuentePagoFormModal({
                   />
                   <div className={s.checkbox.labelContainer}>
                     <p className={s.checkbox.label}>Requiere Entidad</p>
-                    <p className={s.checkbox.description}>Banco/Caja</p>
+                    <p className={s.checkbox.description}>Banco / Caja</p>
                   </div>
                 </label>
 
@@ -200,54 +238,72 @@ export function TipoFuentePagoFormModal({
               </div>
             </div>
 
-            {/* Apariencia */}
+            <div className={s.divider} />
+
+            {/* ── Apariencia ─────────────────────────────────────────────── */}
             <div className={s.form.section}>
               <h3 className={s.form.sectionTitle}>Apariencia</h3>
 
-              <div className={s.grid.twoColumns}>
-                <div className={s.input.container}>
-                  <label className={s.input.label}>Color</label>
-                  <FormSelect
-                    {...register('color')}
-                    className={s.input.field}
-                    disabled={isPending}
-                  >
-                    <option value='blue'>Azul</option>
-                    <option value='green'>Verde</option>
-                    <option value='purple'>Púrpura</option>
-                    <option value='orange'>Naranja</option>
-                    <option value='red'>Rojo</option>
-                    <option value='cyan'>Cyan</option>
-                    <option value='pink'>Rosa</option>
-                    <option value='indigo'>Índigo</option>
-                    <option value='yellow'>Amarillo</option>
-                    <option value='emerald'>Esmeralda</option>
-                  </FormSelect>
-                </div>
-
-                <div className={s.input.container}>
-                  <label className={s.input.label}>Icono</label>
-                  <FormSelect
-                    {...register('icono')}
-                    className={s.input.field}
-                    disabled={isPending}
-                  >
-                    <option value='Wallet'>Wallet (Billetera)</option>
-                    <option value='Building2'>Building2 (Banco)</option>
-                    <option value='Home'>Home (Casa)</option>
-                    <option value='Shield'>Shield (Escudo)</option>
-                    <option value='CreditCard'>CreditCard (Tarjeta)</option>
-                    <option value='Landmark'>Landmark (Institución)</option>
-                    <option value='BadgeDollarSign'>
-                      BadgeDollarSign (Insignia $)
-                    </option>
-                    <option value='DollarSign'>DollarSign (Dólar)</option>
-                    <option value='Banknote'>Banknote (Billete)</option>
-                    <option value='HandCoins'>HandCoins (Monedas)</option>
-                  </FormSelect>
+              {/* Color picker */}
+              <div className={s.input.container}>
+                <label className={s.input.label}>Color</label>
+                {/* Campo oculto para react-hook-form */}
+                <input type='hidden' {...register('color')} />
+                <div className={s.colorPicker.wrapper}>
+                  {COLORES_OPCIONES.map(c => (
+                    <button
+                      key={c.valor}
+                      type='button'
+                      title={c.label}
+                      disabled={isPending}
+                      onClick={() =>
+                        form.setValue('color', c.valor, { shouldDirty: true })
+                      }
+                      className={`${c.bg} ${s.colorPicker.swatch(colorActual === c.valor)}`}
+                    />
+                  ))}
                 </div>
               </div>
 
+              {/* Ícono picker */}
+              <div className={s.input.container}>
+                <label className={s.input.label}>Ícono</label>
+                <input type='hidden' {...register('icono')} />
+                <div className={s.iconPicker.wrapper}>
+                  {ICONOS_OPCIONES.map(({ valor, label, Icon }) => (
+                    <button
+                      key={valor}
+                      type='button'
+                      disabled={isPending}
+                      onClick={() =>
+                        form.setValue('icono', valor, { shouldDirty: true })
+                      }
+                      className={s.iconPicker.item(iconoActual === valor)}
+                    >
+                      <Icon className='h-5 w-5' />
+                      <span className={s.iconPicker.label}>{label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Vista previa */}
+              <div className={s.preview.wrapper}>
+                <div className={`${s.preview.iconWrap} ${colorClases.icon}`}>
+                  <IconoActual className='h-5 w-5 text-white' />
+                </div>
+                <div>
+                  <p className={s.preview.name}>
+                    {nombreActual || 'Nombre de la fuente'}
+                  </p>
+                  <p className={`${s.preview.meta} ${colorClases.texto}`}>
+                    {colorLabel} ·{' '}
+                    {ICONOS_OPCIONES.find(i => i.valor === iconoActual)?.label}
+                  </p>
+                </div>
+              </div>
+
+              {/* Orden */}
               <div className={s.input.container}>
                 <label className={s.input.label}>Orden de Visualización</label>
                 <input
@@ -258,9 +314,9 @@ export function TipoFuentePagoFormModal({
                   className={s.input.field}
                   disabled={isPending}
                 />
-                {errors.orden && (
+                {errors.orden ? (
                   <p className={s.input.error}>{errors.orden.message}</p>
-                )}
+                ) : null}
               </div>
 
               <label className={s.checkbox.container}>
@@ -279,18 +335,18 @@ export function TipoFuentePagoFormModal({
               </label>
             </div>
 
-            {/* Info: Configurar Requisitos */}
-            <div className='rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-800 dark:bg-blue-950/30'>
-              <p className='mb-1 text-sm font-medium text-blue-900 dark:text-blue-100'>
+            {/* ── Nota requisitos ────────────────────────────────────────── */}
+            <div className={s.infoBox}>
+              <p className='mb-0.5 text-sm font-medium text-blue-900 dark:text-blue-100'>
                 💡 Configuración de Requisitos
               </p>
               <p className='text-xs text-blue-700 dark:text-blue-300'>
-                Para configurar los documentos obligatorios de esta fuente, ve a{' '}
+                Para configurar los documentos obligatorios, ve a{' '}
                 <strong>Admin → Fuentes de Pago → Requisitos de Fuentes</strong>
               </p>
             </div>
 
-            {/* Actions */}
+            {/* ── Acciones ───────────────────────────────────────────────── */}
             <div className={s.actions.container}>
               <button
                 type='button'
