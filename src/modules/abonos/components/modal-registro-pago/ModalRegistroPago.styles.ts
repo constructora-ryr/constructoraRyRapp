@@ -43,9 +43,29 @@ export type ColorScheme = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const COLOR_SCHEMES: Record<string, ColorScheme> = {
+  // emerald/teal — igual que el botón de la tarjeta
   'Cuota Inicial': {
-    gradient: 'from-blue-600 via-cyan-600 to-teal-600',
-    gradientHover: 'hover:from-blue-700 hover:via-cyan-700 hover:to-teal-700',
+    gradient: 'from-emerald-600 via-teal-600 to-emerald-700',
+    gradientHover:
+      'hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800',
+    bgLight: 'bg-emerald-500/10 dark:bg-emerald-500/10',
+    borderSelected: 'border-emerald-500',
+    textAccent: 'text-emerald-600 dark:text-emerald-400',
+    desembolsoCard:
+      'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-700',
+    headerBadgeAbono: 'bg-white/20 border border-white/30 text-white',
+    headerBadgeDesembolso:
+      'bg-emerald-900/40 border border-emerald-400/40 text-white/90',
+    metodoBg: 'bg-emerald-500',
+    inputFocusBorder: 'focus:border-emerald-500 dark:focus:border-emerald-400',
+    inputFocusRing: 'focus:ring-2 focus:ring-emerald-500/20',
+    inputFocusWithin:
+      'focus-within:border-emerald-500 dark:focus-within:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-500/20',
+  },
+  // blue/indigo — igual que el botón de la tarjeta
+  'Crédito Hipotecario': {
+    gradient: 'from-blue-600 via-indigo-600 to-blue-700',
+    gradientHover: 'hover:from-blue-700 hover:via-indigo-700 hover:to-blue-800',
     bgLight: 'bg-blue-500/10 dark:bg-blue-500/10',
     borderSelected: 'border-blue-500',
     textAccent: 'text-blue-600 dark:text-blue-400',
@@ -53,65 +73,86 @@ const COLOR_SCHEMES: Record<string, ColorScheme> = {
       'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700',
     headerBadgeAbono: 'bg-white/20 border border-white/30 text-white',
     headerBadgeDesembolso:
-      'bg-purple-900/40 border border-purple-400/40 text-white/90',
+      'bg-blue-900/40 border border-blue-400/40 text-white/90',
     metodoBg: 'bg-blue-500',
     inputFocusBorder: 'focus:border-blue-500 dark:focus:border-blue-400',
     inputFocusRing: 'focus:ring-2 focus:ring-blue-500/20',
     inputFocusWithin:
       'focus-within:border-blue-500 dark:focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-500/20',
   },
-  'Crédito Hipotecario': {
-    gradient: 'from-purple-600 via-pink-600 to-rose-600',
-    gradientHover: 'hover:from-purple-700 hover:via-pink-700 hover:to-rose-700',
-    bgLight: 'bg-purple-500/10 dark:bg-purple-500/10',
-    borderSelected: 'border-purple-500',
-    textAccent: 'text-purple-600 dark:text-purple-400',
-    desembolsoCard:
-      'bg-purple-50 dark:bg-purple-900/20 border-purple-300 dark:border-purple-700',
-    headerBadgeAbono: 'bg-white/20 border border-white/30 text-white',
-    headerBadgeDesembolso:
-      'bg-purple-900/40 border border-purple-400/40 text-white/90',
-    metodoBg: 'bg-purple-500',
-    inputFocusBorder: 'focus:border-purple-500 dark:focus:border-purple-400',
-    inputFocusRing: 'focus:ring-2 focus:ring-purple-500/20',
-    inputFocusWithin:
-      'focus-within:border-purple-500 dark:focus-within:border-purple-400 focus-within:ring-2 focus-within:ring-purple-500/20',
-  },
+  // violet/purple — igual que el botón de la tarjeta
   'Subsidio Mi Casa Ya': {
-    gradient: 'from-green-600 via-emerald-600 to-teal-600',
+    gradient: 'from-violet-600 via-purple-600 to-violet-700',
     gradientHover:
-      'hover:from-green-700 hover:via-emerald-700 hover:to-teal-700',
-    bgLight: 'bg-green-500/10 dark:bg-green-500/10',
-    borderSelected: 'border-green-500',
-    textAccent: 'text-green-600 dark:text-green-400',
+      'hover:from-violet-700 hover:via-purple-700 hover:to-violet-800',
+    bgLight: 'bg-violet-500/10 dark:bg-violet-500/10',
+    borderSelected: 'border-violet-500',
+    textAccent: 'text-violet-600 dark:text-violet-400',
     desembolsoCard:
-      'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700',
+      'bg-violet-50 dark:bg-violet-900/20 border-violet-300 dark:border-violet-700',
     headerBadgeAbono: 'bg-white/20 border border-white/30 text-white',
     headerBadgeDesembolso:
-      'bg-green-900/40 border border-green-400/40 text-white/90',
-    metodoBg: 'bg-green-500',
-    inputFocusBorder: 'focus:border-green-500 dark:focus:border-green-400',
-    inputFocusRing: 'focus:ring-2 focus:ring-green-500/20',
+      'bg-violet-900/40 border border-violet-400/40 text-white/90',
+    metodoBg: 'bg-violet-500',
+    inputFocusBorder: 'focus:border-violet-500 dark:focus:border-violet-400',
+    inputFocusRing: 'focus:ring-2 focus:ring-violet-500/20',
     inputFocusWithin:
-      'focus-within:border-green-500 dark:focus-within:border-green-400 focus-within:ring-2 focus-within:ring-green-500/20',
+      'focus-within:border-violet-500 dark:focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-500/20',
   },
+  // pink/rose — igual que el botón de la tarjeta
   'Subsidio Caja Compensación': {
-    gradient: 'from-orange-600 via-amber-600 to-yellow-600',
-    gradientHover:
-      'hover:from-orange-700 hover:via-amber-700 hover:to-yellow-700',
-    bgLight: 'bg-orange-500/10 dark:bg-orange-500/10',
-    borderSelected: 'border-orange-500',
-    textAccent: 'text-orange-600 dark:text-orange-400',
+    gradient: 'from-pink-600 via-rose-600 to-pink-700',
+    gradientHover: 'hover:from-pink-700 hover:via-rose-700 hover:to-pink-800',
+    bgLight: 'bg-pink-500/10 dark:bg-pink-500/10',
+    borderSelected: 'border-pink-500',
+    textAccent: 'text-pink-600 dark:text-pink-400',
     desembolsoCard:
-      'bg-orange-50 dark:bg-orange-900/20 border-orange-300 dark:border-orange-700',
+      'bg-pink-50 dark:bg-pink-900/20 border-pink-300 dark:border-pink-700',
     headerBadgeAbono: 'bg-white/20 border border-white/30 text-white',
     headerBadgeDesembolso:
-      'bg-orange-900/40 border border-orange-400/40 text-white/90',
-    metodoBg: 'bg-orange-500',
-    inputFocusBorder: 'focus:border-orange-500 dark:focus:border-orange-400',
-    inputFocusRing: 'focus:ring-2 focus:ring-orange-500/20',
+      'bg-pink-900/40 border border-pink-400/40 text-white/90',
+    metodoBg: 'bg-pink-500',
+    inputFocusBorder: 'focus:border-pink-500 dark:focus:border-pink-400',
+    inputFocusRing: 'focus:ring-2 focus:ring-pink-500/20',
     inputFocusWithin:
-      'focus-within:border-orange-500 dark:focus-within:border-orange-400 focus-within:ring-2 focus-within:ring-orange-500/20',
+      'focus-within:border-pink-500 dark:focus-within:border-pink-400 focus-within:ring-2 focus-within:ring-pink-500/20',
+  },
+  // violet/purple — igual que el botón de la tarjeta
+  'Crédito con la Constructora': {
+    gradient: 'from-violet-600 via-purple-600 to-violet-700',
+    gradientHover:
+      'hover:from-violet-700 hover:via-purple-700 hover:to-violet-800',
+    bgLight: 'bg-violet-500/10 dark:bg-violet-500/10',
+    borderSelected: 'border-violet-500',
+    textAccent: 'text-violet-600 dark:text-violet-400',
+    desembolsoCard:
+      'bg-violet-50 dark:bg-violet-900/20 border-violet-300 dark:border-violet-700',
+    headerBadgeAbono: 'bg-white/20 border border-white/30 text-white',
+    headerBadgeDesembolso:
+      'bg-violet-900/40 border border-violet-400/40 text-white/90',
+    metodoBg: 'bg-violet-500',
+    inputFocusBorder: 'focus:border-violet-500 dark:focus:border-violet-400',
+    inputFocusRing: 'focus:ring-2 focus:ring-violet-500/20',
+    inputFocusWithin:
+      'focus-within:border-violet-500 dark:focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-500/20',
+  },
+  // cyan/blue — igual que el botón de la tarjeta
+  Leasing: {
+    gradient: 'from-cyan-600 via-blue-600 to-cyan-700',
+    gradientHover: 'hover:from-cyan-700 hover:via-blue-700 hover:to-cyan-800',
+    bgLight: 'bg-cyan-500/10 dark:bg-cyan-500/10',
+    borderSelected: 'border-cyan-500',
+    textAccent: 'text-cyan-600 dark:text-cyan-400',
+    desembolsoCard:
+      'bg-cyan-50 dark:bg-cyan-900/20 border-cyan-300 dark:border-cyan-700',
+    headerBadgeAbono: 'bg-white/20 border border-white/30 text-white',
+    headerBadgeDesembolso:
+      'bg-cyan-900/40 border border-cyan-400/40 text-white/90',
+    metodoBg: 'bg-cyan-500',
+    inputFocusBorder: 'focus:border-cyan-500 dark:focus:border-cyan-400',
+    inputFocusRing: 'focus:ring-2 focus:ring-cyan-500/20',
+    inputFocusWithin:
+      'focus-within:border-cyan-500 dark:focus-within:border-cyan-400 focus-within:ring-2 focus-within:ring-cyan-500/20',
   },
 }
 
@@ -153,8 +194,7 @@ export function getModalStyles(scheme: ColorScheme, modo: ModoRegistro) {
       cancelButton:
         'flex-1 h-11 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors',
       submitAbono: `flex-1 h-11 inline-flex items-center justify-center gap-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-r ${scheme.gradient} ${scheme.gradientHover} shadow-lg disabled:opacity-60 disabled:cursor-not-allowed transition-all`,
-      submitDesembolso:
-        'flex-1 h-11 inline-flex items-center justify-center gap-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-700 hover:via-indigo-700 hover:to-blue-700 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed transition-all',
+      submitDesembolso: `flex-1 h-11 inline-flex items-center justify-center gap-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-r ${scheme.gradient} ${scheme.gradientHover} shadow-lg disabled:opacity-60 disabled:cursor-not-allowed transition-all`,
     },
   }
 }
