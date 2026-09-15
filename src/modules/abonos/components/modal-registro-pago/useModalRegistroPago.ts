@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
 import { formatDateCompact, getTodayDateString } from '@/lib/utils/date.utils'
+import { useTiposFuentePagoConfig } from '@/modules/fuentes-pago/hooks'
 import { getCreditoByFuente } from '@/modules/fuentes-pago/services/creditos-constructora.service'
 import { esCreditoConstructora } from '@/shared/constants/fuentes-pago.constants'
 
@@ -19,7 +20,10 @@ import {
   type ModoRegistro,
 } from '../../types'
 
-import { getColorScheme, type ColorScheme } from './ModalRegistroPago.styles'
+import {
+  getColorSchemeByToken,
+  type ColorScheme,
+} from './ModalRegistroPago.styles'
 
 type FaseLoading = 'idle' | 'subiendo' | 'guardando'
 
@@ -72,6 +76,7 @@ export function useModalRegistroPago({
   onSuccess,
   onClose,
 }: UseModalRegistroPagoProps) {
+  const { getTipoConfig } = useTiposFuentePagoConfig()
   const fallbackFuente = fuenteInicial ?? fuentesPago[0]
 
   const [fuenteSeleccionada, setFuenteSeleccionadaState] =
@@ -155,7 +160,9 @@ export function useModalRegistroPago({
   const modo: ModoRegistro = getModoRegistro(fuenteSeleccionada)
   const esDesembolso = modo === 'desembolso'
   const esCuotaPreCargada = montoPrecargado != null
-  const colorScheme: ColorScheme = getColorScheme(fuenteSeleccionada.tipo)
+  const colorScheme: ColorScheme = getColorSchemeByToken(
+    getTipoConfig(fuenteSeleccionada.tipo).color
+  )
   const saldoPendiente = fuenteSeleccionada.saldo_pendiente ?? 0
   const montoNum = parseFloat(monto.replace(/[^0-9]/g, '')) || 0
   const isSubmitting = faseLoading !== 'idle'

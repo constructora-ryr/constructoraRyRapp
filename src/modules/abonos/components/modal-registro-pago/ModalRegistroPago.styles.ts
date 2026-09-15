@@ -162,6 +162,192 @@ export function getColorScheme(tipo: string): ColorScheme {
   return COLOR_SCHEMES[tipo] ?? DEFAULT_SCHEME
 }
 
+// ─── Mapa por token de color (para respetar config de BD) ────────────────────
+// Permite que el modal use el color configurado desde /admin/fuentes-pago.
+// Todas las clases son strings literales para que Tailwind JIT no las purgue.
+const COLOR_SCHEMES_BY_TOKEN: Record<string, ColorScheme> = {
+  blue: {
+    gradient: 'from-blue-600 via-indigo-600 to-blue-700',
+    gradientHover: 'hover:from-blue-700 hover:via-indigo-700 hover:to-blue-800',
+    bgLight: 'bg-blue-500/10 dark:bg-blue-500/10',
+    borderSelected: 'border-blue-500',
+    textAccent: 'text-blue-600 dark:text-blue-400',
+    desembolsoCard:
+      'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700',
+    headerBadgeAbono: 'bg-white/20 border border-white/30 text-white',
+    headerBadgeDesembolso:
+      'bg-blue-900/40 border border-blue-400/40 text-white/90',
+    metodoBg: 'bg-blue-500',
+    inputFocusBorder: 'focus:border-blue-500 dark:focus:border-blue-400',
+    inputFocusRing: 'focus:ring-2 focus:ring-blue-500/20',
+    inputFocusWithin:
+      'focus-within:border-blue-500 dark:focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-500/20',
+  },
+  indigo: {
+    gradient: 'from-indigo-600 via-violet-600 to-indigo-700',
+    gradientHover:
+      'hover:from-indigo-700 hover:via-violet-700 hover:to-indigo-800',
+    bgLight: 'bg-indigo-500/10 dark:bg-indigo-500/10',
+    borderSelected: 'border-indigo-500',
+    textAccent: 'text-indigo-600 dark:text-indigo-400',
+    desembolsoCard:
+      'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-300 dark:border-indigo-700',
+    headerBadgeAbono: 'bg-white/20 border border-white/30 text-white',
+    headerBadgeDesembolso:
+      'bg-indigo-900/40 border border-indigo-400/40 text-white/90',
+    metodoBg: 'bg-indigo-500',
+    inputFocusBorder: 'focus:border-indigo-500 dark:focus:border-indigo-400',
+    inputFocusRing: 'focus:ring-2 focus:ring-indigo-500/20',
+    inputFocusWithin:
+      'focus-within:border-indigo-500 dark:focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/20',
+  },
+  purple: {
+    gradient: 'from-violet-600 via-purple-600 to-violet-700',
+    gradientHover:
+      'hover:from-violet-700 hover:via-purple-700 hover:to-violet-800',
+    bgLight: 'bg-violet-500/10 dark:bg-violet-500/10',
+    borderSelected: 'border-violet-500',
+    textAccent: 'text-violet-600 dark:text-violet-400',
+    desembolsoCard:
+      'bg-violet-50 dark:bg-violet-900/20 border-violet-300 dark:border-violet-700',
+    headerBadgeAbono: 'bg-white/20 border border-white/30 text-white',
+    headerBadgeDesembolso:
+      'bg-violet-900/40 border border-violet-400/40 text-white/90',
+    metodoBg: 'bg-violet-500',
+    inputFocusBorder: 'focus:border-violet-500 dark:focus:border-violet-400',
+    inputFocusRing: 'focus:ring-2 focus:ring-violet-500/20',
+    inputFocusWithin:
+      'focus-within:border-violet-500 dark:focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-500/20',
+  },
+  pink: {
+    gradient: 'from-pink-600 via-rose-600 to-pink-700',
+    gradientHover: 'hover:from-pink-700 hover:via-rose-700 hover:to-pink-800',
+    bgLight: 'bg-pink-500/10 dark:bg-pink-500/10',
+    borderSelected: 'border-pink-500',
+    textAccent: 'text-pink-600 dark:text-pink-400',
+    desembolsoCard:
+      'bg-pink-50 dark:bg-pink-900/20 border-pink-300 dark:border-pink-700',
+    headerBadgeAbono: 'bg-white/20 border border-white/30 text-white',
+    headerBadgeDesembolso:
+      'bg-pink-900/40 border border-pink-400/40 text-white/90',
+    metodoBg: 'bg-pink-500',
+    inputFocusBorder: 'focus:border-pink-500 dark:focus:border-pink-400',
+    inputFocusRing: 'focus:ring-2 focus:ring-pink-500/20',
+    inputFocusWithin:
+      'focus-within:border-pink-500 dark:focus-within:border-pink-400 focus-within:ring-2 focus-within:ring-pink-500/20',
+  },
+  emerald: {
+    gradient: 'from-emerald-600 via-teal-600 to-emerald-700',
+    gradientHover:
+      'hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800',
+    bgLight: 'bg-emerald-500/10 dark:bg-emerald-500/10',
+    borderSelected: 'border-emerald-500',
+    textAccent: 'text-emerald-600 dark:text-emerald-400',
+    desembolsoCard:
+      'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-700',
+    headerBadgeAbono: 'bg-white/20 border border-white/30 text-white',
+    headerBadgeDesembolso:
+      'bg-emerald-900/40 border border-emerald-400/40 text-white/90',
+    metodoBg: 'bg-emerald-500',
+    inputFocusBorder: 'focus:border-emerald-500 dark:focus:border-emerald-400',
+    inputFocusRing: 'focus:ring-2 focus:ring-emerald-500/20',
+    inputFocusWithin:
+      'focus-within:border-emerald-500 dark:focus-within:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-500/20',
+  },
+  green: {
+    gradient: 'from-green-600 via-emerald-600 to-green-700',
+    gradientHover:
+      'hover:from-green-700 hover:via-emerald-700 hover:to-green-800',
+    bgLight: 'bg-green-500/10 dark:bg-green-500/10',
+    borderSelected: 'border-green-500',
+    textAccent: 'text-green-600 dark:text-green-400',
+    desembolsoCard:
+      'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700',
+    headerBadgeAbono: 'bg-white/20 border border-white/30 text-white',
+    headerBadgeDesembolso:
+      'bg-green-900/40 border border-green-400/40 text-white/90',
+    metodoBg: 'bg-green-500',
+    inputFocusBorder: 'focus:border-green-500 dark:focus:border-green-400',
+    inputFocusRing: 'focus:ring-2 focus:ring-green-500/20',
+    inputFocusWithin:
+      'focus-within:border-green-500 dark:focus-within:border-green-400 focus-within:ring-2 focus-within:ring-green-500/20',
+  },
+  cyan: {
+    gradient: 'from-cyan-600 via-blue-600 to-cyan-700',
+    gradientHover: 'hover:from-cyan-700 hover:via-blue-700 hover:to-cyan-800',
+    bgLight: 'bg-cyan-500/10 dark:bg-cyan-500/10',
+    borderSelected: 'border-cyan-500',
+    textAccent: 'text-cyan-600 dark:text-cyan-400',
+    desembolsoCard:
+      'bg-cyan-50 dark:bg-cyan-900/20 border-cyan-300 dark:border-cyan-700',
+    headerBadgeAbono: 'bg-white/20 border border-white/30 text-white',
+    headerBadgeDesembolso:
+      'bg-cyan-900/40 border border-cyan-400/40 text-white/90',
+    metodoBg: 'bg-cyan-500',
+    inputFocusBorder: 'focus:border-cyan-500 dark:focus:border-cyan-400',
+    inputFocusRing: 'focus:ring-2 focus:ring-cyan-500/20',
+    inputFocusWithin:
+      'focus-within:border-cyan-500 dark:focus-within:border-cyan-400 focus-within:ring-2 focus-within:ring-cyan-500/20',
+  },
+  orange: {
+    gradient: 'from-orange-600 via-amber-600 to-orange-700',
+    gradientHover:
+      'hover:from-orange-700 hover:via-amber-700 hover:to-orange-800',
+    bgLight: 'bg-orange-500/10 dark:bg-orange-500/10',
+    borderSelected: 'border-orange-500',
+    textAccent: 'text-orange-600 dark:text-orange-400',
+    desembolsoCard:
+      'bg-orange-50 dark:bg-orange-900/20 border-orange-300 dark:border-orange-700',
+    headerBadgeAbono: 'bg-white/20 border border-white/30 text-white',
+    headerBadgeDesembolso:
+      'bg-orange-900/40 border border-orange-400/40 text-white/90',
+    metodoBg: 'bg-orange-500',
+    inputFocusBorder: 'focus:border-orange-500 dark:focus:border-orange-400',
+    inputFocusRing: 'focus:ring-2 focus:ring-orange-500/20',
+    inputFocusWithin:
+      'focus-within:border-orange-500 dark:focus-within:border-orange-400 focus-within:ring-2 focus-within:ring-orange-500/20',
+  },
+  red: {
+    gradient: 'from-red-600 via-rose-600 to-red-700',
+    gradientHover: 'hover:from-red-700 hover:via-rose-700 hover:to-red-800',
+    bgLight: 'bg-red-500/10 dark:bg-red-500/10',
+    borderSelected: 'border-red-500',
+    textAccent: 'text-red-600 dark:text-red-400',
+    desembolsoCard:
+      'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700',
+    headerBadgeAbono: 'bg-white/20 border border-white/30 text-white',
+    headerBadgeDesembolso:
+      'bg-red-900/40 border border-red-400/40 text-white/90',
+    metodoBg: 'bg-red-500',
+    inputFocusBorder: 'focus:border-red-500 dark:focus:border-red-400',
+    inputFocusRing: 'focus:ring-2 focus:ring-red-500/20',
+    inputFocusWithin:
+      'focus-within:border-red-500 dark:focus-within:border-red-400 focus-within:ring-2 focus-within:ring-red-500/20',
+  },
+  yellow: {
+    gradient: 'from-yellow-600 via-amber-600 to-yellow-700',
+    gradientHover:
+      'hover:from-yellow-700 hover:via-amber-700 hover:to-yellow-800',
+    bgLight: 'bg-yellow-500/10 dark:bg-yellow-500/10',
+    borderSelected: 'border-yellow-500',
+    textAccent: 'text-yellow-600 dark:text-yellow-400',
+    desembolsoCard:
+      'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700',
+    headerBadgeAbono: 'bg-white/20 border border-white/30 text-white',
+    headerBadgeDesembolso:
+      'bg-yellow-900/40 border border-yellow-400/40 text-white/90',
+    metodoBg: 'bg-yellow-500',
+    inputFocusBorder: 'focus:border-yellow-500 dark:focus:border-yellow-400',
+    inputFocusRing: 'focus:ring-2 focus:ring-yellow-500/20',
+    inputFocusWithin:
+      'focus-within:border-yellow-500 dark:focus-within:border-yellow-400 focus-within:ring-2 focus-within:ring-yellow-500/20',
+  },
+}
+
+export function getColorSchemeByToken(colorToken: string): ColorScheme {
+  return COLOR_SCHEMES_BY_TOKEN[colorToken] ?? DEFAULT_SCHEME
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Estilos generados del modal
 // ─────────────────────────────────────────────────────────────────────────────

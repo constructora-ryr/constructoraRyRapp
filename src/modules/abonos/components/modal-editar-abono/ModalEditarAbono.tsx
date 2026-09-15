@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 
 import { getTodayDateString } from '@/lib/utils/date.utils'
+import { useTiposFuentePagoConfig } from '@/modules/fuentes-pago/hooks'
 import {
   Dialog,
   DialogContent,
@@ -31,7 +32,7 @@ import { formatMontoDisplay } from '../modal-registro-pago/CampoMontoPago'
 import { ComprobantePago } from '../modal-registro-pago/ComprobantePago'
 import { MetodosPago } from '../modal-registro-pago/MetodosPago'
 import {
-  getColorScheme,
+  getColorSchemeByToken,
   getModalStyles,
 } from '../modal-registro-pago/ModalRegistroPago.styles'
 
@@ -51,8 +52,11 @@ export function ModalEditarAbono({
   onSuccess,
 }: ModalEditarAbonoProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { getTipoConfig } = useTiposFuentePagoConfig()
 
-  const colorScheme = getColorScheme(abono.fuente_tipo ?? '')
+  const colorScheme = getColorSchemeByToken(
+    getTipoConfig(abono.fuente_tipo ?? '').color
+  )
   const styles = getModalStyles(colorScheme, 'abono')
 
   const {
