@@ -5,7 +5,6 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { clientesService } from '@/modules/clientes/services/clientes.service'
 import { proyectosService } from '@/modules/proyectos/services'
-import { viviendasService } from '@/modules/viviendas/services/viviendas.service'
 
 export interface DashboardStatsData {
   proyectos: {
@@ -48,10 +47,11 @@ export function useDashboardStats() {
       inicioMes.setHours(0, 0, 0, 0)
       const inicioMesStr = inicioMes.toISOString().slice(0, 10)
 
-      const [proyectos, viviendas, clientesStats, abonosMes] =
+      const [proyectos, viviendasEstados, clientesStats, abonosMes] =
         await Promise.all([
           proyectosService.obtenerProyectos(false),
-          viviendasService.listar(),
+          // Solo estado — evita cargar vista_viviendas_completas con todos los campos
+          supabase.from('viviendas').select('estado'),
           clientesService.obtenerEstadisticas(),
           supabase
             .from('abonos_historial')
@@ -81,11 +81,19 @@ export function useDashboardStats() {
           })),
         },
         viviendas: {
-          total: viviendas.length,
-          disponibles: viviendas.filter(v => v.estado === 'Disponible').length,
-          asignadas: viviendas.filter(v => v.estado === 'Asignada').length,
-          entregadas: viviendas.filter(v => v.estado === 'Entregada').length,
-          propietario: viviendas.filter(v => v.estado === 'Propietario').length,
+          total: viviendasEstados.data?.length ?? 0,
+          disponibles:
+            viviendasEstados.data?.filter(v => v.estado === 'Disponible')
+              .length ?? 0,
+          asignadas:
+            viviendasEstados.data?.filter(v => v.estado === 'Asignada')
+              .length ?? 0,
+          entregadas:
+            viviendasEstados.data?.filter(v => v.estado === 'Entregada')
+              .length ?? 0,
+          propietario:
+            viviendasEstados.data?.filter(v => v.estado === 'Propietario')
+              .length ?? 0,
         },
         clientes: clientesStats,
         recaudoMes: (abonosMes.data ?? []).reduce(
