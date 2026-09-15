@@ -465,16 +465,15 @@ export function useAsignarViviendaV2({
           }
         })
 
-      // valor_negociado debe ser el precio PRE-descuento, porque useCrearNegociacion
-      // calcula el total a financiar como (valor_negociado - descuento_aplicado)
-      // y lo compara contra la suma de fuentes. Enviar el valor post-descuento
-      // causaría una doble resta y fallaría la validación.
-      const valorPreDescuento = valorTotal + descuentoAplicado
-
+      // valor_negociado = solo valor_base (sin gastos_notariales ni recargo_esquinera).
+      // El trigger calcular_valor_total_pagar() suma esos extras automáticamente:
+      //   valor_total_pagar = valor_negociado - descuento + gastos + recargo
+      // Si enviáramos valor_negociado = valorBase + gastos, el trigger los sumaría
+      // de nuevo → doble conteo y descuadre de exactamente gastos_notariales.
       const result = await crearNegociacion({
         cliente_id: clienteId,
         vivienda_id: viviendaId,
-        valor_negociado: valorPreDescuento,
+        valor_negociado: valorBase,
         descuento_aplicado: descuentoAplicado,
         tipo_descuento: tipoDescuento || undefined,
         motivo_descuento: motivoDescuento || undefined,
@@ -510,7 +509,7 @@ export function useAsignarViviendaV2({
     clienteId,
     clienteSlug,
     viviendaId,
-    valorTotal,
+    valorBase,
     descuentoAplicado,
     tipoDescuento,
     motivoDescuento,
