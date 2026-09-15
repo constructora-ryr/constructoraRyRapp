@@ -21,6 +21,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
+import { useRouter } from 'next/navigation'
+
 import { clientesService } from '../services/clientes.service'
 import type {
   ActualizarClienteDTO,
@@ -101,6 +103,7 @@ export function useEstadisticasClientesQuery() {
  */
 export function useCrearClienteMutation() {
   const queryClient = useQueryClient()
+  const router = useRouter()
 
   return useMutation({
     mutationFn: (datos: CrearClienteDTO) => clientesService.crearCliente(datos),
@@ -110,9 +113,13 @@ export function useCrearClienteMutation() {
       queryClient.invalidateQueries({ queryKey: clientesKeys.estadisticas() })
 
       // 🎉 Toast de éxito
-      toast.success('Cliente creado exitosamente', {
-        description: `${cliente.nombres} ${cliente.apellidos}`,
+      toast.success(`${cliente.nombres} ${cliente.apellidos}`, {
+        description: 'Cliente creado exitosamente',
         duration: 4000,
+        action: {
+          label: 'Ver cliente',
+          onClick: () => router.push(`/clientes/${cliente.id}`),
+        },
       })
     },
     onError: (error: Error) => {
