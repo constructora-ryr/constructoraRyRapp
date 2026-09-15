@@ -7,11 +7,11 @@ export const tipoFuentePagoFormModalStyles = {
   backdropOverlay: 'absolute inset-0 bg-black/60 backdrop-blur-sm',
 
   modal:
-    'relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 rounded-2xl shadow-2xl',
+    'relative w-full max-w-2xl max-h-[90vh] flex flex-col bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden',
 
   header: {
     container:
-      'sticky top-0 z-10 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-6 py-4 flex items-center justify-between',
+      'flex-shrink-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-6 py-4 flex items-center justify-between rounded-t-2xl',
     left: 'flex items-center gap-3',
     preview:
       'h-10 w-10 rounded-xl flex items-center justify-center shadow-lg ring-2 ring-white/30 flex-shrink-0',
@@ -23,7 +23,8 @@ export const tipoFuentePagoFormModalStyles = {
   },
 
   form: {
-    container: 'p-6 space-y-6',
+    container: 'flex flex-col flex-1 min-h-0',
+    scrollBody: 'flex-1 overflow-y-auto p-6 space-y-6',
     section: 'space-y-4',
     sectionTitle:
       'text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider',
@@ -99,7 +100,7 @@ export const tipoFuentePagoFormModalStyles = {
 
   actions: {
     container:
-      'flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-800',
+      'flex-shrink-0 flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 dark:border-gray-800',
     cancelButton:
       'px-4 py-2.5 rounded-xl border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors font-medium text-sm disabled:opacity-50',
     submitButton:
