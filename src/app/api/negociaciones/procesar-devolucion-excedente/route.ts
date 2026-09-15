@@ -77,6 +77,33 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Validar tipo de archivo en servidor (no confiar en el nombre ni en el header del browser)
+    const MIMES_VALIDOS: Record<string, string> = {
+      'application/pdf': 'pdf',
+      'image/jpeg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp',
+    }
+    const extPermitida = MIMES_VALIDOS[comprobanteFile.type]
+    if (!extPermitida) {
+      return NextResponse.json(
+        {
+          error:
+            'Tipo de archivo no permitido. Solo se aceptan PDF, JPG, PNG o WebP.',
+        },
+        { status: 400 }
+      )
+    }
+
+    // Validar tamaño máximo: 10 MB
+    const MAX_BYTES = 10 * 1024 * 1024
+    if (comprobanteFile.size > MAX_BYTES) {
+      return NextResponse.json(
+        { error: 'El archivo no puede superar 10 MB.' },
+        { status: 400 }
+      )
+    }
+
     // Verificar que la negociación existe
     const { data: negRaw, error: negError } = await supabaseAdmin
       .from('negociaciones')
@@ -106,9 +133,9 @@ export async function POST(request: NextRequest) {
 
     // Subir comprobante a documentos-clientes (única copia — aparece en pestaña
     // Documentos y es vinculable desde el historial del cliente)
-    const ext = comprobanteFile.name.split('.').pop() ?? 'pdf'
+    // La extensión se deriva del MIME validado (no del nombre del archivo)
     const timestamp = Date.now()
-    const fileName = `${timestamp}.${ext}`
+    const fileName = `${timestamp}.${extPermitida}`
     const filePath = `${neg.cliente_id}/devoluciones/${negociacion_id}/${fileName}`
 
     const arrayBuffer = await comprobanteFile.arrayBuffer()
