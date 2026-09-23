@@ -5,7 +5,6 @@ import { ArrowUpRight, Calendar, CreditCard, Tag, Wallet } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 import { formatDateCompact } from '@/lib/utils/date.utils'
-import { getShortId } from '@/lib/utils/slug.utils'
 import { formatearNumeroRecibo } from '@/modules/abonos/utils/formato-recibo'
 import { formatCurrency } from '@/shared/utils/format'
 
@@ -32,7 +31,7 @@ interface AbonosRecientesProps {
   abonos: Abono[]
   totalAbonado: number
   negociacionId: string
-  clienteId: string
+  clienteCC: string
   fuentesPago?: FuenteInfo[]
   isLoading?: boolean
 }
@@ -43,7 +42,7 @@ export function AbonosRecientes({
   abonos,
   totalAbonado,
   negociacionId: _negociacionId,
-  clienteId,
+  clienteCC,
   fuentesPago = [],
   isLoading,
 }: AbonosRecientesProps) {
@@ -95,7 +94,9 @@ export function AbonosRecientes({
           <button
             key={abono.id}
             type='button'
-            onClick={() => router.push(`/abonos/${getShortId(clienteId)}`)}
+            onClick={() =>
+              router.push(`/abonos?q=${encodeURIComponent(clienteCC)}`)
+            }
             className='group flex w-full items-center gap-3 rounded-lg border border-gray-200/80 bg-white px-3 py-2.5 text-left transition-colors hover:border-cyan-200 hover:bg-cyan-50/40 dark:border-gray-700/50 dark:bg-gray-800/60 dark:hover:border-cyan-800/50 dark:hover:bg-cyan-900/10'
           >
             {/* Icono */}

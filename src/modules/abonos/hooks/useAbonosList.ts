@@ -52,7 +52,7 @@ export interface EstadisticasAbonos {
  * Wrapper de presentación sobre useAbonosQuery (React Query).
  * Agrega filtrado local, paginación, estadísticas y meses disponibles.
  */
-export function useAbonosList() {
+export function useAbonosList(initialBusqueda = '') {
   const {
     abonos,
     cargando: isLoading,
@@ -61,7 +61,7 @@ export function useAbonosList() {
   } = useAbonosQuery()
 
   const [filtros, setFiltros] = useState<FiltrosAbonos>({
-    busqueda: '',
+    busqueda: initialBusqueda,
     fuente: 'todas',
     entidad: 'todas',
     rango: 'todo',

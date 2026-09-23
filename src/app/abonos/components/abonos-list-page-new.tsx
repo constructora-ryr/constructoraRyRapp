@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react'
 
 import { CreditCard, Receipt, SlidersHorizontal } from 'lucide-react'
 
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 import { AbonoDetalleModal } from '@/modules/abonos/components/abono-detalle-modal/AbonoDetalleModal'
 import { AbonosListFiltros } from '@/modules/abonos/components/lista/AbonosListFiltros'
@@ -34,6 +34,8 @@ export function AbonosListPage({
   isAdmin = false,
 }: AbonosListPageProps = {}) {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const initialQ = searchParams.get('q') ?? ''
 
   // â”€â”€â”€ Estado de modales â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [abonoSeleccionado, setAbonoSeleccionado] =
@@ -78,7 +80,7 @@ export function AbonosListPage({
     isLoading,
     error,
     refetch,
-  } = useAbonosList()
+  } = useAbonosList(initialQ)
 
   // â”€â”€â”€ Loading â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (isLoading) {
