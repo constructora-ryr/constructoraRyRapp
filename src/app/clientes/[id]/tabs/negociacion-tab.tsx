@@ -244,6 +244,12 @@ export function NegociacionTab({
       />
     )
 
+  // Solo permite ajustar en estados editables — una negociación Completada o
+  // Cerrada por Traslado no debe poder modificarse.
+  const puedeAjustarAhora =
+    puedeAjustar &&
+    (negociacion.estado === 'Activa' || negociacion.estado === 'Suspendida')
+
   const proyecto = negociacion.proyecto?.nombre ?? '—'
   const vivienda = negociacion.vivienda
   const manzana = vivienda?.manzanas?.nombre
@@ -702,7 +708,7 @@ export function NegociacionTab({
               </button>
             ) : null}
           </div>
-          {puedeDescuento || puedeAjustar ? (
+          {puedeDescuento || puedeAjustarAhora ? (
             <div className='flex items-center gap-2'>
               {puedeDescuento && negociacion.estado === 'Activa' ? (
                 <button
@@ -713,7 +719,7 @@ export function NegociacionTab({
                   {descuento > 0 ? 'Modificar Descuento' : 'Aplicar Descuento'}
                 </button>
               ) : null}
-              {puedeAjustar ? (
+              {puedeAjustarAhora ? (
                 <button
                   onClick={openAjuste}
                   className='inline-flex items-center gap-1.5 rounded-lg border border-cyan-300 bg-cyan-50 px-3 py-1.5 text-[11px] font-semibold text-cyan-800 shadow-sm transition-colors hover:bg-cyan-100 hover:shadow dark:border-cyan-700/50 dark:bg-cyan-900/30 dark:text-cyan-300 dark:hover:bg-cyan-900/40'
@@ -736,7 +742,7 @@ export function NegociacionTab({
           {fuentesPago.length > 0 && !estaBalanceado ? (
             <DescuadreFinancieroAlert
               diferencia={diferencia}
-              puedeAjustar={puedeAjustar}
+              puedeAjustar={puedeAjustarAhora}
               onCorregir={openAjuste}
             />
           ) : null}
@@ -749,14 +755,14 @@ export function NegociacionTab({
               monto={negociacion?.excedente_devolucion_monto}
               fecha={negociacion?.excedente_devolucion_fecha}
               comprobanteUrl={negociacion?.excedente_devolucion_comprobante_url}
-              puedeAjustar={puedeAjustar}
+              puedeAjustar={puedeAjustarAhora}
               onRegistrar={() => setModalDevolucionOpen(true)}
             />
           ) : null}
 
           {fuentesPago.length === 0 ? (
             <p className='py-4 text-center text-xs text-gray-400 dark:text-gray-500'>
-              {puedeAjustar
+              {puedeAjustarAhora
                 ? 'Sin fuentes configuradas. Usa "Redistribuir" para agregarlas.'
                 : 'Sin fuentes de pago configuradas.'}
             </p>
@@ -945,7 +951,7 @@ export function NegociacionTab({
       />
 
       {/* Modal: Redistribuir montos */}
-      {puedeAjustar ? (
+      {puedeAjustarAhora ? (
         <AjusteCierreFinancieroModal
           isOpen={modalAjusteOpen}
           onClose={closeAjuste}
