@@ -4,11 +4,14 @@ import { useState } from 'react'
 
 import { AlertTriangle, Info, X } from 'lucide-react'
 
+import { useTiposFuentePagoConfig } from '@/modules/fuentes-pago/hooks'
 import { FormSelect } from '@/shared/components/ui/form-select'
-import { esCreditoConstructora } from '@/shared/constants/fuentes-pago.constants'
+import {
+  esCreditoConstructora,
+  getFuenteColorClasses,
+} from '@/shared/constants/fuentes-pago.constants'
 
 import type { FuAlteNueva } from '../../hooks'
-import { getFuenteColor } from '../../hooks'
 
 import { formatMontoInput } from './helpers'
 
@@ -37,7 +40,8 @@ export function FilaNueva({
   hasError = false,
   hasEntidadError = false,
 }: FilaNuevaProps) {
-  const color = getFuenteColor(fuente.tipo)
+  const { getTipoConfig } = useTiposFuentePagoConfig()
+  const color = getFuenteColorClasses(getTipoConfig(fuente.tipo).color)
   const [inputValue, setInputValue] = useState(formatMontoInput(fuente.monto))
   const mostrarEntidad = requiereEntidad
   const esCredito = esCreditoConstructora(fuente.tipo)

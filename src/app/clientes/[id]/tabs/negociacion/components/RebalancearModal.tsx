@@ -7,6 +7,8 @@
  * Toda la lógica de estado y validación vive en useModalAjusteState.
  */
 
+import { useEffect } from 'react'
+
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   AlertTriangle,
@@ -121,6 +123,16 @@ export function AjusteCierreFinancieroModal({
     onGuardar,
     isGuardando,
   })
+
+  // Bloquear scroll del body mientras el modal está abierto
+  useEffect(() => {
+    if (!isOpen) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [isOpen])
 
   if (!isOpen || typeof document === 'undefined') return null
 
@@ -345,14 +357,25 @@ export function AjusteCierreFinancieroModal({
 
                 {/* Indicador de balance */}
                 {estaBalanceado ? (
-                  <div className='flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2 dark:border-emerald-800/60 dark:bg-emerald-900/20'>
-                    <CheckCircle2 className='h-3.5 w-3.5 flex-shrink-0 text-emerald-600 dark:text-emerald-400' />
-                    <span className='flex-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300'>
-                      Ecuación balanceada
-                    </span>
-                    <span className='text-xs tabular-nums text-emerald-600/70 dark:text-emerald-400/70'>
-                      {formatCurrency(subtotal)}
-                    </span>
+                  <div className='rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2 dark:border-emerald-800/60 dark:bg-emerald-900/20'>
+                    <div className='flex items-center gap-2'>
+                      <CheckCircle2 className='h-3.5 w-3.5 flex-shrink-0 text-emerald-600 dark:text-emerald-400' />
+                      <span className='flex-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300'>
+                        Ecuación balanceada
+                      </span>
+                      <span className='text-xs tabular-nums text-emerald-600/70 dark:text-emerald-400/70'>
+                        {formatCurrency(subtotal)}
+                      </span>
+                    </div>
+                    {diferencia < -1 && (
+                      <p className='mt-1 pl-[22px] text-xs text-emerald-600/80 dark:text-emerald-400/70'>
+                        Excedente de{' '}
+                        <strong className='font-semibold'>
+                          {formatCurrency(Math.abs(diferencia))}
+                        </strong>{' '}
+                        — se devolverá al cliente
+                      </p>
+                    )}
                   </div>
                 ) : (
                   <div className='flex items-center gap-2.5 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 dark:border-red-800/60 dark:bg-red-900/20'>

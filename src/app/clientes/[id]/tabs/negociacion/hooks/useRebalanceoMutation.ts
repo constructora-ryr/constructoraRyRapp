@@ -16,6 +16,13 @@ import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase/client'
 import { logger } from '@/lib/utils/logger'
 import { documentosPendientesKeys } from '@/modules/clientes/types/documentos-pendientes.types'
+import { formatCurrency } from '@/shared/utils/format'
+
+// Convierte "$127576000" → "$ 127.576.000" en mensajes de error del servidor
+function formatearMensajeErrorRebalanceo(msg: string): string {
+  if (!msg) return 'Error al ajustar el cierre financiero. Intenta nuevamente.'
+  return msg.replace(/\$(\d+)/g, (_, n) => formatCurrency(parseInt(n, 10)))
+}
 
 import type { DatosAjusteCierreFinanciero } from './useNegociacionTab'
 
@@ -84,7 +91,7 @@ export function useAjusteCierreFinanciero({
 
       return data
     },
-    onSuccess: () => {
+    onSuccess: (_, { motivo }) => {
       queryClient.invalidateQueries({
         queryKey: ['fuentes-pago-neg-tab', negociacionId],
       })
@@ -94,7 +101,9 @@ export function useAjusteCierreFinanciero({
       queryClient.invalidateQueries({
         queryKey: ['docs-pendientes-neg-tab', clienteId],
       })
-      toast.success('Cierre financiero ajustado correctamente')
+      toast.success('Cierre financiero ajustado', {
+        description: motivo ? `Motivo: ${motivo}` : undefined,
+      })
       closeAjuste()
     },
     onError: (error: Error) => {
@@ -102,10 +111,7 @@ export function useAjusteCierreFinanciero({
         '[useAjusteCierreFinanciero] Error al ajustar cierre financiero:',
         error.message
       )
-      toast.error(
-        error.message ||
-          'Error al ajustar el cierre financiero. Intenta nuevamente.'
-      )
+      toast.error(formatearMensajeErrorRebalanceo(error.message))
     },
   })
 

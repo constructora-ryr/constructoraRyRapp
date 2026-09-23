@@ -5,11 +5,12 @@ import { useEffect, useState } from 'react'
 import { AlertTriangle, CheckCircle2, Lock, Minus, Plus } from 'lucide-react'
 
 import { EntidadCombobox } from '@/modules/clientes/components/fuente-pago-card/EntidadCombobox'
+import { useTiposFuentePagoConfig } from '@/modules/fuentes-pago/hooks'
+import { getFuenteColorClasses } from '@/shared/constants/fuentes-pago.constants'
 import { formatCurrency } from '@/shared/utils/format'
 import type { RestriccionesFuente } from '@/shared/utils/reglas-cierre-financiero'
 
 import type { AjusteLocal } from '../../hooks'
-import { getFuenteColor } from '../../hooks'
 
 import { formatMontoInput } from './helpers'
 
@@ -36,7 +37,8 @@ export function FilaFuente({
   hasMontoError = false,
   hasEntidadError = false,
 }: FilaFuenteProps) {
-  const color = getFuenteColor(ajuste.tipo)
+  const { getTipoConfig } = useTiposFuentePagoConfig()
+  const color = getFuenteColorClasses(getTipoConfig(ajuste.tipo).color)
   const [inputValue, setInputValue] = useState(
     formatMontoInput(ajuste.montoEditable)
   )

@@ -4,7 +4,7 @@ import { useState } from 'react'
 
 import { Plus } from 'lucide-react'
 
-import { getFuenteColor } from '../../hooks'
+import { getFuenteColorClasses } from '@/shared/constants/fuentes-pago.constants'
 
 interface TipoDisponible {
   nombre: string
@@ -53,7 +53,7 @@ export function SelectorNuevoTipo({
       </p>
       <div className='max-h-40 divide-y divide-gray-100 overflow-y-auto dark:divide-gray-700/50'>
         {tiposDisponibles.map(tipo => {
-          const color = getFuenteColor(tipo.nombre)
+          const color = getFuenteColorClasses(tipo.color)
           return (
             <button
               key={tipo.nombre}
