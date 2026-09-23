@@ -1,6 +1,8 @@
 'use client'
 
-import { Calendar, CreditCard, Tag, Wallet } from 'lucide-react'
+import { ArrowUpRight, Calendar, CreditCard, Tag, Wallet } from 'lucide-react'
+
+import { useRouter } from 'next/navigation'
 
 import { formatDateCompact } from '@/lib/utils/date.utils'
 import { formatearNumeroRecibo } from '@/modules/abonos/utils/formato-recibo'
@@ -29,6 +31,7 @@ interface AbonosRecientesProps {
   abonos: Abono[]
   totalAbonado: number
   negociacionId: string
+  clienteId: string
   fuentesPago?: FuenteInfo[]
   isLoading?: boolean
 }
@@ -39,10 +42,11 @@ export function AbonosRecientes({
   abonos,
   totalAbonado,
   negociacionId: _negociacionId,
+  clienteId,
   fuentesPago = [],
   isLoading,
 }: AbonosRecientesProps) {
-  // Mapa fuente_pago_id → FuenteInfo para lookup O(1)
+  const router = useRouter()
   const fuenteMap = new Map(fuentesPago.map(f => [f.id, f]))
 
   if (isLoading) {
@@ -87,16 +91,18 @@ export function AbonosRecientes({
           : null
 
         return (
-          <div
+          <button
             key={abono.id}
-            className='flex items-center gap-3 rounded-lg border border-gray-200/80 bg-white px-3 py-2.5 dark:border-gray-700/50 dark:bg-gray-800/60'
+            type='button'
+            onClick={() => router.push(`/abonos/${clienteId}`)}
+            className='group flex w-full items-center gap-3 rounded-lg border border-gray-200/80 bg-white px-3 py-2.5 text-left transition-colors hover:border-cyan-200 hover:bg-cyan-50/40 dark:border-gray-700/50 dark:bg-gray-800/60 dark:hover:border-cyan-800/50 dark:hover:bg-cyan-900/10'
           >
             {/* Icono */}
-            <div className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-900/30'>
-              <Wallet className='h-4 w-4 text-blue-600 dark:text-blue-400' />
+            <div className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-blue-50 transition-colors group-hover:bg-cyan-100 dark:bg-blue-900/30 dark:group-hover:bg-cyan-900/40'>
+              <Wallet className='h-4 w-4 text-blue-600 group-hover:text-cyan-600 dark:text-blue-400 dark:group-hover:text-cyan-400' />
             </div>
 
-            {/* Info — columnas con etiquetas claras */}
+            {/* Info */}
             <div className='min-w-0 flex-1 space-y-0.5'>
               {/* Monto + consecutivo */}
               <div className='flex items-center gap-2'>
@@ -115,7 +121,6 @@ export function AbonosRecientes({
 
               {/* Fecha + método + fuente */}
               <div className='flex flex-wrap items-center gap-x-3 gap-y-0.5'>
-                {/* Fecha */}
                 <div className='flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400'>
                   <Calendar className='h-3 w-3 flex-shrink-0' />
                   <span className='text-gray-400 dark:text-gray-500'>
@@ -124,7 +129,6 @@ export function AbonosRecientes({
                   <span>{formatDateCompact(abono.fecha_abono)}</span>
                 </div>
 
-                {/* Método */}
                 {abono.metodo_pago ? (
                   <div className='flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400'>
                     <span className='text-gray-400 dark:text-gray-500'>
@@ -134,7 +138,6 @@ export function AbonosRecientes({
                   </div>
                 ) : null}
 
-                {/* Fuente */}
                 {fuenteLabel ? (
                   <div className='flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400'>
                     <Tag className='h-3 w-3 flex-shrink-0' />
@@ -145,7 +148,10 @@ export function AbonosRecientes({
                 ) : null}
               </div>
             </div>
-          </div>
+
+            {/* Flecha — aparece en hover */}
+            <ArrowUpRight className='h-4 w-4 flex-shrink-0 text-gray-300 transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-cyan-500 dark:text-gray-600 dark:group-hover:text-cyan-400' />
+          </button>
         )
       })}
 

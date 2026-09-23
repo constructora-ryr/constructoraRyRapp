@@ -911,9 +911,7 @@ export function NegociacionTab({
             ) : null}
             {canVerAbonos ? (
               <button
-                onClick={() =>
-                  router.push(`/abonos?negociacion=${negociacion.id}`)
-                }
+                onClick={() => router.push(`/abonos/${cliente.id}`)}
                 className='inline-flex items-center gap-1.5 rounded-lg border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-[11px] font-semibold text-cyan-700 transition-all hover:border-cyan-300 hover:bg-cyan-100 hover:shadow-sm dark:border-cyan-800 dark:bg-cyan-900/20 dark:text-cyan-400 dark:hover:bg-cyan-900/40'
               >
                 <ArrowUpRight className='h-3.5 w-3.5' />
@@ -937,6 +935,7 @@ export function NegociacionTab({
             abonos={abonosParaUI}
             totalAbonado={totalAbonado}
             negociacionId={negociacion.id}
+            clienteId={cliente.id}
             fuentesPago={fuentesPago}
             isLoading={isLoadingAbonos}
           />
