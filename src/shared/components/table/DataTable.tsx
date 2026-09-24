@@ -34,6 +34,7 @@ interface DataTableProps<TData> {
   showPagination?: boolean
   initialSorting?: SortingState
   onRowClick?: (row: TData) => void
+  compact?: boolean
 }
 
 const gradientClasses = {
@@ -83,6 +84,7 @@ export function DataTable<TData>({
   showPagination = true,
   initialSorting = [],
   onRowClick,
+  compact = false,
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = useState<SortingState>(initialSorting)
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize })
@@ -127,7 +129,8 @@ export function DataTable<TData>({
                   <th
                     key={header.id}
                     className={cn(
-                      'px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-white',
+                      'text-xs font-bold uppercase tracking-wider text-white',
+                      compact ? 'px-3 py-2' : 'px-4 py-3.5',
                       header.column.getCanSort() &&
                         'cursor-pointer select-none transition-all hover:bg-white/10'
                     )}
@@ -184,7 +187,10 @@ export function DataTable<TData>({
                   {row.getVisibleCells().map(cell => (
                     <td
                       key={cell.id}
-                      className='px-4 py-3.5 text-sm text-gray-700 dark:text-gray-300'
+                      className={cn(
+                        'text-sm text-gray-700 dark:text-gray-300',
+                        compact ? 'px-3 py-2' : 'px-4 py-3.5'
+                      )}
                     >
                       {flexRender(
                         cell.column.columnDef.cell,

@@ -422,24 +422,27 @@ export function ClientesTabla({
             : valorTotal > 0
               ? Math.min(Math.round((totalAbonado / valorTotal) * 100), 100)
               : 0
-          if (pagadoCompleto) {
-            return (
-              <span className='inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'>
-                ✓ 100%
-              </span>
-            )
-          }
-          const barColor = porcentaje >= 50 ? 'bg-blue-500' : 'bg-amber-500'
-          const textColor =
-            porcentaje >= 50
+          const barColor = pagadoCompleto
+            ? 'bg-emerald-500'
+            : porcentaje >= 50
+              ? 'bg-blue-500'
+              : 'bg-amber-500'
+          const textColor = pagadoCompleto
+            ? 'text-emerald-600 dark:text-emerald-400'
+            : porcentaje >= 50
               ? 'text-blue-600 dark:text-blue-400'
               : 'text-amber-600 dark:text-amber-400'
+          const trackColor = pagadoCompleto
+            ? 'bg-emerald-100 dark:bg-emerald-900/30'
+            : 'bg-gray-200 dark:bg-gray-700'
           return (
             <div className='w-full min-w-[80px] px-1'>
               <span className={`text-xs font-semibold ${textColor}`}>
                 {porcentaje}%
               </span>
-              <div className='mt-1 h-1.5 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700'>
+              <div
+                className={`mt-1 h-1.5 w-full overflow-hidden rounded-full ${trackColor}`}
+              >
                 <div
                   className={`h-full rounded-full transition-all duration-500 ${barColor}`}
                   style={{ width: `${porcentaje}%` }}
@@ -534,6 +537,7 @@ export function ClientesTabla({
         data={clientes}
         initialSorting={initialSorting}
         onRowClick={onView}
+        compact
       />
     </div>
   )
