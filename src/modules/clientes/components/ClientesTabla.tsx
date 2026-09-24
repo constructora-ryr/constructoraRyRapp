@@ -146,14 +146,17 @@ export function ClientesTabla({
       },
     },
 
-    // 2. DOCUMENTO (CC 12345678)
+    // 2. DOCUMENTO (tipo + número)
     {
       accessorKey: 'numero_documento',
       header: 'Documento',
       size: 110,
       cell: ({ row }) => (
         <span className='font-mono text-xs text-gray-600 dark:text-gray-400'>
-          CC {row.original.numero_documento}
+          <span className='font-semibold text-gray-400 dark:text-gray-500'>
+            {row.original.tipo_documento ?? 'CC'}
+          </span>{' '}
+          {row.original.numero_documento}
         </span>
       ),
     },
