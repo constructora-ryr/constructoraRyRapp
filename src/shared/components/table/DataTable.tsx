@@ -176,7 +176,7 @@ export function DataTable<TData>({
                     onRowClick ? () => onRowClick(row.original) : undefined
                   }
                   className={cn(
-                    'transition-all duration-200',
+                    'group transition-all duration-200',
                     theme.hover,
                     onRowClick && 'cursor-pointer',
                     idx % 2 === 0

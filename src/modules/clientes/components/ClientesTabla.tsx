@@ -75,7 +75,8 @@ const styles = {
 
   // Acciones (cyan/blue del módulo)
   actions: {
-    container: 'flex items-center justify-center gap-1',
+    container:
+      'flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150',
     button: 'p-1.5 rounded-lg transition-all',
     view: 'text-cyan-600 dark:text-cyan-400 hover:bg-cyan-100 dark:hover:bg-cyan-900/30',
     edit: 'text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30',
