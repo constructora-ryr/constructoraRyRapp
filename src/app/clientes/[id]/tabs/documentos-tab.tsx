@@ -125,13 +125,13 @@ export function DocumentosTab({ cliente }: DocumentosTabProps) {
         <div className='relative overflow-hidden rounded-xl bg-gradient-to-br from-cyan-600 via-blue-600 to-indigo-600 p-4 shadow-xl shadow-cyan-500/20 dark:from-cyan-700 dark:via-blue-700 dark:to-indigo-800'>
           <div className='bg-grid-white/10 absolute inset-0 [mask-image:linear-gradient(0deg,transparent,black,transparent)]' />
           <div className='relative z-10'>
-            <div className='flex items-center justify-between'>
+            <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
               <div className='flex items-center gap-2.5'>
-                <div className='flex h-10 w-10 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm'>
+                <div className='flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm'>
                   <IdCard className='h-5 w-5 text-white' />
                 </div>
-                <div>
-                  <h2 className='text-lg font-bold text-white'>
+                <div className='min-w-0'>
+                  <h2 className='text-base font-bold text-white sm:text-lg'>
                     {uploadTipoCedula
                       ? 'Subir Documento de Identidad'
                       : 'Subir Documento'}
@@ -144,10 +144,10 @@ export function DocumentosTab({ cliente }: DocumentosTabProps) {
                 </div>
               </div>
 
-              {/* Botón volver a la derecha */}
+              {/* Botón volver */}
               <button
                 onClick={volverADocumentos}
-                className='flex items-center gap-1.5 rounded-lg border border-white/30 bg-white/20 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-md transition-all hover:bg-white/30'
+                className='flex items-center gap-1.5 self-start rounded-lg border border-white/30 bg-white/20 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-md transition-all hover:bg-white/30 sm:self-auto'
               >
                 <ArrowLeft className='h-3.5 w-3.5' />
                 <span>Volver</span>

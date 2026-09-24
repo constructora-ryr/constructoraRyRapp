@@ -306,7 +306,7 @@ export function NegociacionTab({
         className='overflow-hidden rounded-xl border border-gray-200/80 bg-white dark:border-gray-700/50 dark:bg-gray-800/50'
       >
         {/* Row 1: Identificación de vivienda + acciones */}
-        <div className='flex items-center gap-3 border-b border-gray-100 px-4 py-2.5 dark:border-gray-700/40'>
+        <div className='flex flex-col gap-2 border-b border-gray-100 px-4 py-2.5 dark:border-gray-700/40 sm:flex-row sm:items-center'>
           <div className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-cyan-100 dark:bg-cyan-900/30'>
             <Home className='h-4 w-4 text-cyan-600 dark:text-cyan-400' />
           </div>
@@ -379,7 +379,7 @@ export function NegociacionTab({
               </div>
             ) : null}
           </div>
-          <div className='flex flex-shrink-0 items-center gap-2'>
+          <div className='flex flex-wrap items-center gap-1.5'>
             {puedeTrasladar && negociacion.estado === 'Activa' ? (
               <button
                 onClick={() =>
@@ -429,7 +429,7 @@ export function NegociacionTab({
           }`}
         >
           {/* KPI 1: Precio Vivienda (siempre) */}
-          <div className='px-4 py-2.5'>
+          <div className='px-2 py-2.5 sm:px-4'>
             <div className='mb-0.5 flex items-center gap-1'>
               <DollarSign className='h-3 w-3 text-cyan-500' />
               <span className='text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500'>
@@ -506,7 +506,7 @@ export function NegociacionTab({
 
           {/* KPI 1b (condicional): Total a Pagar con intereses — solo cuando hay crédito constructora */}
           {interesesTotales > 0 ? (
-            <div className='px-4 py-2.5'>
+            <div className='px-2 py-2.5 sm:px-4'>
               <div className='mb-0.5 flex items-center gap-1'>
                 <TrendingUp className='h-3 w-3 text-violet-500' />
                 <span className='text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500'>
@@ -524,7 +524,7 @@ export function NegociacionTab({
 
           {/* KPI 2 (condicional): Descuento aplicado */}
           {descuento > 0 ? (
-            <div className='border-l border-gray-100 px-4 py-2.5 dark:border-gray-700/40'>
+            <div className='border-l border-gray-100 px-2 py-2.5 dark:border-gray-700/40 sm:px-4'>
               <div className='mb-0.5 flex items-center gap-1'>
                 <Percent className='h-3 w-3 text-violet-500' />
                 <span className='text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500'>
@@ -541,7 +541,7 @@ export function NegociacionTab({
               ) : null}
             </div>
           ) : null}
-          <div className='px-4 py-2.5'>
+          <div className='px-2 py-2.5 sm:px-4'>
             <div className='mb-0.5 flex items-center gap-1'>
               <Wallet className='h-3 w-3 text-emerald-500' />
               <span className='text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500'>
@@ -552,7 +552,7 @@ export function NegociacionTab({
               {formatCurrency(totalAbonadoDisplay)}
             </p>
           </div>
-          <div className='px-4 py-2.5'>
+          <div className='px-2 py-2.5 sm:px-4'>
             <div className='mb-0.5 flex items-center gap-1'>
               <TrendingUp className='h-3 w-3 text-amber-500' />
               {diferencia < 0 ? (
@@ -593,7 +593,7 @@ export function NegociacionTab({
               </p>
             )}
           </div>
-          <div className='px-4 py-2.5'>
+          <div className='px-2 py-2.5 sm:px-4'>
             <div className='mb-0.5 flex items-center gap-1'>
               <Percent className='h-3 w-3 text-blue-500' />
               <span className='text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500'>
@@ -681,7 +681,7 @@ export function NegociacionTab({
         className='overflow-hidden rounded-xl border border-gray-200/80 bg-white dark:border-gray-700/50 dark:bg-gray-800/50'
       >
         {/* Header: título + balance inline + botón */}
-        <div className='flex items-center justify-between border-b border-gray-100 px-4 py-2.5 dark:border-gray-700/40'>
+        <div className='flex flex-col gap-2 border-b border-gray-100 px-4 py-2.5 dark:border-gray-700/40 sm:flex-row sm:items-center sm:justify-between'>
           <div className='flex items-center gap-2'>
             <DollarSign className='h-4 w-4 text-gray-400' />
             <h3 className='text-sm font-semibold text-gray-900 dark:text-white'>
@@ -709,7 +709,7 @@ export function NegociacionTab({
             ) : null}
           </div>
           {puedeDescuento || puedeAjustarAhora ? (
-            <div className='flex items-center gap-2'>
+            <div className='flex flex-wrap items-center gap-1.5'>
               {puedeDescuento && negociacion.estado === 'Activa' ? (
                 <button
                   onClick={openDescuento}
@@ -810,7 +810,7 @@ export function NegociacionTab({
                     : fuentesPago.length === 2
                       ? 'grid-cols-2'
                       : fuentesPago.length === 3
-                        ? 'grid-cols-3'
+                        ? 'grid-cols-1 sm:grid-cols-3'
                         : 'grid-cols-2'
                 }`}
               >

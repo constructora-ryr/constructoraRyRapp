@@ -17,15 +17,15 @@ export const historialStyles = {
     overlay:
       'absolute inset-0 bg-grid-white/10 [mask-image:linear-gradient(0deg,transparent,black,transparent)]',
     content: 'relative z-10',
-    headerRow: 'flex items-center justify-between',
+    headerRow: 'flex flex-wrap items-start justify-between gap-y-2',
     titleGroup: 'flex items-center gap-3',
     iconBox:
-      'flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm',
+      'flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm',
     icon: 'h-5 w-5 text-white',
-    titleText: 'text-xl font-bold text-white',
+    titleText: 'text-base font-bold text-white sm:text-xl',
     subtitle: 'text-xs text-cyan-100 dark:text-cyan-200',
     badge:
-      'inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-md border border-white/30',
+      'inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-md border border-white/30 self-start',
     badgeIcon: 'h-3.5 w-3.5',
     statsGrid: 'mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4',
     statCard:
@@ -39,7 +39,7 @@ export const historialStyles = {
     wrapper:
       'sticky top-4 z-40 rounded-xl border border-gray-200/50 bg-white/90 p-3 shadow-lg backdrop-blur-xl dark:border-gray-700/50 dark:bg-gray-800/90',
     row: 'flex flex-wrap items-center gap-2',
-    searchContainer: 'relative flex-1 min-w-[200px]',
+    searchContainer: 'relative flex-1 min-w-0',
     searchIcon:
       'pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500',
     searchInput:
