@@ -73,7 +73,8 @@ export const viviendasTablaStyles = {
 
   // Acciones
   actions: {
-    container: 'flex items-center justify-center gap-1',
+    container:
+      'flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150',
     button: {
       base: 'group p-1 rounded-md transition-all hover:scale-105',
       view: 'bg-orange-50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-950/50',

@@ -239,18 +239,18 @@ export function ViviendasTabla({
             .format(v)
             .replace(/\s/g, '')
         return (
-          <div className='flex flex-col items-center gap-0.5 py-0.5'>
-            <span
-              className={`text-xs font-bold leading-tight ${
-                pagadoCompleto
-                  ? 'text-emerald-600 dark:text-emerald-400'
-                  : 'text-red-500 dark:text-red-400'
-              }`}
-            >
-              {pagadoCompleto ? '✓ Pagado' : fmt(saldo)}
-            </span>
-            <span className='text-[10px] leading-none text-gray-400 dark:text-gray-500'>
-              de {fmt(valorRef)}
+          <div className='flex flex-col gap-0.5 py-0.5'>
+            {pagadoCompleto ? (
+              <span className='inline-flex w-fit items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'>
+                ✓ Pagado
+              </span>
+            ) : (
+              <span className='font-mono text-xs font-bold leading-tight text-amber-600 dark:text-amber-400'>
+                {fmt(saldo)}
+              </span>
+            )}
+            <span className='font-mono text-[10px] leading-none text-gray-400 dark:text-gray-500'>
+              {fmt(valorRef)} total
             </span>
           </div>
         )
@@ -283,24 +283,27 @@ export function ViviendasTabla({
         }
         const porcentaje = Math.min(row.original.porcentaje_pagado || 0, 100)
         const pagadoCompleto = porcentaje >= 100
-        if (pagadoCompleto) {
-          return (
-            <span className='inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'>
-              ✓ 100%
-            </span>
-          )
-        }
-        const barColor = porcentaje >= 50 ? 'bg-blue-500' : 'bg-amber-500'
-        const textColor =
-          porcentaje >= 50
+        const barColor = pagadoCompleto
+          ? 'bg-emerald-500'
+          : porcentaje >= 50
+            ? 'bg-blue-500'
+            : 'bg-amber-500'
+        const textColor = pagadoCompleto
+          ? 'text-emerald-600 dark:text-emerald-400'
+          : porcentaje >= 50
             ? 'text-blue-600 dark:text-blue-400'
             : 'text-amber-600 dark:text-amber-400'
+        const trackColor = pagadoCompleto
+          ? 'bg-emerald-100 dark:bg-emerald-900/30'
+          : 'bg-gray-200 dark:bg-gray-700'
         return (
           <div className='w-full min-w-[80px] px-1'>
             <span className={`text-xs font-semibold ${textColor}`}>
               {porcentaje}%
             </span>
-            <div className='mt-1 h-1.5 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700'>
+            <div
+              className={`mt-1 h-1.5 w-full overflow-hidden rounded-full ${trackColor}`}
+            >
               <div
                 className={`h-full rounded-full transition-all duration-500 ${barColor}`}
                 style={{ width: `${porcentaje}%` }}
@@ -399,6 +402,7 @@ export function ViviendasTabla({
           },
         ]}
         onRowClick={onView}
+        compact
       />
     </div>
   )
