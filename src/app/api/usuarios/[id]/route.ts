@@ -74,15 +74,34 @@ export async function DELETE(
       )
     }
 
-    // 5. Eliminar de auth.users → CASCADE elimina public.usuarios automáticamente
-    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(id)
+    // 5. Eliminar de public.usuarios primero (evita depender del CASCADE)
+    const { error: deletePublicError } = await supabaseAdmin
+      .from('usuarios')
+      .delete()
+      .eq('id', id)
 
-    if (deleteError) {
+    if (deletePublicError) {
       logger.error(
-        '❌ [ELIMINAR USUARIO] Error en auth.admin.deleteUser:',
-        deleteError
+        '❌ [ELIMINAR USUARIO] Error eliminando de public.usuarios:',
+        deletePublicError
       )
-      return NextResponse.json({ error: deleteError.message }, { status: 500 })
+      return NextResponse.json(
+        { error: deletePublicError.message },
+        { status: 500 }
+      )
+    }
+
+    // 6. Eliminar de auth.users (limpia la cuenta de autenticación)
+    const { error: deleteAuthError } =
+      await supabaseAdmin.auth.admin.deleteUser(id)
+
+    if (deleteAuthError) {
+      // La fila pública ya fue eliminada; loguear pero no fallar (el usuario
+      // no podrá ingresar de todos modos sin su perfil en public.usuarios)
+      logger.error(
+        '⚠️ [ELIMINAR USUARIO] public.usuarios eliminado pero auth.users falló:',
+        deleteAuthError
+      )
     }
 
     logger.info(
