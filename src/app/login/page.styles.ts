@@ -29,7 +29,7 @@ export const loginStyles = {
   classes: {
     // Layout principal
     container:
-      'relative flex min-h-screen w-full flex-col items-center overflow-x-hidden px-4 py-8 sm:justify-center',
+      'relative flex min-h-dvh w-full flex-col items-center px-4 py-8 sm:justify-center',
     backgroundWrapper: 'fixed inset-0 z-0 h-screen w-screen',
     backgroundImage: 'object-cover',
     overlay:
