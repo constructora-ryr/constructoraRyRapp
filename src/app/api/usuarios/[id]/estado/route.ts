@@ -99,7 +99,7 @@ export async function PATCH(
       return NextResponse.json({ error: updateError.message }, { status: 500 })
     }
 
-    // 7. Si inactivando: revocar todas las sesiones activas en tiempo real
+    // 7. Si inactivando: revocar sesiones + broadcast inmediato al cliente
     if (nuevoEstado === 'Inactivo') {
       const { error: revokeError } = await adminRaw
         .from('sesiones_activas')
@@ -114,7 +114,36 @@ export async function PATCH(
         )
       }
 
-      logger.info(`✅ [ESTADO] Usuario ${id} inactivado y sesiones revocadas`)
+      // Broadcast Realtime: notifica al cliente activo para mostrar overlay al instante
+      // Se usa channel broadcast (no postgres_changes) para evitar restricciones de RLS
+      try {
+        await new Promise<void>(resolve => {
+          const ch = adminRaw.channel(`cuenta-estado-${id}`)
+          const timeout = setTimeout(() => {
+            adminRaw.removeChannel(ch).catch(() => null)
+            resolve()
+          }, 3000)
+          ch.subscribe(async (status: string) => {
+            if (status !== 'SUBSCRIBED') return
+            clearTimeout(timeout)
+            await ch
+              .send({
+                type: 'broadcast',
+                event: 'cuenta_desactivada',
+                payload: { userId: id },
+              })
+              .catch(() => null)
+            await adminRaw.removeChannel(ch).catch(() => null)
+            resolve()
+          })
+        })
+      } catch {
+        // broadcast no crítico — el polling de 5s actúa como respaldo
+      }
+
+      logger.info(
+        `✅ [ESTADO] Usuario ${id} inactivado, sesiones revocadas y broadcast enviado`
+      )
     } else {
       logger.info(`✅ [ESTADO] Usuario ${id} activado`)
     }

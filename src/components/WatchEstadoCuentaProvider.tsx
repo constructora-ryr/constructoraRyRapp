@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase/client'
 
 import { CuentaDesactivadaOverlay } from './auth/CuentaDesactivadaOverlay'
 
-const POLL_INTERVAL_MS = 20_000 // verificar cada 20 segundos como fallback
+const POLL_INTERVAL_MS = 5_000 // verificar cada 5 segundos como fallback
 
 /**
  * Detecta en tiempo real cuando un admin desactiva la cuenta del usuario actual.
@@ -40,12 +40,14 @@ export function WatchEstadoCuentaProvider({
 
     const verificarEstado = async () => {
       if (!userId || desactivadoRef.current) return
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('usuarios')
         .select('estado')
         .eq('id', userId)
         .maybeSingle()
-      if (data && data.estado !== 'Activo') {
+      // Disparar si: estado cambiado a no-Activo, O si RLS bloqueó la fila
+      // (data=null sin error significa que el usuario no puede leer su propia fila)
+      if (!error && (!data || data.estado !== 'Activo')) {
         activarDesactivado()
       }
     }
@@ -58,9 +60,15 @@ export function WatchEstadoCuentaProvider({
 
       userId = user.id
 
-      // ── 1. Realtime (instantáneo si la publicación está configurada) ──
+      // ── 1. Canal Realtime: broadcast del servidor (instantáneo) +
+      //       postgres_changes como respaldo secundario ──
       channelRef = supabase
         .channel(`cuenta-estado-${user.id}`)
+        // Broadcast enviado por el API route al inactivar (llega en ~ms)
+        .on('broadcast', { event: 'cuenta_desactivada' }, () => {
+          activarDesactivado()
+        })
+        // postgres_changes como respaldo (requiere ALTER PUBLICATION + RLS permisiva)
         .on(
           'postgres_changes',
           {
@@ -78,7 +86,7 @@ export function WatchEstadoCuentaProvider({
         )
         .subscribe()
 
-      // ── 2. Polling cada 20s (fallback si Realtime no está configurado) ──
+      // ── 2. Polling cada 5s (fallback final) ──
       pollTimer = setInterval(verificarEstado, POLL_INTERVAL_MS)
 
       // ── 3. Al recuperar foco de pestaña ──
@@ -100,13 +108,11 @@ export function WatchEstadoCuentaProvider({
       cleanupVisibility = cleanup
     })
 
-    // Limpiar al logout
+    // Limpiar al logout normal (no al signOut interno del overlay de desactivación)
     const {
       data: { subscription: authSub },
     } = supabase.auth.onAuthStateChange(event => {
-      if (event === 'SIGNED_OUT') {
-        desactivadoRef.current = false
-        setDesactivado(false)
+      if (event === 'SIGNED_OUT' && !desactivadoRef.current) {
         userId = null
         if (channelRef) {
           supabase.removeChannel(channelRef)
