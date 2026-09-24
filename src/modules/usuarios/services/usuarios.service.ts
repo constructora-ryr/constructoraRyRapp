@@ -240,6 +240,21 @@ export async function reenviarInvitacion(email: string): Promise<void> {
 }
 
 /**
+ * Cancela la invitación de un usuario pendiente eliminándolo del sistema.
+ * Solo funciona con usuarios que nunca han iniciado sesión.
+ * El CASCADE en public.usuarios borra la fila automáticamente.
+ */
+export async function eliminarUsuarioPendiente(id: string): Promise<void> {
+  const response = await fetch(`/api/usuarios/${id}`, {
+    method: 'DELETE',
+  })
+  const body = await response.json()
+  if (!response.ok) {
+    throw new Error(body.error ?? 'Error al eliminar usuario')
+  }
+}
+
+/**
  * Desbloquea un usuario reseteando sus intentos fallidos.
  */
 export async function desbloquearUsuario(id: string): Promise<void> {

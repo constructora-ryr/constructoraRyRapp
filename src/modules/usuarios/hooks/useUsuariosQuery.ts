@@ -18,6 +18,7 @@ import {
   cambiarRolUsuario,
   crearUsuario,
   desbloquearUsuario,
+  eliminarUsuarioPendiente,
   obtenerEstadisticasUsuarios,
   obtenerUsuarioPorId,
   obtenerUsuarios,
@@ -182,6 +183,29 @@ export function useCambiarRolMutation() {
     },
     onError: (error: Error) => {
       toast.error('Error al cambiar rol', { description: error.message })
+    },
+  })
+}
+
+/**
+ * Eliminar un usuario con invitación pendiente (nunca inició sesión).
+ */
+export function useEliminarUsuarioPendienteMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => eliminarUsuarioPendiente(id),
+    onSuccess: () => {
+      toast.success('Invitación cancelada', {
+        description: 'El usuario fue eliminado del sistema',
+      })
+      queryClient.invalidateQueries({ queryKey: usuariosKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: usuariosKeys.estadisticas() })
+    },
+    onError: (error: Error) => {
+      toast.error('Error al cancelar invitación', {
+        description: error.message,
+      })
     },
   })
 }

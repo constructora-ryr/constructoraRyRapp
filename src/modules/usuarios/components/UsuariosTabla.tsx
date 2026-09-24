@@ -11,7 +11,7 @@
 import { useState } from 'react'
 
 import { motion } from 'framer-motion'
-import { Mail, Pencil, UserCheck, UserPlus, UserX } from 'lucide-react'
+import { Mail, Pencil, Trash2, UserCheck, UserPlus, UserX } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { useRouter } from 'next/navigation'
@@ -19,7 +19,10 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
 import { formatDateCompact } from '@/lib/utils/date.utils'
 
-import { useCambiarEstadoMutation } from '../hooks'
+import {
+  useCambiarEstadoMutation,
+  useEliminarUsuarioPendienteMutation,
+} from '../hooks'
 import { useReenviarInvitacion } from '../hooks/useReenviarInvitacion'
 import { usuariosPageStyles as styles } from '../styles/usuarios-page.styles'
 import type { UsuarioCompleto } from '../types'
@@ -134,6 +137,9 @@ function FilaUsuario({ usuario, canEdit, onEditar }: FilaUsuarioProps) {
 
   const { reenviar, cargando } = useReenviarInvitacion()
   const [reenviado, setReenviado] = useState(false)
+  const { mutate: eliminarPendiente, isPending: eliminando } =
+    useEliminarUsuarioPendienteMutation()
+  const [confirmandoEliminar, setConfirmandoEliminar] = useState(false)
 
   const handleReenviar = async () => {
     try {
@@ -143,6 +149,12 @@ function FilaUsuario({ usuario, canEdit, onEditar }: FilaUsuarioProps) {
     } catch {
       toast.error('No se pudo reenviar la invitación')
     }
+  }
+
+  const handleConfirmarEliminar = () => {
+    eliminarPendiente(usuario.id, {
+      onSettled: () => setConfirmandoEliminar(false),
+    })
   }
 
   return (
@@ -214,23 +226,52 @@ function FilaUsuario({ usuario, canEdit, onEditar }: FilaUsuarioProps) {
       {canEdit ? (
         <td className={styles.tabla.tdRight}>
           <div className='flex items-center justify-end gap-1.5'>
-            {/* Reenviar invitación */}
-            {pendiente && !reenviado ? (
-              <button
-                onClick={handleReenviar}
-                disabled={cargando}
-                className='inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-50 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300 dark:hover:bg-amber-900/40'
-                title={`Reenviar invitación a ${usuario.email}`}
-                aria-label={`Reenviar invitación a ${nombreCompleto}`}
-              >
-                <Mail className='h-3.5 w-3.5' />
-                {cargando ? 'Enviando...' : 'Reenviar'}
-              </button>
-            ) : pendiente && reenviado ? (
-              <span className='text-xs text-green-600 dark:text-green-400'>
-                ✓ Enviado
-              </span>
-            ) : null}
+            {/* Acciones para invitación pendiente */}
+            {pendiente &&
+              (confirmandoEliminar ? (
+                <div className='flex items-center gap-1'>
+                  <button
+                    onClick={handleConfirmarEliminar}
+                    disabled={eliminando}
+                    className='inline-flex items-center gap-1 rounded-lg bg-red-600 px-2 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-60 dark:bg-red-700 dark:hover:bg-red-800'
+                  >
+                    {eliminando ? '...' : 'Eliminar'}
+                  </button>
+                  <button
+                    onClick={() => setConfirmandoEliminar(false)}
+                    disabled={eliminando}
+                    className='rounded-lg px-2 py-1.5 text-xs font-medium text-gray-500 transition-colors hover:bg-gray-100 disabled:opacity-60 dark:text-gray-400 dark:hover:bg-gray-700'
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              ) : (
+                <div className='flex items-center gap-1'>
+                  {!reenviado ? (
+                    <button
+                      onClick={handleReenviar}
+                      disabled={cargando}
+                      className='inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-50 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300 dark:hover:bg-amber-900/40'
+                      title={`Reenviar invitación a ${usuario.email}`}
+                    >
+                      <Mail className='h-3.5 w-3.5' />
+                      {cargando ? 'Enviando...' : 'Reenviar'}
+                    </button>
+                  ) : (
+                    <span className='text-xs text-green-600 dark:text-green-400'>
+                      ✓ Enviado
+                    </span>
+                  )}
+                  <button
+                    onClick={() => setConfirmandoEliminar(true)}
+                    className='inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-medium text-red-700 transition-colors hover:bg-red-100 dark:border-red-800/50 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40'
+                    title='Cancelar invitación y eliminar usuario'
+                  >
+                    <Trash2 className='h-3.5 w-3.5' />
+                    Eliminar
+                  </button>
+                </div>
+              ))}
 
             {/* Toggle Inactivar / Activar */}
             {puedeToggleEstado &&

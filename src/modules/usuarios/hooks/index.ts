@@ -30,6 +30,7 @@ export {
   useCambiarRolMutation,
   useCrearUsuarioMutation,
   useDesbloquearUsuarioMutation,
+  useEliminarUsuarioPendienteMutation,
   useUsuarioDetailQuery,
   useUsuariosEstadisticasQuery,
   useUsuariosListQuery,
