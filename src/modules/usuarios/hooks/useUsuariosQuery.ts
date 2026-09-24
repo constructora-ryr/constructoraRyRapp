@@ -29,6 +29,7 @@ import type {
   EstadoUsuario,
   FiltrosUsuarios,
   Rol,
+  UsuarioCompleto,
 } from '../types'
 
 // ============================================
@@ -195,10 +196,15 @@ export function useEliminarUsuarioPendienteMutation() {
 
   return useMutation({
     mutationFn: (id: string) => eliminarUsuarioPendiente(id),
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       toast.success('Invitación cancelada', {
         description: 'El usuario fue eliminado del sistema',
       })
+      // Eliminación inmediata del caché → la fila desaparece sin esperar refetch
+      queryClient.setQueriesData<UsuarioCompleto[]>(
+        { queryKey: usuariosKeys.lists() },
+        old => old?.filter(u => u.id !== id) ?? old
+      )
       queryClient.invalidateQueries({ queryKey: usuariosKeys.lists() })
       queryClient.invalidateQueries({ queryKey: usuariosKeys.estadisticas() })
     },
