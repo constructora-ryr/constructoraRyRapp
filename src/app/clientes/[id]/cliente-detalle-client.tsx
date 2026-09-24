@@ -483,7 +483,7 @@ export default function ClienteDetalleClient({
                       const numero = neg?.viviendas?.numero || 'N/A'
 
                       return (
-                        <div className='mt-2 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/15 px-3 py-1.5 text-white/95 backdrop-blur-md'>
+                        <div className='mt-2 inline-flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-white/25 bg-white/15 px-3 py-1.5 text-white/95 backdrop-blur-md sm:rounded-full'>
                           <Home className='h-3.5 w-3.5 flex-shrink-0 text-emerald-300' />
                           <span className='text-xs font-semibold'>
                             Mza. {manzana} · Casa {numero}

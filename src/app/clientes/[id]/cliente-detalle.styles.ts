@@ -13,16 +13,18 @@ export const headerClasses = {
     'relative z-10 mb-2 flex items-center gap-1.5 text-xs text-white/80',
   breadcrumbIcon: 'h-3 w-3',
   breadcrumbCurrent: 'font-semibold text-white',
-  contentWrapper: 'relative z-10 flex items-start justify-between',
-  leftSection: 'flex items-center gap-3',
+  contentWrapper:
+    'relative z-10 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between',
+  leftSection: 'flex items-start gap-3',
   iconContainer:
-    'rounded-xl bg-white/20 p-2.5 backdrop-blur-xl transition-transform hover:scale-105',
+    'rounded-xl bg-white/20 p-2.5 backdrop-blur-xl transition-transform hover:scale-105 flex-shrink-0',
   icon: 'h-6 w-6 text-white',
-  titleSection: 'space-y-0.5',
-  title: 'text-xl font-bold text-white',
+  titleSection: 'space-y-0.5 min-w-0',
+  title: 'text-base font-bold text-white sm:text-xl',
   location: 'flex items-center gap-1.5 text-sm text-white/90',
   locationIcon: 'h-3.5 w-3.5',
-  actionsContainer: 'flex items-center gap-2',
+  actionsContainer:
+    'flex items-center gap-2 self-end sm:self-auto sm:flex-shrink-0',
   actionButton:
     'inline-flex items-center justify-center w-10 h-10 rounded-lg bg-white/20 backdrop-blur-md border border-white/30 text-white transition-all hover:bg-white/30 hover:scale-105',
   deleteButton:

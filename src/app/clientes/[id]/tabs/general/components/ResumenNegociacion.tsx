@@ -67,7 +67,7 @@ export function ResumenNegociacion({
       />
 
       {/* ── Header ─────────────────────────────────────── */}
-      <div className='flex items-center justify-between px-4 py-3'>
+      <div className='flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between'>
         {/* Left: badge + breadcrumb */}
         <div className='flex flex-col gap-1'>
           {/* Status badge */}
@@ -125,7 +125,7 @@ export function ResumenNegociacion({
                 ? `/abonos?q=${encodeURIComponent(clienteCC)}`
                 : '/abonos'
             }
-            className='flex items-center gap-1.5 rounded-lg border border-cyan-200 bg-cyan-50 px-2.5 py-1.5 text-xs font-semibold text-cyan-700 transition-colors hover:bg-cyan-100 dark:border-cyan-800/50 dark:bg-cyan-900/20 dark:text-cyan-400 dark:hover:bg-cyan-900/40'
+            className='flex items-center gap-1.5 self-start rounded-lg border border-cyan-200 bg-cyan-50 px-2.5 py-1.5 text-xs font-semibold text-cyan-700 transition-colors hover:bg-cyan-100 dark:border-cyan-800/50 dark:bg-cyan-900/20 dark:text-cyan-400 dark:hover:bg-cyan-900/40 sm:self-auto'
           >
             <TrendingUp className='h-3 w-3' />
             Ver abonos
@@ -137,60 +137,62 @@ export function ResumenNegociacion({
       {/* ── Metrics ────────────────────────────────────── */}
       <div
         className={`grid divide-x divide-gray-100 border-t border-gray-100 dark:divide-gray-700/60 dark:border-gray-700/60 ${
-          interesesTotales > 0 ? 'grid-cols-4' : 'grid-cols-3'
+          interesesTotales > 0
+            ? 'grid-cols-2 sm:grid-cols-4'
+            : 'grid-cols-2 sm:grid-cols-3'
         }`}
       >
         {/* Precio vivienda — contexto */}
-        <div className='px-4 py-3'>
-          <p className='mb-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500'>
+        <div className='px-3 py-2.5 sm:px-4 sm:py-3'>
+          <p className='mb-1 text-[9px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 sm:text-[10px]'>
             {interesesTotales > 0 ? 'Precio Vivienda' : 'Valor Total'}
           </p>
-          <p className='text-xl font-black tabular-nums tracking-tight text-gray-700 dark:text-gray-300'>
+          <p className='text-sm font-black tabular-nums tracking-tight text-gray-700 dark:text-gray-300 sm:text-xl'>
             {formatCurrency(valorVivienda)}
           </p>
-          <p className='mt-0.5 text-[10px] text-gray-400 dark:text-gray-500'>
+          <p className='mt-0.5 text-[9px] text-gray-400 dark:text-gray-500 sm:text-[10px]'>
             Precio vivienda
           </p>
         </div>
 
         {/* Total a pagar (solo cuando hay intereses) */}
         {interesesTotales > 0 ? (
-          <div className='bg-indigo-50/40 px-4 py-3 dark:bg-indigo-900/10'>
-            <p className='mb-1 text-[10px] font-semibold uppercase tracking-widest text-indigo-600 dark:text-indigo-400'>
+          <div className='bg-indigo-50/40 px-3 py-2.5 dark:bg-indigo-900/10 sm:px-4 sm:py-3'>
+            <p className='mb-1 text-[9px] font-semibold uppercase tracking-widest text-indigo-600 dark:text-indigo-400 sm:text-[10px]'>
               Total a pagar
             </p>
-            <p className='text-xl font-black tabular-nums tracking-tight text-indigo-700 dark:text-indigo-300'>
+            <p className='text-sm font-black tabular-nums tracking-tight text-indigo-700 dark:text-indigo-300 sm:text-xl'>
               {formatCurrency(totalComprometido)}
             </p>
-            <p className='mt-0.5 text-[10px] text-indigo-400 dark:text-indigo-500'>
+            <p className='mt-0.5 text-[9px] text-indigo-400 dark:text-indigo-500 sm:text-[10px]'>
               +{formatCurrency(interesesTotales)} intereses
             </p>
           </div>
         ) : null}
 
         {/* Abonado — positivo */}
-        <div className='border-r border-gray-100 bg-emerald-50/50 px-4 py-3 dark:border-gray-700/60 dark:bg-emerald-900/10'>
-          <p className='mb-1 text-[10px] font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-500'>
+        <div className='border-r border-gray-100 bg-emerald-50/50 px-3 py-2.5 dark:border-gray-700/60 dark:bg-emerald-900/10 sm:px-4 sm:py-3'>
+          <p className='mb-1 text-[9px] font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-500 sm:text-[10px]'>
             Abonado
           </p>
-          <p className='text-xl font-black tabular-nums tracking-tight text-emerald-700 dark:text-emerald-400'>
+          <p className='text-sm font-black tabular-nums tracking-tight text-emerald-700 dark:text-emerald-400 sm:text-xl'>
             {formatCurrency(totalAbonado)}
           </p>
-          <p className='mt-0.5 text-[10px] text-emerald-500/80 dark:text-emerald-500/60'>
+          <p className='mt-0.5 text-[9px] text-emerald-500/80 dark:text-emerald-500/60 sm:text-[10px]'>
             Total pagado
           </p>
         </div>
 
         {/* Saldo — héroe */}
         <div
-          className={`px-4 py-3 ${
+          className={`px-3 py-2.5 sm:px-4 sm:py-3 ${
             estaCompleta
               ? 'bg-emerald-50/80 dark:bg-emerald-900/15'
               : 'bg-amber-50/60 dark:bg-amber-900/10'
           }`}
         >
           <p
-            className={`mb-1 text-[10px] font-semibold uppercase tracking-widest ${
+            className={`mb-1 text-[9px] font-semibold uppercase tracking-widest sm:text-[10px] ${
               estaCompleta
                 ? 'text-emerald-600 dark:text-emerald-500'
                 : 'text-amber-600 dark:text-amber-500'
@@ -199,7 +201,7 @@ export function ResumenNegociacion({
             Saldo
           </p>
           <p
-            className={`text-xl font-black tabular-nums tracking-tight ${
+            className={`text-sm font-black tabular-nums tracking-tight sm:text-xl ${
               estaCompleta
                 ? 'text-emerald-700 dark:text-emerald-400'
                 : 'text-amber-700 dark:text-amber-400'
@@ -207,7 +209,7 @@ export function ResumenNegociacion({
           >
             {formatCurrency(saldoPendiente)}
           </p>
-          <p className='mt-0.5 text-[10px] text-gray-400 dark:text-gray-500'>
+          <p className='mt-0.5 text-[9px] text-gray-400 dark:text-gray-500 sm:text-[10px]'>
             {estaCompleta ? 'Pagado completamente' : 'Resta por pagar'}
           </p>
         </div>
