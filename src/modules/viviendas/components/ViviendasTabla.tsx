@@ -207,24 +207,6 @@ export function ViviendasTabla({
           row.original.estado === 'Asignada' ||
           row.original.estado === 'Entregada' ||
           row.original.estado === 'Propietario'
-        if (!estaAsignada) {
-          return (
-            <div className={styles.cell.center}>
-              <div className='flex flex-col items-center gap-0.5 py-0.5'>
-                <span className='text-xs font-semibold text-gray-700 dark:text-gray-300'>
-                  {new Intl.NumberFormat('es-CO', {
-                    style: 'currency',
-                    currency: 'COP',
-                    minimumFractionDigits: 0,
-                  }).format(row.original.valor_total || 0)}
-                </span>
-                <span className='text-[10px] text-gray-400 dark:text-gray-500'>
-                  Valor total
-                </span>
-              </div>
-            </div>
-          )
-        }
         const valorTotal = row.original.valor_total || 0
         const valorRef = row.original.valor_negociado || valorTotal
         const saldo = row.original.saldo_pendiente || 0
@@ -238,6 +220,18 @@ export function ViviendasTabla({
           })
             .format(v)
             .replace(/\s/g, '')
+        if (!estaAsignada) {
+          return (
+            <div className='flex flex-col gap-0.5 py-0.5'>
+              <span className='font-mono text-xs font-bold leading-tight text-gray-700 dark:text-gray-300'>
+                {fmt(valorTotal)}
+              </span>
+              <span className='font-mono text-[10px] leading-none text-gray-400 dark:text-gray-500'>
+                precio base
+              </span>
+            </div>
+          )
+        }
         return (
           <div className='flex flex-col gap-0.5 py-0.5'>
             {pagadoCompleto ? (
