@@ -67,9 +67,12 @@ export function GeneralTab({
   // Extraer negociación activa (datos ya cargados en cliente.negociaciones)
   const negociacionActiva = useMemo(() => {
     if (!cliente.negociaciones?.length) return null
-    // Solo considerar negociaciones realmente activas
+    // Priorizar activa/suspendida; si no hay, mostrar la completada
     const activa = cliente.negociaciones.find(
-      n => n.estado === 'Activa' || n.estado === 'Suspendida'
+      n =>
+        n.estado === 'Activa' ||
+        n.estado === 'Suspendida' ||
+        n.estado === 'Completada'
     )
     return activa || null
   }, [cliente.negociaciones])
@@ -101,6 +104,7 @@ export function GeneralTab({
           <ResumenNegociacion
             negociacion={negociacionActiva}
             clienteId={cliente.id}
+            clienteCC={cliente.numero_documento}
           />
         )}
 
