@@ -246,7 +246,23 @@ export async function middleware(req: NextRequest) {
       data: { user: existingUser },
     } = await supabaseTmp.auth.getUser()
     if (existingUser) {
-      return NextResponse.redirect(new URL('/', req.url))
+      // Solo redirigir al dashboard si la cuenta está activa.
+      // Si está Inactiva/Bloqueada, hacer signOut y mostrar el login
+      // para evitar el redirect loop (estado inactivo → /login → / → loop).
+      const { data: cuenta } = await supabaseTmp
+        .from('usuarios')
+        .select('estado')
+        .eq('id', existingUser.id)
+        .maybeSingle()
+
+      if (cuenta?.estado === 'Activo') {
+        return NextResponse.redirect(new URL('/', req.url))
+      }
+
+      // Cuenta inactiva o bloqueada: limpiar sesión y mostrar login.
+      // signOut modifica tmpRes (están vinculados), así que devolver tmpRes
+      // propaga la cookie borrada al navegador.
+      await supabaseTmp.auth.signOut()
     }
     return tmpRes
   }
@@ -318,9 +334,13 @@ export async function middleware(req: NextRequest) {
           estado: cuentaData?.estado,
           pathname,
         })
+        await supabase.auth.signOut()
         const redirectUrl = req.nextUrl.clone()
         redirectUrl.pathname = '/login'
-        return NextResponse.redirect(redirectUrl)
+        // Propagar las cookies del signOut (vinculadas a `res`) al redirect
+        const redirectRes = NextResponse.redirect(redirectUrl)
+        res.cookies.getAll().forEach(c => redirectRes.cookies.set(c))
+        return redirectRes
       }
     } catch {
       // Si falla la consulta de estado, denegar acceso por seguridad
@@ -367,7 +387,10 @@ export async function middleware(req: NextRequest) {
           const redirectUrl = req.nextUrl.clone()
           redirectUrl.pathname = '/login'
           redirectUrl.searchParams.set('revocada', '1')
-          return NextResponse.redirect(redirectUrl)
+          // Propagar las cookies del signOut (vinculadas a `res`) al redirect
+          const redirectRes = NextResponse.redirect(redirectUrl)
+          res.cookies.getAll().forEach(c => redirectRes.cookies.set(c))
+          return redirectRes
         }
 
         // Registrar o actualizar sesión activa (fire-and-forget, no bloquea)
