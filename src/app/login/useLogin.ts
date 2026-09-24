@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 import { showLoginSuccessToast } from '@/components/toasts/custom-toasts'
+import { supabase } from '@/lib/supabase/client'
 import { debugLog, errorLog, successLog } from '@/lib/utils/logger'
 import { traducirErrorSupabase } from '@/lib/utils/traducir-errores'
 import { auditLogService } from '@/services/audit-log.service'
@@ -143,6 +144,28 @@ export function useLogin(): UseLoginReturn {
         await signIn(email, password)
 
         successLog('Login exitoso en signIn()')
+
+        // Verificar estado de la cuenta en public.usuarios antes de continuar.
+        // Supabase Auth acepta credenciales válidas aunque la cuenta esté inactiva,
+        // por lo que necesitamos verificar aquí y hacer signOut si corresponde.
+        const {
+          data: { user: loggedUser },
+        } = await supabase.auth.getUser()
+
+        if (loggedUser) {
+          const { data: cuenta } = await supabase
+            .from('usuarios')
+            .select('estado')
+            .eq('id', loggedUser.id)
+            .maybeSingle()
+
+          if (!cuenta || cuenta.estado !== 'Activo') {
+            await supabase.auth.signOut()
+            throw new Error(
+              'Tu cuenta está desactivada. Contacta al administrador del sistema.'
+            )
+          }
+        }
 
         // Login exitoso: resetear intentos fallidos
         resetearIntentos()
