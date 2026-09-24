@@ -14,7 +14,7 @@ import { toast } from 'sonner'
 
 import {
   actualizarUsuario,
-  cambiarEstadoUsuario,
+  cambiarEstadoConRevocacion,
   cambiarRolUsuario,
   crearUsuario,
   desbloquearUsuario,
@@ -144,9 +144,17 @@ export function useCambiarEstadoMutation() {
     }: {
       id: string
       nuevoEstado: EstadoUsuario
-    }) => cambiarEstadoUsuario(id, nuevoEstado),
+    }) => cambiarEstadoConRevocacion(id, nuevoEstado),
     onSuccess: (_, { id, nuevoEstado }) => {
-      toast.success(`Usuario marcado como ${nuevoEstado}`)
+      if (nuevoEstado === 'Inactivo') {
+        toast.success('Usuario inactivado', {
+          description: 'Expulsado de todas sus sesiones activas',
+        })
+      } else {
+        toast.success('Usuario activado', {
+          description: 'Ya puede ingresar al sistema',
+        })
+      }
       queryClient.invalidateQueries({ queryKey: usuariosKeys.lists() })
       queryClient.invalidateQueries({ queryKey: usuariosKeys.detail(id) })
       queryClient.invalidateQueries({ queryKey: usuariosKeys.estadisticas() })

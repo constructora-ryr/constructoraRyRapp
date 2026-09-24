@@ -193,6 +193,25 @@ export async function cambiarEstadoUsuario(
 }
 
 /**
+ * Cambia el estado del usuario vía API route (service role).
+ * Al inactivar, revoca todas las sesiones activas en tiempo real.
+ */
+export async function cambiarEstadoConRevocacion(
+  id: string,
+  nuevoEstado: EstadoUsuario
+): Promise<void> {
+  const response = await fetch(`/api/usuarios/${id}/estado`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nuevoEstado }),
+  })
+  const body = await response.json()
+  if (!response.ok) {
+    throw new Error(body.error ?? 'Error al cambiar estado')
+  }
+}
+
+/**
  * Cambia el rol de un usuario.
  */
 export async function cambiarRolUsuario(

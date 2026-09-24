@@ -11,13 +11,15 @@
 import { useState } from 'react'
 
 import { motion } from 'framer-motion'
-import { Mail, Pencil, UserPlus } from 'lucide-react'
+import { Mail, Pencil, UserCheck, UserPlus, UserX } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { useRouter } from 'next/navigation'
 
+import { useAuth } from '@/contexts/auth-context'
 import { formatDateCompact } from '@/lib/utils/date.utils'
 
+import { useCambiarEstadoMutation } from '../hooks'
 import { useReenviarInvitacion } from '../hooks/useReenviarInvitacion'
 import { usuariosPageStyles as styles } from '../styles/usuarios-page.styles'
 import type { UsuarioCompleto } from '../types'
@@ -111,6 +113,25 @@ function FilaUsuario({ usuario, canEdit, onEditar }: FilaUsuarioProps) {
   const nombreCompleto = getNombreCompleto(usuario)
   const pendiente = esPendiente(usuario)
 
+  const { user: currentUser } = useAuth()
+  const { mutate: cambiarEstado, isPending: cambiandoEstado } =
+    useCambiarEstadoMutation()
+  const [confirming, setConfirming] = useState(false)
+
+  const esMiUsuario = currentUser?.id === usuario.id
+  const estaActivo = usuario.estado === 'Activo'
+  const esBloqueado = usuario.estado === 'Bloqueado'
+  const puedeToggleEstado =
+    canEdit && !esMiUsuario && !pendiente && !esBloqueado
+
+  const handleConfirmarCambioEstado = () => {
+    const nuevoEstado = estaActivo ? 'Inactivo' : 'Activo'
+    cambiarEstado(
+      { id: usuario.id, nuevoEstado },
+      { onSettled: () => setConfirming(false) }
+    )
+  }
+
   const { reenviar, cargando } = useReenviarInvitacion()
   const [reenviado, setReenviado] = useState(false)
 
@@ -192,7 +213,8 @@ function FilaUsuario({ usuario, canEdit, onEditar }: FilaUsuarioProps) {
       {/* Acciones */}
       {canEdit ? (
         <td className={styles.tabla.tdRight}>
-          <div className='flex items-center justify-end gap-1'>
+          <div className='flex items-center justify-end gap-1.5'>
+            {/* Reenviar invitación */}
             {pendiente && !reenviado ? (
               <button
                 onClick={handleReenviar}
@@ -209,6 +231,58 @@ function FilaUsuario({ usuario, canEdit, onEditar }: FilaUsuarioProps) {
                 ✓ Enviado
               </span>
             ) : null}
+
+            {/* Toggle Inactivar / Activar */}
+            {puedeToggleEstado &&
+              (confirming ? (
+                <div className='flex items-center gap-1'>
+                  <button
+                    onClick={handleConfirmarCambioEstado}
+                    disabled={cambiandoEstado}
+                    className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-semibold transition-colors disabled:opacity-60 ${
+                      estaActivo
+                        ? 'bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800'
+                        : 'bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800'
+                    }`}
+                  >
+                    {cambiandoEstado
+                      ? '...'
+                      : estaActivo
+                        ? 'Inactivar'
+                        : 'Activar'}
+                  </button>
+                  <button
+                    onClick={() => setConfirming(false)}
+                    disabled={cambiandoEstado}
+                    className='rounded-lg px-2 py-1.5 text-xs font-medium text-gray-500 transition-colors hover:bg-gray-100 disabled:opacity-60 dark:text-gray-400 dark:hover:bg-gray-700'
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setConfirming(true)}
+                  className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                    estaActivo
+                      ? 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100 dark:border-red-800/50 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40'
+                      : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800/50 dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/40'
+                  }`}
+                  title={
+                    estaActivo
+                      ? `Inactivar a ${nombreCompleto}`
+                      : `Activar a ${nombreCompleto}`
+                  }
+                >
+                  {estaActivo ? (
+                    <UserX className='h-3.5 w-3.5' />
+                  ) : (
+                    <UserCheck className='h-3.5 w-3.5' />
+                  )}
+                  {estaActivo ? 'Inactivar' : 'Activar'}
+                </button>
+              ))}
+
+            {/* Editar */}
             <button
               onClick={onEditar}
               className={styles.tabla.actionButton}
