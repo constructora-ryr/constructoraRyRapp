@@ -103,9 +103,7 @@ const ROUTE_TO_PERMISSION: Record<string, { modulo: string; accion: string }> =
     '/proyectos/nuevo': { modulo: 'proyectos', accion: 'crear' },
     '/viviendas/nueva': { modulo: 'viviendas', accion: 'crear' }, // ✅ era 'nuevo'
     '/clientes/nuevo': { modulo: 'clientes', accion: 'crear' },
-    '/renuncias/nuevo': { modulo: 'renuncias', accion: 'crear' },
-    '/abonos/nuevo': { modulo: 'abonos', accion: 'crear' },
-    '/abonos/registrar': { modulo: 'abonos', accion: 'crear' }, // ✅ ruta real de registrar abono
+    '/abonos/registrar': { modulo: 'abonos', accion: 'registrar' },
     '/usuarios/nueva': { modulo: 'usuarios', accion: 'crear' },
 
     // Módulos principales (ver)

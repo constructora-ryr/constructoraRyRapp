@@ -186,7 +186,7 @@ export const navigationGroups: NavigationGroup[] = [
             href: '/abonos/registrar',
             icon: Plus,
             description: 'Nuevo pago',
-            requiredPermission: { modulo: 'abonos', accion: 'crear' },
+            requiredPermission: { modulo: 'abonos', accion: 'registrar' },
           },
           {
             name: 'Ver Abonos',

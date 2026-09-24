@@ -304,9 +304,12 @@ export const ACCIONES_DESCRIPCION: Record<
   },
   negociaciones: {
     ver: 'Ver tab de negociaciones del cliente',
-    crear: 'Crear negociaciones',
-    editar: 'Modificar negociaciones',
-    eliminar: 'Eliminar negociaciones',
+    asignar: 'Asignar vivienda al cliente',
+    trasladar: 'Trasladar a otra vivienda',
+    renunciar: 'Registrar renuncia de negociación',
+    descuento: 'Aplicar descuento al precio',
+    escritura: 'Editar valor de escritura',
+    ajustar: 'Ajustar cierre financiero',
   },
   documentos: {
     ver: 'Ver tab de documentos',
@@ -317,15 +320,12 @@ export const ACCIONES_DESCRIPCION: Record<
   },
   abonos: {
     ver: 'Acceder al módulo y ver listado',
-    crear: 'Registrar abonos',
-    editar: 'Modificar abonos',
-    eliminar: 'Eliminar abonos',
+    registrar: 'Registrar un nuevo abono',
+    editar: 'Modificar datos de un abono',
+    anular: 'Anular un abono registrado',
   },
   renuncias: {
     ver: 'Acceder al módulo y ver listado',
-    crear: 'Registrar renuncias',
-    editar: 'Modificar renuncias',
-    eliminar: 'Eliminar renuncias',
   },
   usuarios: {
     ver: 'Ver lista de usuarios y permisos',

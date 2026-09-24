@@ -47,6 +47,7 @@ export const ETIQUETA_MODULO: Record<string, string> = {
   documentos: 'Documentos',
   negociaciones: 'Negociaciones',
   abonos: 'Abonos',
+  renuncias: 'Renuncias',
   usuarios: 'Usuarios',
   auditorias: 'Auditorías',
   reportes: 'Reportes',
