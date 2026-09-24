@@ -29,13 +29,13 @@ export const loginStyles = {
   classes: {
     // Layout principal
     container:
-      'relative flex min-h-screen w-full items-center justify-center overflow-y-auto overflow-x-hidden py-8',
+      'relative flex min-h-screen w-full flex-col items-center overflow-x-hidden px-4 py-8 sm:justify-center',
     backgroundWrapper: 'fixed inset-0 z-0 h-screen w-screen',
     backgroundImage: 'object-cover',
     overlay:
       'absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/70',
     content:
-      'relative z-10 mx-auto flex w-full max-w-2xl flex-col items-center justify-center px-4',
+      'relative z-10 mx-auto flex w-full max-w-2xl flex-col items-center px-4',
 
     // Branding
     brandingContainer:

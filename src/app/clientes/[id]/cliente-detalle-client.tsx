@@ -32,6 +32,7 @@ import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
+import { formatearDocumentoCompleto } from '@/lib/utils/documento.utils'
 import { getShortId } from '@/lib/utils/slug.utils'
 import { formatNombreCompleto } from '@/lib/utils/string.utils'
 import {
@@ -462,7 +463,10 @@ export default function ClienteDetalleClient({
 
                   {/* Documento pegado al nombre (sin ícono, compacto) */}
                   <p className='mb-2 mt-0.5 text-sm font-medium text-white/80 dark:text-white/70'>
-                    {cliente.tipo_documento} {cliente.numero_documento}
+                    {formatearDocumentoCompleto(
+                      cliente.tipo_documento,
+                      cliente.numero_documento
+                    )}
                   </p>
 
                   {/* Chip compacto de vivienda asignada — usa negociación ACTIVA o COMPLETADA */}
