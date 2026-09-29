@@ -976,7 +976,7 @@ export function NegociacionTab({
           onClose={closeDescuento}
           onGuardar={handleAplicarDescuento}
           isGuardando={isAplicandoDescuento}
-          valorNegociado={negociacion.valor_negociado}
+          valorTotalPagar={valorVivienda}
           descuentoActual={descuento}
           tipoDescuentoActual={negociacion.tipo_descuento}
           motivoDescuentoActual={negociacion.motivo_descuento}

@@ -42,7 +42,8 @@ interface DescuentoModalProps {
   onClose: () => void
   onGuardar: (datos: DatosDescuento) => void
   isGuardando: boolean
-  valorNegociado: number
+  /** valor_total_pagar actual (incluye gastos notariales y recargos) */
+  valorTotalPagar: number
   descuentoActual: number
   tipoDescuentoActual?: string | null
   motivoDescuentoActual?: string | null
@@ -58,7 +59,7 @@ export function DescuentoModal({
   onClose,
   onGuardar,
   isGuardando,
-  valorNegociado,
+  valorTotalPagar,
   descuentoActual,
   tipoDescuentoActual,
   motivoDescuentoActual,
@@ -97,30 +98,37 @@ export function DescuentoModal({
   // ─── Valores calculados ──────────────────────────────────────────────────
   const montoNum = useMemo(() => parseCurrency(montoRaw), [montoRaw])
 
+  // Base de referencia: precio total actual (incluye gastos notariales)
+  // Si hay un descuento previo, el precio "sin descuento" es valorTotalPagar + descuentoActual
+  const precioBase = valorTotalPagar + descuentoActual
+
   const porcentaje = useMemo(() => {
-    if (valorNegociado <= 0 || montoNum <= 0) return 0
-    return Number(((montoNum / valorNegociado) * 100).toFixed(2))
-  }, [montoNum, valorNegociado])
+    if (precioBase <= 0 || montoNum <= 0) return 0
+    return Number(((montoNum / precioBase) * 100).toFixed(2))
+  }, [montoNum, precioBase])
 
   const nuevoTotal = useMemo(() => {
-    return Math.max(0, valorNegociado - montoNum)
-  }, [valorNegociado, montoNum])
+    return Math.max(0, precioBase - montoNum)
+  }, [precioBase, montoNum])
 
   // ─── Validación ──────────────────────────────────────────────────────────
   const errores = useMemo(() => {
     const errs: { monto?: string; motivo?: string } = {}
     if (montoNum <= 0) errs.monto = 'El monto debe ser mayor a $0'
-    else if (montoNum >= valorNegociado)
-      errs.monto = 'El descuento no puede ser igual o mayor al valor negociado'
-    else if (!esAdmin && montoNum > valorNegociado * 0.5)
-      errs.monto = 'El descuento no puede superar el 50% del valor negociado'
-    else if (esAdmin && montoNum > valorNegociado * 0.99)
-      errs.monto = 'El descuento no puede superar el 99% del valor negociado'
+    else if (montoNum >= precioBase)
+      errs.monto =
+        'El descuento no puede ser igual o mayor al precio de la vivienda'
+    else if (!esAdmin && montoNum > precioBase * 0.5)
+      errs.monto =
+        'El descuento no puede superar el 50% del precio de la vivienda'
+    else if (esAdmin && montoNum > precioBase * 0.99)
+      errs.monto =
+        'El descuento no puede superar el 99% del precio de la vivienda'
     if (!motivo.trim()) errs.motivo = 'El motivo es obligatorio'
     else if (motivo.trim().length < 10)
       errs.motivo = 'El motivo debe tener al menos 10 caracteres'
     return errs
-  }, [montoNum, valorNegociado, motivo, esAdmin])
+  }, [montoNum, precioBase, motivo, esAdmin])
 
   const puedeGuardar = !errores.monto && !errores.motivo && !isGuardando
 
@@ -185,7 +193,7 @@ export function DescuentoModal({
                     {esEdicion ? 'Modificar Descuento' : 'Aplicar Descuento'}
                   </h2>
                   <p className={styles.header.subtitle}>
-                    Valor negociado: {formatCurrency(valorNegociado)}
+                    Precio vivienda: {formatCurrency(precioBase)}
                   </p>
                 </div>
               </div>
@@ -262,9 +270,9 @@ export function DescuentoModal({
               {/* Preview financiero */}
               <div className={styles.preview.container}>
                 <div className={styles.preview.row}>
-                  <span className={styles.preview.label}>Valor negociado</span>
+                  <span className={styles.preview.label}>Precio vivienda</span>
                   <span className={styles.preview.value}>
-                    {formatCurrency(valorNegociado)}
+                    {formatCurrency(precioBase)}
                   </span>
                 </div>
                 <div className={styles.preview.row}>
