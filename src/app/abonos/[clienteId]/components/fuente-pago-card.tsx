@@ -360,7 +360,7 @@ export function FuentePagoCard({
               <span
                 className={`text-xs font-bold ${completada ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-white/60'}`}
               >
-                {pct}%
+                {completada ? 100 : Math.floor(pct)}%
               </span>
             ) : (
               <span className='text-xs text-gray-400 dark:text-white/30'>
