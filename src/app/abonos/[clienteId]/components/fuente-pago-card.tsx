@@ -355,6 +355,19 @@ export function FuentePagoCard({
 
         {/* Barra de progreso */}
         <div className='space-y-1'>
+          <div className='flex justify-end'>
+            {pct > 0 ? (
+              <span
+                className={`text-xs font-bold ${completada ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-white/60'}`}
+              >
+                {pct}%
+              </span>
+            ) : (
+              <span className='text-xs text-gray-400 dark:text-white/30'>
+                Sin pagos
+              </span>
+            )}
+          </div>
           <div className='h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-white/10'>
             <motion.div
               className={`h-full rounded-full bg-gradient-to-r ${colors.bar}`}
@@ -367,18 +380,6 @@ export function FuentePagoCard({
               }}
               style={{ boxShadow: `0 0 8px ${colors.glow}` }}
             />
-          </div>
-          <div className='flex justify-between'>
-            <span className='text-[10px] text-gray-400 dark:text-white/30'>
-              0%
-            </span>
-            <span
-              className={`text-[10px] font-bold ${completada ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-white/60'}`}
-            >
-              {fuente.saldo_pendiente > 0
-                ? `${Math.floor(pct * 10) / 10}%`
-                : `${pct.toFixed(1)}%`}
-            </span>
           </div>
         </div>
       </div>
