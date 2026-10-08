@@ -130,9 +130,14 @@ export function useFuentePagoCard({
       abonado: fuente.monto_recibido || 0,
       pendiente: (fuente.monto_aprobado || 0) - (fuente.monto_recibido || 0),
       porcentajePagado: fuente.monto_aprobado
-        ? Math.round(
-            ((fuente.monto_recibido || 0) / fuente.monto_aprobado) * 100
-          )
+        ? fuente.monto_recibido >= fuente.monto_aprobado
+          ? 100
+          : Math.min(
+              Math.floor(
+                ((fuente.monto_recibido || 0) / fuente.monto_aprobado) * 100
+              ),
+              99
+            )
         : 0,
     }),
     [fuente.monto_aprobado, fuente.monto_recibido]

@@ -424,7 +424,7 @@ export function ClientesTabla({
           const porcentaje = pagadoCompleto
             ? 100
             : valorTotal > 0
-              ? Math.min(Math.round((totalAbonado / valorTotal) * 100), 100)
+              ? Math.min(Math.floor((totalAbonado / valorTotal) * 100), 99)
               : 0
           const barColor = pagadoCompleto
             ? 'bg-emerald-500'

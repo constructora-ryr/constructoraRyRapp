@@ -26,6 +26,9 @@ const CIRCUNFERENCIA = 2 * Math.PI * 40
 
 export function MetricasCards({ metricas }: MetricasCardsProps) {
   const pct = Math.min(Math.max(metricas.porcentajePagado, 0), 100)
+  // Solo mostrar 100% en el texto si el saldo es realmente cero
+  const pctTexto =
+    metricas.saldoPendiente === 0 ? 100 : Math.min(Math.floor(pct), 99)
   const offset = CIRCUNFERENCIA - (pct / 100) * CIRCUNFERENCIA
   const tieneIntereses = metricas.interesesTotales > 0
 
@@ -187,7 +190,7 @@ export function MetricasCards({ metricas }: MetricasCardsProps) {
               </svg>
               <div className='absolute inset-0 flex flex-col items-center justify-center leading-none'>
                 <span className='text-2xl font-extrabold text-gray-900 dark:text-white'>
-                  {pct.toFixed(0)}%
+                  {pctTexto}%
                 </span>
                 <span className='mt-0.5 text-[10px] font-medium uppercase tracking-wider text-gray-400 dark:text-white/40'>
                   pagado
