@@ -363,7 +363,7 @@ export function FuentePagoCard({
                 {completada ? 100 : Math.floor(pct)}%
               </span>
             ) : (
-              <span className='text-xs text-gray-400 dark:text-white/30'>
+              <span className='text-xs font-medium italic text-gray-400 dark:text-white/40'>
                 Sin pagos
               </span>
             )}
