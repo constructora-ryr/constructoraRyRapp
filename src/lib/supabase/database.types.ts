@@ -10,76 +10,10 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.15"
   }
   public: {
     Tables: {
-      pagos_excedentes: {
-        Row: {
-          id: string
-          negociacion_id: string
-          abono_id: string | null
-          fuente_tipo: string | null
-          monto_pagado: number
-          monto_esperado: number
-          monto_excedente: number
-          estado: string
-          fecha_procesado: string | null
-          comprobante_url: string | null
-          procesado_por: string | null
-          notas: string | null
-          created_at: string
-          created_by: string | null
-        }
-        Insert: {
-          id?: string
-          negociacion_id: string
-          abono_id?: string | null
-          fuente_tipo?: string | null
-          monto_pagado: number
-          monto_esperado: number
-          monto_excedente: number
-          estado?: string
-          fecha_procesado?: string | null
-          comprobante_url?: string | null
-          procesado_por?: string | null
-          notas?: string | null
-          created_at?: string
-          created_by?: string | null
-        }
-        Update: {
-          id?: string
-          negociacion_id?: string
-          abono_id?: string | null
-          fuente_tipo?: string | null
-          monto_pagado?: number
-          monto_esperado?: number
-          monto_excedente?: number
-          estado?: string
-          fecha_procesado?: string | null
-          comprobante_url?: string | null
-          procesado_por?: string | null
-          notas?: string | null
-          created_at?: string
-          created_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "pagos_excedentes_negociacion_id_fkey"
-            columns: ["negociacion_id"]
-            isOneToOne: false
-            referencedRelation: "negociaciones"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "pagos_excedentes_abono_id_fkey"
-            columns: ["abono_id"]
-            isOneToOne: false
-            referencedRelation: "abonos_historial"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       abonos_historial: {
         Row: {
           anulado_por_id: string | null
@@ -1799,6 +1733,15 @@ export type Database = {
           escritura_url: string | null
           estado: string
           evidencia_envio_correo_url: string | null
+          excedente_devolucion_comprobante_url: string | null
+          excedente_devolucion_estado: string | null
+          excedente_devolucion_fecha: string | null
+          excedente_devolucion_metodo: string | null
+          excedente_devolucion_monto: number | null
+          excedente_devolucion_notas: string | null
+          excedente_devolucion_numero_comprobante: string | null
+          excedente_devolucion_procesado_en: string | null
+          excedente_devolucion_procesado_por: string | null
           fecha_actualizacion: string
           fecha_completada: string | null
           fecha_creacion: string
@@ -1836,6 +1779,15 @@ export type Database = {
           escritura_url?: string | null
           estado?: string
           evidencia_envio_correo_url?: string | null
+          excedente_devolucion_comprobante_url?: string | null
+          excedente_devolucion_estado?: string | null
+          excedente_devolucion_fecha?: string | null
+          excedente_devolucion_metodo?: string | null
+          excedente_devolucion_monto?: number | null
+          excedente_devolucion_notas?: string | null
+          excedente_devolucion_numero_comprobante?: string | null
+          excedente_devolucion_procesado_en?: string | null
+          excedente_devolucion_procesado_por?: string | null
           fecha_actualizacion?: string
           fecha_completada?: string | null
           fecha_creacion?: string
@@ -1873,6 +1825,15 @@ export type Database = {
           escritura_url?: string | null
           estado?: string
           evidencia_envio_correo_url?: string | null
+          excedente_devolucion_comprobante_url?: string | null
+          excedente_devolucion_estado?: string | null
+          excedente_devolucion_fecha?: string | null
+          excedente_devolucion_metodo?: string | null
+          excedente_devolucion_monto?: number | null
+          excedente_devolucion_notas?: string | null
+          excedente_devolucion_numero_comprobante?: string | null
+          excedente_devolucion_procesado_en?: string | null
+          excedente_devolucion_procesado_por?: string | null
           fecha_actualizacion?: string
           fecha_completada?: string | null
           fecha_creacion?: string
@@ -2173,6 +2134,107 @@ export type Database = {
           },
         ]
       }
+      pagos_excedentes: {
+        Row: {
+          abono_id: string | null
+          comprobante_url: string | null
+          created_at: string
+          created_by: string | null
+          estado: string
+          fecha_procesado: string | null
+          fuente_tipo: string | null
+          id: string
+          monto_esperado: number
+          monto_excedente: number
+          monto_pagado: number
+          negociacion_id: string
+          notas: string | null
+          procesado_por: string | null
+        }
+        Insert: {
+          abono_id?: string | null
+          comprobante_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          estado?: string
+          fecha_procesado?: string | null
+          fuente_tipo?: string | null
+          id?: string
+          monto_esperado: number
+          monto_excedente: number
+          monto_pagado: number
+          negociacion_id: string
+          notas?: string | null
+          procesado_por?: string | null
+        }
+        Update: {
+          abono_id?: string | null
+          comprobante_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          estado?: string
+          fecha_procesado?: string | null
+          fuente_tipo?: string | null
+          id?: string
+          monto_esperado?: number
+          monto_excedente?: number
+          monto_pagado?: number
+          negociacion_id?: string
+          notas?: string | null
+          procesado_por?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pagos_excedentes_abono_id_fkey"
+            columns: ["abono_id"]
+            isOneToOne: false
+            referencedRelation: "abonos_historial"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pagos_excedentes_abono_id_fkey"
+            columns: ["abono_id"]
+            isOneToOne: false
+            referencedRelation: "vista_abonos_completos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pagos_excedentes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pagos_excedentes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "vista_usuarios_completos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pagos_excedentes_negociacion_id_fkey"
+            columns: ["negociacion_id"]
+            isOneToOne: false
+            referencedRelation: "negociaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pagos_excedentes_procesado_por_fkey"
+            columns: ["procesado_por"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pagos_excedentes_procesado_por_fkey"
+            columns: ["procesado_por"]
+            isOneToOne: false
+            referencedRelation: "vista_usuarios_completos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       permisos_rol: {
         Row: {
           accion: string
@@ -2314,6 +2376,7 @@ export type Database = {
           consecutivo: string
           estado: string
           fecha_actualizacion: string | null
+          fecha_cancelacion: string | null
           fecha_cierre: string | null
           fecha_creacion: string | null
           fecha_devolucion: string | null
@@ -2323,6 +2386,7 @@ export type Database = {
           metodo_devolucion: string | null
           monto_a_devolver: number
           motivo: string
+          motivo_cancelacion: string | null
           negociacion_datos_snapshot: Json | null
           negociacion_id: string | null
           notas_cierre: string | null
@@ -2330,6 +2394,7 @@ export type Database = {
           requiere_devolucion: boolean
           retencion_monto: number
           retencion_motivo: string | null
+          usuario_cancelacion: string | null
           usuario_cierre: string | null
           usuario_registro: string | null
           vivienda_datos_snapshot: Json | null
@@ -2344,6 +2409,7 @@ export type Database = {
           consecutivo: string
           estado?: string
           fecha_actualizacion?: string | null
+          fecha_cancelacion?: string | null
           fecha_cierre?: string | null
           fecha_creacion?: string | null
           fecha_devolucion?: string | null
@@ -2353,6 +2419,7 @@ export type Database = {
           metodo_devolucion?: string | null
           monto_a_devolver?: number
           motivo: string
+          motivo_cancelacion?: string | null
           negociacion_datos_snapshot?: Json | null
           negociacion_id?: string | null
           notas_cierre?: string | null
@@ -2360,6 +2427,7 @@ export type Database = {
           requiere_devolucion?: boolean
           retencion_monto?: number
           retencion_motivo?: string | null
+          usuario_cancelacion?: string | null
           usuario_cierre?: string | null
           usuario_registro?: string | null
           vivienda_datos_snapshot?: Json | null
@@ -2374,6 +2442,7 @@ export type Database = {
           consecutivo?: string
           estado?: string
           fecha_actualizacion?: string | null
+          fecha_cancelacion?: string | null
           fecha_cierre?: string | null
           fecha_creacion?: string | null
           fecha_devolucion?: string | null
@@ -2383,6 +2452,7 @@ export type Database = {
           metodo_devolucion?: string | null
           monto_a_devolver?: number
           motivo?: string
+          motivo_cancelacion?: string | null
           negociacion_datos_snapshot?: Json | null
           negociacion_id?: string | null
           notas_cierre?: string | null
@@ -2390,6 +2460,7 @@ export type Database = {
           requiere_devolucion?: boolean
           retencion_monto?: number
           retencion_motivo?: string | null
+          usuario_cancelacion?: string | null
           usuario_cierre?: string | null
           usuario_registro?: string | null
           vivienda_datos_snapshot?: Json | null
@@ -2490,6 +2561,42 @@ export type Database = {
           usuario_actualizacion?: string | null
           usuario_creacion?: string | null
           version?: number
+        }
+        Relationships: []
+      }
+      sesiones_activas: {
+        Row: {
+          created_at: string
+          dispositivo: string | null
+          id: string
+          ip: string | null
+          last_seen_at: string
+          navegador: string | null
+          revocada: boolean
+          session_token: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dispositivo?: string | null
+          id?: string
+          ip?: string | null
+          last_seen_at?: string
+          navegador?: string | null
+          revocada?: boolean
+          session_token: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dispositivo?: string | null
+          id?: string
+          ip?: string | null
+          last_seen_at?: string
+          navegador?: string | null
+          revocada?: boolean
+          session_token?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -3436,7 +3543,6 @@ export type Database = {
           estado: Database["public"]["Enums"]["estado_usuario"] | null
           fecha_actualizacion: string | null
           fecha_creacion: string | null
-          fecha_registro_auth: string | null
           id: string | null
           intentos_fallidos: number | null
           nombre_completo: string | null
@@ -3445,7 +3551,6 @@ export type Database = {
           telefono: string | null
           ultimo_acceso: string | null
           ultimo_login: string | null
-          ultimo_login_auth: string | null
         }
         Relationships: []
       }
@@ -3663,6 +3768,10 @@ export type Database = {
       limpiar_logs_antiguos: {
         Args: { dias_retencion?: number }
         Returns: number
+      }
+      limpiar_sesiones_antiguas: {
+        Args: { p_user_id: string }
+        Returns: undefined
       }
       marcar_interes_convertido: {
         Args: { p_cliente_id: string; p_vivienda_id: string }
@@ -3918,12 +4027,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3947,11 +4056,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3972,11 +4081,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3997,11 +4106,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -4014,11 +4123,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
