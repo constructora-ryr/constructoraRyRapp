@@ -179,6 +179,8 @@ export async function POST(request: NextRequest) {
         comprobante_url: comprobante_path,
         notas: notas || null,
         usuario_registro: user?.id ?? null,
+        es_overpayment:
+          es_overpayment && montoSinMora > saldoDisponible ? true : undefined,
       })
       .select()
       .single()
