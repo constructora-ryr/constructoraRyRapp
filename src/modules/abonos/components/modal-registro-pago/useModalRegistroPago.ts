@@ -298,12 +298,15 @@ export function useModalRegistroPago({
           }
         )
       }
-    } catch {
+    } catch (err) {
       submittingRef.current = false
       setFaseLoading('idle')
+      const msg = err instanceof Error ? err.message : null
       setErrors({
         submit:
-          'No se pudo guardar el pago. El comprobante puede haber quedado sin registrar — intenta de nuevo.',
+          msg && msg !== 'Error al registrar el pago'
+            ? msg
+            : 'No se pudo guardar el pago. El comprobante puede haber quedado sin registrar — intenta de nuevo.',
       })
       return
     }
