@@ -18,6 +18,8 @@ import { AbonoDetalleModal } from '@/modules/abonos/components/abono-detalle-mod
 import type { AbonoParaDetalle } from '@/modules/abonos/components/abono-detalle-modal/useAbonoDetalle'
 import { ModalEditarAbono } from '@/modules/abonos/components/modal-editar-abono'
 import { ModalRegistroPago } from '@/modules/abonos/components/modal-registro-pago'
+import { PagosExcedentesBanner } from '@/modules/abonos/components/pago-excedente/PagosExcedentesBanner'
+import { usePagosExcedentes } from '@/modules/abonos/hooks/usePagosExcedentes'
 import type { AbonoHistorial } from '@/modules/abonos/types'
 import type { AbonoParaEditar } from '@/modules/abonos/types/editar-abono.types'
 import { usePermisosQuery } from '@/modules/usuarios/hooks/usePermisosQuery'
@@ -60,6 +62,7 @@ export default function AbonosDetalleClient({
 
   // ─── Permisos granulares de abonos ──────────────────────────────────────
   const { esAdmin, puede } = usePermisosQuery()
+  const { data: pagosExcedentes = [] } = usePagosExcedentes(negociacion?.id)
   const canRegistrar =
     (esAdmin || puede('abonos', 'registrar')) && estaBalanceado
   const canEditar = esAdmin || puede('abonos', 'editar')
@@ -322,6 +325,14 @@ export default function AbonosDetalleClient({
             </motion.div>
           )}
 
+        {/* Banner de pago excedente (cliente pagó más de lo que debía) */}
+        {esAdmin && pagosExcedentes.length > 0 && negociacion ? (
+          <PagosExcedentesBanner
+            pagos={pagosExcedentes}
+            negociacionId={negociacion.id}
+          />
+        ) : null}
+
         {/* Fuentes de pago */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
@@ -385,6 +396,7 @@ export default function AbonosDetalleClient({
             onClose={handleCerrarModal}
             negociacionId={negociacion.id}
             clienteId={clienteId}
+            esAdmin={esAdmin}
             fechaMinima={
               negociacion.fecha_negociacion
                 ? formatDateForInput(negociacion.fecha_negociacion)

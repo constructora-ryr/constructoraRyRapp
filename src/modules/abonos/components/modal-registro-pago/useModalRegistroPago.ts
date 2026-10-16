@@ -37,6 +37,8 @@ export interface UseModalRegistroPagoProps {
   montoPrecargado?: number
   /** Porción del montoPrecargado que corresponde a mora (para contabilidad) */
   moraIncluida?: number
+  /** Cuando true, admin puede registrar montos que excedan el saldo (muestra advertencia) */
+  esAdmin?: boolean
   onSuccess: (meta?: { fechaAbono?: string }) => void
   onClose: () => void
 }
@@ -73,6 +75,7 @@ export function useModalRegistroPago({
   fechaMinima,
   montoPrecargado,
   moraIncluida: moraIncluidaProp = 0,
+  esAdmin = false,
   onSuccess,
   onClose,
 }: UseModalRegistroPagoProps) {
@@ -176,6 +179,18 @@ export function useModalRegistroPago({
     setFuenteSeleccionadaState(fuente)
   }
 
+  // Cuando admin ingresa un monto mayor al saldo, se trata como overpayment (no bloqueo)
+  const montoExcedeInfo =
+    !esDesembolso &&
+    !esCuotaPreCargada &&
+    montoNum > 0 &&
+    montoNum > saldoPendiente
+      ? {
+          excedente: montoNum - saldoPendiente,
+          esOverpayment: esAdmin,
+        }
+      : null
+
   // ── Validación ──────────────────────────────────────────────────────────────
   const validar = (): boolean => {
     const newErrors: Record<string, string> = {}
@@ -183,7 +198,8 @@ export function useModalRegistroPago({
     if (!esDesembolso && !esCuotaPreCargada) {
       if (!monto || isNaN(montoNum) || montoNum <= 0) {
         newErrors.monto = 'El monto debe ser mayor a cero'
-      } else if (montoNum > saldoPendiente) {
+      } else if (montoNum > saldoPendiente && !esAdmin) {
+        // Admin puede exceder el saldo (overpayment permitido con advertencia)
         newErrors.monto = 'No puede exceder el saldo pendiente'
       }
     }
@@ -262,6 +278,7 @@ export function useModalRegistroPago({
         numero_referencia: referencia || null,
         notas: notas || null,
         comprobante_path: uploadedPath,
+        es_overpayment: montoExcedeInfo?.esOverpayment ?? false,
       })
 
       // Capturar datos del abono registrado para mostrar pantalla de éxito
@@ -342,6 +359,8 @@ export function useModalRegistroPago({
     // Cuota pre-cargada
     esCuotaPreCargada,
     moraIncluidaProp,
+    // Overpayment (admin excede saldo pendiente)
+    montoExcedeInfo,
     // Crédito constructora
     valorCuota,
     numeroCuota:

@@ -14,6 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      pagos_excedentes: {
+        Row: {
+          id: string
+          negociacion_id: string
+          abono_id: string | null
+          fuente_tipo: string | null
+          monto_pagado: number
+          monto_esperado: number
+          monto_excedente: number
+          estado: string
+          fecha_procesado: string | null
+          comprobante_url: string | null
+          procesado_por: string | null
+          notas: string | null
+          created_at: string
+          created_by: string | null
+        }
+        Insert: {
+          id?: string
+          negociacion_id: string
+          abono_id?: string | null
+          fuente_tipo?: string | null
+          monto_pagado: number
+          monto_esperado: number
+          monto_excedente: number
+          estado?: string
+          fecha_procesado?: string | null
+          comprobante_url?: string | null
+          procesado_por?: string | null
+          notas?: string | null
+          created_at?: string
+          created_by?: string | null
+        }
+        Update: {
+          id?: string
+          negociacion_id?: string
+          abono_id?: string | null
+          fuente_tipo?: string | null
+          monto_pagado?: number
+          monto_esperado?: number
+          monto_excedente?: number
+          estado?: string
+          fecha_procesado?: string | null
+          comprobante_url?: string | null
+          procesado_por?: string | null
+          notas?: string | null
+          created_at?: string
+          created_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pagos_excedentes_negociacion_id_fkey"
+            columns: ["negociacion_id"]
+            isOneToOne: false
+            referencedRelation: "negociaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pagos_excedentes_abono_id_fkey"
+            columns: ["abono_id"]
+            isOneToOne: false
+            referencedRelation: "abonos_historial"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       abonos_historial: {
         Row: {
           anulado_por_id: string | null

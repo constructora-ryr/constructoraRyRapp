@@ -12,6 +12,7 @@ export interface RegistrarAbonoPayload {
   numero_referencia: string | null
   notas: string | null
   comprobante_path: string
+  es_overpayment?: boolean
 }
 
 /**

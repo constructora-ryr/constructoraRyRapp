@@ -43,6 +43,8 @@ export interface ModalRegistroPagoProps {
   montoPrecargado?: number
   /** Mora incluida en montoPrecargado (se separa contablemente) */
   moraIncluida?: number
+  /** Cuando true, admin puede registrar montos que excedan el saldo (muestra advertencia) */
+  esAdmin?: boolean
   onSuccess: (meta?: { fechaAbono?: string }) => void
   /** Contexto de la negoción para generar el recibo PDF en la pantalla de éxito */
   negociacionContext?: {
@@ -89,6 +91,7 @@ export function ModalRegistroPago(props: ModalRegistroPagoProps) {
     handleCloseExito,
     valorCuota,
     numeroCuota,
+    montoExcedeInfo,
   } = useModalRegistroPago(props)
 
   const styles = getModalStyles(colorScheme, modo)
@@ -278,6 +281,7 @@ export function ModalRegistroPago(props: ModalRegistroPagoProps) {
             montoAprobado={fuenteSeleccionada.monto_aprobado}
             colorScheme={colorScheme}
             error={errors.monto}
+            overpaymentInfo={montoExcedeInfo}
           />
 
           <MetodosPago

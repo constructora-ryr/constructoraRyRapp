@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
       notas,
       comprobante_path,
       mora_incluida,
+      es_overpayment, // flag explícito enviado por el frontend cuando admin acepta exceder saldo
     } = body
 
     // mora_incluida: porción del monto que corresponde a mora (no se descuenta del saldo)
@@ -120,12 +121,15 @@ export async function POST(request: NextRequest) {
     const saldoDisponible = fuente.saldo_pendiente || 0
     const montoSinMora = monto - moraIncluida
     if (montoSinMora > saldoDisponible) {
-      return NextResponse.json(
-        {
-          error: `El monto principal ($${montoSinMora}) excede el saldo disponible ($${saldoDisponible})`,
-        },
-        { status: 400 }
-      )
+      // Solo admins pueden registrar overpayments y solo cuando lo confirman explícitamente
+      if (!permisos.isAdmin || !es_overpayment) {
+        return NextResponse.json(
+          {
+            error: `El monto principal ($${montoSinMora}) excede el saldo disponible ($${saldoDisponible})`,
+          },
+          { status: 400 }
+        )
+      }
     }
 
     // 1b. Validar estado y fecha de la negociación
@@ -187,7 +191,27 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 4. Los triggers de la DB ya actualizaron saldo_pendiente y totales.
+    // 4b. Si fue un overpayment confirmado por admin, registrar la devolución pendiente
+    if (es_overpayment && montoSinMora > saldoDisponible) {
+      const montoExcedente = montoSinMora - saldoDisponible
+      await supabaseAdmin
+        .from('pagos_excedentes')
+        .insert({
+          negociacion_id,
+          abono_id: nuevoAbono.id,
+          fuente_tipo: fuente.tipo,
+          monto_pagado: montoSinMora,
+          monto_esperado: saldoDisponible,
+          monto_excedente: montoExcedente,
+          created_by: user.id,
+        })
+        .throwOnError()
+      logger.info(
+        `💰 [ABONO] Overpayment de $${montoExcedente} registrado para negociación ${negociacion_id}`
+      )
+    }
+
+    // 5. Los triggers de la DB ya actualizaron saldo_pendiente y totales.
     //    Re-consultamos la negociación para detectar si se completó el pago.
     const { data: negActualizada } = await supabase
       .from('negociaciones')
