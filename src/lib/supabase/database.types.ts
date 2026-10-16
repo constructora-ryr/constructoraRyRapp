@@ -19,6 +19,7 @@ export type Database = {
           anulado_por_id: string | null
           anulado_por_nombre: string | null
           comprobante_url: string | null
+          es_overpayment: boolean
           estado: string
           fecha_abono: string
           fecha_actualizacion: string
@@ -42,6 +43,7 @@ export type Database = {
           anulado_por_id?: string | null
           anulado_por_nombre?: string | null
           comprobante_url?: string | null
+          es_overpayment?: boolean
           estado?: string
           fecha_abono: string
           fecha_actualizacion?: string
@@ -65,6 +67,7 @@ export type Database = {
           anulado_por_id?: string | null
           anulado_por_nombre?: string | null
           comprobante_url?: string | null
+          es_overpayment?: boolean
           estado?: string
           fecha_abono?: string
           fecha_actualizacion?: string
