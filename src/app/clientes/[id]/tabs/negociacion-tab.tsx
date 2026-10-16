@@ -44,6 +44,8 @@ import { useRouter } from 'next/navigation'
 import { formatDateForDB, formatDateForDisplay } from '@/lib/utils/date.utils'
 import { ProcesarDevolucionExcedenteModal } from '@/modules/abonos/components/devolucion-excedente/ProcesarDevolucionExcedenteModal'
 import { ModalEditarAbono } from '@/modules/abonos/components/modal-editar-abono'
+import { PagosExcedentesBanner } from '@/modules/abonos/components/pago-excedente/PagosExcedentesBanner'
+import { usePagosExcedentes } from '@/modules/abonos/hooks/usePagosExcedentes'
 import type { AbonoParaEditar } from '@/modules/abonos/types/editar-abono.types'
 import { negociacionesService } from '@/modules/clientes/services/negociaciones.service'
 import type { Cliente } from '@/modules/clientes/types'
@@ -225,6 +227,8 @@ export function NegociacionTab({
       setGuardandoFechaNeg(false)
     }
   }, [fechaNegEdit, negociacion, refetchNegociaciones])
+
+  const { data: pagosExcedentes = [] } = usePagosExcedentes(negociacion?.id)
 
   if (isLoading)
     return (
@@ -757,6 +761,13 @@ export function NegociacionTab({
               comprobanteUrl={negociacion?.excedente_devolucion_comprobante_url}
               puedeAjustar={puedeAjustar}
               onRegistrar={() => setModalDevolucionOpen(true)}
+            />
+          ) : null}
+
+          {isAdmin && pagosExcedentes.length > 0 ? (
+            <PagosExcedentesBanner
+              pagos={pagosExcedentes}
+              negociacionId={negociacion.id}
             />
           ) : null}
 
