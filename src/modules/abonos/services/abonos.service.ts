@@ -43,6 +43,7 @@ export async function obtenerNegociacionesActivas(): Promise<
     `
     )
     .eq('estado', 'Activa')
+    .or('saldo_pendiente.gt.0,saldo_pendiente.is.null')
     .order('fecha_creacion', { ascending: false })
 
   if (error) {
