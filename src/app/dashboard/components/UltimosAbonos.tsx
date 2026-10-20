@@ -100,7 +100,9 @@ function UltimosAbonosComponent({
           </p>
         </div>
       ) : (
-        <ul className='-mx-2 flex flex-col divide-y divide-slate-100 dark:divide-slate-700/50'>
+        // En escritorio la tarjeta toma la altura de la columna vecina y la
+        // lista hace scroll interno; en móvil se muestra completa
+        <ul className='custom-scrollbar -mx-2 flex min-h-0 flex-1 flex-col divide-y divide-slate-100 overflow-y-auto pr-1 dark:divide-slate-700/50'>
           {abonos.map(a => {
             const dias = diasEntre(a.fechaPago, a.fechaRegistro)
             const tardio = dias >= UMBRAL_REGISTRO_TARDIO

@@ -278,9 +278,10 @@ export default function DashboardContent(_props: DashboardContentProps) {
             </div>
 
             {/* Inventario + Últimos abonos / Comercial */}
-            {/* items-start: cada tarjeta ocupa solo su altura natural (sin estirarse
-                para igualar a "Últimos abonos") */}
-            <div className='grid grid-cols-1 items-start gap-4 lg:grid-cols-3 lg:gap-6 [&>*]:min-w-0'>
+            {/* La columna izquierda define la altura de la fila; "Últimos abonos"
+                se ajusta a ella (absolute + scroll interno) para que ambas
+                columnas terminen en la misma línea */}
+            <div className='grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6 [&>*]:min-w-0'>
               <div
                 className={`flex flex-col gap-4 lg:gap-6 ${mostrarAbonos ? 'lg:col-span-2' : 'lg:col-span-3'}`}
               >
@@ -296,11 +297,15 @@ export default function DashboardContent(_props: DashboardContentProps) {
                 />
               </div>
               {mostrarAbonos && (
-                <UltimosAbonos
-                  loading={loading}
-                  abonos={s.ultimosAbonos ?? []}
-                  canNavigate={permisos.abonos}
-                />
+                <div className='lg:relative'>
+                  <div className='lg:absolute lg:inset-0'>
+                    <UltimosAbonos
+                      loading={loading}
+                      abonos={s.ultimosAbonos ?? []}
+                      canNavigate={permisos.abonos}
+                    />
+                  </div>
+                </div>
               )}
             </div>
           </motion.div>
