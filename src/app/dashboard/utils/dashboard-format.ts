@@ -105,3 +105,40 @@ export function formatCOPCompact(value: number): string {
   }
   return `$${Math.round(value).toLocaleString('es-CO')}`
 }
+
+/** 'YYYY-MM-DD' → "16 oct 2026" (fecha sin hora: no se convierte de zona) */
+export function formatFechaCorta(fecha: string): string {
+  const [y, m, d] = fecha.slice(0, 10).split('-').map(Number)
+  return new Date(y, m - 1, d)
+    .toLocaleDateString('es-CO', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    })
+    .replace('.', '')
+}
+
+/** ISO → "16 oct, 12:55 p. m." en hora Colombia */
+export function formatFechaHora(iso: string): string {
+  return new Intl.DateTimeFormat('es-CO', {
+    day: 'numeric',
+    month: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: TIME_ZONE,
+  })
+    .format(new Date(iso))
+    .replace('.', '')
+}
+
+/** Días entre el pago ('YYYY-MM-DD') y su registro (ISO), en hora Colombia */
+export function diasEntre(fechaPago: string, registroIso: string): number {
+  const registroDia = new Intl.DateTimeFormat('en-CA', {
+    timeZone: TIME_ZONE,
+  }).format(new Date(registroIso)) // 'YYYY-MM-DD'
+  const aUTC = (ymd: string) => {
+    const [y, m, d] = ymd.slice(0, 10).split('-').map(Number)
+    return Date.UTC(y, m - 1, d)
+  }
+  return Math.round((aUTC(registroDia) - aUTC(fechaPago)) / 86_400_000)
+}

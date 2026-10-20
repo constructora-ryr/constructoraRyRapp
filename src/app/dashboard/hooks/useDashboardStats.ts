@@ -34,10 +34,27 @@ export interface AlertaDevolucionItem {
   monto: number
 }
 
+export interface UltimoAbono {
+  id: string
+  monto: number
+  /** Día en que el cliente pagó, 'YYYY-MM-DD' (hora Colombia) */
+  fechaPago: string
+  /** Momento en que se registró en el sistema (ISO) */
+  fechaRegistro: string
+  recibo: string | null
+  metodo: string | null
+  fuente: string | null
+  clienteId: string
+  cliente: string | null
+  manzana: string | null
+  casa: string | null
+  registradoPor: string | null
+}
+
 /**
  * Estadísticas del dashboard en 1 round-trip vía RPC `get_dashboard_stats()`.
  * La función es SECURITY INVOKER: cada usuario agrega solo lo que RLS le deja
- * ver. Ver supabase/migrations/20261020_dashboard_stats_rpc_v3.sql
+ * ver. Ver supabase/migrations/20261020_dashboard_stats_rpc_v4.sql
  */
 export interface DashboardStatsData {
   generadoEn: string
@@ -95,14 +112,16 @@ export interface DashboardStatsData {
   /** Últimos 12 meses, incluye meses en cero. mes = 'YYYY-MM' */
   recaudoMensual: Array<{ mes: string; total: number; cantidad: number }>
   alertas: {
-    creditoMora: {
+    /** Hasta v3 */
+    creditoMora?: {
       creditos: number
       monto: number
       maxDiasAtraso: number
       /** Top 10 por días de atraso. v2+ */
       items?: AlertaMoraItem[]
     }
-    desembolsosPendientes: {
+    /** Hasta v3 */
+    desembolsosPendientes?: {
       total: number
       monto: number
       /** Top 10 por saldo. v2+ */
@@ -114,9 +133,12 @@ export interface DashboardStatsData {
       monto: number
       items: AlertaDevolucionItem[]
     }
-    documentosPendientes: { total: number; vencidos: number }
+    /** Hasta v3 */
+    documentosPendientes?: { total: number; vencidos: number }
     renunciasPendientes: { total: number; monto: number }
   }
+  /** Últimos 8 abonos registrados. v4+ */
+  ultimosAbonos?: UltimoAbono[]
   /** Vacío para usuarios sin acceso a audit_log */
   actividad: Array<{
     id: string
@@ -174,6 +196,7 @@ export const EMPTY_DASHBOARD_STATS: DashboardStatsData = {
     documentosPendientes: { total: 0, vencidos: 0 },
     renunciasPendientes: { total: 0, monto: 0 },
   },
+  ultimosAbonos: [],
   actividad: [],
 }
 

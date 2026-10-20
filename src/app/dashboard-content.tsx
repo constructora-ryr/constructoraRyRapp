@@ -13,7 +13,6 @@ import { useAuth } from '@/hooks/auth/useAuthQuery'
 import { usePermisosQuery } from '@/modules/usuarios/hooks/usePermisosQuery'
 import { formatCurrency } from '@/shared/utils/format'
 
-import { ActividadReciente } from './dashboard/components/ActividadReciente'
 import { ClientesCard } from './dashboard/components/ClientesCard'
 import {
   DashboardHero,
@@ -23,6 +22,7 @@ import { DevolucionesPanel } from './dashboard/components/DevolucionesPanel'
 import { KpiCard, type KpiDelta } from './dashboard/components/KpiCard'
 import { ProyectosCard } from './dashboard/components/ProyectosCard'
 import { RecaudoChart } from './dashboard/components/RecaudoChart'
+import { UltimosAbonos } from './dashboard/components/UltimosAbonos'
 import {
   EMPTY_DASHBOARD_STATS,
   useDashboardStats,
@@ -132,7 +132,6 @@ export default function DashboardContent(_props: DashboardContentProps) {
     abonos: puede('abonos', 'ver'),
     negociaciones: puede('negociaciones', 'ver'),
     renuncias: puede('renuncias', 'ver'),
-    auditorias: puede('auditorias', 'ver'),
   }
 
   const heroActions: HeroAction[] = permLoading
@@ -207,7 +206,7 @@ export default function DashboardContent(_props: DashboardContentProps) {
     },
   ].filter((k): k is Exclude<typeof k, false> => Boolean(k))
 
-  const mostrarActividad = permisos.auditorias || s.actividad.length > 0
+  const mostrarAbonos = permisos.abonos
 
   return (
     <MotionConfig reducedMotion='user'>
@@ -278,7 +277,7 @@ export default function DashboardContent(_props: DashboardContentProps) {
               </div>
             </div>
 
-            {/* Inventario + Actividad / Comercial */}
+            {/* Inventario + Últimos abonos / Comercial */}
             <div className='grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6 [&>*]:min-w-0'>
               <div className='lg:col-span-2'>
                 <ProyectosCard
@@ -287,12 +286,12 @@ export default function DashboardContent(_props: DashboardContentProps) {
                   canNavigate={permisos.proyectos}
                 />
               </div>
-              {mostrarActividad ? (
+              {mostrarAbonos ? (
                 <div className='lg:row-span-2'>
-                  <ActividadReciente
+                  <UltimosAbonos
                     loading={loading}
-                    actividad={s.actividad}
-                    canNavigate={permisos.auditorias}
+                    abonos={s.ultimosAbonos ?? []}
+                    canNavigate={permisos.abonos}
                   />
                 </div>
               ) : (
@@ -302,7 +301,7 @@ export default function DashboardContent(_props: DashboardContentProps) {
                   canNavigate={permisos.clientes}
                 />
               )}
-              {mostrarActividad && (
+              {mostrarAbonos && (
                 <div className='lg:col-span-2'>
                   <ClientesCard
                     loading={loading}
