@@ -37,7 +37,8 @@ const ESTADO_LABELS: Record<string, { label: string; chip: string }> = {
 /**
  * Orden de la barra apilada validado con dataviz/validate_palette.js:
  * violeta (Escriturada) y azul (Asignada) no pueden ir juntos (ΔE 1.3 en
- * deuteranopia). Con este orden el peor par adyacente da ΔE 16.
+ * deuteranopia). Con este orden y Saldada en dorado el peor par adyacente
+ * da ΔE 25.
  */
 const SEGMENTOS = [
   'entregadas',

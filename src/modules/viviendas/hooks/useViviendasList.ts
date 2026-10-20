@@ -37,7 +37,9 @@ export function useViviendasList() {
     isLoading: cargando,
     error,
     refetch,
-  } = useViviendasQuery(filtros)
+  } = useViviendasQuery() // Lista completa: los filtros se aplican abajo, en memoria.
+  // Así los conteos por estado no cambian al filtrar y escribir en el buscador
+  // no dispara una consulta por cada tecla.
   const eliminarMutation = useEliminarViviendaMutation()
 
   // ✅ Proyectos para filtro con React Query (id + nombre solamente)
@@ -52,12 +54,18 @@ export function useViviendasList() {
 
     if (filtros.search) {
       const termino = filtros.search.toLowerCase()
-      resultado = resultado.filter(
-        vivienda =>
+      resultado = resultado.filter(vivienda => {
+        // "A1" (manzana + número), como se nombra en toda la app
+        const codigo =
+          `${vivienda.manzanas?.nombre ?? ''}${vivienda.numero}`.toLowerCase()
+        return (
+          codigo.includes(termino.replace(/\s+/g, '')) ||
           vivienda.matricula_inmobiliaria?.toLowerCase().includes(termino) ||
           vivienda.nomenclatura?.toLowerCase().includes(termino) ||
-          vivienda.numero.toLowerCase().includes(termino)
-      )
+          vivienda.numero.toLowerCase().includes(termino) ||
+          vivienda.clientes?.nombre_completo?.toLowerCase().includes(termino)
+        )
+      })
     }
 
     if (filtros.proyecto_id) {

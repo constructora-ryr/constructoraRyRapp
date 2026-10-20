@@ -1,32 +1,45 @@
 /**
  * ViviendasTabla - Vista de tabla para viviendas
  * ✅ COMPONENTE PRESENTACIONAL PURO
- * ✅ Usa DataTable genérico
- * ✅ Columnas específicas de Viviendas
- * ✅ Diseño compacto y alineado
- * ✅ Colores naranja/ámbar del módulo
+ * ✅ DataTable variant='clean' con encabezado en degradado del módulo (fijo)
+ * ✅ Colores de estado desde @/shared/config/estados.colors
+ *
+ * Columnas: Vivienda ("A1" + manzana/casa + proyecto) · Cliente · Estado ·
+ * Matrícula y dirección · Pago · Acciones (menú ⋯)
+ *
+ * En móvil (< md) la misma información se muestra como tarjetas apiladas.
  */
 
 'use client'
 
+import { useMemo } from 'react'
+
 import { type ColumnDef } from '@tanstack/react-table'
 import {
   Building2,
-  CheckCircle2,
-  Clock,
-  Edit2,
   Home,
+  MapPin,
+  MoreHorizontal,
+  Pencil,
+  Phone,
   Trash2,
+  User,
 } from 'lucide-react'
 
 import { toTitleCase } from '@/lib/utils/string.utils'
+import { formatCOP, PagoProgreso } from '@/shared/components/list-page'
 import { DataTable } from '@/shared/components/table/DataTable'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/shared/components/ui/dropdown-menu'
+import { VIVIENDA_ESTADO_BADGE } from '@/shared/config/estados.colors'
 import { cn } from '@/shared/utils/helpers'
 
-import { ESTADO_LABELS } from '../constants'
 import type { Vivienda } from '../types'
-
-import { viviendasTablaStyles as styles } from './ViviendasTabla.styles'
 
 interface ViviendasTablaProps {
   viviendas: Vivienda[]
@@ -37,6 +50,223 @@ interface ViviendasTablaProps {
   canDelete?: boolean
 }
 
+// ── Estilos del módulo ───────────────────────────────────────────────────────
+const styles = {
+  tile: 'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-sm',
+  codigo: 'text-base font-bold leading-tight text-slate-900 dark:text-white',
+  secundario:
+    'block truncate text-xs tabular-nums text-slate-500 dark:text-slate-400',
+  badge:
+    'inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset',
+  esquinera:
+    'inline-flex items-center rounded-md bg-amber-100 px-1.5 py-px text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
+  vacio: 'text-xs text-slate-300 dark:text-slate-600',
+  accionesTrigger:
+    'rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 data-[state=open]:bg-slate-100 data-[state=open]:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200 dark:data-[state=open]:bg-slate-700',
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function configEstado(estado: string) {
+  return (
+    VIVIENDA_ESTADO_BADGE[estado] ?? {
+      label: estado,
+      dot: 'bg-slate-400',
+      badge: 'bg-slate-100 text-slate-600 ring-slate-500/20',
+      icon: Home,
+      gradient: 'from-slate-500 to-slate-700',
+      iconFilled: false,
+    }
+  )
+}
+
+/** "A1" = manzana + número, como se nombra en toda la app */
+const codigoVivienda = (v: Vivienda) => `${v.manzanas?.nombre ?? ''}${v.numero}`
+
+const estaNegociada = (v: Vivienda) => v.estado !== 'Disponible'
+
+/** A1, A2, … A10, B1 (orden natural por manzana y número) */
+function compararVivienda(a: Vivienda, b: Vivienda): number {
+  const ma = a.manzanas?.nombre ?? ''
+  const mb = b.manzanas?.nombre ?? ''
+  if (ma !== mb) return ma.localeCompare(mb)
+  return (parseInt(a.numero, 10) || 0) - (parseInt(b.numero, 10) || 0)
+}
+
+// ── Celdas (compartidas por la tabla y las tarjetas móviles) ─────────────────
+function CeldaVivienda({ v }: { v: Vivienda }) {
+  // Siempre una casa (temática del módulo); el color del cuadro indica el estado
+  const cfg = configEstado(v.estado)
+  const proyecto = toTitleCase(v.manzanas?.proyectos?.nombre)
+  return (
+    <div className='flex min-w-0 items-center gap-3'>
+      <span aria-hidden className={cn(styles.tile, cfg.gradient)}>
+        <Home className='h-5 w-5' />
+      </span>
+      <span className='min-w-0'>
+        <span className='flex items-center gap-1.5'>
+          <span className={styles.codigo}>{codigoVivienda(v)}</span>
+          {v.es_esquinera && (
+            <span className={styles.esquinera}>Esquinera</span>
+          )}
+        </span>
+        <span className={styles.secundario}>
+          Manzana {v.manzanas?.nombre ?? '—'} · Casa {v.numero}
+        </span>
+        {proyecto && (
+          <span className='flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400'>
+            <Building2 className='h-3 w-3 text-orange-500 dark:text-orange-400' />
+            {proyecto}
+          </span>
+        )}
+      </span>
+    </div>
+  )
+}
+
+function CeldaCliente({ v }: { v: Vivienda }) {
+  const nombre = v.clientes?.nombre_completo
+  if (!estaNegociada(v) || !nombre) {
+    return (
+      <span className='text-xs italic text-slate-400 dark:text-slate-500'>
+        Sin asignar
+      </span>
+    )
+  }
+  return (
+    <span className='block min-w-0'>
+      <span className='flex items-center gap-1.5 text-sm font-semibold text-slate-900 dark:text-white'>
+        <User className='h-3.5 w-3.5 shrink-0 text-slate-400' />
+        <span className='truncate' title={toTitleCase(nombre)}>
+          {toTitleCase(nombre)}
+        </span>
+      </span>
+      {v.clientes?.telefono && (
+        <span className='mt-0.5 flex items-center gap-1 text-xs tabular-nums text-slate-500 dark:text-slate-400'>
+          <Phone className='h-3 w-3 shrink-0' />
+          {v.clientes.telefono}
+        </span>
+      )}
+    </span>
+  )
+}
+
+function CeldaEstado({ v }: { v: Vivienda }) {
+  const cfg = configEstado(v.estado)
+  const Icono = cfg.icon
+  return (
+    <span className={cn(styles.badge, cfg.badge)}>
+      <Icono className='h-3.5 w-3.5' />
+      {cfg.label}
+    </span>
+  )
+}
+
+function CeldaMatricula({ v }: { v: Vivienda }) {
+  if (!v.matricula_inmobiliaria && !v.nomenclatura) {
+    return <span className={styles.vacio}>—</span>
+  }
+  return (
+    <span className='block min-w-0'>
+      <span className='block truncate text-sm font-medium tabular-nums text-slate-700 dark:text-slate-200'>
+        {v.matricula_inmobiliaria || '—'}
+      </span>
+      {v.nomenclatura && (
+        <span className='flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400'>
+          <MapPin className='h-3 w-3 shrink-0' />
+          <span className='truncate'>{toTitleCase(v.nomenclatura)}</span>
+        </span>
+      )}
+    </span>
+  )
+}
+
+function CeldaPago({ v }: { v: Vivienda }) {
+  const valorTotal = v.valor_total || 0
+  if (!estaNegociada(v)) {
+    // Disponible: se muestra el precio
+    return (
+      <span className='block'>
+        <span className='text-sm font-semibold tabular-nums text-slate-900 dark:text-white'>
+          {formatCOP(valorTotal)}
+        </span>
+        <span className={styles.secundario}>precio</span>
+      </span>
+    )
+  }
+  return (
+    <PagoProgreso
+      valorTotal={v.valor_negociado || valorTotal}
+      saldo={v.saldo_pendiente || 0}
+      porcentaje={Math.floor(v.porcentaje_pagado || 0)}
+    />
+  )
+}
+
+interface MenuAccionesProps {
+  v: Vivienda
+  onEdit?: (vivienda: Vivienda) => void
+  onDelete?: (id: string) => void
+  canEdit?: boolean
+  canDelete?: boolean
+}
+
+function MenuAcciones({
+  v,
+  onEdit,
+  onDelete,
+  canEdit,
+  canDelete,
+}: MenuAccionesProps) {
+  const puedeEditar = canEdit && !!onEdit
+  // Solo se elimina una vivienda sin negociación
+  const puedeEliminar = canDelete && !!onDelete && v.estado === 'Disponible'
+
+  // El detalle se abre con clic en la fila: el menú es solo para acciones
+  if (!puedeEditar && !puedeEliminar) return null
+
+  return (
+    // Evita que el clic en el menú abra el detalle (la fila/tarjeta es clicable)
+    <div
+      onClick={e => e.stopPropagation()}
+      onKeyDown={e => e.stopPropagation()}
+      className='inline-flex'
+    >
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type='button'
+            aria-label={`Acciones para la vivienda ${codigoVivienda(v)}`}
+            className={styles.accionesTrigger}
+          >
+            <MoreHorizontal className='h-4 w-4' />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align='end' className='w-44'>
+          {puedeEditar && (
+            <DropdownMenuItem onClick={() => onEdit?.(v)}>
+              <Pencil className='mr-2 h-4 w-4' />
+              Editar
+            </DropdownMenuItem>
+          )}
+          {puedeEliminar && (
+            <>
+              {puedeEditar && <DropdownMenuSeparator />}
+              <DropdownMenuItem
+                onClick={() => onDelete?.(v.id)}
+                className='text-red-600 focus:text-red-700 dark:text-red-400'
+              >
+                <Trash2 className='mr-2 h-4 w-4' />
+                Eliminar
+              </DropdownMenuItem>
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  )
+}
+
+// ── Componente ───────────────────────────────────────────────────────────────
 export function ViviendasTabla({
   viviendas,
   onView,
@@ -45,359 +275,111 @@ export function ViviendasTabla({
   canEdit,
   canDelete,
 }: ViviendasTablaProps) {
+  const accionesProps = { onEdit, onDelete, canEdit, canDelete }
+
   const columns: ColumnDef<Vivienda>[] = [
-    // Identificador Completo (Manzana + Número) - COMPACTO
     {
       id: 'identificador',
       header: 'Vivienda',
-      size: 130,
-      accessorFn: row => `${row.manzanas?.nombre || ''} ${row.numero}`,
-      enableSorting: true,
-      sortingFn: (rowA, rowB) => {
-        const manzanaA = rowA.original.manzanas?.nombre || ''
-        const manzanaB = rowB.original.manzanas?.nombre || ''
-        const numeroA = rowA.original.numero
-        const numeroB = rowB.original.numero
-
-        // Ordenar primero por manzana, luego por número
-        if (manzanaA !== manzanaB) {
-          return manzanaA.localeCompare(manzanaB)
-        }
-
-        // ✅ Ordenamiento numérico correcto (convierte string a número)
-        const numA = parseInt(numeroA, 10) || 0
-        const numB = parseInt(numeroB, 10) || 0
-        return numA - numB
-      },
-      cell: ({ row }) => {
-        const identificador = `Mz. ${row.original.manzanas?.nombre || 'N/A'} Casa ${row.original.numero}`
-        return (
-          <div className={styles.numero.container}>
-            <div className={styles.iconContainer}>
-              <Home className={styles.iconSvg} />
-            </div>
-            <span className={styles.numero.text}>{identificador}</span>
-          </div>
-        )
-      },
+      size: 260,
+      accessorFn: row => codigoVivienda(row),
+      sortingFn: (a, b) => compararVivienda(a.original, b.original),
+      cell: ({ row }) => <CeldaVivienda v={row.original} />,
     },
-
-    // Proyecto (solo nombre) - COMPACTO
     {
-      id: 'proyecto',
-      header: 'Proyecto',
-      size: 140,
-      accessorFn: row => row.manzanas?.proyectos?.nombre || '',
-      cell: ({ row }) => {
-        const nombreProyecto =
-          toTitleCase(row.original.manzanas?.proyectos?.nombre) ||
-          'Sin proyecto'
-        return (
-          <div className='flex items-center gap-1.5'>
-            <Building2 className='h-3 w-3 flex-shrink-0 text-orange-600 dark:text-orange-400' />
-            <span className={styles.proyecto.nombre} title={nombreProyecto}>
-              {nombreProyecto}
-            </span>
-          </div>
-        )
-      },
+      id: 'cliente',
+      header: 'Cliente',
+      size: 240,
+      accessorFn: row =>
+        estaNegociada(row) ? (row.clientes?.nombre_completo ?? '') : '',
+      cell: ({ row }) => <CeldaCliente v={row.original} />,
     },
-
-    // Nomenclatura - MÁS COMPACTO
-    {
-      accessorKey: 'nomenclatura',
-      header: 'Nomenclatura',
-      size: 110,
-      cell: ({ row }) => (
-        <div className={styles.cell.center}>
-          <span
-            className={styles.cell.textCompact}
-            title={toTitleCase(row.original.nomenclatura) || 'N/A'}
-          >
-            {toTitleCase(row.original.nomenclatura) || 'N/A'}
-          </span>
-        </div>
-      ),
-    },
-
-    // Matrícula Inmobiliaria - MÁS COMPACTO
-    {
-      accessorKey: 'matricula_inmobiliaria',
-      header: 'Matrícula',
-      size: 100,
-      cell: ({ row }) => (
-        <div className={styles.cell.center}>
-          <span
-            className={styles.cell.textCompact}
-            title={row.original.matricula_inmobiliaria || 'N/A'}
-          >
-            {row.original.matricula_inmobiliaria || 'N/A'}
-          </span>
-        </div>
-      ),
-    },
-
-    // Tipo de Vivienda - REDUCIDO
-    {
-      accessorKey: 'tipo_vivienda',
-      header: 'Tipo',
-      size: 80,
-      cell: ({ row }) => (
-        <div className={styles.cell.center}>
-          <span className={styles.cell.textCompact}>
-            {toTitleCase(row.original.tipo_vivienda) || 'N/A'}
-          </span>
-        </div>
-      ),
-    },
-
-    // Estado - COMPACTO
     {
       accessorKey: 'estado',
       header: 'Estado',
-      size: 110,
-      cell: ({ row }) => {
-        const estado = row.original.estado
-        const esDisponible = estado === 'Disponible'
-        const esAsignada = estado === 'Asignada'
-        const esEntregada = estado === 'Entregada'
-        const esPropietario = estado === 'Propietario'
-
-        return (
-          <div className={styles.cell.center}>
-            <div
-              className={cn(
-                styles.badge.base,
-                esDisponible && styles.badge.disponible,
-                esAsignada && styles.badge.asignada,
-                esEntregada && styles.badge.entregada,
-                esPropietario && styles.badge.propietario,
-                !esDisponible &&
-                  !esAsignada &&
-                  !esEntregada &&
-                  !esPropietario &&
-                  styles.badge.default
-              )}
-            >
-              {esDisponible ? (
-                <CheckCircle2 className='h-3 w-3 flex-shrink-0' />
-              ) : esAsignada ? (
-                <Clock className='h-3 w-3 flex-shrink-0' />
-              ) : esEntregada || esPropietario ? (
-                <CheckCircle2 className='h-3 w-3 flex-shrink-0' />
-              ) : null}
-              <span>
-                {ESTADO_LABELS[estado as keyof typeof ESTADO_LABELS] ?? estado}
-              </span>
-            </div>
-          </div>
-        )
-      },
+      size: 130,
+      cell: ({ row }) => <CeldaEstado v={row.original} />,
     },
-
-    // Valor (valor total / saldo pendiente según estado)
     {
-      id: 'saldo',
-      header: 'Valor',
-      size: 155,
-      accessorFn: row => row.saldo_pendiente || 0,
-      enableSorting: true,
-      cell: ({ row }) => {
-        const estaAsignada =
-          row.original.estado === 'Asignada' ||
-          row.original.estado === 'Entregada' ||
-          row.original.estado === 'Propietario'
-        const valorTotal = row.original.valor_total || 0
-        const valorRef = row.original.valor_negociado || valorTotal
-        const saldo = row.original.saldo_pendiente || 0
-        const pagadoCompleto = saldo === 0 && valorRef > 0
-        const fmt = (v: number) =>
-          new Intl.NumberFormat('es-CO', {
-            style: 'currency',
-            currency: 'COP',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-          })
-            .format(v)
-            .replace(/\s/g, '')
-        if (!estaAsignada) {
-          return (
-            <div className='flex flex-col gap-0.5 py-0.5'>
-              <span className='font-mono text-xs font-bold leading-tight text-gray-700 dark:text-gray-300'>
-                {fmt(valorTotal)}
-              </span>
-              <span className='font-mono text-[10px] leading-none text-gray-400 dark:text-gray-500'>
-                precio base
-              </span>
-            </div>
-          )
-        }
-        return (
-          <div className='flex flex-col gap-0.5 py-0.5'>
-            {pagadoCompleto ? (
-              <span className='inline-flex w-fit items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'>
-                ✓ Pagado
-              </span>
-            ) : (
-              <span className='font-mono text-xs font-bold leading-tight text-amber-600 dark:text-amber-400'>
-                {fmt(saldo)}
-              </span>
-            )}
-            <span className='font-mono text-[10px] leading-none text-gray-400 dark:text-gray-500'>
-              {fmt(valorRef)} total
-            </span>
-          </div>
-        )
-      },
+      accessorKey: 'matricula_inmobiliaria',
+      header: 'Matrícula y dirección',
+      size: 200,
+      cell: ({ row }) => <CeldaMatricula v={row.original} />,
     },
-
-    // Progreso (anillo circular)
+    // Ordenable: primero las que más deben
     {
-      id: 'progreso',
-      header: 'Progreso',
-      size: 72,
-      accessorFn: row => row.porcentaje_pagado || 0,
-      enableSorting: true,
-      sortingFn: (rowA, rowB) =>
-        (rowA.original.porcentaje_pagado || 0) -
-        (rowB.original.porcentaje_pagado || 0),
-      cell: ({ row }) => {
-        const estaAsignada =
-          row.original.estado === 'Asignada' ||
-          row.original.estado === 'Entregada' ||
-          row.original.estado === 'Propietario'
-        if (!estaAsignada) {
-          return (
-            <div className={styles.cell.center}>
-              <span className='text-xs text-gray-400 dark:text-gray-500'>
-                —
-              </span>
-            </div>
-          )
-        }
-        const porcentaje = Math.min(row.original.porcentaje_pagado || 0, 100)
-        const pagadoCompleto = porcentaje >= 100
-        const barColor = pagadoCompleto
-          ? 'bg-emerald-500'
-          : porcentaje >= 50
-            ? 'bg-blue-500'
-            : 'bg-amber-500'
-        const textColor = pagadoCompleto
-          ? 'text-emerald-600 dark:text-emerald-400'
-          : porcentaje >= 50
-            ? 'text-blue-600 dark:text-blue-400'
-            : 'text-amber-600 dark:text-amber-400'
-        const trackColor = pagadoCompleto
-          ? 'bg-emerald-100 dark:bg-emerald-900/30'
-          : 'bg-gray-200 dark:bg-gray-700'
-        return (
-          <div className='w-full min-w-[80px] px-1'>
-            <span className={`text-xs font-semibold ${textColor}`}>
-              {porcentaje}%
-            </span>
-            <div
-              className={`mt-1 h-1.5 w-full overflow-hidden rounded-full ${trackColor}`}
-            >
-              <div
-                className={`h-full rounded-full transition-all duration-500 ${barColor}`}
-                style={{ width: `${porcentaje}%` }}
-              />
-            </div>
-          </div>
-        )
-      },
+      id: 'pago',
+      header: 'Pago',
+      size: 220,
+      accessorFn: row => (estaNegociada(row) ? row.saldo_pendiente || 0 : -1),
+      sortDescFirst: true,
+      cell: ({ row }) => <CeldaPago v={row.original} />,
     },
-
-    // Acciones - COMPACTO
     {
       id: 'acciones',
-      header: 'Acciones',
-      size: 72,
+      header: () => <span className='sr-only'>Acciones</span>,
+      size: 56,
       enableSorting: false,
-      cell: ({ row }) => (
-        <div className={styles.actions.container}>
-          {canEdit && onEdit && (
-            <button
-              onClick={e => {
-                e.stopPropagation()
-                onEdit(row.original)
-              }}
-              className={cn(
-                styles.actions.button.base,
-                styles.actions.button.edit
-              )}
-              title='Editar'
-            >
-              <Edit2 className={styles.actions.icon} />
-            </button>
-          )}
-          {canDelete && onDelete && row.original.estado === 'Disponible' && (
-            <button
-              onClick={e => {
-                e.stopPropagation()
-                onDelete(row.original.id)
-              }}
-              className={cn(
-                styles.actions.button.base,
-                styles.actions.button.delete
-              )}
-              title='Eliminar'
-            >
-              <Trash2 className={styles.actions.icon} />
-            </button>
-          )}
-        </div>
-      ),
+      meta: { align: 'right' },
+      cell: ({ row }) => <MenuAcciones v={row.original} {...accionesProps} />,
     },
   ]
 
+  const viviendasMovil = useMemo(
+    () => [...viviendas].sort(compararVivienda),
+    [viviendas]
+  )
+
   return (
-    <div className='viviendas-tabla-wrapper w-full'>
-      <style jsx>{`
-        .viviendas-tabla-wrapper :global(thead) {
-          background: linear-gradient(
-            135deg,
-            #ea580c 0%,
-            #d97706 50%,
-            #ca8a04 100%
-          ) !important;
-        }
-        .viviendas-tabla-wrapper :global(thead th) {
-          color: white !important;
-          font-weight: 600 !important;
-        }
-        .viviendas-tabla-wrapper :global(thead button) {
-          color: white !important;
-        }
-        .viviendas-tabla-wrapper :global(thead .opacity-40) {
-          opacity: 0.6 !important;
-        }
-        .viviendas-tabla-wrapper :global(tbody tr:hover) {
-          background: linear-gradient(
-            90deg,
-            rgba(234, 88, 12, 0.05) 0%,
-            rgba(217, 119, 6, 0.05) 50%,
-            rgba(202, 138, 4, 0.05) 100%
-          ) !important;
-        }
-        .viviendas-tabla-wrapper :global(tbody tr) {
-          transition: all 0.2s ease;
-        }
-      `}</style>
-      <DataTable
-        columns={columns}
-        data={viviendas}
-        gradientColor='orange'
-        pageSize={20}
-        initialSorting={[
-          {
-            id: 'identificador',
-            desc: false,
-          },
-        ]}
-        onRowClick={onView}
-        compact
-      />
-    </div>
+    <>
+      {/* Móvil: tarjetas apiladas */}
+      <ul className='space-y-3 md:hidden'>
+        {viviendasMovil.map(v => (
+          <li key={v.id}>
+            <div
+              role={onView ? 'button' : undefined}
+              tabIndex={onView ? 0 : undefined}
+              onClick={onView ? () => onView(v) : undefined}
+              onKeyDown={
+                onView
+                  ? e => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        onView(v)
+                      }
+                    }
+                  : undefined
+              }
+              className='rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 active:bg-slate-50 dark:border-slate-700/60 dark:bg-slate-800/60 dark:active:bg-slate-700/40'
+            >
+              <div className='flex items-start justify-between gap-2'>
+                <CeldaVivienda v={v} />
+                <MenuAcciones v={v} {...accionesProps} />
+              </div>
+              <div className='mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2'>
+                <CeldaEstado v={v} />
+                <CeldaCliente v={v} />
+              </div>
+              <div className='mt-3 border-t border-slate-100 pt-3 dark:border-slate-700/60'>
+                <CeldaPago v={v} />
+              </div>
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      {/* Escritorio: tabla */}
+      <div className='hidden md:block'>
+        <DataTable
+          columns={columns}
+          data={viviendas}
+          pageSize={20}
+          initialSorting={[{ id: 'identificador', desc: false }]}
+          onRowClick={onView}
+          variant='clean'
+          headerGradient='from-orange-600 via-amber-600 to-yellow-600'
+        />
+      </div>
+    </>
   )
 }

@@ -22,6 +22,14 @@ export interface EstadoFiltroOpcion<T extends string> {
   dot?: string
 }
 
+// Clases completas para que Tailwind las detecte
+const COLUMNAS_LG: Record<number, string> = {
+  3: 'lg:grid-cols-3',
+  4: 'lg:grid-cols-4',
+  5: 'lg:grid-cols-5',
+  6: 'lg:grid-cols-6',
+}
+
 interface EstadoFiltroCardsProps<T extends string> {
   opciones: EstadoFiltroOpcion<T>[]
   seleccionado: T
@@ -46,7 +54,7 @@ export function EstadoFiltroCards<T extends string>({
     <div
       role='radiogroup'
       aria-label={ariaLabel}
-      className='grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6'
+      className={`grid grid-cols-2 gap-3 sm:grid-cols-3 ${COLUMNAS_LG[opciones.length] ?? 'lg:grid-cols-6'}`}
     >
       {opciones.map(o => {
         const activo = o.value === seleccionado

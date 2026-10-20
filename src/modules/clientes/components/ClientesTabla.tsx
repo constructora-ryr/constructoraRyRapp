@@ -17,7 +17,6 @@ import { useMemo } from 'react'
 import { type ColumnDef, type SortingState } from '@tanstack/react-table'
 import {
   Building2,
-  CheckCircle2,
   Home,
   MoreHorizontal,
   Pencil,
@@ -26,6 +25,7 @@ import {
 } from 'lucide-react'
 
 import { formatNombreCompleto, toTitleCase } from '@/lib/utils/string.utils'
+import { PagoProgreso } from '@/shared/components/list-page'
 import { DataTable } from '@/shared/components/table/DataTable'
 import {
   DropdownMenu,
@@ -66,15 +66,6 @@ const styles = {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-const formatCOP = (v: number) =>
-  new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  })
-    .format(v)
-    .replace(/\s/g, '')
 
 /** "14890678" → "14.890.678" (solo si es numérico) */
 const formatDocumento = (n: string | null | undefined) =>
@@ -200,39 +191,12 @@ function CeldaVivienda({ c }: { c: ClienteResumen }) {
 function CeldaPago({ c }: { c: ClienteResumen }) {
   const p = datosPago(c)
   if (!p) return <span className={styles.vacio}>—</span>
-
-  if (p.pagado) {
-    return (
-      <span className='block'>
-        <span className='inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'>
-          <CheckCircle2 className='h-3.5 w-3.5' />
-          Pagado
-        </span>
-        <span className={styles.secundario}>{formatCOP(p.valorTotal)}</span>
-      </span>
-    )
-  }
-
   return (
-    <span className='block'>
-      <span className='flex items-baseline justify-between gap-3'>
-        <span className='text-sm font-semibold tabular-nums text-amber-700 dark:text-amber-400'>
-          {formatCOP(p.saldo)}
-        </span>
-        <span className='text-xs tabular-nums text-slate-500 dark:text-slate-400'>
-          {p.porcentaje}%
-        </span>
-      </span>
-      <span className='mt-1 block h-1.5 w-full overflow-hidden rounded-full bg-amber-100 dark:bg-amber-500/15'>
-        <span
-          className='block h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500'
-          style={{ width: `${p.porcentaje}%` }}
-        />
-      </span>
-      <span className={cn(styles.secundario, 'mt-0.5')}>
-        por pagar de {formatCOP(p.valorTotal)}
-      </span>
-    </span>
+    <PagoProgreso
+      valorTotal={p.valorTotal}
+      saldo={p.saldo}
+      porcentaje={p.porcentaje}
+    />
   )
 }
 

@@ -16,8 +16,8 @@
 export const viviendasStyles = {
   // 🎯 CONTENEDOR PRINCIPAL
   container: {
-    page: 'min-h-screen bg-gradient-to-br from-slate-50 via-orange-50 to-amber-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950',
-    content: 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-4',
+    page: 'min-h-screen bg-gradient-to-br from-slate-50 via-orange-50/60 to-amber-50/60 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950',
+    content: 'max-w-[1400px] mx-auto px-4 sm:px-6 py-6 lg:py-8 space-y-5',
   },
 
   // 🎨 HEADER HERO (compacto)

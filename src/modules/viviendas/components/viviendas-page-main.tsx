@@ -1,13 +1,25 @@
 ﻿'use client'
 
 import { motion } from 'framer-motion'
+import { Home, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { useRouter } from 'next/navigation'
 
 import { construirURLVivienda, getShortId } from '@/lib/utils/slug.utils'
+import {
+  EstadoFiltroCards,
+  ListPageHeader,
+  ListSearchToolbar,
+  type EstadoFiltroOpcion,
+} from '@/shared/components/list-page'
+import {
+  FilterDropdown,
+  type FilterOption,
+} from '@/shared/components/ui/filter-dropdown'
 import { Modal } from '@/shared/components/ui/Modal'
 import { NoResults } from '@/shared/components/ui/NoResults'
+import { VIVIENDA_ESTADO_BADGE } from '@/shared/config/estados.colors'
 
 import { useViviendasList } from '../hooks/useViviendasList'
 import { viviendasStyles as styles } from '../styles/viviendas.styles'
@@ -15,10 +27,7 @@ import type { Vivienda } from '../types'
 
 // EditarViviendaModal deprecated — edición en página propia /viviendas/[slug]/editar
 import { ViviendasEmpty } from './viviendas-empty'
-import { ViviendasHeader } from './viviendas-header'
 import { ViviendasSkeleton } from './viviendas-skeleton'
-import { ViviendasStats } from './viviendas-stats'
-import { ViviendasFiltrosPremium } from './ViviendasFiltrosPremium'
 import { ViviendasTabla } from './ViviendasTabla'
 
 /**
@@ -103,6 +112,64 @@ export function ViviendasPageMain({
     router.push(`/viviendas/${getShortId(vivienda.id)}/editar`)
   }
 
+  // ── Tarjetas de conteo = filtro de estado ────────────────────────────────
+  const conEstilo = (estado: string) => {
+    const cfg = VIVIENDA_ESTADO_BADGE[estado]
+    return {
+      icon: cfg.icon,
+      gradient: cfg.gradient,
+      text: cfg.text,
+      selected: cfg.selected,
+    }
+  }
+  const opcionesEstado: EstadoFiltroOpcion<string>[] = [
+    {
+      value: 'Todos',
+      label: 'Todas',
+      count: estadisticas.total,
+      icon: Home,
+      gradient: 'from-orange-500 to-amber-600',
+      text: 'text-orange-700 dark:text-orange-400',
+      selected:
+        'border-orange-400 bg-orange-50/80 ring-2 ring-orange-400/40 dark:border-orange-500/60 dark:bg-orange-500/10',
+    },
+    {
+      value: 'Disponible',
+      label: 'Disponibles',
+      count: estadisticas.disponibles,
+      ...conEstilo('Disponible'),
+    },
+    {
+      value: 'Asignada',
+      label: 'Asignadas',
+      count: estadisticas.asignadas,
+      ...conEstilo('Asignada'),
+    },
+    {
+      value: 'Entregada',
+      label: 'Escrituradas',
+      count: estadisticas.entregadas,
+      ...conEstilo('Entregada'),
+    },
+    {
+      value: 'Propietario',
+      label: 'Saldadas',
+      count: estadisticas.propietario,
+      ...conEstilo('Propietario'),
+    },
+  ]
+
+  const proyectoOptions: FilterOption[] = [
+    { value: '', label: 'Todos los proyectos' },
+    ...proyectos.map(p => ({ value: p.id, label: p.nombre })),
+  ]
+
+  const hayFiltros = !!(filtros.search || filtros.proyecto_id || filtros.estado)
+  const resultado =
+    totalFiltradas === estadisticas.total
+      ? `${estadisticas.total} vivienda${estadisticas.total !== 1 ? 's' : ''}`
+      : `${totalFiltradas} de ${estadisticas.total} viviendas`
+
   // Buscar en viviendasFiltradas para que funcione en ambas vistas
   const viviendaEliminando = viviendasFiltradas?.find(
     v => v.id === viviendaEliminar
@@ -117,35 +184,60 @@ export function ViviendasPageMain({
         transition={{ duration: 0.15 }}
         className={styles.container.content}
       >
-        {/* Header - Navegación a vista dedicada */}
-        <ViviendasHeader
-          totalViviendas={estadisticas.total}
-          canCreate={canCreate}
+        <ListPageHeader
+          icon={Home}
+          heroGradient='from-orange-600 via-amber-600 to-yellow-600'
+          title='Viviendas'
+          subtitle='Inventario de casas y estado de cada unidad'
+          breadcrumbs={[
+            { label: 'Dashboard', href: '/' },
+            { label: 'Viviendas' },
+          ]}
+          actions={
+            canCreate ? (
+              <button
+                type='button'
+                onClick={() => router.push('/viviendas/nueva')}
+                className='inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-orange-700 shadow-lg shadow-orange-900/20 transition-all hover:-translate-y-0.5 hover:bg-orange-50 hover:shadow-xl'
+              >
+                <Plus className='h-4 w-4' />
+                Nueva vivienda
+              </button>
+            ) : undefined
+          }
         />
 
-        {/* Estadísticas */}
-        <ViviendasStats
+        <EstadoFiltroCards
+          ariaLabel='Filtrar viviendas por estado'
+          opciones={opcionesEstado}
+          seleccionado={filtros.estado || 'Todos'}
+          onSeleccionar={v =>
+            actualizarFiltros({ estado: v === 'Todos' ? '' : v })
+          }
           total={estadisticas.total}
-          disponibles={estadisticas.disponibles}
-          asignadas={estadisticas.asignadas}
-          entregadas={estadisticas.entregadas}
-          propietario={estadisticas.propietario}
-          valorTotal={estadisticas.valorTotal}
         />
 
-        {/* Filtros Premium */}
-        <ViviendasFiltrosPremium
-          filtros={filtros}
-          onActualizarFiltros={actualizarFiltros}
-          onLimpiarFiltros={limpiarFiltros}
-          totalResultados={totalFiltradas}
-          proyectos={proyectos}
-        />
+        <ListSearchToolbar
+          value={filtros.search}
+          onChange={v => actualizarFiltros({ search: v })}
+          placeholder='Buscar por casa (A1), cliente, matrícula o dirección…'
+          resultado={resultado}
+          onLimpiar={hayFiltros ? limpiarFiltros : undefined}
+        >
+          {proyectos.length > 1 && (
+            <FilterDropdown
+              value={filtros.proyecto_id}
+              placeholder='Todos los proyectos'
+              options={proyectoOptions}
+              onChange={v => actualizarFiltros({ proyecto_id: v })}
+            />
+          )}
+        </ListSearchToolbar>
 
         {/* Contenido Principal */}
         {cargando ? (
           <ViviendasSkeleton />
-        ) : estadisticas.total === 0 ? (
+        ) : viviendasFiltradas.length === 0 ? (
           filtros.search ||
           filtros.estado ||
           filtros.proyecto_id ||

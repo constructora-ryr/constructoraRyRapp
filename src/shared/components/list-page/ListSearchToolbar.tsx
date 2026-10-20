@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 
 import { Search, X } from 'lucide-react'
 
@@ -12,6 +12,8 @@ interface ListSearchToolbarProps {
   resultado: string
   /** Si se define, muestra "Limpiar filtros" (hay búsqueda o filtro activo) */
   onLimpiar?: () => void
+  /** Filtros adicionales junto al buscador (p.ej. selector de proyecto) */
+  children?: ReactNode
 }
 
 /**
@@ -23,6 +25,7 @@ export function ListSearchToolbar({
   placeholder,
   resultado,
   onLimpiar,
+  children,
 }: ListSearchToolbarProps) {
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -73,6 +76,9 @@ export function ListSearchToolbar({
           </kbd>
         )}
       </div>
+      {children && (
+        <div className='flex shrink-0 flex-wrap gap-2'>{children}</div>
+      )}
       <div className='flex shrink-0 items-center gap-3 text-sm text-slate-500 dark:text-slate-400'>
         <span aria-live='polite'>{resultado}</span>
         {onLimpiar && (

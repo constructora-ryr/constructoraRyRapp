@@ -8,11 +8,8 @@ export { PasoResumenNuevo } from './paso-resumen-nuevo'
 export { PasoUbicacionNuevo } from './paso-ubicacion-nuevo'
 export { ViviendaCard } from './vivienda-card'
 export { ViviendasEmpty } from './viviendas-empty'
-export { ViviendasHeader } from './viviendas-header'
 export { ViviendasPageMain } from './viviendas-page-main'
 export { ViviendasSkeleton } from './viviendas-skeleton'
-export { ViviendasStats } from './viviendas-stats'
-export { ViviendasFiltrosPremium } from './ViviendasFiltrosPremium'
 export { ViviendasTabla } from './ViviendasTabla'
 
 // Vistas de creación/edición (accordion)

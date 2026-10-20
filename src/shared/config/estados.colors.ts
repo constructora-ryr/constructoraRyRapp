@@ -3,8 +3,8 @@
  *
  * Alineados con los módulos de origen para que un estado tenga el mismo
  * color en toda la app:
- * - Viviendas → ViviendasFiltrosPremium (Disponible verde, Asignada azul,
- *   Escriturada violeta, Saldada cian)
+ * - Viviendas (Disponible verde, Asignada azul,
+ *   Escriturada violeta, Saldada dorado como Propietario en Clientes)
  * - Clientes  → estado-badge (Interesado azul, Activo verde, Inactivo gris)
  */
 
@@ -33,7 +33,9 @@ export const VIVIENDA_ESTADO_COLORS = {
   disponibles: { label: 'Disponibles', hex: '#10b981', bg: 'bg-emerald-500' },
   asignadas: { label: 'Asignadas', hex: '#3b82f6', bg: 'bg-blue-500' },
   entregadas: { label: 'Escrituradas', hex: '#8b5cf6', bg: 'bg-violet-500' },
-  propietario: { label: 'Saldadas', hex: '#06b6d4', bg: 'bg-cyan-500' },
+  // Dorado como Propietario en Clientes (casa saldada = cliente propietario).
+  // Validado: peor par adyacente ΔE 25 (con cian se confundía con Asignada)
+  propietario: { label: 'Saldadas', hex: '#f59e0b', bg: 'bg-amber-500' },
 } as const satisfies Record<string, EstadoColor>
 
 export const CLIENTE_ESTADO_COLORS = {
@@ -205,8 +207,8 @@ export const VIVIENDA_ESTADO_BADGE: Record<string, EstadoBadge> = {
   Propietario: {
     label: 'Saldada',
     dot: VIVIENDA_ESTADO_COLORS.propietario.bg,
-    badge: badge.cyan,
+    badge: badge.amber,
     icon: CheckCircle2,
-    ...acento.cyan,
+    ...acento.amber,
   },
 }
