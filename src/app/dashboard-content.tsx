@@ -278,37 +278,29 @@ export default function DashboardContent(_props: DashboardContentProps) {
             </div>
 
             {/* Inventario + Últimos abonos / Comercial */}
-            <div className='grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6 [&>*]:min-w-0'>
-              <div className='lg:col-span-2'>
+            {/* items-start: cada tarjeta ocupa solo su altura natural (sin estirarse
+                para igualar a "Últimos abonos") */}
+            <div className='grid grid-cols-1 items-start gap-4 lg:grid-cols-3 lg:gap-6 [&>*]:min-w-0'>
+              <div
+                className={`flex flex-col gap-4 lg:gap-6 ${mostrarAbonos ? 'lg:col-span-2' : 'lg:col-span-3'}`}
+              >
                 <ProyectosCard
                   loading={loading}
                   proyectos={s.proyectos}
                   canNavigate={permisos.proyectos}
                 />
-              </div>
-              {mostrarAbonos ? (
-                <div className='lg:row-span-2'>
-                  <UltimosAbonos
-                    loading={loading}
-                    abonos={s.ultimosAbonos ?? []}
-                    canNavigate={permisos.abonos}
-                  />
-                </div>
-              ) : (
                 <ClientesCard
                   loading={loading}
                   clientes={s.clientes}
                   canNavigate={permisos.clientes}
                 />
-              )}
+              </div>
               {mostrarAbonos && (
-                <div className='lg:col-span-2'>
-                  <ClientesCard
-                    loading={loading}
-                    clientes={s.clientes}
-                    canNavigate={permisos.clientes}
-                  />
-                </div>
+                <UltimosAbonos
+                  loading={loading}
+                  abonos={s.ultimosAbonos ?? []}
+                  canNavigate={permisos.abonos}
+                />
               )}
             </div>
           </motion.div>
