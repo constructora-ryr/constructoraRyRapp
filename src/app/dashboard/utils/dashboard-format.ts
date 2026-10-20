@@ -31,7 +31,64 @@ export function getContextoFecha(now: Date = new Date()) {
     timeZone: TIME_ZONE,
   }).format(now)
 
-  return { saludo, fechaHoy, mesActual }
+  // Mes (1-12) actual en Bogotá → nombre del mes anterior, sin depender de la
+  // zona horaria del proceso
+  const mesNum = Number(
+    new Intl.DateTimeFormat('en-US', {
+      month: 'numeric',
+      timeZone: TIME_ZONE,
+    }).format(now)
+  )
+  const mesAnterior = new Date(2000, (mesNum + 10) % 12, 1).toLocaleString(
+    'es-CO',
+    { month: 'long' }
+  )
+
+  return { saludo, fechaHoy, mesActual, mesAnterior }
+}
+
+/** 'YYYY-MM' → Date local del día 1 (sin conversión de zona) */
+function parseMes(mes: string): Date {
+  const [y, m] = mes.split('-').map(Number)
+  return new Date(y, m - 1, 1)
+}
+
+/** 'YYYY-MM' → "nov" (o "ene 26" en enero, para marcar el cambio de año) */
+export function formatMesCorto(mes: string): string {
+  const d = parseMes(mes)
+  const corto = d.toLocaleString('es-CO', { month: 'short' }).replace('.', '')
+  return d.getMonth() === 0
+    ? `${corto} ${String(d.getFullYear()).slice(2)}`
+    : corto
+}
+
+/** 'YYYY-MM' → "noviembre de 2025" */
+export function formatMesLargo(mes: string): string {
+  return parseMes(mes).toLocaleString('es-CO', {
+    month: 'long',
+    year: 'numeric',
+  })
+}
+
+/** Variación porcentual; null si no hay base de comparación */
+export function pctChange(actual: number, anterior: number): number | null {
+  if (!anterior) return null
+  return ((actual - anterior) / anterior) * 100
+}
+
+/** Máximo "redondo" y paso para un eje de `ticks` divisiones */
+export function niceScale(
+  max: number,
+  ticks = 4
+): { max: number; step: number } {
+  if (max <= 0) return { max: 1, step: 1 / ticks }
+  const raw = max / ticks
+  const mag = 10 ** Math.floor(Math.log10(raw))
+  const norm = raw / mag
+  const nice =
+    norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 2.5 ? 2.5 : norm <= 5 ? 5 : 10
+  const step = nice * mag
+  return { max: step * ticks, step }
 }
 
 /** $45,2 M · $850 mil · $1.230 M */

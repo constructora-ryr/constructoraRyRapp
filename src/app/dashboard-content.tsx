@@ -1,27 +1,28 @@
 'use client'
 
 import { MotionConfig, motion } from 'framer-motion'
-import { AlertTriangle, Building2, DollarSign, Home, Users } from 'lucide-react'
+import {
+  AlertTriangle,
+  DollarSign,
+  Handshake,
+  Home,
+  Landmark,
+} from 'lucide-react'
 
 import { useAuth } from '@/hooks/auth/useAuthQuery'
 import { usePermisosQuery } from '@/modules/usuarios/hooks/usePermisosQuery'
-import type { Modulo } from '@/modules/usuarios/types'
 import { formatCurrency } from '@/shared/utils/format'
 
-import { AccesosRapidos } from './dashboard/components/AccesosRapidos'
+import { ActividadReciente } from './dashboard/components/ActividadReciente'
+import { AtencionPanel } from './dashboard/components/AtencionPanel'
 import { ClientesCard } from './dashboard/components/ClientesCard'
 import {
   DashboardHero,
   type HeroAction,
 } from './dashboard/components/DashboardHero'
-import { KpiCard, type KpiSubItem } from './dashboard/components/KpiCard'
+import { KpiCard, type KpiDelta } from './dashboard/components/KpiCard'
 import { ProyectosCard } from './dashboard/components/ProyectosCard'
-import { ViviendasCard } from './dashboard/components/ViviendasCard'
-import {
-  CLIENTE_ESTADO_COLORS,
-  PROYECTO_ESTADO_COLORS,
-} from './dashboard/config/estados.colors'
-import { MODULES_CONFIG } from './dashboard/config/modules.config'
+import { RecaudoChart } from './dashboard/components/RecaudoChart'
 import {
   EMPTY_DASHBOARD_STATS,
   useDashboardStats,
@@ -29,6 +30,7 @@ import {
 import {
   formatCOPCompact,
   getContextoFecha,
+  pctChange,
 } from './dashboard/utils/dashboard-format'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -64,20 +66,45 @@ const itemVariants = {
   },
 }
 
+// Clases completas para que Tailwind las detecte
+const KPI_COLS: Record<number, string> = {
+  1: 'lg:grid-cols-1',
+  2: 'lg:grid-cols-2',
+  3: 'lg:grid-cols-3',
+  4: 'lg:grid-cols-4',
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-const plural = (n: number, singular: string, pluralForm = `${singular}s`) =>
-  n === 1 ? singular : pluralForm
+function deltaPct(
+  actual: number,
+  anterior: number,
+  mesAnterior: string
+): KpiDelta | undefined {
+  const pct = pctChange(actual, anterior)
+  if (pct === null) return undefined
+  const redondeado = Math.round(pct)
+  return {
+    label: `${redondeado > 0 ? '+' : ''}${redondeado}% vs ${mesAnterior}`,
+    direction: redondeado > 0 ? 'up' : redondeado < 0 ? 'down' : 'flat',
+  }
+}
 
-/** Sub-ítems solo para los conteos > 0 */
-function buildSubItems(
-  items: Array<{ count: number; label: string; dot: string }>
-): KpiSubItem[] {
-  return items
-    .filter(i => i.count > 0)
-    .map(i => ({ label: `${i.count} ${i.label}`, dot: i.dot }))
+function deltaAbs(
+  actual: number,
+  anterior: number,
+  mesAnterior: string
+): KpiDelta {
+  const diff = actual - anterior
+  return {
+    label:
+      diff === 0
+        ? `igual que ${mesAnterior}`
+        : `${diff > 0 ? '+' : ''}${diff} vs ${mesAnterior}`,
+    direction: diff > 0 ? 'up' : diff < 0 ? 'down' : 'flat',
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -94,27 +121,19 @@ export default function DashboardContent(_props: DashboardContentProps) {
   const { puede, isLoading: permLoading } = usePermisosQuery()
   const { perfil } = useAuth()
 
-  const { saludo, fechaHoy, mesActual } = getContextoFecha()
+  const { saludo, fechaHoy, mesActual, mesAnterior } = getContextoFecha()
   const nombre = perfil?.nombres?.split(' ')[0] || 'Usuario'
   const rol = perfil?.rol || ''
 
-  const permisos: Record<Modulo, boolean> = {
+  const permisos = {
     proyectos: puede('proyectos', 'ver'),
     viviendas: puede('viviendas', 'ver'),
     clientes: puede('clientes', 'ver'),
     abonos: puede('abonos', 'ver'),
-    renuncias: puede('renuncias', 'ver'),
-    usuarios: puede('usuarios', 'ver'),
     negociaciones: puede('negociaciones', 'ver'),
-    documentos: puede('documentos', 'ver'),
+    renuncias: puede('renuncias', 'ver'),
     auditorias: puede('auditorias', 'ver'),
-    reportes: puede('reportes', 'ver'),
-    administracion: puede('administracion', 'ver'),
   }
-
-  const accessibleModules = permLoading
-    ? []
-    : MODULES_CONFIG.filter(m => permisos[m.modulo])
 
   const heroActions: HeroAction[] = permLoading
     ? []
@@ -134,89 +153,58 @@ export default function DashboardContent(_props: DashboardContentProps) {
       ]
 
   const s = stats ?? EMPTY_DASHBOARD_STATS
+  const f = s.finanzas
+  const loading = statsLoading || permLoading
 
-  const p = s.proyectos
-  const c = s.clientes
   const vendidas = s.viviendas.total - s.viviendas.disponibles
   const pctVendidas =
     s.viviendas.total > 0 ? Math.round((vendidas / s.viviendas.total) * 100) : 0
 
+  // Cada KPI se muestra solo si el usuario puede ver su módulo: RLS devolvería
+  // ceros y un "$0" engaña más que no mostrar la tarjeta.
   const kpis = [
-    {
-      label: 'Proyectos',
-      value: p.total,
-      subItems: buildSubItems([
-        {
-          count: p.activos,
-          label: PROYECTO_ESTADO_COLORS.enEjecucion.label,
-          dot: PROYECTO_ESTADO_COLORS.enEjecucion.bg,
-        },
-        {
-          count: p.enPlanificacion,
-          label: PROYECTO_ESTADO_COLORS.enPlanificacion.label,
-          dot: PROYECTO_ESTADO_COLORS.enPlanificacion.bg,
-        },
-        {
-          count: p.pausados,
-          label: plural(p.pausados, 'pausado'),
-          dot: PROYECTO_ESTADO_COLORS.pausados.bg,
-        },
-        {
-          count: p.completados,
-          label: plural(p.completados, 'finalizado'),
-          dot: PROYECTO_ESTADO_COLORS.completados.bg,
-        },
-      ]),
-      icon: Building2,
-      accentText: 'text-green-600 dark:text-green-400',
-      accentBg: 'bg-green-50 dark:bg-green-500/10',
-      href: permisos.proyectos ? '/proyectos' : undefined,
-    },
-    {
-      label: 'Viviendas disponibles',
-      value: s.viviendas.disponibles,
-      sub: `de ${s.viviendas.total} unidades · ${pctVendidas}% vendido`,
-      icon: Home,
-      accentText: 'text-orange-600 dark:text-orange-400',
-      accentBg: 'bg-orange-50 dark:bg-orange-500/10',
-      href: permisos.viviendas ? '/viviendas' : undefined,
-    },
-    {
-      label: 'Clientes',
-      value: c.total,
-      subItems: buildSubItems([
-        {
-          count: c.activos,
-          label: plural(c.activos, 'activo'),
-          dot: CLIENTE_ESTADO_COLORS.activos.bg,
-        },
-        {
-          count: c.interesados,
-          label: plural(c.interesados, 'interesado'),
-          dot: CLIENTE_ESTADO_COLORS.interesados.bg,
-        },
-        {
-          count: c.propietarios,
-          label: plural(c.propietarios, 'propietario'),
-          dot: CLIENTE_ESTADO_COLORS.propietarios.bg,
-        },
-      ]),
-      icon: Users,
-      accentText: 'text-cyan-600 dark:text-cyan-400',
-      accentBg: 'bg-cyan-50 dark:bg-cyan-500/10',
-      href: permisos.clientes ? '/clientes' : undefined,
-    },
-    {
+    permisos.abonos && {
       label: `Recaudo de ${mesActual}`,
-      value: s.finanzas.recaudoMes,
-      sub: `${formatCurrency(s.finanzas.recaudoMes)} COP`,
+      value: f.recaudoMes,
       format: formatCOPCompact,
+      delta: deltaPct(f.recaudoMes, f.recaudoMesAnterior, mesAnterior),
+      sub: `${f.abonosMes} ${f.abonosMes === 1 ? 'abono' : 'abonos'} · ${formatCurrency(f.recaudoMes)}`,
       icon: DollarSign,
       accentText: 'text-violet-600 dark:text-violet-400',
       accentBg: 'bg-violet-50 dark:bg-violet-500/10',
-      href: permisos.abonos ? '/abonos' : undefined,
+      href: '/abonos',
     },
-  ]
+    permisos.negociaciones && {
+      label: 'Cartera por cobrar',
+      value: f.carteraPendiente,
+      format: formatCOPCompact,
+      sub: `en ${f.negociacionesActivas} ${f.negociacionesActivas === 1 ? 'negociación activa' : 'negociaciones activas'}`,
+      icon: Landmark,
+      accentText: 'text-pink-600 dark:text-pink-400',
+      accentBg: 'bg-pink-50 dark:bg-pink-500/10',
+      href: permisos.clientes ? '/clientes' : undefined,
+    },
+    permisos.negociaciones && {
+      label: `Ventas de ${mesActual}`,
+      value: f.ventasMes,
+      delta: deltaAbs(f.ventasMes, f.ventasMesAnterior, mesAnterior),
+      icon: Handshake,
+      accentText: 'text-pink-600 dark:text-pink-400',
+      accentBg: 'bg-pink-50 dark:bg-pink-500/10',
+      href: permisos.clientes ? '/clientes' : undefined,
+    },
+    permisos.viviendas && {
+      label: 'Viviendas disponibles',
+      value: s.viviendas.disponibles,
+      sub: `de ${s.viviendas.total} creadas · ${pctVendidas}% vendido`,
+      icon: Home,
+      accentText: 'text-orange-600 dark:text-orange-400',
+      accentBg: 'bg-orange-50 dark:bg-orange-500/10',
+      href: '/viviendas',
+    },
+  ].filter((k): k is Exclude<typeof k, false> => Boolean(k))
+
+  const mostrarActividad = permisos.auditorias || s.actividad.length > 0
 
   return (
     <MotionConfig reducedMotion='user'>
@@ -226,7 +214,7 @@ export default function DashboardContent(_props: DashboardContentProps) {
             variants={containerVariants}
             initial='hidden'
             animate='visible'
-            className='mx-auto max-w-[1400px] space-y-6 lg:space-y-8'
+            className='mx-auto max-w-[1400px] space-y-4 lg:space-y-6'
           >
             <DashboardHero
               saludo={saludo}
@@ -252,36 +240,76 @@ export default function DashboardContent(_props: DashboardContentProps) {
               </div>
             )}
 
-            {/* KPI Cards */}
-            <motion.div
-              variants={itemVariants}
-              className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4'
-            >
-              {kpis.map(kpi => (
-                <KpiCard key={kpi.label} {...kpi} loading={statsLoading} />
-              ))}
-            </motion.div>
+            {/* KPIs */}
+            {kpis.length > 0 && (
+              <motion.div
+                variants={itemVariants}
+                className={`grid grid-cols-1 gap-4 sm:grid-cols-2 [&>*]:min-w-0 ${KPI_COLS[kpis.length]}`}
+              >
+                {kpis.map(kpi => (
+                  <KpiCard key={kpi.label} {...kpi} loading={loading} />
+                ))}
+              </motion.div>
+            )}
 
-            {/* Bento Grid */}
-            <div className='grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6'>
-              <ProyectosCard
-                loading={statsLoading}
-                proyectos={s.proyectos}
-                canNavigate={permisos.proyectos}
-              />
-              <ViviendasCard
-                loading={statsLoading}
-                viviendas={s.viviendas}
-                canNavigate={permisos.viviendas}
-              />
-              <ClientesCard
-                loading={statsLoading}
-                clientes={s.clientes}
-                canNavigate={permisos.clientes}
-              />
+            {/* Recaudo + Requiere atención */}
+            <div className='grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6 [&>*]:min-w-0'>
+              {permisos.abonos && (
+                <div className='lg:col-span-2'>
+                  <RecaudoChart
+                    loading={loading}
+                    data={s.recaudoMensual}
+                    canNavigate={permisos.abonos}
+                  />
+                </div>
+              )}
+              <div className={permisos.abonos ? '' : 'lg:col-span-3'}>
+                <AtencionPanel
+                  loading={loading}
+                  alertas={s.alertas}
+                  permisos={{
+                    abonos: permisos.abonos,
+                    clientes: permisos.clientes,
+                    renuncias: permisos.renuncias,
+                  }}
+                />
+              </div>
             </div>
 
-            <AccesosRapidos loading={permLoading} modules={accessibleModules} />
+            {/* Inventario + Actividad / Comercial */}
+            <div className='grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6 [&>*]:min-w-0'>
+              <div className='lg:col-span-2'>
+                <ProyectosCard
+                  loading={loading}
+                  proyectos={s.proyectos}
+                  canNavigate={permisos.proyectos}
+                />
+              </div>
+              {mostrarActividad ? (
+                <div className='lg:row-span-2'>
+                  <ActividadReciente
+                    loading={loading}
+                    actividad={s.actividad}
+                    canNavigate={permisos.auditorias}
+                  />
+                </div>
+              ) : (
+                <ClientesCard
+                  loading={loading}
+                  clientes={s.clientes}
+                  canNavigate={permisos.clientes}
+                />
+              )}
+              {mostrarActividad && (
+                <div className='lg:col-span-2'>
+                  <ClientesCard
+                    loading={loading}
+                    clientes={s.clientes}
+                    canNavigate={permisos.clientes}
+                  />
+                </div>
+              )}
+            </div>
           </motion.div>
         </div>
       </div>

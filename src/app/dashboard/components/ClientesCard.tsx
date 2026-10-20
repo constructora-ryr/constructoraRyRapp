@@ -50,7 +50,7 @@ function ClientesCardComponent({
   return (
     <motion.div
       variants={itemVariants}
-      className='group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-colors hover:border-cyan-300 dark:border-slate-700/60 dark:bg-slate-800/60 dark:shadow-none dark:hover:border-cyan-500/30 lg:col-span-2'
+      className='group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-colors hover:border-cyan-300 dark:border-slate-700/60 dark:bg-slate-800/60 dark:shadow-none dark:hover:border-cyan-500/30'
     >
       {/* Subtle top glow - no mouse tracking */}
       <div className='absolute inset-x-0 top-0 z-10 h-[1px] w-full bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:via-cyan-500/50' />

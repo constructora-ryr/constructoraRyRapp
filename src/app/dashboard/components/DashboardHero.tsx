@@ -41,7 +41,7 @@ export function DashboardHero({
       className='flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between'
     >
       <div>
-        <p className='text-sm capitalize text-slate-500 dark:text-slate-400'>
+        <p className='text-sm text-slate-500 first-letter:uppercase dark:text-slate-400'>
           {fechaHoy}
         </p>
         <h1

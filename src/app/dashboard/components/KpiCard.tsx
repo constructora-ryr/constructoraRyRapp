@@ -2,7 +2,7 @@
 
 import { memo, type ElementType } from 'react'
 
-import { ArrowUpRight } from 'lucide-react'
+import { ArrowUpRight, Minus, TrendingDown, TrendingUp } from 'lucide-react'
 
 import Link from 'next/link'
 
@@ -13,11 +13,20 @@ export interface KpiSubItem {
   dot: string
 }
 
+export interface KpiDelta {
+  /** Texto ya formateado, p.ej. "+148% vs septiembre" */
+  label: string
+  direction: 'up' | 'down' | 'flat'
+  /** true si subir es bueno (recaudo, ventas) */
+  upIsGood?: boolean
+}
+
 interface KpiCardProps {
   label: string
   value: number
   sub?: string
   subItems?: KpiSubItem[]
+  delta?: KpiDelta
   icon: ElementType
   accentText: string
   accentBg: string
@@ -27,11 +36,22 @@ interface KpiCardProps {
   loading: boolean
 }
 
+const DELTA_ICON = { up: TrendingUp, down: TrendingDown, flat: Minus }
+
+function deltaClass({ direction, upIsGood = true }: KpiDelta): string {
+  if (direction === 'flat') return 'text-slate-500 dark:text-slate-400'
+  const good = (direction === 'up') === upIsGood
+  return good
+    ? 'text-emerald-600 dark:text-emerald-400'
+    : 'text-rose-600 dark:text-rose-400'
+}
+
 function KpiCardComponent({
   label,
   value,
   sub,
   subItems,
+  delta,
   icon: Icon,
   accentText,
   accentBg,
@@ -39,6 +59,8 @@ function KpiCardComponent({
   href,
   loading,
 }: KpiCardProps) {
+  const DeltaIcon = delta ? DELTA_ICON[delta.direction] : null
+
   const content = (
     <>
       <div className='mb-5 flex items-center justify-between'>
@@ -61,30 +83,36 @@ function KpiCardComponent({
         <AnimatedCounter
           value={value}
           format={format}
-          className='text-3xl font-semibold tabular-nums tracking-tight text-slate-900 dark:text-white'
+          className='text-3xl font-semibold tracking-tight text-slate-900 dark:text-white'
         />
       )}
 
-      {subItems && subItems.length > 0 ? (
-        <div className='mt-2 flex flex-wrap gap-x-3 gap-y-1'>
-          {subItems.map(item => (
-            <span key={item.label} className='flex items-center gap-1.5'>
-              <span
-                className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${item.dot}`}
-              />
-              <span className='text-xs text-slate-500 dark:text-slate-400'>
-                {item.label}
+      <div className='mt-2 flex flex-wrap items-center gap-x-3 gap-y-1'>
+        {delta && DeltaIcon && !loading && (
+          <span
+            className={`inline-flex items-center gap-1 text-xs font-medium ${deltaClass(delta)}`}
+          >
+            <DeltaIcon className='h-3.5 w-3.5' />
+            {delta.label}
+          </span>
+        )}
+        {subItems && subItems.length > 0
+          ? subItems.map(item => (
+              <span key={item.label} className='flex items-center gap-1.5'>
+                <span
+                  className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${item.dot}`}
+                />
+                <span className='text-xs text-slate-500 dark:text-slate-400'>
+                  {item.label}
+                </span>
               </span>
-            </span>
-          ))}
-        </div>
-      ) : (
-        sub && (
-          <p className='mt-2 text-xs text-slate-500 dark:text-slate-400'>
-            {sub}
-          </p>
-        )
-      )}
+            ))
+          : sub && (
+              <span className='text-xs text-slate-500 dark:text-slate-400'>
+                {sub}
+              </span>
+            )}
+      </div>
     </>
   )
 
