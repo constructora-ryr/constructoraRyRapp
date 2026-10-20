@@ -29,8 +29,8 @@ export function ClientesVistaTabla({
 }: ClientesVistaTablaProps) {
   if (isLoading && clientes.length === 0) {
     return (
-      <div className='overflow-hidden rounded-2xl border border-gray-200/50 bg-white/80 shadow-lg backdrop-blur-xl dark:border-gray-700/50 dark:bg-gray-800/80'>
-        <div className='h-12 animate-pulse bg-gradient-to-r from-cyan-500 via-indigo-600 to-purple-600' />
+      <div className='overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-800/60'>
+        <div className='h-10 animate-pulse bg-slate-50 dark:bg-slate-800' />
         <div className='space-y-3 p-4'>
           {[...Array(5)].map((_, i) => (
             <div

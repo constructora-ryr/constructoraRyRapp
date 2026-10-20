@@ -6,7 +6,8 @@ import { ArrowUpRight, Minus, TrendingDown, TrendingUp } from 'lucide-react'
 
 import Link from 'next/link'
 
-import { AnimatedCounter } from './AnimatedCounter'
+import { AnimatedCounter } from '@/shared/components/ui/AnimatedCounter'
+
 import { Monto } from './Monto'
 
 export interface KpiSubItem {

@@ -6,6 +6,8 @@
  * ✅ Diseño premium con glassmorphism
  * ✅ Dark mode completo
  * ✅ Responsive
+ * ✅ variant='clean': encabezado neutro y fijo al hacer scroll, filas sin
+ *    rayado, alineación por columna con `meta: { align }`
  */
 
 'use client'
@@ -19,12 +21,35 @@ import {
   getSortedRowModel,
   useReactTable,
   type ColumnDef,
+  type RowData,
   type SortingState,
 } from '@tanstack/react-table'
 import { ChevronDown, ChevronUp, ChevronsUpDown } from 'lucide-react'
 
 import { FormSelect } from '@/shared/components/ui/form-select'
 import { cn } from '@/shared/utils/helpers'
+
+declare module '@tanstack/react-table' {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface ColumnMeta<TData extends RowData, TValue> {
+    /** Alineación de encabezado y celdas (por defecto: center en 'gradient', left en 'clean') */
+    align?: 'left' | 'center' | 'right'
+  }
+}
+
+type Align = 'left' | 'center' | 'right'
+
+const ALIGN_FLEX: Record<Align, string> = {
+  left: 'justify-start text-left',
+  center: 'justify-center text-center',
+  right: 'justify-end text-right',
+}
+
+const ALIGN_TEXT: Record<Align, string> = {
+  left: 'text-left',
+  center: 'text-center',
+  right: 'text-right',
+}
 
 interface DataTableProps<TData> {
   columns: ColumnDef<TData>[]
@@ -35,6 +60,10 @@ interface DataTableProps<TData> {
   initialSorting?: SortingState
   onRowClick?: (row: TData) => void
   compact?: boolean
+  /** 'gradient' (por defecto, estilo anterior) o 'clean' (neutro, moderno) */
+  variant?: 'gradient' | 'clean'
+  /** Solo 'clean': encabezado con degradado del módulo, p.ej. 'from-cyan-600 via-indigo-600 to-violet-600' */
+  headerGradient?: string
 }
 
 const gradientClasses = {
@@ -85,7 +114,18 @@ export function DataTable<TData>({
   initialSorting = [],
   onRowClick,
   compact = false,
+  variant = 'gradient',
+  headerGradient,
 }: DataTableProps<TData>) {
+  const clean = variant === 'clean'
+  // En 'gradient' solo se alinea si la columna lo pide: así las tablas
+  // existentes se ven exactamente igual que antes
+  const alignOf = (a?: Align): Align | undefined =>
+    a ?? (clean ? 'left' : undefined)
+  const alignText = (a?: Align) => {
+    const al = alignOf(a)
+    return al ? ALIGN_TEXT[al] : undefined
+  }
   const [sorting, setSorting] = useState<SortingState>(initialSorting)
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize })
 
@@ -108,20 +148,34 @@ export function DataTable<TData>({
   return (
     <div
       className={cn(
-        'relative overflow-hidden rounded-xl border border-gray-200/50 bg-white shadow-2xl dark:border-gray-700/50 dark:bg-gray-800',
-        theme.shadow
+        clean
+          ? // Sin overflow-hidden en escritorio para que el encabezado pueda ser sticky
+            'relative rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-800/60 dark:shadow-none'
+          : cn(
+              'relative overflow-hidden rounded-xl border border-gray-200/50 bg-white shadow-2xl dark:border-gray-700/50 dark:bg-gray-800',
+              theme.shadow
+            )
       )}
     >
       {/* Tabla */}
-      <div className='overflow-x-auto'>
+      <div
+        className={
+          clean ? 'overflow-x-auto lg:overflow-visible' : 'overflow-x-auto'
+        }
+      >
         <table className='w-full'>
           {/* Header con gradiente premium */}
           <thead
-            className={cn(
-              'border-b-2 bg-gradient-to-r',
-              theme.header,
-              theme.border
-            )}
+            className={
+              clean
+                ? cn(
+                    'sticky top-0 z-10 [&_th:first-child]:rounded-tl-2xl [&_th:last-child]:rounded-tr-2xl',
+                    headerGradient
+                      ? cn('bg-gradient-to-r shadow-sm', headerGradient)
+                      : 'bg-slate-50/95 backdrop-blur supports-[backdrop-filter]:bg-slate-50/80 dark:bg-slate-800/95'
+                  )
+                : cn('border-b-2 bg-gradient-to-r', theme.header, theme.border)
+            }
           >
             {table.getHeaderGroups().map(headerGroup => (
               <tr key={headerGroup.id}>
@@ -129,10 +183,20 @@ export function DataTable<TData>({
                   <th
                     key={header.id}
                     className={cn(
-                      'text-xs font-bold uppercase tracking-wider text-white',
+                      clean
+                        ? headerGradient
+                          ? 'text-[11px] font-semibold uppercase tracking-wider text-white'
+                          : 'border-b border-slate-200 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-700 dark:text-slate-400'
+                        : 'text-xs font-bold uppercase tracking-wider text-white',
                       compact ? 'px-3 py-2' : 'px-4 py-3.5',
+                      clean && 'px-4 py-2.5',
+                      alignText(header.column.columnDef.meta?.align),
                       header.column.getCanSort() &&
-                        'cursor-pointer select-none transition-all hover:bg-white/10'
+                        (clean
+                          ? headerGradient
+                            ? 'cursor-pointer select-none transition-colors hover:bg-white/10'
+                            : 'cursor-pointer select-none transition-colors hover:text-slate-800 dark:hover:text-slate-200'
+                          : 'cursor-pointer select-none transition-all hover:bg-white/10')
                     )}
                     onClick={header.column.getToggleSortingHandler()}
                     style={{
@@ -140,7 +204,16 @@ export function DataTable<TData>({
                         header.getSize() !== 150 ? header.getSize() : undefined,
                     }}
                   >
-                    <div className='flex items-center justify-center gap-2'>
+                    <div
+                      className={cn(
+                        'flex items-center',
+                        clean ? 'gap-1' : 'gap-2',
+                        ALIGN_FLEX[
+                          alignOf(header.column.columnDef.meta?.align) ??
+                            'center'
+                        ]
+                      )}
+                    >
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -151,11 +224,21 @@ export function DataTable<TData>({
                       {header.column.getCanSort() && (
                         <span>
                           {header.column.getIsSorted() === 'asc' ? (
-                            <ChevronUp className='h-4 w-4' />
+                            <ChevronUp
+                              className={clean ? 'h-3.5 w-3.5' : 'h-4 w-4'}
+                            />
                           ) : header.column.getIsSorted() === 'desc' ? (
-                            <ChevronDown className='h-4 w-4' />
+                            <ChevronDown
+                              className={clean ? 'h-3.5 w-3.5' : 'h-4 w-4'}
+                            />
                           ) : (
-                            <ChevronsUpDown className='h-4 w-4 opacity-40' />
+                            <ChevronsUpDown
+                              className={
+                                clean
+                                  ? 'h-3.5 w-3.5 opacity-30'
+                                  : 'h-4 w-4 opacity-40'
+                              }
+                            />
                           )}
                         </span>
                       )}
@@ -167,7 +250,13 @@ export function DataTable<TData>({
           </thead>
 
           {/* Body con hover effects premium */}
-          <tbody className='divide-y divide-gray-200 dark:divide-gray-700'>
+          <tbody
+            className={
+              clean
+                ? 'divide-y divide-slate-100 dark:divide-slate-700/50'
+                : 'divide-y divide-gray-200 dark:divide-gray-700'
+            }
+          >
             {table.getRowModel().rows.length > 0 ? (
               table.getRowModel().rows.map((row, idx) => (
                 <tr
@@ -176,20 +265,29 @@ export function DataTable<TData>({
                     onRowClick ? () => onRowClick(row.original) : undefined
                   }
                   className={cn(
-                    'group transition-all duration-200',
-                    theme.hover,
-                    onRowClick && 'cursor-pointer',
-                    idx % 2 === 0
-                      ? 'bg-white dark:bg-gray-800'
-                      : 'bg-gray-50/30 dark:bg-gray-800/30'
+                    clean
+                      ? 'group transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/30'
+                      : cn(
+                          'group transition-all duration-200',
+                          theme.hover,
+                          idx % 2 === 0
+                            ? 'bg-white dark:bg-gray-800'
+                            : 'bg-gray-50/30 dark:bg-gray-800/30'
+                        ),
+                    onRowClick && 'cursor-pointer'
                   )}
                 >
                   {row.getVisibleCells().map(cell => (
                     <td
                       key={cell.id}
                       className={cn(
-                        'text-sm text-gray-700 dark:text-gray-300',
-                        compact ? 'px-3 py-2' : 'px-4 py-3.5'
+                        clean
+                          ? 'px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300'
+                          : cn(
+                              'text-sm text-gray-700 dark:text-gray-300',
+                              compact ? 'px-3 py-2' : 'px-4 py-3.5'
+                            ),
+                        alignText(cell.column.columnDef.meta?.align)
                       )}
                     >
                       {flexRender(
@@ -216,7 +314,13 @@ export function DataTable<TData>({
 
       {/* Paginación moderna y compacta - Mostrar siempre */}
       {showPagination && (
-        <div className='flex items-center justify-between border-t border-gray-200/50 bg-gradient-to-r from-white/95 via-gray-50/95 to-white/95 px-4 py-2.5 backdrop-blur-xl dark:border-gray-700/50 dark:from-gray-800/95 dark:via-gray-800/90 dark:to-gray-800/95'>
+        <div
+          className={
+            clean
+              ? 'flex items-center justify-between rounded-b-2xl border-t border-slate-200 px-4 py-2.5 dark:border-slate-700/60'
+              : 'flex items-center justify-between border-t border-gray-200/50 bg-gradient-to-r from-white/95 via-gray-50/95 to-white/95 px-4 py-2.5 backdrop-blur-xl dark:border-gray-700/50 dark:from-gray-800/95 dark:via-gray-800/90 dark:to-gray-800/95'
+          }
+        >
           {/* Contador compacto + Selector de items por página */}
           <div className='flex items-center gap-2'>
             <div className='flex items-center gap-1 rounded-full border border-gray-200 bg-gray-100 px-2.5 py-1 dark:border-gray-600 dark:bg-gray-700/50'>

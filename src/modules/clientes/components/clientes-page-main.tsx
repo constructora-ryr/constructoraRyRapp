@@ -18,18 +18,21 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import { motion } from 'framer-motion'
+import { Plus, Users } from 'lucide-react'
 
 import { useRouter } from 'next/navigation'
 
 import { construirURLCliente, getShortId } from '@/lib/utils/slug.utils'
 import { ModalConfirmacion } from '@/shared'
-import { NoResults } from '@/shared/components/ui/NoResults'
-
 import {
-  ClientesHeader,
-  EstadisticasClientes,
-  FiltrosClientes,
-} from '../components'
+  EstadoFiltroCards,
+  ListPageHeader,
+  ListSearchToolbar,
+  type EstadoFiltroOpcion,
+} from '@/shared/components/list-page'
+import { NoResults } from '@/shared/components/ui/NoResults'
+import { CLIENTE_ESTADO_BADGE } from '@/shared/config/estados.colors'
+
 import { FormularioClienteContainer } from '../containers/formulario-cliente-container'
 import { useClientesList } from '../hooks'
 import { clientesListaStyles } from '../styles/clientes-lista.styles'
@@ -130,6 +133,75 @@ export function ClientesPageMain({
     [router]
   )
 
+  const propietarios =
+    (estadisticas as Record<string, number>).propietarios ?? 0
+
+  // Las tarjetas de conteo son también el filtro de estado
+  const conEstilo = (estado: string) => {
+    const cfg = CLIENTE_ESTADO_BADGE[estado]
+    return {
+      icon: cfg.icon,
+      gradient: cfg.gradient,
+      text: cfg.text,
+      selected: cfg.selected,
+      iconFilled: cfg.iconFilled,
+    }
+  }
+
+  // Las tarjetas de conteo son también el filtro de estado
+  const opcionesEstado: EstadoFiltroOpcion<EstadoCliente | 'Todos'>[] = [
+    {
+      value: 'Todos',
+      label: 'Todos',
+      count: estadisticas.total,
+      icon: Users,
+      gradient: 'from-cyan-500 to-blue-600',
+      text: 'text-cyan-700 dark:text-cyan-400',
+      selected:
+        'border-cyan-400 bg-cyan-50/80 ring-2 ring-cyan-400/40 dark:border-cyan-500/60 dark:bg-cyan-500/10',
+    },
+    {
+      value: 'Activo',
+      label: 'Activos',
+      count: estadisticas.activos,
+      ...conEstilo('Activo'),
+    },
+    {
+      value: 'Interesado',
+      label: 'Interesados',
+      count: estadisticas.interesados,
+      ...conEstilo('Interesado'),
+    },
+    {
+      value: 'Propietario',
+      label: 'Propietarios',
+      count: propietarios,
+      ...conEstilo('Propietario'),
+    },
+    {
+      value: 'Inactivo',
+      label: 'Inactivos',
+      count: estadisticas.inactivos,
+      ...conEstilo('Inactivo'),
+    },
+    {
+      value: 'Renunció',
+      label: 'Renunciaron',
+      count: estadisticas.renunciaron,
+      ...conEstilo('Renunció'),
+    },
+  ]
+
+  const hayFiltros = busqueda.trim().length > 0 || estadoFiltro !== 'Todos'
+  const limpiarFiltros = () => {
+    setBusqueda('')
+    setEstadoFiltro('Todos')
+  }
+  const resultado =
+    totalFiltrados === estadisticas.total
+      ? `${estadisticas.total} cliente${estadisticas.total !== 1 ? 's' : ''}`
+      : `${totalFiltrados} de ${estadisticas.total} clientes`
+
   return (
     <div className={clientesListaStyles.container.page}>
       <motion.div
@@ -138,29 +210,43 @@ export function ClientesPageMain({
         transition={{ duration: 0.15 }}
         className={clientesListaStyles.container.content}
       >
-        <ClientesHeader
-          onNuevoCliente={canCreate ? handleNuevoCliente : undefined}
-          totalClientes={estadisticas.total}
-        />
-
-        <EstadisticasClientes
-          total={estadisticas.total}
-          interesados={estadisticas.interesados}
-          activos={estadisticas.activos}
-          inactivos={estadisticas.inactivos}
-          renunciaron={estadisticas.renunciaron}
-          propietarios={
-            (estadisticas as Record<string, number>).propietarios ?? 0
+        <ListPageHeader
+          icon={Users}
+          heroGradient='from-cyan-600 via-blue-600 to-indigo-600'
+          title='Clientes'
+          subtitle='Compradores, interesados y propietarios'
+          breadcrumbs={[
+            { label: 'Dashboard', href: '/' },
+            { label: 'Clientes' },
+          ]}
+          actions={
+            canCreate ? (
+              <button
+                type='button'
+                onClick={handleNuevoCliente}
+                className='inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-blue-700 shadow-lg shadow-blue-900/20 transition-all hover:-translate-y-0.5 hover:bg-blue-50 hover:shadow-xl'
+              >
+                <Plus className='h-4 w-4' />
+                Nuevo cliente
+              </button>
+            ) : undefined
           }
         />
 
-        <FiltrosClientes
-          busqueda={busqueda}
-          estadoSeleccionado={estadoFiltro}
-          onBusquedaChange={setBusqueda}
-          onEstadoChange={setEstadoFiltro}
-          totalResultados={totalFiltrados}
-          totalClientes={estadisticas.total}
+        <EstadoFiltroCards
+          ariaLabel='Filtrar clientes por estado'
+          total={estadisticas.total}
+          opciones={opcionesEstado}
+          seleccionado={estadoFiltro}
+          onSeleccionar={setEstadoFiltro}
+        />
+
+        <ListSearchToolbar
+          value={busqueda}
+          onChange={setBusqueda}
+          placeholder='Buscar por nombre, cédula o teléfono…'
+          resultado={resultado}
+          onLimpiar={hayFiltros ? limpiarFiltros : undefined}
         />
 
         {isLoading ? (
@@ -169,10 +255,7 @@ export function ClientesPageMain({
           busqueda || estadoFiltro !== 'Todos' ? (
             <NoResults
               moduleName='clientes'
-              onLimpiarFiltros={() => {
-                setBusqueda('')
-                setEstadoFiltro('Todos')
-              }}
+              onLimpiarFiltros={limpiarFiltros}
               mensaje='No hay clientes que coincidan con los filtros aplicados'
             />
           ) : (

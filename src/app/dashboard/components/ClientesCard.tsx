@@ -7,7 +7,8 @@ import { ArrowRight } from 'lucide-react'
 
 import Link from 'next/link'
 
-import { CLIENTE_ESTADO_COLORS } from '../config/estados.colors'
+import { CLIENTE_ESTADO_COLORS } from '@/shared/config/estados.colors'
+
 import type { DashboardStatsData } from '../hooks/useDashboardStats'
 
 const itemVariants = {

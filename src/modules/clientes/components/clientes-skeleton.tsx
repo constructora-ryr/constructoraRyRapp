@@ -21,11 +21,8 @@ export function ClientesSkeleton() {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
-      className='overflow-hidden rounded-2xl border border-gray-200/50 bg-white/80 shadow-lg backdrop-blur-xl dark:border-gray-700/50 dark:bg-gray-800/80'
+      className='overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-800/60'
     >
-      {/* Barra de color del módulo */}
-      <div className='h-1.5 bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600' />
-
       {/* Cabecera de columnas */}
       <div className='flex items-center gap-3 border-b border-gray-200/60 bg-gray-50/80 px-4 py-3 dark:border-gray-700/60 dark:bg-gray-900/40'>
         {COLS.map((col, i) => (

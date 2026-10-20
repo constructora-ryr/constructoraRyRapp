@@ -1,13 +1,10 @@
 // Barrel export para componentes del módulo de clientes
 export * from './clientes-empty'
-export * from './clientes-header'
 export * from './clientes-page-main'
 export * from './clientes-skeleton'
 export { ClientesTabla } from './ClientesTabla'
 export * from './detalle-cliente'
-export * from './estadisticas-clientes'
 export * from './estado-badge'
-export * from './filtros-clientes'
 export { FormularioCliente } from './formulario-cliente-modern'
 
 // Componentes de asignar vivienda

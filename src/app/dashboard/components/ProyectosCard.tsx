@@ -7,7 +7,8 @@ import { ArrowRight, Building2 } from 'lucide-react'
 
 import Link from 'next/link'
 
-import { VIVIENDA_ESTADO_COLORS } from '../config/estados.colors'
+import { VIVIENDA_ESTADO_COLORS } from '@/shared/config/estados.colors'
+
 import type { DashboardStatsData } from '../hooks/useDashboardStats'
 
 const ESTADO_LABELS: Record<string, { label: string; chip: string }> = {
