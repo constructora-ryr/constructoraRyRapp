@@ -17,6 +17,8 @@ import {
   niceScale,
 } from '../utils/dashboard-format'
 
+import { Monto } from './Monto'
+
 const itemVariants = {
   hidden: { opacity: 0, y: 15 },
   visible: {
@@ -65,9 +67,15 @@ function RecaudoChartComponent({
             Recaudo mensual
           </h2>
           <p className='mt-1 text-sm text-slate-500 dark:text-slate-400'>
-            {loading
-              ? 'Últimos 12 meses'
-              : `Últimos 12 meses · ${formatCOPCompact(total12m)} en total · promedio ${formatCOPCompact(promedio)}/mes`}
+            {loading ? (
+              'Últimos 12 meses'
+            ) : (
+              <>
+                Últimos 12 meses · <Monto value={total12m} /> en total ·
+                promedio <Monto value={promedio} />
+                /mes
+              </>
+            )}
           </p>
         </div>
         <div className='flex items-center gap-2'>

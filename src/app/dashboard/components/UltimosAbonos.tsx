@@ -18,10 +18,11 @@ import { getShortId } from '@/lib/utils/slug.utils'
 import type { UltimoAbono } from '../hooks/useDashboardStats'
 import {
   diasEntre,
-  formatCOPCompact,
   formatFechaCorta,
   formatFechaHora,
 } from '../utils/dashboard-format'
+
+import { Monto } from './Monto'
 
 const itemVariants = {
   hidden: { opacity: 0, y: 15 },
@@ -122,7 +123,7 @@ function UltimosAbonosComponent({
                       {etiquetaAbono(a)}
                     </span>
                     <span className='shrink-0 text-sm font-semibold text-slate-900 dark:text-white'>
-                      {formatCOPCompact(a.monto)}
+                      <Monto value={a.monto} focusable={!canNavigate} />
                     </span>
                   </div>
 

@@ -7,6 +7,7 @@ import { ArrowUpRight, Minus, TrendingDown, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
 
 import { AnimatedCounter } from './AnimatedCounter'
+import { Monto } from './Monto'
 
 export interface KpiSubItem {
   label: string
@@ -31,6 +32,8 @@ interface KpiCardProps {
   accentText: string
   accentBg: string
   format?: (value: number) => string
+  /** Muestra el valor exacto en un tooltip (KPIs de dinero abreviados) */
+  montoCompleto?: boolean
   /** Si se define, toda la tarjeta es clicable */
   href?: string
   loading: boolean
@@ -56,6 +59,7 @@ function KpiCardComponent({
   accentText,
   accentBg,
   format,
+  montoCompleto,
   href,
   loading,
 }: KpiCardProps) {
@@ -80,11 +84,23 @@ function KpiCardComponent({
       {loading ? (
         <div className='h-9 w-24 animate-pulse rounded-md bg-slate-200 dark:bg-slate-700' />
       ) : (
-        <AnimatedCounter
-          value={value}
-          format={format}
-          className='text-3xl font-semibold tracking-tight text-slate-900 dark:text-white'
-        />
+        (() => {
+          const contador = (
+            <AnimatedCounter
+              value={value}
+              format={format}
+              className='text-3xl font-semibold tracking-tight text-slate-900 dark:text-white'
+            />
+          )
+          return montoCompleto ? (
+            // La tarjeta ya es un enlace: el tooltip abre al pasar el cursor
+            <Monto value={value} focusable={!href} className='self-start'>
+              {contador}
+            </Monto>
+          ) : (
+            contador
+          )
+        })()
       )}
 
       <div className='mt-2 flex flex-wrap items-center gap-x-3 gap-y-1'>

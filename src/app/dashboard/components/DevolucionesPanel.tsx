@@ -10,7 +10,8 @@ import Link from 'next/link'
 import { construirURLCliente } from '@/lib/utils/slug.utils'
 
 import type { DashboardStatsData } from '../hooks/useDashboardStats'
-import { formatCOPCompact } from '../utils/dashboard-format'
+
+import { Monto } from './Monto'
 
 const itemVariants = {
   hidden: { opacity: 0, y: 15 },
@@ -94,7 +95,7 @@ function DevolucionesPanelComponent({
         {!loading && totalCasos > 0 && (
           <div className='text-right'>
             <p className='text-xl font-semibold text-slate-900 dark:text-white'>
-              {formatCOPCompact(totalMonto)}
+              <Monto value={totalMonto} />
             </p>
             <p className='text-xs text-slate-500 dark:text-slate-400'>
               en total
@@ -146,7 +147,7 @@ function DevolucionesPanelComponent({
                   </span>
                 </span>
                 <span className='shrink-0 text-sm font-semibold text-slate-900 dark:text-white'>
-                  {formatCOPCompact(d.monto)}
+                  <Monto value={d.monto} focusable={!href} />
                 </span>
                 {href && (
                   <ChevronRight className='h-4 w-4 shrink-0 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-500 dark:text-slate-600' />
@@ -194,7 +195,10 @@ function DevolucionesPanelComponent({
                     </span>
                     {renuncias.monto > 0 && (
                       <span className='shrink-0 text-sm font-semibold text-slate-900 dark:text-white'>
-                        {formatCOPCompact(renuncias.monto)}
+                        <Monto
+                          value={renuncias.monto}
+                          focusable={!permisos.renuncias}
+                        />
                       </span>
                     )}
                     {permisos.renuncias && (

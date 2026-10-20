@@ -11,7 +11,6 @@ import {
 
 import { useAuth } from '@/hooks/auth/useAuthQuery'
 import { usePermisosQuery } from '@/modules/usuarios/hooks/usePermisosQuery'
-import { formatCurrency } from '@/shared/utils/format'
 
 import { ClientesCard } from './dashboard/components/ClientesCard'
 import {
@@ -166,8 +165,9 @@ export default function DashboardContent(_props: DashboardContentProps) {
       label: `Recaudo de ${mesActual}`,
       value: f.recaudoMes,
       format: formatCOPCompact,
+      montoCompleto: true,
       delta: deltaPct(f.recaudoMes, f.recaudoMesAnterior, mesAnterior),
-      sub: `${f.abonosMes} ${f.abonosMes === 1 ? 'abono' : 'abonos'} · ${formatCurrency(f.recaudoMes)}`,
+      sub: `${f.abonosMes} ${f.abonosMes === 1 ? 'abono registrado' : 'abonos registrados'}`,
       icon: DollarSign,
       accentText: 'text-violet-600 dark:text-violet-400',
       accentBg: 'bg-violet-50 dark:bg-violet-500/10',
@@ -177,6 +177,7 @@ export default function DashboardContent(_props: DashboardContentProps) {
       label: 'Cartera por cobrar',
       value: f.carteraPendiente,
       format: formatCOPCompact,
+      montoCompleto: true,
       sub: `en ${f.negociacionesActivas} ${f.negociacionesActivas === 1 ? 'negociación activa' : 'negociaciones activas'}`,
       icon: Landmark,
       accentText: 'text-pink-600 dark:text-pink-400',
