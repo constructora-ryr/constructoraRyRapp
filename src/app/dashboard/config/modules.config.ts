@@ -42,10 +42,10 @@ export const MODULES_CONFIG: ModuleConfig[] = [
     icon: Home,
     modulo: 'viviendas',
     glowColor:
-      'hover:border-amber-400 hover:shadow-[0_8px_30px_-5px_rgba(245,158,11,0.15)] dark:group-hover:border-amber-500/50 dark:group-hover:shadow-[0_0_30px_-5px_rgba(245,158,11,0.3)]',
-    iconColor: 'text-amber-600 dark:text-amber-400',
+      'hover:border-orange-400 hover:shadow-[0_8px_30px_-5px_rgba(249,115,22,0.15)] dark:group-hover:border-orange-500/50 dark:group-hover:shadow-[0_0_30px_-5px_rgba(249,115,22,0.3)]',
+    iconColor: 'text-orange-600 dark:text-orange-400',
     iconBgColor:
-      'bg-amber-100 dark:bg-amber-500/10 group-hover:bg-amber-200 dark:group-hover:bg-amber-500/20',
+      'bg-orange-100 dark:bg-orange-500/10 group-hover:bg-orange-200 dark:group-hover:bg-orange-500/20',
   },
   {
     title: 'Clientes',

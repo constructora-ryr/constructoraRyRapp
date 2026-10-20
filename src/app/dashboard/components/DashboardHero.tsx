@@ -1,20 +1,30 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import { Plus } from 'lucide-react'
+
+import Link from 'next/link'
+
+export interface HeroAction {
+  label: string
+  href: string
+  primary?: boolean
+}
 
 interface DashboardHeroProps {
   saludo: string
   nombre: string
   rol: string
   fechaHoy: string
+  actions: HeroAction[]
 }
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 15 },
+  hidden: { opacity: 0, y: 8 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { type: 'spring' as const, stiffness: 100, damping: 20 },
+    transition: { type: 'spring' as const, stiffness: 120, damping: 20 },
   },
 }
 
@@ -23,48 +33,48 @@ export function DashboardHero({
   nombre,
   rol,
   fechaHoy,
+  actions,
 }: DashboardHeroProps) {
   return (
-    <div className='mb-4 flex flex-col gap-6 md:flex-row md:items-end md:justify-between'>
-      <motion.div variants={itemVariants} className='space-y-3'>
-        <div className='flex items-center gap-3'>
-          <p className='text-sm font-medium uppercase tracking-wide text-slate-500 dark:text-white/50'>
-            {fechaHoy}
-          </p>
-          <div className='flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-medium text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400'>
-            <span className='relative flex h-1.5 w-1.5'>
-              <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75' />
-              <span className='relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500' />
-            </span>
-            Sistema en línea
-          </div>
-        </div>
+    <motion.div
+      variants={itemVariants}
+      className='flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between'
+    >
+      <div>
+        <p className='text-sm capitalize text-slate-500 dark:text-slate-400'>
+          {fechaHoy}
+        </p>
         <h1
-          className='text-4xl font-semibold tracking-tight text-slate-900 dark:text-white md:text-5xl lg:text-6xl'
+          className='mt-1 text-2xl font-semibold tracking-tight text-slate-900 dark:text-white md:text-3xl'
           style={{ fontFamily: 'var(--font-jakarta)' }}
         >
-          <span className='font-light text-slate-500 dark:text-white/60'>
-            {saludo},
-          </span>
-          <br />
-          {nombre}
+          {saludo}, {nombre}
+          {rol && (
+            <span className='ml-3 inline-flex translate-y-[-3px] items-center rounded-full border border-slate-200 bg-white px-2.5 py-0.5 align-middle text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'>
+              {rol}
+            </span>
+          )}
         </h1>
-        <div className='flex items-center gap-3 pt-2'>
-          <span className='inline-flex items-center rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-medium text-slate-700 backdrop-blur-sm dark:border-white/10 dark:bg-white/5 dark:text-white/80'>
-            <div className='mr-2 h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 dark:shadow-[0_0_8px_rgba(52,211,153,0.8)]' />
-            {rol}
-          </span>
-          <span className='ml-2 hidden items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-white/30 sm:inline-flex'>
-            <kbd className='rounded border border-slate-200 bg-white px-1.5 py-0.5 font-sans shadow-sm dark:border-white/10 dark:bg-white/5'>
-              ⌘
-            </kbd>
-            <kbd className='rounded border border-slate-200 bg-white px-1.5 py-0.5 font-sans shadow-sm dark:border-white/10 dark:bg-white/5'>
-              K
-            </kbd>
-            para comandos
-          </span>
+      </div>
+
+      {actions.length > 0 && (
+        <div className='flex flex-wrap gap-2'>
+          {actions.map(action => (
+            <Link
+              key={action.href}
+              href={action.href}
+              className={
+                action.primary
+                  ? 'inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100'
+                  : 'inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700'
+              }
+            >
+              <Plus className='h-4 w-4' />
+              {action.label}
+            </Link>
+          ))}
         </div>
-      </motion.div>
-    </div>
+      )}
+    </motion.div>
   )
 }

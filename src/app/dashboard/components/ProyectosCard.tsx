@@ -55,7 +55,7 @@ function ProyectosCardComponent({
   return (
     <motion.div
       variants={itemVariants}
-      className='group relative flex flex-col overflow-hidden rounded-3xl border border-slate-200/60 bg-white/80 p-6 shadow-md backdrop-blur-2xl transition-colors hover:border-emerald-400/50 dark:border-gray-700/50 dark:bg-gray-800/50 dark:shadow-none dark:hover:border-emerald-500/30'
+      className='group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-colors hover:border-emerald-300 dark:border-slate-700/60 dark:bg-slate-800/60 dark:shadow-none dark:hover:border-emerald-500/30'
     >
       {/* Subtle top glow - no mouse tracking */}
       <div className='absolute inset-x-0 top-0 z-10 h-[1px] w-full bg-gradient-to-r from-transparent via-emerald-400/50 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:via-emerald-500/50' />
@@ -66,8 +66,8 @@ function ProyectosCardComponent({
             Estado de Proyectos
           </h2>
           <p className='mt-1 text-sm text-slate-500 dark:text-white/50'>
-            {proyectos.activos} en ejecución, {proyectos.completados}{' '}
-            finalizadas
+            {proyectos.activos} en ejecución · {proyectos.completados}{' '}
+            finalizado{proyectos.completados !== 1 ? 's' : ''}
           </p>
         </div>
         {canNavigate && (
@@ -130,7 +130,7 @@ function ProyectosCardComponent({
                         transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
                       />
                     </div>
-                    <span className='w-8 text-right font-mono text-xs font-medium text-slate-500 dark:text-white/50'>
+                    <span className='w-9 text-right text-xs font-medium tabular-nums text-slate-500 dark:text-white/50'>
                       {pct}%
                     </span>
                   </div>

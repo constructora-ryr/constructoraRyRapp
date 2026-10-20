@@ -8,17 +8,19 @@ interface AnimatedCounterProps {
   value: number
   duration?: number
   className?: string
+  format?: (value: number) => string
 }
+
+const defaultFormat = (v: number) => Math.round(v).toLocaleString('es-CO')
 
 function AnimatedCounterComponent({
   value,
   duration = 1,
   className,
+  format = defaultFormat,
 }: AnimatedCounterProps) {
   const count = useMotionValue(0)
-  const display = useTransform(count, v =>
-    Math.round(v).toLocaleString('es-CO')
-  )
+  const display = useTransform(count, format)
 
   useEffect(() => {
     const controls = animate(count, value, {

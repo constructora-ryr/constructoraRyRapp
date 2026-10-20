@@ -2,6 +2,8 @@
 
 import { motion } from 'framer-motion'
 
+import { VIVIENDA_ESTADO_COLORS } from '../config/estados.colors'
+
 const CX = 64
 const CY = 64
 const R = 50
@@ -9,12 +11,13 @@ const SW = 11
 const CIRC = 2 * Math.PI * R
 const GAP = 5
 
-const SEG_CONFIG = [
-  { key: 'disponibles' as const, label: 'Disponibles', color: '#10b981' },
-  { key: 'asignadas' as const, label: 'Asignadas', color: '#f59e0b' },
-  { key: 'entregadas' as const, label: 'Escrituradas', color: '#8b5cf6' },
-  { key: 'propietario' as const, label: 'Saldadas', color: '#06b6d4' },
-]
+const SEG_CONFIG = (
+  ['disponibles', 'asignadas', 'entregadas', 'propietario'] as const
+).map(key => ({
+  key,
+  label: VIVIENDA_ESTADO_COLORS[key].label,
+  color: VIVIENDA_ESTADO_COLORS[key].hex,
+}))
 
 interface ViviendasRingChartProps {
   disponibles: number
@@ -76,7 +79,7 @@ export function ViviendasRingChart({
                   transition={{
                     duration: 1.2,
                     delay: i * 0.18,
-                    ease: [0.34, 1.56, 0.64, 1],
+                    ease: [0.16, 1, 0.3, 1],
                   }}
                 />
               ))
@@ -93,7 +96,7 @@ export function ViviendasRingChart({
           </g>
         </svg>
         <div className='absolute inset-0 flex flex-col items-center justify-center'>
-          <span className='font-mono text-2xl font-bold leading-none text-zinc-900 dark:text-zinc-100'>
+          <span className='text-2xl font-bold tabular-nums leading-none text-zinc-900 dark:text-zinc-100'>
             {total}
           </span>
           <span className='mt-0.5 text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500'>
@@ -119,7 +122,7 @@ export function ViviendasRingChart({
                 <span className='text-xs text-zinc-500 dark:text-zinc-400'>
                   {cfg.label}
                 </span>
-                <span className='font-mono text-xs font-semibold text-zinc-800 dark:text-zinc-200'>
+                <span className='text-xs font-semibold tabular-nums text-zinc-800 dark:text-zinc-200'>
                   {count}
                 </span>
                 <span className='w-8 text-right text-[10px] text-zinc-400 dark:text-zinc-500'>

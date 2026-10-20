@@ -1,22 +1,35 @@
 'use client'
 
-import { format } from 'date-fns'
-import { es } from 'date-fns/locale'
-import { motion } from 'framer-motion'
-import { Building2, DollarSign, Home, Users } from 'lucide-react'
+import { MotionConfig, motion } from 'framer-motion'
+import { AlertTriangle, Building2, DollarSign, Home, Users } from 'lucide-react'
 
 import { useAuth } from '@/hooks/auth/useAuthQuery'
 import { usePermisosQuery } from '@/modules/usuarios/hooks/usePermisosQuery'
 import type { Modulo } from '@/modules/usuarios/types'
+import { formatCurrency } from '@/shared/utils/format'
 
 import { AccesosRapidos } from './dashboard/components/AccesosRapidos'
 import { ClientesCard } from './dashboard/components/ClientesCard'
-import { DashboardHero } from './dashboard/components/DashboardHero'
-import { KpiCard } from './dashboard/components/KpiCard'
+import {
+  DashboardHero,
+  type HeroAction,
+} from './dashboard/components/DashboardHero'
+import { KpiCard, type KpiSubItem } from './dashboard/components/KpiCard'
 import { ProyectosCard } from './dashboard/components/ProyectosCard'
 import { ViviendasCard } from './dashboard/components/ViviendasCard'
+import {
+  CLIENTE_ESTADO_COLORS,
+  PROYECTO_ESTADO_COLORS,
+} from './dashboard/config/estados.colors'
 import { MODULES_CONFIG } from './dashboard/config/modules.config'
-import { useDashboardStats } from './dashboard/hooks/useDashboardStats'
+import {
+  EMPTY_DASHBOARD_STATS,
+  useDashboardStats,
+} from './dashboard/hooks/useDashboardStats'
+import {
+  formatCOPCompact,
+  getContextoFecha,
+} from './dashboard/utils/dashboard-format'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -52,20 +65,38 @@ const itemVariants = {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+const plural = (n: number, singular: string, pluralForm = `${singular}s`) =>
+  n === 1 ? singular : pluralForm
+
+/** Sub-ítems solo para los conteos > 0 */
+function buildSubItems(
+  items: Array<{ count: number; label: string; dot: string }>
+): KpiSubItem[] {
+  return items
+    .filter(i => i.count > 0)
+    .map(i => ({ label: `${i.count} ${i.label}`, dot: i.dot }))
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Component
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function DashboardContent(_props: DashboardContentProps) {
-  const { data: stats, isLoading: statsLoading } = useDashboardStats()
+  const {
+    data: stats,
+    isLoading: statsLoading,
+    isError: statsError,
+    refetch: refetchStats,
+  } = useDashboardStats()
   const { puede, isLoading: permLoading } = usePermisosQuery()
   const { perfil } = useAuth()
 
-  const hora = new Date().getHours()
-  const saludo =
-    hora < 12 ? 'Buenos días' : hora < 19 ? 'Buenas tardes' : 'Buenas noches'
+  const { saludo, fechaHoy, mesActual } = getContextoFecha()
   const nombre = perfil?.nombres?.split(' ')[0] || 'Usuario'
   const rol = perfil?.rol || ''
-  const fechaHoy = format(new Date(), "EEEE d 'de' MMMM, yyyy", { locale: es })
 
   const permisos: Record<Modulo, boolean> = {
     proyectos: puede('proyectos', 'ver'),
@@ -85,167 +116,175 @@ export default function DashboardContent(_props: DashboardContentProps) {
     ? []
     : MODULES_CONFIG.filter(m => permisos[m.modulo])
 
-  const s = stats ?? {
-    proyectos: { total: 0, activos: 0, completados: 0, list: [] },
-    viviendas: {
-      total: 0,
-      disponibles: 0,
-      asignadas: 0,
-      entregadas: 0,
-      propietario: 0,
-    },
-    clientes: {
-      total: 0,
-      activos: 0,
-      interesados: 0,
-      inactivos: 0,
-      renunciaron: 0,
-      propietarios: 0,
-    },
-    recaudoMes: 0,
-  }
+  const heroActions: HeroAction[] = permLoading
+    ? []
+    : [
+        ...(puede('abonos', 'crear')
+          ? [
+              {
+                label: 'Registrar abono',
+                href: '/abonos/registrar',
+                primary: true,
+              },
+            ]
+          : []),
+        ...(puede('clientes', 'crear')
+          ? [{ label: 'Nuevo cliente', href: '/clientes/nuevo' }]
+          : []),
+      ]
 
-  const mesActual = new Date().toLocaleString('es-CO', { month: 'long' })
+  const s = stats ?? EMPTY_DASHBOARD_STATS
+
+  const p = s.proyectos
+  const c = s.clientes
+  const vendidas = s.viviendas.total - s.viviendas.disponibles
+  const pctVendidas =
+    s.viviendas.total > 0 ? Math.round((vendidas / s.viviendas.total) * 100) : 0
 
   const kpis = [
     {
       label: 'Proyectos',
-      value: s.proyectos.total,
-      sub: '',
-      subItems: [
-        { label: `${s.proyectos.activos} en ejecución`, dot: 'bg-emerald-500' },
-        ...(s.proyectos.completados > 0
-          ? [
-              {
-                label: `${s.proyectos.completados} finalizado${s.proyectos.completados !== 1 ? 's' : ''}`,
-                dot: 'bg-violet-500',
-              },
-            ]
-          : []),
-      ],
+      value: p.total,
+      subItems: buildSubItems([
+        {
+          count: p.activos,
+          label: PROYECTO_ESTADO_COLORS.enEjecucion.label,
+          dot: PROYECTO_ESTADO_COLORS.enEjecucion.bg,
+        },
+        {
+          count: p.enPlanificacion,
+          label: PROYECTO_ESTADO_COLORS.enPlanificacion.label,
+          dot: PROYECTO_ESTADO_COLORS.enPlanificacion.bg,
+        },
+        {
+          count: p.pausados,
+          label: plural(p.pausados, 'pausado'),
+          dot: PROYECTO_ESTADO_COLORS.pausados.bg,
+        },
+        {
+          count: p.completados,
+          label: plural(p.completados, 'finalizado'),
+          dot: PROYECTO_ESTADO_COLORS.completados.bg,
+        },
+      ]),
       icon: Building2,
-      accentText: 'text-emerald-600 dark:text-emerald-400',
-      sparkline: 'M0,20 Q15,5 30,15 T60,10 T100,18',
+      accentText: 'text-green-600 dark:text-green-400',
+      accentBg: 'bg-green-50 dark:bg-green-500/10',
+      href: permisos.proyectos ? '/proyectos' : undefined,
     },
     {
-      label: 'Disponibles',
+      label: 'Viviendas disponibles',
       value: s.viviendas.disponibles,
-      sub: `de ${s.viviendas.total} unidades en total`,
+      sub: `de ${s.viviendas.total} unidades · ${pctVendidas}% vendido`,
       icon: Home,
-      accentText: 'text-amber-600 dark:text-amber-400',
-      sparkline: 'M0,15 Q10,25 25,10 T50,20 T100,12',
+      accentText: 'text-orange-600 dark:text-orange-400',
+      accentBg: 'bg-orange-50 dark:bg-orange-500/10',
+      href: permisos.viviendas ? '/viviendas' : undefined,
     },
     {
       label: 'Clientes',
-      value: s.clientes.total,
-      sub: '',
-      subItems: [
-        ...(s.clientes.activos > 0
-          ? [
-              {
-                label: `${s.clientes.activos} activo${s.clientes.activos !== 1 ? 's' : ''}`,
-                dot: 'bg-emerald-500',
-              },
-            ]
-          : []),
-        ...(s.clientes.interesados > 0
-          ? [
-              {
-                label: `${s.clientes.interesados} interesado${s.clientes.interesados !== 1 ? 's' : ''}`,
-                dot: 'bg-amber-500',
-              },
-            ]
-          : []),
-        ...(s.clientes.propietarios > 0
-          ? [
-              {
-                label: `${s.clientes.propietarios} propietario${s.clientes.propietarios !== 1 ? 's' : ''}`,
-                dot: 'bg-cyan-500',
-              },
-            ]
-          : []),
-        ...(s.clientes.inactivos > 0
-          ? [
-              {
-                label: `${s.clientes.inactivos} inactivo${s.clientes.inactivos !== 1 ? 's' : ''}`,
-                dot: 'bg-slate-400',
-              },
-            ]
-          : []),
-        ...(s.clientes.renunciaron > 0
-          ? [
-              {
-                label: `${s.clientes.renunciaron} renunció${s.clientes.renunciaron !== 1 ? 'aron' : ''}`,
-                dot: 'bg-rose-400',
-              },
-            ]
-          : []),
-      ],
+      value: c.total,
+      subItems: buildSubItems([
+        {
+          count: c.activos,
+          label: plural(c.activos, 'activo'),
+          dot: CLIENTE_ESTADO_COLORS.activos.bg,
+        },
+        {
+          count: c.interesados,
+          label: plural(c.interesados, 'interesado'),
+          dot: CLIENTE_ESTADO_COLORS.interesados.bg,
+        },
+        {
+          count: c.propietarios,
+          label: plural(c.propietarios, 'propietario'),
+          dot: CLIENTE_ESTADO_COLORS.propietarios.bg,
+        },
+      ]),
       icon: Users,
       accentText: 'text-cyan-600 dark:text-cyan-400',
-      sparkline: 'M0,25 Q15,10 35,20 T70,5 T100,15',
+      accentBg: 'bg-cyan-50 dark:bg-cyan-500/10',
+      href: permisos.clientes ? '/clientes' : undefined,
     },
     {
-      label: 'Recaudo',
-      value: s.recaudoMes,
-      sub: `COP en ${mesActual}`,
+      label: `Recaudo de ${mesActual}`,
+      value: s.finanzas.recaudoMes,
+      sub: `${formatCurrency(s.finanzas.recaudoMes)} COP`,
+      format: formatCOPCompact,
       icon: DollarSign,
       accentText: 'text-violet-600 dark:text-violet-400',
-      sparkline: 'M0,10 Q20,25 40,15 T75,25 T100,8',
+      accentBg: 'bg-violet-50 dark:bg-violet-500/10',
+      href: permisos.abonos ? '/abonos' : undefined,
     },
   ]
 
   return (
-    <div className='custom-scrollbar min-h-full bg-slate-50 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.08),rgba(255,255,255,0))] text-slate-900 transition-colors duration-300 selection:bg-slate-200 selection:text-slate-900 dark:bg-gray-900 dark:text-white dark:selection:bg-white/20 dark:selection:text-white'>
-      {/* Noise Texture Overlay - optimized */}
-      <div className='pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_50%,rgba(200,200,200,0.02),transparent_50%)] opacity-[0.01] dark:opacity-[0.008]' />
-
-      <div className='relative z-10 px-6 py-12 md:py-16 lg:py-24'>
-        <motion.div
-          variants={containerVariants}
-          initial='hidden'
-          animate='visible'
-          className='mx-auto max-w-[1400px] space-y-12 lg:space-y-16'
-        >
-          <DashboardHero
-            saludo={saludo}
-            nombre={nombre}
-            rol={rol}
-            fechaHoy={fechaHoy}
-          />
-
-          {/* KPI Cards */}
+    <MotionConfig reducedMotion='user'>
+      <div className='custom-scrollbar min-h-full bg-slate-50 text-slate-900 transition-colors duration-300 dark:bg-slate-900 dark:text-white'>
+        <div className='px-4 py-6 sm:px-6 md:py-8 lg:py-10'>
           <motion.div
-            variants={itemVariants}
-            className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4'
+            variants={containerVariants}
+            initial='hidden'
+            animate='visible'
+            className='mx-auto max-w-[1400px] space-y-6 lg:space-y-8'
           >
-            {kpis.map(kpi => (
-              <KpiCard key={kpi.label} {...kpi} loading={statsLoading} />
-            ))}
+            <DashboardHero
+              saludo={saludo}
+              nombre={nombre}
+              rol={rol}
+              fechaHoy={fechaHoy}
+              actions={heroActions}
+            />
+
+            {statsError && (
+              <div className='flex items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300'>
+                <span className='flex items-center gap-2'>
+                  <AlertTriangle className='h-4 w-4 shrink-0' />
+                  No se pudieron cargar las estadísticas del dashboard.
+                </span>
+                <button
+                  type='button'
+                  onClick={() => refetchStats()}
+                  className='font-medium underline-offset-2 hover:underline'
+                >
+                  Reintentar
+                </button>
+              </div>
+            )}
+
+            {/* KPI Cards */}
+            <motion.div
+              variants={itemVariants}
+              className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4'
+            >
+              {kpis.map(kpi => (
+                <KpiCard key={kpi.label} {...kpi} loading={statsLoading} />
+              ))}
+            </motion.div>
+
+            {/* Bento Grid */}
+            <div className='grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6'>
+              <ProyectosCard
+                loading={statsLoading}
+                proyectos={s.proyectos}
+                canNavigate={permisos.proyectos}
+              />
+              <ViviendasCard
+                loading={statsLoading}
+                viviendas={s.viviendas}
+                canNavigate={permisos.viviendas}
+              />
+              <ClientesCard
+                loading={statsLoading}
+                clientes={s.clientes}
+                canNavigate={permisos.clientes}
+              />
+            </div>
+
+            <AccesosRapidos loading={permLoading} modules={accessibleModules} />
           </motion.div>
-
-          {/* Bento Grid */}
-          <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
-            <ProyectosCard
-              loading={statsLoading}
-              proyectos={s.proyectos}
-              canNavigate={permisos.proyectos}
-            />
-            <ViviendasCard
-              loading={statsLoading}
-              viviendas={s.viviendas}
-              canNavigate={permisos.viviendas}
-            />
-            <ClientesCard
-              loading={statsLoading}
-              clientes={s.clientes}
-              canNavigate={permisos.clientes}
-            />
-          </div>
-
-          <AccesosRapidos loading={permLoading} modules={accessibleModules} />
-        </motion.div>
+        </div>
       </div>
-    </div>
+    </MotionConfig>
   )
 }

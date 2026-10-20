@@ -3,20 +3,33 @@
 import { useQuery } from '@tanstack/react-query'
 
 import { supabase } from '@/lib/supabase/client'
-import { clientesService } from '@/modules/clientes/services/clientes.service'
-import { proyectosService } from '@/modules/proyectos/services'
 
+/**
+ * Estadísticas del dashboard en 1 round-trip vía RPC `get_dashboard_stats()`.
+ * La función es SECURITY INVOKER: cada usuario agrega solo lo que RLS le deja
+ * ver. Ver supabase/migrations/20261020_dashboard_stats_rpc.sql
+ */
 export interface DashboardStatsData {
+  generadoEn: string
   proyectos: {
     total: number
+    /** en_proceso + en_construccion */
     activos: number
+    enPlanificacion: number
+    pausados: number
     completados: number
     list: Array<{
       id: string
       nombre: string
       estado: string
-      progreso: number
+      /** max(viviendas planeadas en manzanas, viviendas creadas) */
       totalViviendas: number
+      viviendasCreadas: number
+      disponibles: number
+      asignadas: number
+      entregadas: number
+      propietario: number
+      /** No disponibles (misma regla del filtro "Vendidas" de viviendas) */
       viviendasVendidas: number
     }>
   }
@@ -35,72 +48,94 @@ export interface DashboardStatsData {
     renunciaron: number
     propietarios: number
   }
-  recaudoMes: number
+  finanzas: {
+    /** Capital recaudado (sin mora) en el mes actual, hora Colombia */
+    recaudoMes: number
+    recaudoMesAnterior: number
+    abonosMes: number
+    /** Suma de saldo_pendiente de negociaciones activas */
+    carteraPendiente: number
+    negociacionesActivas: number
+    ventasMes: number
+    ventasMesAnterior: number
+  }
+  /** Últimos 12 meses, incluye meses en cero. mes = 'YYYY-MM' */
+  recaudoMensual: Array<{ mes: string; total: number; cantidad: number }>
+  alertas: {
+    creditoMora: { creditos: number; monto: number; maxDiasAtraso: number }
+    desembolsosPendientes: { total: number; monto: number }
+    documentosPendientes: { total: number; vencidos: number }
+    renunciasPendientes: { total: number; monto: number }
+  }
+  /** Vacío para usuarios sin acceso a audit_log */
+  actividad: Array<{
+    id: string
+    modulo: string | null
+    accion: string
+    tabla: string
+    fecha: string
+    usuario: string | null
+    detalle: string | null
+    monto: number | null
+  }>
+}
+
+export const EMPTY_DASHBOARD_STATS: DashboardStatsData = {
+  generadoEn: '',
+  proyectos: {
+    total: 0,
+    activos: 0,
+    enPlanificacion: 0,
+    pausados: 0,
+    completados: 0,
+    list: [],
+  },
+  viviendas: {
+    total: 0,
+    disponibles: 0,
+    asignadas: 0,
+    entregadas: 0,
+    propietario: 0,
+  },
+  clientes: {
+    total: 0,
+    activos: 0,
+    interesados: 0,
+    inactivos: 0,
+    renunciaron: 0,
+    propietarios: 0,
+  },
+  finanzas: {
+    recaudoMes: 0,
+    recaudoMesAnterior: 0,
+    abonosMes: 0,
+    carteraPendiente: 0,
+    negociacionesActivas: 0,
+    ventasMes: 0,
+    ventasMesAnterior: 0,
+  },
+  recaudoMensual: [],
+  alertas: {
+    creditoMora: { creditos: 0, monto: 0, maxDiasAtraso: 0 },
+    desembolsosPendientes: { total: 0, monto: 0 },
+    documentosPendientes: { total: 0, vencidos: 0 },
+    renunciasPendientes: { total: 0, monto: 0 },
+  },
+  actividad: [],
 }
 
 export function useDashboardStats() {
   return useQuery<DashboardStatsData>({
     queryKey: ['dashboard', 'stats'],
     queryFn: async () => {
-      const inicioMes = new Date()
-      inicioMes.setDate(1)
-      inicioMes.setHours(0, 0, 0, 0)
-      const inicioMesStr = inicioMes.toISOString().slice(0, 10)
+      // RPC aún no presente en los tipos generados
+      const { data, error } = await (
+        supabase.rpc as (fn: string) => ReturnType<typeof supabase.rpc>
+      )('get_dashboard_stats')
 
-      const [proyectos, viviendasEstados, clientesStats, abonosMes] =
-        await Promise.all([
-          proyectosService.obtenerProyectos(false),
-          // Solo estado — evita cargar vista_viviendas_completas con todos los campos
-          supabase.from('viviendas').select('estado'),
-          clientesService.obtenerEstadisticas(),
-          supabase
-            .from('abonos_historial')
-            .select('monto, mora_incluida')
-            .eq('estado', 'Activo')
-            .gte('fecha_abono', inicioMesStr),
-        ])
+      if (error) throw new Error(error.message)
 
-      return {
-        proyectos: {
-          total: proyectos.length,
-          activos: proyectos.filter(p => p.estado !== 'completado').length,
-          completados: proyectos.filter(p => p.estado === 'completado').length,
-          list: proyectos.slice(0, 6).map(p => ({
-            id: p.id,
-            nombre: p.nombre,
-            estado: p.estado,
-            progreso: p.progreso ?? 0,
-            totalViviendas: p.manzanas.reduce(
-              (s, m) => s + m.totalViviendas,
-              0
-            ),
-            viviendasVendidas: p.manzanas.reduce(
-              (s, m) => s + m.viviendasVendidas,
-              0
-            ),
-          })),
-        },
-        viviendas: {
-          total: viviendasEstados.data?.length ?? 0,
-          disponibles:
-            viviendasEstados.data?.filter(v => v.estado === 'Disponible')
-              .length ?? 0,
-          asignadas:
-            viviendasEstados.data?.filter(v => v.estado === 'Asignada')
-              .length ?? 0,
-          entregadas:
-            viviendasEstados.data?.filter(v => v.estado === 'Entregada')
-              .length ?? 0,
-          propietario:
-            viviendasEstados.data?.filter(v => v.estado === 'Propietario')
-              .length ?? 0,
-        },
-        clientes: clientesStats,
-        recaudoMes: (abonosMes.data ?? []).reduce(
-          (sum, a) => sum + (a.monto ?? 0) - (a.mora_incluida ?? 0),
-          0
-        ),
-      }
+      return data as unknown as DashboardStatsData
     },
     staleTime: 2 * 60 * 1000,
     gcTime: 5 * 60 * 1000,

@@ -34,10 +34,10 @@ function ViviendasCardComponent({
   return (
     <motion.div
       variants={itemVariants}
-      className='group relative flex flex-col items-center justify-between overflow-hidden rounded-3xl border border-slate-200/60 bg-white/80 p-6 shadow-md backdrop-blur-2xl transition-colors hover:border-amber-400/50 dark:border-gray-700/50 dark:bg-gray-800/50 dark:shadow-none dark:hover:border-amber-500/30 md:flex-row'
+      className='group relative flex flex-col items-center justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-colors hover:border-orange-300 dark:border-slate-700/60 dark:bg-slate-800/60 dark:shadow-none dark:hover:border-orange-500/30 md:flex-row'
     >
       {/* Subtle top glow - no mouse tracking */}
-      <div className='absolute inset-x-0 top-0 z-10 h-[1px] w-full bg-gradient-to-r from-transparent via-amber-400/50 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:via-amber-500/50' />
+      <div className='absolute inset-x-0 top-0 z-10 h-[1px] w-full bg-gradient-to-r from-transparent via-orange-400/50 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:via-orange-500/50' />
 
       <div className='relative z-10 mb-6 flex h-full flex-col justify-between md:mb-0 md:w-1/2'>
         <div>

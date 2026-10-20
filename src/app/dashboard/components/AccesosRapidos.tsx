@@ -65,7 +65,7 @@ function AccesosRapidosComponent({ loading, modules }: AccesosRapidosProps) {
             <Link
               key={mod.modulo}
               href={mod.href}
-              className={`group relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white/60 p-5 backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:bg-white hover:shadow-lg dark:border-white/5 dark:bg-white/[0.02] dark:hover:bg-white/[0.04] dark:hover:shadow-none ${getSpanClass(modules.length, index)} ${mod.glowColor}`}
+              className={`group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:bg-white hover:shadow-lg dark:border-slate-700/60 dark:bg-slate-800/60 dark:hover:bg-slate-800 dark:hover:shadow-none ${getSpanClass(modules.length, index)} ${mod.glowColor}`}
             >
               {/* Subtle glow on hover - no mouse tracking */}
               <div className='absolute inset-x-0 top-0 z-0 h-[1px] w-full bg-gradient-to-r from-transparent via-white/50 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-50 dark:via-white/30' />
@@ -83,7 +83,7 @@ function AccesosRapidosComponent({ loading, modules }: AccesosRapidosProps) {
                   <h3 className='text-base font-medium text-slate-800 group-hover:text-slate-900 dark:text-white/90 dark:group-hover:text-white'>
                     {mod.title}
                   </h3>
-                  <p className='mt-1.5 line-clamp-2 text-xs text-slate-500 dark:text-white/40'>
+                  <p className='mt-1.5 line-clamp-2 text-xs text-slate-500 dark:text-slate-400'>
                     {mod.description}
                   </p>
                 </div>

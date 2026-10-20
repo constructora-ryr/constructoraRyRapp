@@ -2,6 +2,10 @@
 
 import { memo, type ElementType } from 'react'
 
+import { ArrowUpRight } from 'lucide-react'
+
+import Link from 'next/link'
+
 import { AnimatedCounter } from './AnimatedCounter'
 
 export interface KpiSubItem {
@@ -12,11 +16,14 @@ export interface KpiSubItem {
 interface KpiCardProps {
   label: string
   value: number
-  sub: string
+  sub?: string
   subItems?: KpiSubItem[]
   icon: ElementType
   accentText: string
-  sparkline: string
+  accentBg: string
+  format?: (value: number) => string
+  /** Si se define, toda la tarjeta es clicable */
+  href?: string
   loading: boolean
 }
 
@@ -27,75 +34,75 @@ function KpiCardComponent({
   subItems,
   icon: Icon,
   accentText,
-  sparkline,
+  accentBg,
+  format,
+  href,
   loading,
 }: KpiCardProps) {
-  return (
-    <div className='group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200/60 bg-white/60 p-5 shadow-sm backdrop-blur-xl transition-all hover:bg-white dark:border-white/10 dark:bg-white/[0.02] dark:shadow-none dark:hover:bg-white/[0.04]'>
-      {/* Subtle top glow on hover - no mouse tracking */}
-      <div className='pointer-events-none absolute inset-x-0 top-0 z-0 h-[1px] w-full bg-gradient-to-r from-transparent via-slate-200 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:via-white/20' />
-
-      {/* Sparkline SVG */}
-      <div className='pointer-events-none absolute bottom-0 left-0 right-0 z-0 h-16 overflow-hidden opacity-[0.08] dark:opacity-20'>
-        <svg
-          viewBox='0 0 100 30'
-          preserveAspectRatio='none'
-          className={`h-full w-full ${accentText}`}
-        >
-          <path
-            d={`${sparkline} L100,30 L0,30 Z`}
-            fill='currentColor'
-            opacity='0.15'
-          />
-          <path
-            d={sparkline}
-            fill='none'
-            stroke='currentColor'
-            strokeWidth='1.5'
-          />
-        </svg>
-      </div>
-
-      <div className='relative z-10 mb-6 flex items-start justify-between'>
-        <Icon
-          className={`h-5 w-5 opacity-70 transition-opacity group-hover:opacity-100 ${accentText}`}
-        />
-        <span className='text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-white/40'>
-          {label.split(' ')[0]}
-        </span>
-      </div>
-
-      <div className='relative z-10'>
-        {loading ? (
-          <div className='h-8 w-16 animate-pulse rounded bg-slate-200 dark:bg-white/10' />
-        ) : (
-          <AnimatedCounter
-            value={value}
-            className='text-3xl font-semibold tracking-tight text-slate-900 dark:text-white'
-          />
+  const content = (
+    <>
+      <div className='mb-5 flex items-center justify-between'>
+        <div className='flex items-center gap-2.5'>
+          <span className={`rounded-lg p-1.5 ${accentBg} ${accentText}`}>
+            <Icon className='h-4 w-4' />
+          </span>
+          <span className='text-sm font-medium text-slate-600 dark:text-slate-300'>
+            {label}
+          </span>
+        </div>
+        {href && (
+          <ArrowUpRight className='h-4 w-4 text-slate-300 transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-slate-600 dark:text-slate-600 dark:group-hover:text-slate-300' />
         )}
+      </div>
 
-        {subItems && subItems.length > 0 ? (
-          <div className='mt-2 flex flex-wrap gap-x-3 gap-y-1'>
-            {subItems.map(item => (
-              <span key={item.label} className='flex items-center gap-1.5'>
-                <span
-                  className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${item.dot}`}
-                />
-                <span className='text-xs text-slate-500 dark:text-white/40'>
-                  {item.label}
-                </span>
+      {loading ? (
+        <div className='h-9 w-24 animate-pulse rounded-md bg-slate-200 dark:bg-slate-700' />
+      ) : (
+        <AnimatedCounter
+          value={value}
+          format={format}
+          className='text-3xl font-semibold tabular-nums tracking-tight text-slate-900 dark:text-white'
+        />
+      )}
+
+      {subItems && subItems.length > 0 ? (
+        <div className='mt-2 flex flex-wrap gap-x-3 gap-y-1'>
+          {subItems.map(item => (
+            <span key={item.label} className='flex items-center gap-1.5'>
+              <span
+                className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${item.dot}`}
+              />
+              <span className='text-xs text-slate-500 dark:text-slate-400'>
+                {item.label}
               </span>
-            ))}
-          </div>
-        ) : (
-          <p className='mt-1 text-xs text-slate-500 dark:text-white/40'>
+            </span>
+          ))}
+        </div>
+      ) : (
+        sub && (
+          <p className='mt-2 text-xs text-slate-500 dark:text-slate-400'>
             {sub}
           </p>
-        )}
-      </div>
-    </div>
+        )
+      )}
+    </>
   )
+
+  const className =
+    'group relative flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all dark:border-slate-700/60 dark:bg-slate-800/60 dark:shadow-none'
+
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className={`${className} hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 dark:hover:border-slate-600`}
+      >
+        {content}
+      </Link>
+    )
+  }
+
+  return <div className={className}>{content}</div>
 }
 
 export const KpiCard = memo(KpiCardComponent)
