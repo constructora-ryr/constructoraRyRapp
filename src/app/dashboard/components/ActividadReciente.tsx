@@ -100,10 +100,10 @@ function describir(e: Evento): string {
   return `${verbo} ${objeto}`
 }
 
-function nombreCorto(usuario: string | null): string {
+/** La RPC ya entrega "Nombre Apellido"; el email solo queda como respaldo */
+function nombreUsuario(usuario: string | null): string {
   if (!usuario) return 'Alguien'
-  if (usuario.includes('@')) return usuario.split('@')[0]
-  return usuario.split(' ')[0]
+  return usuario.includes('@') ? usuario.split('@')[0] : usuario
 }
 
 interface ActividadRecienteProps {
@@ -180,8 +180,8 @@ function ActividadRecienteComponent({
                 </span>
                 <div className='min-w-0 flex-1'>
                   <p className='text-sm text-slate-700 dark:text-slate-200'>
-                    <span className='font-medium capitalize text-slate-900 dark:text-white'>
-                      {nombreCorto(e.usuario)}
+                    <span className='font-medium text-slate-900 dark:text-white'>
+                      {nombreUsuario(e.usuario)}
                     </span>{' '}
                     {describir(e)}
                     {e.monto ? (

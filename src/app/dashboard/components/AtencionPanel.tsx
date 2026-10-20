@@ -1,17 +1,20 @@
 'use client'
 
-import { memo, type ElementType } from 'react'
+import { memo, useState, type ElementType } from 'react'
 
 import { motion } from 'framer-motion'
 import {
   AlertOctagon,
   AlertTriangle,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
   Clock,
 } from 'lucide-react'
 
 import Link from 'next/link'
+
+import { getShortId } from '@/lib/utils/slug.utils'
 
 import type { DashboardStatsData } from '../hooks/useDashboardStats'
 import { formatCOPCompact } from '../utils/dashboard-format'
@@ -61,6 +64,18 @@ interface Item {
   detalle: string
   monto?: number
   href?: string
+  /** Detalle desplegable (p.ej. cada desembolso con su cliente) */
+  filas?: Fila[]
+  /** Cuántos hay en total (si son más que las filas mostradas) */
+  totalFilas?: number
+}
+
+interface Fila {
+  key: string
+  titulo: string
+  subtitulo: string
+  monto: number
+  href?: string
 }
 
 const plural = (n: number, s: string, p = `${s}s`) => (n === 1 ? s : p)
@@ -96,6 +111,16 @@ function buildItems(
       detalle: `${creditoMora.creditos} ${plural(creditoMora.creditos, 'crédito')} · hasta ${creditoMora.maxDiasAtraso} días de atraso`,
       monto: creditoMora.monto,
       href: permisos.abonos ? '/abonos' : undefined,
+      totalFilas: creditoMora.creditos,
+      filas: (creditoMora.items ?? []).map(m => ({
+        key: m.fuenteId,
+        titulo: m.cliente ?? 'Cliente',
+        subtitulo: `${m.diasAtraso} ${plural(m.diasAtraso, 'día')} de atraso`,
+        monto: m.monto,
+        href: permisos.abonos
+          ? `/abonos/${getShortId(m.clienteId)}`
+          : undefined,
+      })),
     })
   }
 
@@ -132,6 +157,18 @@ function buildItems(
       detalle: `${desembolsosPendientes.total} ${plural(desembolsosPendientes.total, 'fuente')} de bancos, cajas y subsidios`,
       monto: desembolsosPendientes.monto,
       href: permisos.abonos ? '/abonos' : undefined,
+      totalFilas: desembolsosPendientes.total,
+      filas: (desembolsosPendientes.items ?? []).map(d => ({
+        key: d.fuenteId,
+        titulo: d.cliente ?? 'Cliente',
+        subtitulo: [d.vivienda && `Casa ${d.vivienda}`, d.tipo, d.entidad]
+          .filter(Boolean)
+          .join(' · '),
+        monto: d.monto,
+        href: permisos.abonos
+          ? `/abonos/${getShortId(d.clienteId)}`
+          : undefined,
+      })),
     })
   }
 
@@ -146,6 +183,7 @@ function AtencionPanelComponent({
   permisos,
 }: AtencionPanelProps) {
   const items = buildItems(alertas, permisos)
+  const [abierto, setAbierto] = useState<string | null>(null)
   const urgentes = items.filter(i => i.severidad === 'critico').length
 
   return (
@@ -196,6 +234,8 @@ function AtencionPanelComponent({
         <ul className='-mx-2 flex flex-col gap-1'>
           {items.map(item => {
             const sev = SEVERIDAD[item.severidad]
+            const desplegable = (item.filas?.length ?? 0) > 0
+            const expandido = desplegable && abierto === item.key
             const body = (
               <>
                 <span className={`mt-0.5 shrink-0 rounded-lg p-2 ${sev.tile}`}>
@@ -219,20 +259,91 @@ function AtencionPanelComponent({
                     {formatCOPCompact(item.monto)}
                   </span>
                 )}
-                {item.href && (
-                  <ChevronRight className='h-4 w-4 shrink-0 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-500 dark:text-slate-600' />
+                {desplegable ? (
+                  <ChevronDown
+                    className={`mt-0.5 h-4 w-4 shrink-0 text-slate-400 transition-transform dark:text-slate-500 ${expandido ? 'rotate-180' : ''}`}
+                  />
+                ) : (
+                  item.href && (
+                    <ChevronRight className='h-4 w-4 shrink-0 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-500 dark:text-slate-600' />
+                  )
                 )}
               </>
             )
             const cls =
               'group flex items-start gap-3 rounded-xl px-2 py-2.5 transition-colors'
+            const interactivo =
+              'hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 dark:hover:bg-slate-700/40'
+            const panelId = `atencion-${item.key}`
             return (
               <li key={item.key}>
-                {item.href ? (
-                  <Link
-                    href={item.href}
-                    className={`${cls} hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 dark:hover:bg-slate-700/40`}
-                  >
+                {desplegable ? (
+                  <>
+                    <button
+                      type='button'
+                      aria-expanded={expandido}
+                      aria-controls={panelId}
+                      onClick={() => setAbierto(expandido ? null : item.key)}
+                      className={`${cls} ${interactivo} w-full text-left`}
+                    >
+                      {body}
+                    </button>
+                    {expandido && (
+                      <div id={panelId} className='mb-2 ml-12 mr-2'>
+                        <ul className='divide-y divide-slate-100 rounded-lg border border-slate-100 dark:divide-slate-700/60 dark:border-slate-700/60'>
+                          {(item.filas ?? []).map(f => {
+                            const filaBody = (
+                              <>
+                                <span className='min-w-0 flex-1'>
+                                  <span className='block truncate text-sm text-slate-800 dark:text-slate-100'>
+                                    {f.titulo}
+                                  </span>
+                                  <span className='block truncate text-xs text-slate-500 dark:text-slate-400'>
+                                    {f.subtitulo}
+                                  </span>
+                                </span>
+                                <span className='shrink-0 text-sm font-medium text-slate-900 dark:text-white'>
+                                  {formatCOPCompact(f.monto)}
+                                </span>
+                                {f.href && (
+                                  <ChevronRight className='h-4 w-4 shrink-0 text-slate-300 group-hover/fila:text-slate-500 dark:text-slate-600' />
+                                )}
+                              </>
+                            )
+                            const filaCls =
+                              'group/fila flex items-center gap-3 px-3 py-2'
+                            return (
+                              <li key={f.key}>
+                                {f.href ? (
+                                  <Link
+                                    href={f.href}
+                                    className={`${filaCls} hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 dark:hover:bg-slate-700/40`}
+                                  >
+                                    {filaBody}
+                                  </Link>
+                                ) : (
+                                  <div className={filaCls}>{filaBody}</div>
+                                )}
+                              </li>
+                            )
+                          })}
+                        </ul>
+                        {item.href &&
+                          (item.totalFilas ?? 0) >
+                            (item.filas?.length ?? 0) && (
+                            <Link
+                              href={item.href}
+                              className='mt-2 inline-flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'
+                            >
+                              Ver los {item.totalFilas} en Abonos
+                              <ChevronRight className='h-3.5 w-3.5' />
+                            </Link>
+                          )}
+                      </div>
+                    )}
+                  </>
+                ) : item.href ? (
+                  <Link href={item.href} className={`${cls} ${interactivo}`}>
                     {body}
                   </Link>
                 ) : (

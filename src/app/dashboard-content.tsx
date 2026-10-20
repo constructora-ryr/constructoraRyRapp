@@ -185,9 +185,12 @@ export default function DashboardContent(_props: DashboardContentProps) {
       href: permisos.clientes ? '/clientes' : undefined,
     },
     permisos.negociaciones && {
-      label: `Ventas de ${mesActual}`,
+      // Asignada = negociación nueva del mes (traslados no cuentan);
+      // saldada = negociación completada (pagada al 100%) en el mes
+      label: `Viviendas asignadas en ${mesActual}`,
       value: f.ventasMes,
       delta: deltaAbs(f.ventasMes, f.ventasMesAnterior, mesAnterior),
+      sub: `${f.saldadasMes ?? 0} ${(f.saldadasMes ?? 0) === 1 ? 'saldada' : 'saldadas'} este mes`,
       icon: Handshake,
       accentText: 'text-pink-600 dark:text-pink-400',
       accentBg: 'bg-pink-50 dark:bg-pink-500/10',

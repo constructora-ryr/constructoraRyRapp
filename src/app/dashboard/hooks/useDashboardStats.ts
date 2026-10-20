@@ -4,10 +4,29 @@ import { useQuery } from '@tanstack/react-query'
 
 import { supabase } from '@/lib/supabase/client'
 
+export interface AlertaMoraItem {
+  fuenteId: string
+  clienteId: string
+  /** null si el usuario no tiene permiso para ver clientes (RLS) */
+  cliente: string | null
+  diasAtraso: number
+  monto: number
+}
+
+export interface AlertaDesembolsoItem {
+  fuenteId: string
+  clienteId: string
+  cliente: string | null
+  tipo: string
+  entidad: string | null
+  vivienda: string | null
+  monto: number
+}
+
 /**
  * Estadísticas del dashboard en 1 round-trip vía RPC `get_dashboard_stats()`.
  * La función es SECURITY INVOKER: cada usuario agrega solo lo que RLS le deja
- * ver. Ver supabase/migrations/20261020_dashboard_stats_rpc.sql
+ * ver. Ver supabase/migrations/20261020_dashboard_stats_rpc_v2.sql
  */
 export interface DashboardStatsData {
   generadoEn: string
@@ -58,12 +77,26 @@ export interface DashboardStatsData {
     negociacionesActivas: number
     ventasMes: number
     ventasMesAnterior: number
+    /** Negociaciones completadas (pagadas al 100%) en el mes. v2+ */
+    saldadasMes?: number
+    saldadasMesAnterior?: number
   }
   /** Últimos 12 meses, incluye meses en cero. mes = 'YYYY-MM' */
   recaudoMensual: Array<{ mes: string; total: number; cantidad: number }>
   alertas: {
-    creditoMora: { creditos: number; monto: number; maxDiasAtraso: number }
-    desembolsosPendientes: { total: number; monto: number }
+    creditoMora: {
+      creditos: number
+      monto: number
+      maxDiasAtraso: number
+      /** Top 10 por días de atraso. v2+ */
+      items?: AlertaMoraItem[]
+    }
+    desembolsosPendientes: {
+      total: number
+      monto: number
+      /** Top 10 por saldo. v2+ */
+      items?: AlertaDesembolsoItem[]
+    }
     documentosPendientes: { total: number; vencidos: number }
     renunciasPendientes: { total: number; monto: number }
   }
@@ -113,11 +146,13 @@ export const EMPTY_DASHBOARD_STATS: DashboardStatsData = {
     negociacionesActivas: 0,
     ventasMes: 0,
     ventasMesAnterior: 0,
+    saldadasMes: 0,
+    saldadasMesAnterior: 0,
   },
   recaudoMensual: [],
   alertas: {
-    creditoMora: { creditos: 0, monto: 0, maxDiasAtraso: 0 },
-    desembolsosPendientes: { total: 0, monto: 0 },
+    creditoMora: { creditos: 0, monto: 0, maxDiasAtraso: 0, items: [] },
+    desembolsosPendientes: { total: 0, monto: 0, items: [] },
     documentosPendientes: { total: 0, vencidos: 0 },
     renunciasPendientes: { total: 0, monto: 0 },
   },
