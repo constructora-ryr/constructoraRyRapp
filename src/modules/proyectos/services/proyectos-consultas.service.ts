@@ -39,9 +39,49 @@ export async function obtenerProyectos(
     throw new Error(`Error al obtener proyectos: ${error.message}`)
   }
 
-  return (data || []).map(d =>
+  const proyectos = (data || []).map(d =>
     transformarProyectoDeDB(d as unknown as ProyectoConManzanasDB)
   )
+
+  // Conteos reales por manzana en UNA consulta (antes viviendasVendidas
+  // quedaba siempre en 0 en la lista). Vendida = no disponible, la misma
+  // regla del filtro "Vendidas" de viviendas.
+  const proyectoIds = proyectos.map(p => p.id)
+  if (proyectoIds.length > 0) {
+    const { data: conteos, error: errorConteos } = await supabase
+      .from('vista_manzanas_disponibilidad')
+      .select('id, viviendas_creadas, viviendas_disponibles')
+      .in('proyecto_id', proyectoIds)
+
+    if (errorConteos) {
+      // No bloquear la lista: se muestra sin conteos, como antes
+      logger.error('Error al obtener conteos de viviendas:', errorConteos)
+    } else {
+      const porManzana = new Map(
+        (conteos ?? []).map(c => [
+          c.id as string,
+          {
+            creadas: Number(c.viviendas_creadas) || 0,
+            disponibles: Number(c.viviendas_disponibles) || 0,
+          },
+        ])
+      )
+      for (const proyecto of proyectos) {
+        proyecto.manzanas = proyecto.manzanas.map(m => {
+          const c = porManzana.get(m.id)
+          if (!c) return m
+          return {
+            ...m,
+            viviendasCreadas: c.creadas,
+            viviendasDisponibles: c.disponibles,
+            viviendasVendidas: Math.max(0, c.creadas - c.disponibles),
+          }
+        })
+      }
+    }
+  }
+
+  return proyectos
 }
 
 /**

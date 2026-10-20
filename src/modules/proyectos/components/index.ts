@@ -5,7 +5,7 @@ export { ProyectosForm } from './proyectos-form'
 export { ProyectosPage } from './proyectos-page-main'
 
 // Componentes de lista y búsqueda
-// ❌ ProyectosSearch eliminado - reemplazado por ProyectosFiltrosPremium
+// Filtros/encabezado: componentes compartidos de @/shared/components/list-page
 export { ProyectosHeader } from './proyectos-header'
 
 // Estados

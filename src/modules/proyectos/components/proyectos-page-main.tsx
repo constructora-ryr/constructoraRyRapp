@@ -3,10 +3,17 @@
 import { useState } from 'react'
 
 import { motion } from 'framer-motion'
+import { Archive, Building2, CheckCircle2, HardHat, Plus } from 'lucide-react'
 
 import { useRouter } from 'next/navigation'
 
 import { construirURLProyecto } from '@/lib/utils/slug.utils'
+import {
+  EstadoFiltroCards,
+  ListPageHeader,
+  ListSearchToolbar,
+  type EstadoFiltroOpcion,
+} from '@/shared/components/list-page'
 import { Modal } from '@/shared/components/ui/Modal'
 import { NoResults } from '@/shared/components/ui/NoResults'
 
@@ -21,9 +28,6 @@ import type { Proyecto } from '../types'
 import { ArchivarProyectoModal } from './modals/archivar-proyecto-modal'
 import { RestaurarProyectoModal } from './modals/restaurar-proyecto-modal'
 import { ProyectosEmpty } from './proyectos-empty'
-import { ProyectosFiltrosPremium } from './proyectos-filtros-premium'
-import { ProyectosHeaderPremium } from './proyectos-header-premium'
-import { ProyectosMetricasPremium } from './proyectos-metricas-premium'
 import { ProyectosSkeleton } from './proyectos-skeleton'
 import { ProyectosTabla } from './proyectos-tabla'
 
@@ -78,6 +82,7 @@ export function ProyectosPage({
 
   // ✅ REACT QUERY: Hooks con cache inteligente
   const {
+    proyectos: todosLosProyectos,
     eliminarProyecto,
     archivarProyecto,
     restaurarProyecto,
@@ -86,12 +91,85 @@ export function ProyectosPage({
     archivando,
     restaurando,
   } = useProyectosQuery()
-  const { proyectos, filtros, actualizarFiltros, limpiarFiltros } =
-    useProyectosFiltradosQuery()
+  const {
+    proyectos: proyectosFiltrados,
+    filtros,
+    actualizarFiltros,
+    limpiarFiltros,
+  } = useProyectosFiltradosQuery()
   const estadisticas = useEstadisticasProyectosQuery()
 
+  // ── Tarjetas de conteo = filtro de estado ────────────────────────────────
+  // "Archivados" muestra SOLO los archivados (verArchivados trae todos)
+  const seleccion = filtros.verArchivados
+    ? 'archivados'
+    : (filtros.estado ?? 'Todos')
+  const proyectos =
+    seleccion === 'archivados'
+      ? proyectosFiltrados.filter(p => p.archivado)
+      : proyectosFiltrados
+  const totalArchivados = todosLosProyectos.filter(p => p.archivado).length
+
+  const opcionesEstado: EstadoFiltroOpcion<string>[] = [
+    {
+      value: 'Todos',
+      label: 'Todos',
+      count: estadisticas.total,
+      icon: Building2,
+      gradient: 'from-green-500 to-emerald-600',
+      text: 'text-green-700 dark:text-green-400',
+      selected:
+        'border-green-400 bg-green-50/80 ring-2 ring-green-400/40 dark:border-green-500/60 dark:bg-green-500/10',
+    },
+    {
+      value: 'en_proceso',
+      label: 'En ejecución',
+      count: estadisticas.enProceso,
+      icon: HardHat,
+      gradient: 'from-blue-500 to-indigo-600',
+      text: 'text-blue-600 dark:text-blue-400',
+      selected:
+        'border-blue-400 bg-blue-50/80 ring-2 ring-blue-400/40 dark:border-blue-500/60 dark:bg-blue-500/10',
+    },
+    {
+      value: 'completado',
+      label: 'Completados',
+      count: estadisticas.completados,
+      icon: CheckCircle2,
+      gradient: 'from-violet-500 to-purple-600',
+      text: 'text-violet-600 dark:text-violet-400',
+      selected:
+        'border-violet-400 bg-violet-50/80 ring-2 ring-violet-400/40 dark:border-violet-500/60 dark:bg-violet-500/10',
+    },
+    {
+      value: 'archivados',
+      label: 'Archivados',
+      count: totalArchivados,
+      icon: Archive,
+      gradient: 'from-slate-500 to-slate-700',
+      text: 'text-slate-600 dark:text-slate-300',
+      selected:
+        'border-slate-400 bg-slate-100/80 ring-2 ring-slate-400/40 dark:border-slate-500/60 dark:bg-slate-500/10',
+    },
+  ]
+
+  const seleccionarEstado = (v: string) => {
+    if (v === 'archivados') {
+      actualizarFiltros({ verArchivados: true, estado: undefined })
+    } else {
+      actualizarFiltros({
+        verArchivados: false,
+        estado: v === 'Todos' ? undefined : (v as Proyecto['estado']),
+      })
+    }
+  }
+
   // Detectar si hay filtros activos
-  const hayFiltrosActivos = Boolean(filtros.busqueda || filtros.estado)
+  const hayFiltrosActivos = Boolean(
+    filtros.busqueda || filtros.estado || filtros.verArchivados
+  )
+  const resultado =
+    proyectos.length === 1 ? '1 proyecto' : `${proyectos.length} proyectos`
 
   // Proyecto que se va a eliminar (lookup por ID)
   const proyectoEliminando = proyectos.find(p => p.id === proyectoEliminar)
@@ -170,25 +248,42 @@ export function ProyectosPage({
         {...styles.animations.container}
         className={styles.container.content}
       >
-        {/* Header Premium */}
-        <ProyectosHeaderPremium
-          onNuevoProyecto={canCreate ? handleAbrirModal : undefined}
-          totalProyectos={estadisticas.total}
+        <ListPageHeader
+          icon={Building2}
+          heroGradient='from-green-600 via-emerald-600 to-teal-600'
+          title='Proyectos'
+          subtitle='Desarrollos inmobiliarios y obras en ejecución'
+          breadcrumbs={[
+            { label: 'Dashboard', href: '/' },
+            { label: 'Proyectos' },
+          ]}
+          actions={
+            canCreate ? (
+              <button
+                type='button'
+                onClick={handleAbrirModal}
+                className='inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-green-700 shadow-lg shadow-green-900/20 transition-all hover:-translate-y-0.5 hover:bg-green-50 hover:shadow-xl'
+              >
+                <Plus className='h-4 w-4' />
+                Nuevo proyecto
+              </button>
+            ) : undefined
+          }
         />
 
-        {/* Métricas Premium */}
-        <ProyectosMetricasPremium
-          totalProyectos={estadisticas.total}
-          enProceso={estadisticas.enProceso}
-          completados={estadisticas.completados}
+        <EstadoFiltroCards
+          ariaLabel='Filtrar proyectos por estado'
+          opciones={opcionesEstado}
+          seleccionado={seleccion}
+          onSeleccionar={seleccionarEstado}
         />
 
-        {/* Filtros Premium */}
-        <ProyectosFiltrosPremium
-          totalResultados={proyectos.length}
-          filtros={filtros}
-          onActualizarFiltros={actualizarFiltros}
-          onLimpiarFiltros={limpiarFiltros}
+        <ListSearchToolbar
+          value={filtros.busqueda || ''}
+          onChange={v => actualizarFiltros({ busqueda: v })}
+          placeholder='Buscar por nombre o ubicación…'
+          resultado={resultado}
+          onLimpiar={hayFiltrosActivos ? limpiarFiltros : undefined}
         />
 
         {/* Contenido Principal */}
