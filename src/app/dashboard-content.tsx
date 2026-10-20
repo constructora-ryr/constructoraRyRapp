@@ -14,12 +14,12 @@ import { usePermisosQuery } from '@/modules/usuarios/hooks/usePermisosQuery'
 import { formatCurrency } from '@/shared/utils/format'
 
 import { ActividadReciente } from './dashboard/components/ActividadReciente'
-import { AtencionPanel } from './dashboard/components/AtencionPanel'
 import { ClientesCard } from './dashboard/components/ClientesCard'
 import {
   DashboardHero,
   type HeroAction,
 } from './dashboard/components/DashboardHero'
+import { DevolucionesPanel } from './dashboard/components/DevolucionesPanel'
 import { KpiCard, type KpiDelta } from './dashboard/components/KpiCard'
 import { ProyectosCard } from './dashboard/components/ProyectosCard'
 import { RecaudoChart } from './dashboard/components/RecaudoChart'
@@ -255,7 +255,7 @@ export default function DashboardContent(_props: DashboardContentProps) {
               </motion.div>
             )}
 
-            {/* Recaudo + Requiere atención */}
+            {/* Recaudo + Devoluciones a clientes */}
             <div className='grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6 [&>*]:min-w-0'>
               {permisos.abonos && (
                 <div className='lg:col-span-2'>
@@ -267,11 +267,10 @@ export default function DashboardContent(_props: DashboardContentProps) {
                 </div>
               )}
               <div className={permisos.abonos ? '' : 'lg:col-span-3'}>
-                <AtencionPanel
+                <DevolucionesPanel
                   loading={loading}
                   alertas={s.alertas}
                   permisos={{
-                    abonos: permisos.abonos,
                     clientes: permisos.clientes,
                     renuncias: permisos.renuncias,
                   }}
