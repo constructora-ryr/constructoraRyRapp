@@ -14,7 +14,7 @@ import {
 
 import Link from 'next/link'
 
-import { getShortId } from '@/lib/utils/slug.utils'
+import { construirURLCliente, getShortId } from '@/lib/utils/slug.utils'
 
 import type { DashboardStatsData } from '../hooks/useDashboardStats'
 import { formatCOPCompact } from '../utils/dashboard-format'
@@ -76,6 +76,8 @@ interface Fila {
   subtitulo: string
   monto: number
   href?: string
+  /** Pestaña a abrir en la ficha del cliente (sessionStorage 'cliente-tab-intent') */
+  tabIntent?: 'negociacion' | 'documentos' | 'historial'
 }
 
 const plural = (n: number, s: string, p = `${s}s`) => (n === 1 ? s : p)
@@ -97,7 +99,7 @@ function buildItems(
     creditoMora,
     documentosPendientes,
     renunciasPendientes,
-    desembolsosPendientes,
+    devolucionesPendientes,
   }: DashboardStatsData['alertas'],
   permisos: AtencionPermisos
 ): Item[] {
@@ -149,25 +151,35 @@ function buildItems(
     })
   }
 
-  if (desembolsosPendientes.total > 0) {
+  const devoluciones = devolucionesPendientes
+  if (devoluciones && devoluciones.total > 0) {
     items.push({
-      key: 'desembolsos',
-      severidad: 'info',
-      titulo: 'Desembolsos por recibir',
-      detalle: `${desembolsosPendientes.total} ${plural(desembolsosPendientes.total, 'fuente')} de bancos, cajas y subsidios`,
-      monto: desembolsosPendientes.monto,
-      href: permisos.abonos ? '/abonos' : undefined,
-      totalFilas: desembolsosPendientes.total,
-      filas: (desembolsosPendientes.items ?? []).map(d => ({
-        key: d.fuenteId,
+      key: 'devoluciones',
+      severidad: 'advertencia',
+      titulo: 'Devoluciones a clientes',
+      detalle: `${devoluciones.total} ${plural(devoluciones.total, 'cliente')} con dinero a favor`,
+      monto: devoluciones.monto,
+      totalFilas: devoluciones.total,
+      filas: devoluciones.items.map(d => ({
+        key: d.refId,
         titulo: d.cliente ?? 'Cliente',
-        subtitulo: [d.vivienda && `Casa ${d.vivienda}`, d.tipo, d.entidad]
+        subtitulo: [
+          d.vivienda && `Casa ${d.vivienda}`,
+          d.origen === 'pago_excedente'
+            ? 'Pagó de más'
+            : 'Las fuentes superan el valor',
+        ]
           .filter(Boolean)
           .join(' · '),
         monto: d.monto,
-        href: permisos.abonos
-          ? `/abonos/${getShortId(d.clienteId)}`
+        // El aviso para registrar la devolución está en la pestaña Negociación
+        href: permisos.clientes
+          ? construirURLCliente({
+              id: d.clienteId,
+              nombre_completo: d.cliente ?? undefined,
+            })
           : undefined,
+        tabIntent: 'negociacion',
       })),
     })
   }
@@ -226,8 +238,7 @@ function AtencionPanelComponent({
             Todo al día
           </p>
           <p className='mt-1 text-xs text-slate-500 dark:text-slate-400'>
-            Sin mora, documentos vencidos, devoluciones ni desembolsos
-            pendientes.
+            Sin mora, documentos vencidos ni devoluciones pendientes.
           </p>
         </div>
       ) : (
@@ -317,6 +328,17 @@ function AtencionPanelComponent({
                                 {f.href ? (
                                   <Link
                                     href={f.href}
+                                    onClick={() => {
+                                      if (!f.tabIntent) return
+                                      try {
+                                        sessionStorage.setItem(
+                                          'cliente-tab-intent',
+                                          f.tabIntent
+                                        )
+                                      } catch {
+                                        // sessionStorage no disponible: abre la ficha en su pestaña por defecto
+                                      }
+                                    }}
                                     className={`${filaCls} hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 dark:hover:bg-slate-700/40`}
                                   >
                                     {filaBody}

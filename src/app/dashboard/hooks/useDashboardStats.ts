@@ -23,10 +23,21 @@ export interface AlertaDesembolsoItem {
   monto: number
 }
 
+export interface AlertaDevolucionItem {
+  /** id del pago excedente o de la negociación */
+  refId: string
+  /** pago_excedente: abonó de más · excedente_fuentes: fuentes > valor */
+  origen: 'pago_excedente' | 'excedente_fuentes'
+  clienteId: string
+  cliente: string | null
+  vivienda: string | null
+  monto: number
+}
+
 /**
  * Estadísticas del dashboard en 1 round-trip vía RPC `get_dashboard_stats()`.
  * La función es SECURITY INVOKER: cada usuario agrega solo lo que RLS le deja
- * ver. Ver supabase/migrations/20261020_dashboard_stats_rpc_v2.sql
+ * ver. Ver supabase/migrations/20261020_dashboard_stats_rpc_v3.sql
  */
 export interface DashboardStatsData {
   generadoEn: string
@@ -97,6 +108,12 @@ export interface DashboardStatsData {
       /** Top 10 por saldo. v2+ */
       items?: AlertaDesembolsoItem[]
     }
+    /** Dinero a favor de clientes por devolver. v3+ */
+    devolucionesPendientes?: {
+      total: number
+      monto: number
+      items: AlertaDevolucionItem[]
+    }
     documentosPendientes: { total: number; vencidos: number }
     renunciasPendientes: { total: number; monto: number }
   }
@@ -153,6 +170,7 @@ export const EMPTY_DASHBOARD_STATS: DashboardStatsData = {
   alertas: {
     creditoMora: { creditos: 0, monto: 0, maxDiasAtraso: 0, items: [] },
     desembolsosPendientes: { total: 0, monto: 0, items: [] },
+    devolucionesPendientes: { total: 0, monto: 0, items: [] },
     documentosPendientes: { total: 0, vencidos: 0 },
     renunciasPendientes: { total: 0, monto: 0 },
   },
