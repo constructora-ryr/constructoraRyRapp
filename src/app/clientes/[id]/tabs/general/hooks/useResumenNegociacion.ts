@@ -15,6 +15,7 @@ import { useQuery } from '@tanstack/react-query'
 
 import { fuentesPagoService } from '@/modules/clientes/services/fuentes-pago.service'
 import type { Negociacion } from '@/modules/clientes/types'
+import { calcularTotalesNegociacion } from '@/modules/clientes/utils/totales-negociacion'
 import { esCreditoConstructora } from '@/shared/constants/fuentes-pago.constants'
 
 interface UseResumenNegociacionProps {
@@ -51,27 +52,16 @@ export function useResumenNegociacion({
 
   const totalAbonadoDB = negociacion.total_abonado ?? 0
 
-  // Base para saldo y % — incluye intereses cuando corresponde
-  const baseTotal = interesesTotales > 0 ? totalComprometido : valorVivienda
-
-  // Saldo: cuando hay intereses, recalcular sobre baseTotal (que ya los incluye).
-  // Usar saldo_pendiente de BD solo cuando no hay intereses (el trigger no los suma).
-  const saldo =
-    interesesTotales > 0
-      ? Math.max(0, baseTotal - totalAbonadoDB)
-      : (negociacion.saldo_pendiente ?? Math.max(0, baseTotal - totalAbonadoDB))
+  const { saldo, pctPagado } = calcularTotalesNegociacion({
+    negociacion,
+    valorVivienda,
+    totalComprometido,
+    interesesTotales,
+    totalAbonado: totalAbonadoDB,
+  })
 
   // totalAbonado: siempre el valor real de la BD (lo que el trigger calculó).
   const totalAbonado = totalAbonadoDB
-
-  // Porcentaje pagado — usar siempre el campo de BD cuando está disponible
-  const pctPagado =
-    negociacion.porcentaje_pagado !== null &&
-    negociacion.porcentaje_pagado !== undefined
-      ? negociacion.porcentaje_pagado
-      : baseTotal > 0
-        ? Math.max(0, ((baseTotal - saldo) / baseTotal) * 100)
-        : 0
 
   return {
     cargandoFuentes,
@@ -80,6 +70,6 @@ export function useResumenNegociacion({
     interesesTotales,
     totalAbonado,
     saldo,
-    pctPagado: Math.min(pctPagado, 100),
+    pctPagado,
   }
 }

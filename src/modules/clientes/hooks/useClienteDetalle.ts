@@ -118,20 +118,7 @@ export function useClienteDetalle({ clienteId }: UseClienteDetalleProps) {
     }
   }, [user?.id, cargarCategorias])
 
-  // 2. Listener para cambio de tab (desde otros componentes)
-  useEffect(() => {
-    const handleCambiarTab = (event: Event) => {
-      const nuevoTab = (event as CustomEvent<string>).detail as TabType
-      setActiveTab(nuevoTab)
-    }
-
-    if (typeof window !== 'undefined') {
-      window.addEventListener('cambiar-tab', handleCambiarTab)
-      return () => window.removeEventListener('cambiar-tab', handleCambiarTab)
-    }
-  }, [])
-
-  // 3. Listener para actualización de cliente (cuando se sube cédula)
+  // 2. Listener para actualización de cliente (cuando se sube cédula)
   useEffect(() => {
     const handleClienteActualizado = () => {
       recargarCliente()

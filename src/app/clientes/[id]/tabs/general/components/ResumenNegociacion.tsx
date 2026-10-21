@@ -1,236 +1,253 @@
 'use client'
 
+/**
+ * Resumen de la negociación vigente: valor, abonado, saldo y avance. El
+ * desglose por fuente de pago vive en la pestaña Negociación. Los totales
+ * salen de useResumenNegociacion, igual que en esa pestaña.
+ */
+
 import { motion } from 'framer-motion'
 import {
   ArrowRight,
   Building2,
   CheckCircle2,
-  DollarSign,
+  Clock,
   Home,
-  TrendingUp,
+  PiggyBank,
+  Receipt,
+  Star,
+  Wallet,
+  type LucideIcon,
 } from 'lucide-react'
 
-import { formatCurrency } from '@/lib/utils/format.utils'
+import Link from 'next/link'
+
+import { getShortId } from '@/lib/utils/slug.utils'
 import type { Negociacion } from '@/modules/clientes/types'
-import { usePermisosQuery } from '@/modules/usuarios/hooks/usePermisosQuery'
+import { formatCOP } from '@/shared/components/list-page'
+import { cn } from '@/shared/utils/helpers'
 
 import { useResumenNegociacion } from '../hooks/useResumenNegociacion'
 
 interface ResumenNegociacionProps {
   negociacion: Negociacion
   clienteId: string
-  clienteCC?: string
+  canVerAbonos: boolean
+}
+
+function Cifra({
+  icon: Icon,
+  label,
+  valor,
+  detalle,
+  gradient,
+  texto,
+}: {
+  icon: LucideIcon
+  label: string
+  valor: number
+  detalle: string
+  gradient: string
+  texto: string
+}) {
+  return (
+    <div className='flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-slate-700/60 dark:bg-slate-900/30'>
+      <span
+        className={cn(
+          'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-sm',
+          gradient
+        )}
+      >
+        <Icon className='h-5 w-5' />
+      </span>
+      <div className='min-w-0'>
+        <p className='text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400'>
+          {label}
+        </p>
+        <p
+          className={cn(
+            'text-lg font-black tabular-nums tracking-tight',
+            texto
+          )}
+        >
+          {formatCOP(valor)}
+        </p>
+        <p className='truncate text-[11px] text-slate-500 dark:text-slate-400'>
+          {detalle}
+        </p>
+      </div>
+    </div>
+  )
 }
 
 export function ResumenNegociacion({
   negociacion,
-  clienteId: _clienteId,
-  clienteCC,
+  clienteId,
+  canVerAbonos,
 }: ResumenNegociacionProps) {
   const {
     valorVivienda,
     totalComprometido,
     interesesTotales,
     totalAbonado,
-    saldo: saldoPendiente,
+    saldo,
     pctPagado,
   } = useResumenNegociacion({ negociacion })
 
-  const { esAdmin, puede } = usePermisosQuery()
-  const canVerAbonos = esAdmin || puede('abonos', 'ver')
-
-  const porcentaje = pctPagado
-  const estaCompleta = porcentaje >= 100
-
-  const proyecto = negociacion.viviendas?.manzanas?.proyectos?.nombre
-  const manzana = negociacion.viviendas?.manzanas?.nombre
-  const numero = negociacion.viviendas?.numero
-
-  const progressColor = estaCompleta
-    ? 'from-emerald-400 to-emerald-500'
-    : porcentaje >= 60
-      ? 'from-blue-400 to-cyan-500'
-      : porcentaje >= 30
-        ? 'from-amber-400 to-orange-400'
-        : 'from-red-400 to-rose-400'
+  const pagada = pctPagado >= 100 || saldo <= 0
+  const total = interesesTotales > 0 ? totalComprometido : valorVivienda
+  const vivienda = negociacion.viviendas
+  const codigo = vivienda
+    ? `${vivienda.manzanas?.nombre ?? ''}${vivienda.numero ?? ''}`
+    : ''
+  const proyecto = vivienda?.manzanas?.proyectos?.nombre
 
   return (
-    <motion.div
+    <motion.section
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.05 }}
-      className='relative overflow-hidden rounded-xl border border-gray-200/60 bg-white shadow-sm dark:border-gray-700/60 dark:bg-gray-800'
+      transition={{ duration: 0.2 }}
+      className='overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-800/60'
     >
-      {/* Top accent */}
-      <div
-        className={`absolute left-0 right-0 top-0 h-0.5 bg-gradient-to-r ${estaCompleta ? 'from-emerald-400 to-teal-400' : 'from-cyan-500 to-blue-500'}`}
-      />
-
-      {/* ── Header ─────────────────────────────────────── */}
-      <div className='flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between'>
-        {/* Left: badge + breadcrumb */}
-        <div className='flex flex-col gap-1'>
-          {/* Status badge */}
-          <div className='flex items-center gap-2'>
+      {/* Encabezado */}
+      <div className='flex flex-wrap items-center gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-700/60'>
+        <span
+          className={cn(
+            'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-sm',
+            pagada
+              ? 'from-amber-400 to-orange-500'
+              : 'from-pink-500 to-purple-600'
+          )}
+        >
+          {pagada ? (
+            <Star className='h-4 w-4 fill-white' />
+          ) : (
+            <Home className='h-4 w-4' />
+          )}
+        </span>
+        <div className='min-w-0 flex-1'>
+          <div className='flex flex-wrap items-center gap-2'>
+            <h3 className='text-sm font-bold text-slate-900 dark:text-white'>
+              Negociación
+            </h3>
             <span
-              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold ${
-                estaCompleta
-                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
-                  : 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300'
-              }`}
+              className={cn(
+                'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold ring-1 ring-inset',
+                pagada
+                  ? 'bg-amber-50 text-amber-700 ring-amber-600/25 dark:bg-amber-500/10 dark:text-amber-300'
+                  : 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-300'
+              )}
             >
-              {estaCompleta ? (
+              {pagada ? (
                 <CheckCircle2 className='h-3 w-3' />
               ) : (
-                <DollarSign className='h-3 w-3' />
+                <Clock className='h-3 w-3' />
               )}
-              {estaCompleta ? 'Negociación Completada' : 'Negociación Activa'}
+              {pagada ? 'Pagada por completo' : 'En curso'}
             </span>
           </div>
-
-          {/* Location breadcrumb */}
-          {(proyecto || manzana || numero) && (
-            <div className='flex items-center gap-1.5 text-[11px] text-gray-500 dark:text-gray-400'>
+          {(codigo || proyecto) && (
+            <p className='mt-0.5 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400'>
+              {codigo && (
+                <span className='inline-flex items-center gap-1 rounded-md bg-orange-50 px-1.5 py-px font-bold text-orange-700 dark:bg-orange-500/10 dark:text-orange-300'>
+                  <Home className='h-3 w-3' />
+                  {codigo}
+                </span>
+              )}
               {proyecto && (
-                <>
-                  <Building2 className='h-3 w-3 flex-shrink-0 text-gray-400 dark:text-gray-500' />
-                  <span className='font-medium text-gray-700 dark:text-gray-300'>
-                    {proyecto}
-                  </span>
-                </>
+                <span className='inline-flex items-center gap-1'>
+                  <Building2 className='h-3 w-3 text-green-600 dark:text-green-400' />
+                  {proyecto}
+                </span>
               )}
-              {(manzana || numero) && (
-                <>
-                  <span className='text-gray-300 dark:text-gray-600'>·</span>
-                  <Home className='h-3 w-3 flex-shrink-0 text-gray-400 dark:text-gray-500' />
-                  <span>
-                    {[
-                      manzana && `Manzana ${manzana}`,
-                      numero && `Casa ${numero}`,
-                    ]
-                      .filter(Boolean)
-                      .join(' · ')}
-                  </span>
-                </>
-              )}
-            </div>
+            </p>
           )}
         </div>
-
-        {/* Right: CTA */}
-        {canVerAbonos ? (
-          <a
-            href={
-              clienteCC
-                ? `/abonos?q=${encodeURIComponent(clienteCC)}`
-                : '/abonos'
-            }
-            className='flex items-center gap-1.5 self-start rounded-lg border border-cyan-200 bg-cyan-50 px-2.5 py-1.5 text-xs font-semibold text-cyan-700 transition-colors hover:bg-cyan-100 dark:border-cyan-800/50 dark:bg-cyan-900/20 dark:text-cyan-400 dark:hover:bg-cyan-900/40 sm:self-auto'
+        {canVerAbonos && (
+          <Link
+            href={`/abonos/${getShortId(clienteId)}`}
+            className='inline-flex items-center gap-1.5 rounded-xl border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700 transition-colors hover:bg-violet-100 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-300 dark:hover:bg-violet-500/20'
           >
-            <TrendingUp className='h-3 w-3' />
+            <Receipt className='h-3.5 w-3.5' />
             Ver abonos
-            <ArrowRight className='h-3 w-3' />
-          </a>
-        ) : null}
+            <ArrowRight className='h-3.5 w-3.5' />
+          </Link>
+        )}
       </div>
 
-      {/* ── Metrics ────────────────────────────────────── */}
-      <div
-        className={`grid divide-x divide-gray-100 border-t border-gray-100 dark:divide-gray-700/60 dark:border-gray-700/60 ${
-          interesesTotales > 0
-            ? 'grid-cols-2 sm:grid-cols-4'
-            : 'grid-cols-2 sm:grid-cols-3'
-        }`}
-      >
-        {/* Precio vivienda — contexto */}
-        <div className='px-3 py-2.5 sm:px-4 sm:py-3'>
-          <p className='mb-1 text-[9px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 sm:text-[10px]'>
-            {interesesTotales > 0 ? 'Precio Vivienda' : 'Valor Total'}
-          </p>
-          <p className='text-sm font-black tabular-nums tracking-tight text-gray-700 dark:text-gray-300 sm:text-xl'>
-            {formatCurrency(valorVivienda)}
-          </p>
-          <p className='mt-0.5 text-[9px] text-gray-400 dark:text-gray-500 sm:text-[10px]'>
-            Precio vivienda
-          </p>
+      <div className='space-y-4 p-4'>
+        {/* Cifras */}
+        <div className='grid gap-3 sm:grid-cols-3'>
+          <Cifra
+            icon={Home}
+            label={interesesTotales > 0 ? 'Total a pagar' : 'Valor total'}
+            valor={total}
+            detalle={
+              interesesTotales > 0
+                ? `Vivienda ${formatCOP(valorVivienda)} + intereses`
+                : 'Precio de la vivienda'
+            }
+            gradient='from-blue-500 to-indigo-600'
+            texto='text-slate-900 dark:text-white'
+          />
+          <Cifra
+            icon={PiggyBank}
+            label='Abonado'
+            valor={totalAbonado}
+            detalle='Total recibido'
+            gradient='from-emerald-500 to-teal-600'
+            texto='text-emerald-700 dark:text-emerald-400'
+          />
+          <Cifra
+            icon={pagada ? CheckCircle2 : Wallet}
+            label='Saldo'
+            valor={Math.max(0, saldo)}
+            detalle={pagada ? 'Pagado completamente' : 'Resta por pagar'}
+            gradient={
+              pagada
+                ? 'from-amber-400 to-orange-500'
+                : 'from-amber-500 to-rose-500'
+            }
+            texto={
+              pagada
+                ? 'text-amber-700 dark:text-amber-400'
+                : 'text-rose-700 dark:text-rose-400'
+            }
+          />
         </div>
 
-        {/* Total a pagar (solo cuando hay intereses) */}
-        {interesesTotales > 0 ? (
-          <div className='bg-indigo-50/40 px-3 py-2.5 dark:bg-indigo-900/10 sm:px-4 sm:py-3'>
-            <p className='mb-1 text-[9px] font-semibold uppercase tracking-widest text-indigo-600 dark:text-indigo-400 sm:text-[10px]'>
-              Total a pagar
-            </p>
-            <p className='text-sm font-black tabular-nums tracking-tight text-indigo-700 dark:text-indigo-300 sm:text-xl'>
-              {formatCurrency(totalComprometido)}
-            </p>
-            <p className='mt-0.5 text-[9px] text-indigo-400 dark:text-indigo-500 sm:text-[10px]'>
-              +{formatCurrency(interesesTotales)} intereses
-            </p>
+        {/* Avance */}
+        <div>
+          <div className='mb-1.5 flex items-center justify-between text-xs'>
+            <span className='font-semibold text-slate-600 dark:text-slate-300'>
+              Avance de pago
+            </span>
+            <span
+              className={cn(
+                'font-black tabular-nums',
+                pagada
+                  ? 'text-amber-700 dark:text-amber-400'
+                  : 'text-cyan-700 dark:text-cyan-400'
+              )}
+            >
+              {Math.round(pctPagado)}%
+            </span>
           </div>
-        ) : null}
-
-        {/* Abonado — positivo */}
-        <div className='border-r border-gray-100 bg-emerald-50/50 px-3 py-2.5 dark:border-gray-700/60 dark:bg-emerald-900/10 sm:px-4 sm:py-3'>
-          <p className='mb-1 text-[9px] font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-500 sm:text-[10px]'>
-            Abonado
-          </p>
-          <p className='text-sm font-black tabular-nums tracking-tight text-emerald-700 dark:text-emerald-400 sm:text-xl'>
-            {formatCurrency(totalAbonado)}
-          </p>
-          <p className='mt-0.5 text-[9px] text-emerald-500/80 dark:text-emerald-500/60 sm:text-[10px]'>
-            Total pagado
-          </p>
-        </div>
-
-        {/* Saldo — héroe */}
-        <div
-          className={`px-3 py-2.5 sm:px-4 sm:py-3 ${
-            estaCompleta
-              ? 'bg-emerald-50/80 dark:bg-emerald-900/15'
-              : 'bg-amber-50/60 dark:bg-amber-900/10'
-          }`}
-        >
-          <p
-            className={`mb-1 text-[9px] font-semibold uppercase tracking-widest sm:text-[10px] ${
-              estaCompleta
-                ? 'text-emerald-600 dark:text-emerald-500'
-                : 'text-amber-600 dark:text-amber-500'
-            }`}
-          >
-            Saldo
-          </p>
-          <p
-            className={`text-sm font-black tabular-nums tracking-tight sm:text-xl ${
-              estaCompleta
-                ? 'text-emerald-700 dark:text-emerald-400'
-                : 'text-amber-700 dark:text-amber-400'
-            }`}
-          >
-            {formatCurrency(saldoPendiente)}
-          </p>
-          <p className='mt-0.5 text-[9px] text-gray-400 dark:text-gray-500 sm:text-[10px]'>
-            {estaCompleta ? 'Pagado completamente' : 'Resta por pagar'}
-          </p>
-        </div>
-      </div>
-
-      {/* ── Progress bar ───────────────────────────────── */}
-      <div className='px-4 py-2.5'>
-        <div className='flex items-center gap-2'>
-          <div className='h-1.5 flex-1 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700'>
+          <div className='h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700/60'>
             <motion.div
-              className={`h-full rounded-full bg-gradient-to-r ${progressColor}`}
+              className={cn(
+                'h-full rounded-full bg-gradient-to-r',
+                pagada
+                  ? 'from-amber-400 to-orange-500'
+                  : 'from-cyan-500 via-blue-500 to-indigo-500'
+              )}
               initial={{ width: 0 }}
-              animate={{ width: `${porcentaje}%` }}
-              transition={{ duration: 0.9, ease: 'easeOut', delay: 0.2 }}
+              animate={{ width: `${Math.min(pctPagado, 100)}%` }}
+              transition={{ duration: 0.8, ease: 'easeOut', delay: 0.1 }}
             />
           </div>
-          <span className='text-[11px] font-bold tabular-nums text-gray-500 dark:text-gray-400'>
-            {Math.round(porcentaje)}%
-          </span>
         </div>
       </div>
-    </motion.div>
+    </motion.section>
   )
 }

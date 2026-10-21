@@ -1,33 +1,19 @@
 'use client'
 
 /**
- * ✅ COMPONENTE ORQUESTADOR REFACTORIZADO
- * General Tab - Dividido en componentes atómicos
- *
- * SEPARACIÓN DE RESPONSABILIDADES:
- * - Este componente SOLO orquesta sub-componentes
- * - Cada sección está en su propio archivo atómico
- * - Hook separado para lógica de navegación
- *
- * COMPONENTES ATÓMICOS:
- * - BannerDocumentacion
- * - ResumenNegociacion (NUEVO: muestra estado financiero de negociación activa)
- * - EstadisticasComerciales (ahora tira horizontal compacta)
- * - InfoPersonalCard
- * - ContactoUbicacionCard
- * - NotasCard
+ * Pestaña Información General — solo orquesta sus tarjetas:
+ * - BannerDocumentacion: aviso si falta la cédula
+ * - ResumenNegociacion: valor, abonado, saldo, avance y fuentes de pago
+ * - InfoPersonalCard / ContactoUbicacionCard
+ * - NotasCard (si hay notas)
  */
 
-import { useMemo } from 'react'
-
-import { motion } from 'framer-motion'
 import { Clock } from 'lucide-react'
 
 import { formatDateCompact } from '@/lib/utils/date.utils'
 import { useDocumentoIdentidad } from '@/modules/clientes/documentos/hooks/useDocumentoIdentidad'
-import type { Cliente } from '@/modules/clientes/types'
-
-import * as styles from '../cliente-detalle.styles'
+import type { Cliente, Negociacion } from '@/modules/clientes/types'
+import { usePermisosQuery } from '@/modules/usuarios/hooks/usePermisosQuery'
 
 import {
   BannerDocumentacion,
@@ -39,91 +25,64 @@ import {
 
 interface GeneralTabProps {
   cliente: Cliente
+  /** Negociación vigente (activa o completada), calculada por el orquestador */
+  negociacion: Negociacion | null
   /** Solo mostrar el banner de documentación si el usuario puede ver Y subir documentos */
   canMostrarBannerDocumentos?: boolean
+  onIrADocumentos: () => void
 }
 
 export function GeneralTab({
   cliente,
+  negociacion,
   canMostrarBannerDocumentos = false,
+  onIrADocumentos,
 }: GeneralTabProps) {
-  // ✅ Hook de validación real de documento de identidad
-  const { tieneCedula: tieneDocumento, cargando: cargandoValidacion } =
-    useDocumentoIdentidad({
-      clienteId: cliente.id,
-    })
+  const { tieneCedula, cargando: cargandoValidacion } = useDocumentoIdentidad({
+    clienteId: cliente.id,
+  })
+  const { esAdmin, puede } = usePermisosQuery()
+  const canVerAbonos = esAdmin || puede('abonos', 'ver')
 
-  const estadisticas = cliente.estadisticas || {
-    total_negociaciones: 0,
-    negociaciones_activas: 0,
-    negociaciones_completadas: 0,
-  }
-
-  const tieneNegociacionActiva =
-    estadisticas.negociaciones_activas > 0 ||
-    estadisticas.negociaciones_completadas > 0 ||
+  const tieneNegociacion =
+    (cliente.estadisticas?.negociaciones_activas ?? 0) > 0 ||
+    (cliente.estadisticas?.negociaciones_completadas ?? 0) > 0 ||
     (cliente.negociaciones?.length ?? 0) > 0
 
-  // Extraer negociación activa (datos ya cargados en cliente.negociaciones)
-  const negociacionActiva = useMemo(() => {
-    if (!cliente.negociaciones?.length) return null
-    // Priorizar activa/suspendida; si no hay, mostrar la completada
-    const activa = cliente.negociaciones.find(
-      n =>
-        n.estado === 'Activa' ||
-        n.estado === 'Suspendida' ||
-        n.estado === 'Completada'
-    )
-    return activa || null
-  }, [cliente.negociaciones])
+  const mostrarResumen =
+    !!negociacion &&
+    (negociacion.valor_total_pagar > 0 || negociacion.valor_total > 0)
 
   return (
-    <motion.div
-      key='info'
-      {...styles.animations.fadeInUp}
-      className='space-y-3'
-    >
-      {/* Banner de estado de documentación (oculto si renunció o sin permiso de documentos) */}
+    <div className='space-y-4'>
       {canMostrarBannerDocumentos && cliente.estado !== 'Renunció' && (
         <BannerDocumentacion
-          tieneDocumento={tieneDocumento}
+          tieneDocumento={tieneCedula}
           cargandoValidacion={cargandoValidacion}
-          tieneNegociacionActiva={tieneNegociacionActiva}
-          onIrADocumentos={() =>
-            window.dispatchEvent(
-              new CustomEvent('cambiar-tab', { detail: 'documentos' })
-            )
-          }
+          tieneNegociacionActiva={tieneNegociacion}
+          onIrADocumentos={onIrADocumentos}
         />
       )}
 
-      {/* Resumen financiero de negociación - hero section */}
-      {negociacionActiva &&
-        (negociacionActiva.valor_total_pagar > 0 ||
-          negociacionActiva.valor_total > 0) && (
-          <ResumenNegociacion
-            negociacion={negociacionActiva}
-            clienteId={cliente.id}
-            clienteCC={cliente.numero_documento}
-          />
-        )}
+      {mostrarResumen && (
+        <ResumenNegociacion
+          negociacion={negociacion}
+          clienteId={cliente.id}
+          canVerAbonos={canVerAbonos}
+        />
+      )}
 
-      {/* Grid de información: 50/50 con subgrid para alinear filas */}
-      <div className='grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-y-0 md:[grid-template-rows:auto_auto_auto_auto_auto]'>
+      <div className='grid gap-4 md:grid-cols-2'>
         <InfoPersonalCard cliente={cliente} />
         <ContactoUbicacionCard cliente={cliente} />
       </div>
 
-      {/* Auditoría */}
-      <div className='flex items-center gap-1.5 px-1'>
-        <Clock className='h-3 w-3 flex-shrink-0 text-gray-400 dark:text-gray-500' />
-        <p className='text-xs text-gray-400 dark:text-gray-500'>
-          Cliente registrado el {formatDateCompact(cliente.fecha_creacion)}
-        </p>
-      </div>
-
-      {/* Notas (si existen) */}
       <NotasCard cliente={cliente} />
-    </motion.div>
+
+      <p className='flex items-center gap-1.5 px-1 text-xs text-slate-400 dark:text-slate-500'>
+        <Clock className='h-3 w-3 shrink-0' />
+        Cliente registrado el {formatDateCompact(cliente.fecha_creacion)}
+      </p>
+    </div>
   )
 }

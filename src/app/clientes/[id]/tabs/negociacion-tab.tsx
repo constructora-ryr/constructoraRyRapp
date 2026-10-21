@@ -1,63 +1,36 @@
 'use client'
 
 /**
- * NegociacionTab — Vista compacta de negociación
- *
- * 3 bloques:
- * 1. Header unificado (vivienda + KPIs financieros)
- * 2. Plan de Pagos (grid de fuentes + barra visual)
- * 3. Abonos recientes
+ * Pestaña Negociación — orquestador:
+ * - Datos y acciones: useNegociacionTab
+ * - Saldo y avance: calcularTotalesNegociacion (misma fórmula que Información General)
+ * - UI: ResumenNegociacionCard · PlanDePagosCard · AbonosRecibidosCard
+ * - Modales de las acciones (ajuste, descuento, escritura, renuncia, …)
  */
 
-import { useCallback, useState } from 'react'
+import { useState } from 'react'
 
-import { motion } from 'framer-motion'
-import {
-  AlertTriangle,
-  ArrowRightLeft,
-  ArrowUpRight,
-  CalendarDays,
-  CheckCircle2,
-  CreditCard,
-  DollarSign,
-  FileText,
-  FileX,
-  HelpCircle,
-  History,
-  Home,
-  Lock,
-  Pencil,
-  Percent,
-  RefreshCw,
-  Shield,
-  SlidersHorizontal,
-  Stamp,
-  Tag,
-  TrendingUp,
-  Wallet,
-  X,
-} from 'lucide-react'
+import { FileText } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { useRouter } from 'next/navigation'
 
-import { formatDateForDB, formatDateForDisplay } from '@/lib/utils/date.utils'
+import { formatDateForDB } from '@/lib/utils/date.utils'
 import { ProcesarDevolucionExcedenteModal } from '@/modules/abonos/components/devolucion-excedente/ProcesarDevolucionExcedenteModal'
-import { ModalEditarAbono } from '@/modules/abonos/components/modal-editar-abono'
 import { PagosExcedentesBanner } from '@/modules/abonos/components/pago-excedente/PagosExcedentesBanner'
 import { usePagosExcedentes } from '@/modules/abonos/hooks/usePagosExcedentes'
-import type { AbonoParaEditar } from '@/modules/abonos/types/editar-abono.types'
+import type { FuentePago } from '@/modules/clientes/services/fuentes-pago.service'
 import { negociacionesService } from '@/modules/clientes/services/negociaciones.service'
 import type { Cliente } from '@/modules/clientes/types'
+import { calcularTotalesNegociacion } from '@/modules/clientes/utils/totales-negociacion'
 import { CuotasCreditoTab } from '@/modules/fuentes-pago/components/CuotasCreditoTab'
 import { RegistrarRenunciaModal } from '@/modules/renuncias/components/modals/RegistrarRenunciaModal'
 import { usePermisosQuery } from '@/modules/usuarios/hooks/usePermisosQuery'
-import { SectionLoadingSpinner, Tooltip } from '@/shared/components/ui'
+import { SectionLoadingSpinner } from '@/shared/components/ui'
 import { esCreditoConstructora } from '@/shared/constants/fuentes-pago.constants'
-import { formatCurrency } from '@/shared/utils/format'
 
 import {
-  AbonosRecientes,
+  AbonosRecibidosCard,
   AjusteCierreFinancieroModal,
   DescuadreFinancieroAlert,
   DescuentoModal,
@@ -65,10 +38,11 @@ import {
   EditarReferenciaModal,
   EstadoDeCuenta,
   ExcedenteDevolucionBanners,
-  FuenteMiniCard,
   HistorialNegociacionModal,
   MarcarEscrituraModal,
   NegociacionCerradaRenuncia,
+  PlanDePagosCard,
+  ResumenNegociacionCard,
   SinNegociacion,
 } from './negociacion/components'
 import { LABELS_TIPO_DESCUENTO, useNegociacionTab } from './negociacion/hooks'
@@ -77,6 +51,11 @@ interface NegociacionTabProps {
   cliente: Cliente
   onIrADocumentos?: () => void
 }
+
+type FuenteEditando = Pick<
+  FuentePago,
+  'id' | 'tipo' | 'numero_referencia' | 'fecha_acta'
+>
 
 export function NegociacionTab({
   cliente,
@@ -90,53 +69,19 @@ export function NegociacionTab({
   const canVerDocumentos =
     esAdminPermisos ||
     (puede('documentos', 'ver') && puede('documentos', 'subir'))
+
+  // ── Estado de la UI (modales y despliegues) ──────────────────────────────
   const [cuotasExpandidas, setCuotasExpandidas] = useState<
     Record<string, boolean>
   >({})
-  const toggleCuotas = (id: string) =>
-    setCuotasExpandidas(p => ({ ...p, [id]: !p[id] }))
-
-  // ── Estado para edición de abonos ────────────────────────────────────────
-  const [abonoEditando, setAbonoEditando] = useState<AbonoParaEditar | null>(
-    null
-  )
-
-  // ── Estado para edición de acta (solo admin) ─────────────────────────────
-  const [fuenteEditandoActa, setFuenteEditandoActa] = useState<{
-    id: string
-    tipo: string
-    numeroReferencia: string | null
-    fechaActa: string | null
-  } | null>(null)
-
-  // ── Estado para edición de referencia hipotecario (solo admin) ───────────
-  const [fuenteEditandoReferencia, setFuenteEditandoReferencia] = useState<{
-    id: string
-    tipo: string
-    numeroReferencia: string | null
-  } | null>(null)
-
-  // ── Estado para historial de negociación ─────────────────────────────────
+  const [fuenteEditandoActa, setFuenteEditandoActa] =
+    useState<FuenteEditando | null>(null)
+  const [fuenteEditandoReferencia, setFuenteEditandoReferencia] =
+    useState<FuenteEditando | null>(null)
   const [historialNegOpen, setHistorialNegOpen] = useState(false)
-
-  // ── Estado para modal de devolución de excedente ─────────────────────────
   const [modalDevolucionOpen, setModalDevolucionOpen] = useState(false)
-
-  // ── Estado para modal de renuncia ───────────────────────────────────────
   const [modalRenunciaOpen, setModalRenunciaOpen] = useState(false)
-
-  // ── Estado para modal de escritura ──────────────────────────────────────
   const [modalEscriturarOpen, setModalEscriturarOpen] = useState(false)
-
-  // ── Estado para edición inline de valor escritura ────────────────────────
-  const [editandoEscritura, setEditandoEscritura] = useState(false)
-  const [valorEscrituraEdit, setValorEscrituraEdit] = useState('')
-  const [guardandoEscritura, setGuardandoEscritura] = useState(false)
-
-  // ── Estado para edición inline de fecha de negociación (solo admin) ──────
-  const [editandoFechaNeg, setEditandoFechaNeg] = useState(false)
-  const [fechaNegEdit, setFechaNegEdit] = useState('')
-  const [guardandoFechaNeg, setGuardandoFechaNeg] = useState(false)
 
   const {
     negociacion,
@@ -175,58 +120,8 @@ export function NegociacionTab({
     totalDocsPendientes,
     totalDocsObligatoriosPendientes,
     refetchFuentes,
-    refetchAbonos,
     refetchNegociaciones,
   } = useNegociacionTab({ cliente })
-
-  // ── Guardar valor de escritura (debe estar antes de early returns) ─────────
-  const handleGuardarEscritura = useCallback(async () => {
-    if (!negociacion) return
-    const parsed = parseFloat(valorEscrituraEdit.replace(/\D/g, ''))
-    if (isNaN(parsed) || parsed < 0) {
-      toast.error('Ingresa un valor válido para la escritura')
-      return
-    }
-    setGuardandoEscritura(true)
-    try {
-      await negociacionesService.actualizarNegociacion(negociacion.id, {
-        valor_escritura_publica: parsed,
-      })
-      toast.success('Valor de escritura actualizado')
-      setEditandoEscritura(false)
-      await refetchNegociaciones()
-    } catch (err) {
-      toast.error('Error al actualizar', {
-        description: err instanceof Error ? err.message : 'Error desconocido',
-      })
-    } finally {
-      setGuardandoEscritura(false)
-    }
-  }, [valorEscrituraEdit, negociacion, refetchNegociaciones])
-
-  // ── Guardar fecha de negociación (debe estar antes de early returns) ──────
-  const handleGuardarFechaNeg = useCallback(async () => {
-    if (!negociacion) return
-    if (!fechaNegEdit) {
-      toast.error('Selecciona una fecha válida')
-      return
-    }
-    setGuardandoFechaNeg(true)
-    try {
-      await negociacionesService.actualizarNegociacion(negociacion.id, {
-        fecha_negociacion: formatDateForDB(fechaNegEdit),
-      })
-      toast.success('Fecha de negociación actualizada')
-      setEditandoFechaNeg(false)
-      await refetchNegociaciones()
-    } catch (err) {
-      toast.error('Error al actualizar', {
-        description: err instanceof Error ? err.message : 'Error desconocido',
-      })
-    } finally {
-      setGuardandoFechaNeg(false)
-    }
-  }, [fechaNegEdit, negociacion, refetchNegociaciones])
 
   const { data: pagosExcedentes = [] } = usePagosExcedentes(negociacion?.id)
 
@@ -248,723 +143,238 @@ export function NegociacionTab({
       />
     )
 
-  // Solo permite ajustar en estados editables — una negociación Completada o
-  // Cerrada por Traslado no debe poder modificarse.
+  // Solo se ajusta en estados editables: Completada o Cerrada por Traslado no
   const puedeAjustarAhora =
     puedeAjustar &&
     (negociacion.estado === 'Activa' || negociacion.estado === 'Suspendida')
+  const esActiva = negociacion.estado === 'Activa'
 
-  const proyecto = negociacion.proyecto?.nombre ?? '—'
   const vivienda = negociacion.vivienda
-  const manzana = vivienda?.manzanas?.nombre
-  const numero = vivienda?.numero
-  const valorEscritura = negociacion.valor_escritura_publica ?? 0
-  const notasNeg = negociacion.notas ?? ''
-  // Saldo y % — usar siempre los campos calculados por el trigger de BD.
-  // total_abonado solo suma capital (sin mora/intereses del crédito constructora),
-  // así que computar totalComprometido - totalAbonado genera un saldo fantasma.
-  const baseTotal = interesesTotales > 0 ? totalComprometido : valorVivienda
-  // Saldo: cuando hay intereses, recalcular sobre baseTotal (que ya los incluye).
-  // Usar saldo_pendiente de BD solo cuando no hay intereses (el trigger no los suma).
-  const saldo =
-    interesesTotales > 0
-      ? Math.max(0, baseTotal - totalAbonado)
-      : (negociacion.saldo_pendiente ?? Math.max(0, baseTotal - totalAbonado))
-  const totalAbonadoDisplay = totalAbonado
-  const saldoReal = Math.max(0, valorVivienda - totalAbonadoDisplay)
-  const pctPagado =
-    negociacion.porcentaje_pagado !== null &&
-    negociacion.porcentaje_pagado !== undefined
-      ? negociacion.porcentaje_pagado
-      : baseTotal > 0
-        ? Math.max(0, ((baseTotal - saldo) / baseTotal) * 100)
-        : 0
+  const codigoVivienda = `${vivienda?.manzanas?.nombre ?? ''}${vivienda?.numero ?? ''}`
   const descuento = negociacion.descuento_aplicado ?? 0
-  const pctDescuento = negociacion.porcentaje_descuento ?? 0
 
-  // Fuente con cuotas expandidas (para renderizar CuotasCreditoTab fuera del grid)
+  const { saldo, pctPagado } = calcularTotalesNegociacion({
+    negociacion,
+    valorVivienda,
+    totalComprometido,
+    interesesTotales,
+    totalAbonado,
+  })
+  // Deuda real cuando las fuentes superan el valor (hay excedente)
+  const saldoReal = Math.max(0, valorVivienda - totalAbonado)
+
+  const actualizar = async (
+    campos: Parameters<typeof negociacionesService.actualizarNegociacion>[1],
+    ok: string
+  ) => {
+    await negociacionesService.actualizarNegociacion(negociacion.id, campos)
+    toast.success(ok)
+    await refetchNegociaciones()
+  }
+
   const creditoExpandido = fuentesPago.find(
     f => esCreditoConstructora(f.tipo) && cuotasExpandidas[f.id]
   )
 
-  const abonosParaUI = abonos as Array<{
-    id: string
-    numero_recibo?: string | number | null
-    negociacion_id?: string
-    fuente_pago_id?: string
-    monto: number
-    fecha_abono: string
-    metodo_pago?: string | null
-    numero_referencia?: string | null
-    notas?: string | null
-    comprobante_url?: string | null
-  }>
+  const avisos = (
+    <>
+      {fuentesPago.length > 0 && !estaBalanceado ? (
+        <DescuadreFinancieroAlert
+          diferencia={diferencia}
+          puedeAjustar={puedeAjustarAhora}
+          onCorregir={openAjuste}
+        />
+      ) : null}
+      {estaBalanceado ? (
+        <ExcedenteDevolucionBanners
+          diferencia={diferencia}
+          estado={negociacion.excedente_devolucion_estado}
+          monto={negociacion.excedente_devolucion_monto}
+          fecha={negociacion.excedente_devolucion_fecha}
+          comprobanteUrl={negociacion.excedente_devolucion_comprobante_url}
+          puedeAjustar={puedeAjustar}
+          onRegistrar={() => setModalDevolucionOpen(true)}
+        />
+      ) : null}
+      {isAdmin && pagosExcedentes.length > 0 ? (
+        <PagosExcedentesBanner
+          pagos={pagosExcedentes}
+          negociacionId={negociacion.id}
+        />
+      ) : null}
+    </>
+  )
 
   return (
-    <div className='space-y-3'>
-      {/* ─── BLOQUE 1: HEADER UNIFICADO + KPIs ───── */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25 }}
-        className='overflow-hidden rounded-xl border border-gray-200/80 bg-white dark:border-gray-700/50 dark:bg-gray-800/50'
-      >
-        {/* Row 1: Identificación de vivienda + acciones */}
-        <div className='flex flex-col gap-2 border-b border-gray-100 px-4 py-2.5 dark:border-gray-700/40 sm:flex-row sm:items-center'>
-          <div className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-cyan-100 dark:bg-cyan-900/30'>
-            <Home className='h-4 w-4 text-cyan-600 dark:text-cyan-400' />
-          </div>
-          <div className='min-w-0 flex-1'>
-            <p className='text-sm font-bold leading-tight text-gray-900 dark:text-white'>
-              {proyecto}
-            </p>
-            {manzana || numero ? (
-              <p className='text-[11px] text-gray-500 dark:text-gray-400'>
-                {manzana ? `Manzana ${manzana}` : ''}
-                {manzana && numero ? ' · ' : ''}
-                {numero ? `Casa ${numero}` : ''}
-              </p>
-            ) : null}
-            {/* Fecha de negociación — editable por admin */}
-            {editandoFechaNeg ? (
-              <div className='mt-1.5 flex items-center gap-1.5'>
-                <input
-                  aria-label='Fecha de inicio de la negociación'
-                  autoFocus
-                  type='date'
-                  className='rounded-md border-2 border-cyan-400 bg-white px-2 py-0.5 text-[11px] font-medium text-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 dark:border-cyan-600 dark:bg-gray-900 dark:text-cyan-300'
-                  disabled={guardandoFechaNeg}
-                  onChange={e => setFechaNegEdit(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') void handleGuardarFechaNeg()
-                    if (e.key === 'Escape') setEditandoFechaNeg(false)
-                  }}
-                  value={fechaNegEdit}
-                />
-                <button
-                  className='rounded bg-cyan-600 px-2 py-0.5 text-[10px] font-semibold text-white hover:bg-cyan-700 disabled:opacity-50'
-                  disabled={guardandoFechaNeg}
-                  onClick={() => void handleGuardarFechaNeg()}
-                  type='button'
-                >
-                  {guardandoFechaNeg ? '...' : 'Guardar'}
-                </button>
-                <button
-                  className='rounded p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
-                  disabled={guardandoFechaNeg}
-                  onClick={() => setEditandoFechaNeg(false)}
-                  type='button'
-                >
-                  <X className='h-3 w-3' />
-                </button>
-              </div>
-            ) : negociacion.fecha_negociacion ? (
-              <div className='mt-1 flex items-center gap-1'>
-                <span className='inline-flex items-center gap-1 rounded-md border border-cyan-100 bg-cyan-50 px-1.5 py-0.5 text-[10px] font-medium text-cyan-600 dark:border-cyan-800/40 dark:bg-cyan-950/30 dark:text-cyan-400'>
-                  <CalendarDays className='h-2.5 w-2.5' />
-                  Inicio: {formatDateForDisplay(negociacion.fecha_negociacion)}
-                </span>
-                {esAdminPermisos ? (
-                  <button
-                    aria-label='Editar fecha de inicio de la negociación'
-                    className='rounded p-0.5 text-gray-300 hover:text-cyan-500 dark:text-gray-600 dark:hover:text-cyan-400'
-                    onClick={() => {
-                      setFechaNegEdit(
-                        negociacion.fecha_negociacion?.substring(0, 10) ?? ''
-                      )
-                      setEditandoFechaNeg(true)
-                    }}
-                    title='Editar fecha de inicio'
-                    type='button'
-                  >
-                    <Pencil className='h-3 w-3' />
-                  </button>
-                ) : null}
-              </div>
-            ) : null}
-          </div>
-          <div className='flex flex-wrap items-center gap-1.5'>
-            {puedeTrasladar && negociacion.estado === 'Activa' ? (
-              <button
-                onClick={() =>
-                  router.push(
-                    `/clientes/${cliente.id}/traslado-vivienda?negociacion_id=${negociacion.id}&nombre=${encodeURIComponent(`${cliente.nombres} ${cliente.apellidos}`)}`
-                  )
-                }
-                className='inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 transition-all hover:border-amber-300 hover:bg-amber-100 hover:shadow-sm dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-400 dark:hover:bg-amber-900/40'
-              >
-                <ArrowRightLeft className='h-3.5 w-3.5' />
-                Trasladar vivienda
-              </button>
-            ) : null}
-            {puedeEscritura &&
-            negociacion.estado === 'Activa' &&
-            vivienda?.estado === 'Asignada' ? (
-              <button
-                onClick={() => setModalEscriturarOpen(true)}
-                className='inline-flex items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-2.5 py-1 text-[11px] font-semibold text-violet-700 transition-all hover:border-violet-300 hover:bg-violet-100 hover:shadow-sm dark:border-violet-800 dark:bg-violet-900/20 dark:text-violet-400 dark:hover:bg-violet-900/40'
-              >
-                <Stamp className='h-3.5 w-3.5' />
-                Marcar Escriturada
-              </button>
-            ) : null}
-            {puedeRenunciar &&
-            (negociacion.estado === 'Activa' ||
-              negociacion.estado === 'Suspendida') ? (
-              <button
-                onClick={() => setModalRenunciaOpen(true)}
-                className='inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-[11px] font-semibold text-red-700 transition-all hover:border-red-300 hover:bg-red-100 hover:shadow-sm dark:border-red-800 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40'
-              >
-                <FileX className='h-3.5 w-3.5' />
-                Registrar Renuncia
-              </button>
-            ) : null}
-          </div>
-        </div>
+    <div className='space-y-4'>
+      <ResumenNegociacionCard
+        proyecto={negociacion.proyecto?.nombre ?? '—'}
+        codigoVivienda={codigoVivienda}
+        estado={negociacion.estado}
+        fechaInicio={negociacion.fecha_negociacion ?? null}
+        valorVivienda={valorVivienda}
+        totalComprometido={totalComprometido}
+        interesesTotales={interesesTotales}
+        descuento={descuento}
+        pctDescuento={negociacion.porcentaje_descuento ?? 0}
+        tipoDescuento={
+          negociacion.tipo_descuento
+            ? (LABELS_TIPO_DESCUENTO[
+                negociacion.tipo_descuento as keyof typeof LABELS_TIPO_DESCUENTO
+              ] ?? negociacion.tipo_descuento)
+            : null
+        }
+        motivoDescuento={negociacion.motivo_descuento ?? null}
+        valorEscritura={negociacion.valor_escritura_publica ?? 0}
+        totalAbonado={totalAbonado}
+        saldo={saldo}
+        saldoReal={saldoReal}
+        diferencia={diferencia}
+        pctPagado={pctPagado}
+        esAdmin={esAdminPermisos}
+        puedeEditarEscritura={puedeEscritura}
+        onTrasladar={
+          puedeTrasladar && esActiva
+            ? () =>
+                router.push(
+                  `/clientes/${cliente.id}/traslado-vivienda?negociacion_id=${negociacion.id}&nombre=${encodeURIComponent(`${cliente.nombres} ${cliente.apellidos}`)}`
+                )
+            : undefined
+        }
+        onEscriturar={
+          puedeEscritura && esActiva && vivienda?.estado === 'Asignada'
+            ? () => setModalEscriturarOpen(true)
+            : undefined
+        }
+        onRenunciar={
+          puedeRenunciar && (esActiva || negociacion.estado === 'Suspendida')
+            ? () => setModalRenunciaOpen(true)
+            : undefined
+        }
+        onGuardarFechaInicio={fecha =>
+          actualizar(
+            { fecha_negociacion: formatDateForDB(fecha) },
+            'Fecha de negociación actualizada'
+          )
+        }
+        onGuardarEscritura={valor =>
+          actualizar(
+            { valor_escritura_publica: valor },
+            'Valor de escritura actualizado'
+          )
+        }
+        estadoDeCuenta={
+          <EstadoDeCuenta
+            valorBase={vivienda?.valor_base ?? negociacion.valor_negociado}
+            gastosNotariales={vivienda?.gastos_notariales ?? 0}
+            recargoEsquinera={
+              vivienda?.es_esquinera ? (vivienda?.recargo_esquinera ?? 0) : 0
+            }
+            descuento={descuento}
+            motivoDescuento={negociacion.motivo_descuento}
+            valorTotalPagar={valorVivienda}
+            fuentes={fuentesPago}
+            totalAbonado={totalAbonado}
+            diferencia={diferencia}
+            estadoDevolucion={negociacion.excedente_devolucion_estado}
+            montoDevolucion={negociacion.excedente_devolucion_monto}
+            fechaDevolucion={negociacion.excedente_devolucion_fecha}
+          />
+        }
+      />
 
-        {/* KPIs row — cols dinámicas: +1 si hay intereses, +1 si hay descuento */}
-        <div
-          className={`grid grid-cols-2 divide-x divide-gray-100 dark:divide-gray-700/40 ${
-            interesesTotales > 0 && descuento > 0
-              ? 'sm:grid-cols-6'
-              : interesesTotales > 0 || descuento > 0
-                ? 'sm:grid-cols-5'
-                : 'sm:grid-cols-4'
-          }`}
-        >
-          {/* KPI 1: Precio Vivienda (siempre) */}
-          <div className='px-2 py-2.5 sm:px-4'>
-            <div className='mb-0.5 flex items-center gap-1'>
-              <DollarSign className='h-3 w-3 text-cyan-500' />
-              <span className='text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500'>
-                {interesesTotales > 0
-                  ? 'Precio Vivienda'
-                  : 'Valor Total a Pagar'}
-              </span>
+      <PlanDePagosCard
+        fuentes={fuentesPago}
+        valorVivienda={valorVivienda}
+        estaBalanceado={estaBalanceado}
+        tiposFuentes={tiposFuentes}
+        pendientesPorFuente={pendientesPorFuente}
+        totalDocsPendientes={totalDocsPendientes}
+        totalDocsObligatoriosPendientes={totalDocsObligatoriosPendientes}
+        avisos={avisos}
+        cuotas={
+          creditoExpandido ? (
+            <div className='rounded-2xl border border-indigo-200/60 bg-indigo-50/30 p-3 dark:border-indigo-800/40 dark:bg-indigo-950/10'>
+              <CuotasCreditoTab
+                fuentePagoId={creditoExpandido.id}
+                negociacionId={negociacion.id}
+                montoFuente={creditoExpandido.monto_aprobado}
+                onPagoCuotaRegistrado={() => refetchFuentes()}
+                isAdmin={isAdmin}
+              />
             </div>
-            <p className='text-sm font-bold tabular-nums text-gray-900 dark:text-white'>
-              {formatCurrency(valorVivienda)}
-            </p>
-            {/* Escritura: solo visible cuando el valor difiere del precio de la vivienda */}
-            {valorVivienda > 0 && valorEscritura !== valorVivienda ? (
-              editandoEscritura ? (
-                <div className='mt-1.5 flex items-center gap-1.5'>
-                  <input
-                    aria-label='Valor escritura pública'
-                    autoFocus
-                    className='w-36 rounded-md border-2 border-indigo-400 bg-white px-2 py-0.5 text-[11px] font-medium tabular-nums text-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-indigo-600 dark:bg-gray-900 dark:text-indigo-300'
-                    disabled={guardandoEscritura}
-                    onChange={e => setValorEscrituraEdit(e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') void handleGuardarEscritura()
-                      if (e.key === 'Escape') setEditandoEscritura(false)
-                    }}
-                    placeholder='Ej: 18000000'
-                    value={valorEscrituraEdit}
-                  />
-                  <button
-                    className='rounded bg-indigo-600 px-2 py-0.5 text-[10px] font-semibold text-white hover:bg-indigo-700 disabled:opacity-50'
-                    disabled={guardandoEscritura}
-                    onClick={() => void handleGuardarEscritura()}
-                    type='button'
-                  >
-                    {guardandoEscritura ? '...' : 'Guardar'}
-                  </button>
-                  <button
-                    className='rounded p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
-                    disabled={guardandoEscritura}
-                    onClick={() => setEditandoEscritura(false)}
-                    type='button'
-                  >
-                    <X className='h-3 w-3' />
-                  </button>
-                </div>
-              ) : (
-                <div className='mt-1 flex items-center gap-1'>
-                  <span className='inline-flex items-center gap-1 rounded-md border border-indigo-100 bg-indigo-50 px-1.5 py-0.5 text-[10px] font-medium text-indigo-600 dark:border-indigo-800/40 dark:bg-indigo-950/30 dark:text-indigo-400'>
-                    <FileText className='h-2.5 w-2.5' />
-                    {valorEscritura > 0
-                      ? `Valor en Escritura: ${formatCurrency(valorEscritura)}`
-                      : 'Sin valor escritura'}
-                  </span>
-                  {puedeEscritura ? (
-                    <button
-                      aria-label='Editar valor de escritura'
-                      className='rounded p-0.5 text-gray-300 hover:text-indigo-500 dark:text-gray-600 dark:hover:text-indigo-400'
-                      onClick={() => {
-                        setValorEscrituraEdit(
-                          valorEscritura > 0 ? String(valorEscritura) : ''
-                        )
-                        setEditandoEscritura(true)
-                      }}
-                      title='Editar valor de escritura'
-                      type='button'
-                    >
-                      <Pencil className='h-3 w-3' />
-                    </button>
-                  ) : null}
-                </div>
-              )
-            ) : null}
-          </div>
+          ) : null
+        }
+        cuotasExpandidas={cuotasExpandidas}
+        esCredito={esCreditoConstructora}
+        onToggleCuotas={id =>
+          setCuotasExpandidas(p => ({ ...p, [id]: !p[id] }))
+        }
+        onEditarActa={esAdminPermisos ? setFuenteEditandoActa : undefined}
+        onEditarReferencia={
+          esAdminPermisos ? setFuenteEditandoReferencia : undefined
+        }
+        onHistorial={() => setHistorialNegOpen(true)}
+        onDescuento={puedeDescuento && esActiva ? openDescuento : undefined}
+        tieneDescuento={descuento > 0}
+        onAjustar={puedeAjustarAhora ? openAjuste : undefined}
+        onIrADocumentos={canVerDocumentos ? onIrADocumentos : undefined}
+      />
 
-          {/* KPI 1b (condicional): Total a Pagar con intereses — solo cuando hay crédito constructora */}
-          {interesesTotales > 0 ? (
-            <div className='px-2 py-2.5 sm:px-4'>
-              <div className='mb-0.5 flex items-center gap-1'>
-                <TrendingUp className='h-3 w-3 text-violet-500' />
-                <span className='text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500'>
-                  Total a Pagar
-                </span>
-              </div>
-              <p className='text-sm font-bold tabular-nums text-gray-900 dark:text-white'>
-                {formatCurrency(totalComprometido)}
-              </p>
-              <p className='mt-0.5 text-[10px] tabular-nums text-violet-500 dark:text-violet-400'>
-                +{formatCurrency(interesesTotales)} intereses
-              </p>
-            </div>
-          ) : null}
-
-          {/* KPI 2 (condicional): Descuento aplicado */}
-          {descuento > 0 ? (
-            <div className='border-l border-gray-100 px-2 py-2.5 dark:border-gray-700/40 sm:px-4'>
-              <div className='mb-0.5 flex items-center gap-1'>
-                <Percent className='h-3 w-3 text-violet-500' />
-                <span className='text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500'>
-                  Descuento
-                </span>
-              </div>
-              <p className='text-sm font-bold tabular-nums text-violet-600 dark:text-violet-400'>
-                -{formatCurrency(descuento)}
-              </p>
-              {pctDescuento > 0 ? (
-                <p className='mt-0.5 text-[11px] font-medium text-violet-500 dark:text-violet-500'>
-                  {pctDescuento}% del valor
-                </p>
-              ) : null}
-            </div>
-          ) : null}
-          <div className='px-2 py-2.5 sm:px-4'>
-            <div className='mb-0.5 flex items-center gap-1'>
-              <Wallet className='h-3 w-3 text-emerald-500' />
-              <span className='text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500'>
-                Abonado
-              </span>
-            </div>
-            <p className='text-sm font-bold tabular-nums text-emerald-600 dark:text-emerald-400'>
-              {formatCurrency(totalAbonadoDisplay)}
-            </p>
-          </div>
-          <div className='px-2 py-2.5 sm:px-4'>
-            <div className='mb-0.5 flex items-center gap-1'>
-              <TrendingUp className='h-3 w-3 text-amber-500' />
-              {diferencia < 0 ? (
-                <Tooltip
-                  content={`Las fuentes de pago (${formatCurrency(saldo)}) superan lo que el cliente debe pagar. El valor principal es la deuda real del cliente con la constructora; el valor secundario es el total que ingresará por desembolsos de fuentes. La diferencia (${formatCurrency(Math.abs(diferencia))}) corresponde al excedente que se debe devolver al cliente.`}
-                  side='bottom'
-                >
-                  <span className='inline-flex cursor-help items-center gap-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500'>
-                    Por cobrar
-                    <HelpCircle className='h-3 w-3 text-amber-400 dark:text-amber-500' />
-                  </span>
-                </Tooltip>
-              ) : (
-                <span className='text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500'>
-                  Por cobrar
-                </span>
-              )}
-            </div>
-            {diferencia < 0 ? (
-              <div>
-                <p
-                  className={`text-sm font-bold tabular-nums ${saldoReal <= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-900 dark:text-white'}`}
-                >
-                  {formatCurrency(saldoReal)}
-                </p>
-                <p className='mt-0.5 text-[10px] tabular-nums text-gray-400 dark:text-gray-500'>
-                  {formatCurrency(
-                    Math.max(0, totalComprometido - totalAbonadoDisplay)
-                  )}{' '}
-                  por desembolsar
-                </p>
-              </div>
-            ) : (
-              <p
-                className={`text-sm font-bold tabular-nums ${saldo <= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-900 dark:text-white'}`}
-              >
-                {formatCurrency(Math.max(saldo, 0))}
-              </p>
-            )}
-          </div>
-          <div className='px-2 py-2.5 sm:px-4'>
-            <div className='mb-0.5 flex items-center gap-1'>
-              <Percent className='h-3 w-3 text-blue-500' />
-              <span className='text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500'>
-                Avance
-              </span>
-            </div>
-            <div className='flex items-center gap-2'>
-              <p className='text-sm font-bold tabular-nums text-gray-900 dark:text-white'>
-                {Math.min(pctPagado, 100).toFixed(1)}%
-              </p>
-              <div className='h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700'>
-                <div
-                  className='h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-500'
-                  style={{ width: `${Math.min(pctPagado, 100)}%` }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ─── Estado de cuenta desplegable ─── */}
-        <EstadoDeCuenta
-          valorBase={vivienda?.valor_base ?? negociacion.valor_negociado}
-          gastosNotariales={vivienda?.gastos_notariales ?? 0}
-          recargoEsquinera={
-            vivienda?.es_esquinera ? (vivienda?.recargo_esquinera ?? 0) : 0
-          }
-          descuento={descuento}
-          motivoDescuento={negociacion.motivo_descuento}
-          valorTotalPagar={valorVivienda}
-          fuentes={fuentesPago}
-          totalAbonado={totalAbonadoDisplay}
-          diferencia={diferencia}
-          estadoDevolucion={negociacion.excedente_devolucion_estado}
-          montoDevolucion={negociacion.excedente_devolucion_monto}
-          fechaDevolucion={negociacion.excedente_devolucion_fecha}
-        />
-      </motion.div>
-
-      {/* ─── BANNER: Detalle del descuento aplicado ─── */}
-      {descuento > 0 ? (
-        <motion.div
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2, delay: 0.035 }}
-          className='overflow-hidden rounded-xl border border-violet-200/60 bg-violet-50/60 dark:border-violet-800/40 dark:bg-violet-950/20'
-        >
-          <div className='flex items-start gap-0'>
-            <div className='w-1 self-stretch bg-violet-400 dark:bg-violet-600' />
-            <div className='flex flex-1 flex-wrap items-start gap-x-6 gap-y-1.5 px-4 py-3'>
-              <div className='flex items-center gap-2'>
-                <Tag className='h-3.5 w-3.5 flex-shrink-0 text-violet-500 dark:text-violet-400' />
-                <span className='text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500'>
-                  Tipo
-                </span>
-                <span className='inline-flex items-center rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700 dark:bg-violet-900/40 dark:text-violet-300'>
-                  {negociacion.tipo_descuento
-                    ? (LABELS_TIPO_DESCUENTO[
-                        negociacion.tipo_descuento as keyof typeof LABELS_TIPO_DESCUENTO
-                      ] ?? negociacion.tipo_descuento)
-                    : 'Sin clasificar'}
-                </span>
-              </div>
-              {negociacion.motivo_descuento ? (
-                <div className='flex min-w-0 flex-1 items-center gap-2'>
-                  <FileText className='h-3.5 w-3.5 flex-shrink-0 text-violet-400 dark:text-violet-500' />
-                  <span className='text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500'>
-                    Motivo
-                  </span>
-                  <p className='text-[11px] text-gray-700 dark:text-gray-300'>
-                    {negociacion.motivo_descuento}
-                  </p>
-                </div>
-              ) : null}
-            </div>
-          </div>
-        </motion.div>
-      ) : null}
-
-      {/* ─── BLOQUE 2: PLAN DE PAGOS ───── */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25, delay: 0.04 }}
-        className='overflow-hidden rounded-xl border border-gray-200/80 bg-white dark:border-gray-700/50 dark:bg-gray-800/50'
-      >
-        {/* Header: título + balance inline + botón */}
-        <div className='flex flex-col gap-2 border-b border-gray-100 px-4 py-2.5 dark:border-gray-700/40 sm:flex-row sm:items-center sm:justify-between'>
-          <div className='flex items-center gap-2'>
-            <DollarSign className='h-4 w-4 text-gray-400' />
-            <h3 className='text-sm font-semibold text-gray-900 dark:text-white'>
-              Plan de Pagos
-            </h3>
-            <span className='text-[10px] text-gray-400'>
-              ({fuentesPago.length})
-            </span>
-            {/* Balance badge inline (solo si balanceado) */}
-            {fuentesPago.length > 0 && estaBalanceado ? (
-              <span className='inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400'>
-                <CheckCircle2 className='h-3 w-3' />
-                Cubierto
-              </span>
-            ) : null}
-            {/* Historial de cambios */}
-            {negociacion?.id ? (
-              <button
-                onClick={() => setHistorialNegOpen(true)}
-                title='Ver historial de la negociación'
-                className='flex h-6 w-6 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-violet-50 hover:text-violet-600 dark:hover:bg-violet-900/20 dark:hover:text-violet-400'
-              >
-                <History className='h-3.5 w-3.5' />
-              </button>
-            ) : null}
-          </div>
-          {puedeDescuento || puedeAjustarAhora ? (
-            <div className='flex flex-wrap items-center gap-1.5'>
-              {puedeDescuento && negociacion.estado === 'Activa' ? (
-                <button
-                  onClick={openDescuento}
-                  className='inline-flex items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-2.5 py-1.5 text-[11px] font-semibold text-violet-700 transition-colors hover:bg-violet-100 dark:border-violet-800/40 dark:bg-violet-900/20 dark:text-violet-400 dark:hover:bg-violet-900/30'
-                >
-                  <Percent className='h-3.5 w-3.5' />
-                  {descuento > 0 ? 'Modificar Descuento' : 'Aplicar Descuento'}
-                </button>
-              ) : null}
-              {puedeAjustarAhora ? (
-                <button
-                  onClick={openAjuste}
-                  className='inline-flex items-center gap-1.5 rounded-lg border border-cyan-300 bg-cyan-50 px-3 py-1.5 text-[11px] font-semibold text-cyan-800 shadow-sm transition-colors hover:bg-cyan-100 hover:shadow dark:border-cyan-700/50 dark:bg-cyan-900/30 dark:text-cyan-300 dark:hover:bg-cyan-900/40'
-                >
-                  <SlidersHorizontal className='h-3.5 w-3.5' />
-                  Ajustar Cierre Financiero
-                </button>
-              ) : null}
-            </div>
-          ) : (
-            <span className='inline-flex items-center gap-1 text-[10px] text-gray-400 dark:text-gray-500'>
-              <Lock className='h-3 w-3' />
-              Solo lectura
-            </span>
-          )}
-        </div>
-
-        <div className='space-y-3 p-3'>
-          {/* ⚠️ ALERTA URGENTE: Descuadre financiero */}
-          {fuentesPago.length > 0 && !estaBalanceado ? (
-            <DescuadreFinancieroAlert
-              diferencia={diferencia}
-              puedeAjustar={puedeAjustarAhora}
-              onCorregir={openAjuste}
-            />
-          ) : null}
-
-          {/* ✅ Banners de excedente — pendiente o procesada */}
-          {estaBalanceado ? (
-            <ExcedenteDevolucionBanners
-              diferencia={diferencia}
-              estado={negociacion?.excedente_devolucion_estado}
-              monto={negociacion?.excedente_devolucion_monto}
-              fecha={negociacion?.excedente_devolucion_fecha}
-              comprobanteUrl={negociacion?.excedente_devolucion_comprobante_url}
-              puedeAjustar={puedeAjustar}
-              onRegistrar={() => setModalDevolucionOpen(true)}
-            />
-          ) : null}
-
-          {isAdmin && pagosExcedentes.length > 0 ? (
-            <PagosExcedentesBanner
-              pagos={pagosExcedentes}
-              negociacionId={negociacion.id}
-            />
-          ) : null}
-
-          {fuentesPago.length === 0 ? (
-            <p className='py-4 text-center text-xs text-gray-400 dark:text-gray-500'>
-              {puedeAjustarAhora
-                ? 'Sin fuentes configuradas. Usa "Redistribuir" para agregarlas.'
-                : 'Sin fuentes de pago configuradas.'}
-            </p>
-          ) : (
-            <>
-              {/* Docs pendientes banner — solo visible si puede ver/subir documentos */}
-              {totalDocsPendientes > 0 && canVerDocumentos ? (
-                <button
-                  type='button'
-                  onClick={onIrADocumentos}
-                  className='group relative flex w-full items-center gap-3 overflow-hidden rounded-xl border border-amber-300/70 bg-gradient-to-r from-amber-50 to-orange-50 px-4 py-2.5 text-left shadow-sm transition-all hover:border-amber-400 hover:shadow-md dark:border-amber-700/50 dark:from-amber-950/40 dark:to-orange-950/40 dark:hover:border-amber-600/70'
-                >
-                  {/* barra lateral de acento */}
-                  <span className='absolute inset-y-0 left-0 w-1 rounded-l-xl bg-gradient-to-b from-amber-400 to-orange-500' />
-                  <AlertTriangle className='ml-1 h-4 w-4 flex-shrink-0 text-amber-500 dark:text-amber-400' />
-                  <div className='flex flex-1 items-center gap-1.5 text-[11px]'>
-                    <span className='font-bold text-amber-800 dark:text-amber-200'>
-                      {totalDocsPendientes} doc
-                      {totalDocsPendientes !== 1 ? 's' : ''} pendiente
-                      {totalDocsPendientes !== 1 ? 's' : ''}
-                    </span>
-                    {totalDocsObligatoriosPendientes > 0 ? (
-                      <span className='inline-flex items-center rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-700 dark:bg-red-900/50 dark:text-red-300'>
-                        {totalDocsObligatoriosPendientes} oblig.
-                      </span>
-                    ) : null}
-                    <span className='ml-auto text-amber-600 underline decoration-dotted group-hover:text-amber-700 dark:text-amber-400 dark:group-hover:text-amber-300'>
-                      Ir a <strong>Documentos</strong>
-                    </span>
-                  </div>
-                  <ArrowUpRight className='h-3.5 w-3.5 flex-shrink-0 text-amber-500 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 dark:text-amber-400' />
-                </button>
-              ) : null}
-
-              {/* Título de sección */}
-              <p className='text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500'>
-                Distribución por Fuente
-              </p>
-
-              {/* Grid de fuentes — se adapta al número de fuentes */}
-              <div
-                className={`grid gap-2 ${
-                  fuentesPago.length === 1
-                    ? 'grid-cols-1'
-                    : fuentesPago.length === 2
-                      ? 'grid-cols-2'
-                      : fuentesPago.length === 3
-                        ? 'grid-cols-1 sm:grid-cols-3'
-                        : 'grid-cols-2'
-                }`}
-              >
-                {fuentesPago.map(fuente => (
-                  <FuenteMiniCard
-                    key={fuente.id}
-                    fuente={fuente}
-                    valorVivienda={valorVivienda}
-                    docsPendientes={pendientesPorFuente[fuente.id]}
-                    colorToken={
-                      tiposFuentes.find(t => t.nombre === fuente.tipo)?.color
-                    }
-                    cuotasExpandidas={cuotasExpandidas[fuente.id]}
-                    onToggleCuotas={
-                      esCreditoConstructora(fuente.tipo)
-                        ? () => toggleCuotas(fuente.id)
-                        : undefined
-                    }
-                    onEditarActa={
-                      esAdminPermisos
-                        ? () =>
-                            setFuenteEditandoActa({
-                              id: fuente.id,
-                              tipo: fuente.tipo,
-                              numeroReferencia: fuente.numero_referencia,
-                              fechaActa: fuente.fecha_acta,
-                            })
-                        : undefined
-                    }
-                    onEditarReferencia={
-                      esAdminPermisos
-                        ? () =>
-                            setFuenteEditandoReferencia({
-                              id: fuente.id,
-                              tipo: fuente.tipo,
-                              numeroReferencia: fuente.numero_referencia,
-                            })
-                        : undefined
-                    }
-                  />
-                ))}
-              </div>
-
-              {/* Cuotas de crédito constructora (full-width below grid) */}
-              {creditoExpandido ? (
-                <div className='rounded-xl border border-indigo-200/60 bg-indigo-50/30 p-3 dark:border-indigo-800/40 dark:bg-indigo-950/10'>
-                  <CuotasCreditoTab
-                    fuentePagoId={creditoExpandido.id}
-                    negociacionId={negociacion.id}
-                    montoFuente={creditoExpandido.monto_aprobado}
-                    onPagoCuotaRegistrado={() => refetchFuentes()}
-                    isAdmin={isAdmin}
-                  />
-                </div>
-              ) : null}
-            </>
-          )}
-        </div>
-      </motion.div>
-
-      {/* ─── NOTAS ───── */}
-      {notasNeg ? (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, delay: 0.06 }}
-          className='flex items-start gap-2.5 rounded-xl border border-amber-200/60 bg-amber-50/60 px-4 py-2.5 dark:border-amber-800/30 dark:bg-amber-950/20'
-        >
-          <FileText className='mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-amber-500' />
-          <div className='min-w-0 flex-1'>
-            <p className='mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300'>
+      {negociacion.notas ? (
+        <div className='flex items-start gap-3 rounded-2xl border border-amber-200/70 bg-amber-50/70 px-4 py-3 dark:border-amber-800/30 dark:bg-amber-950/20'>
+          <FileText className='mt-0.5 h-4 w-4 shrink-0 text-amber-500' />
+          <div className='min-w-0'>
+            <p className='text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300'>
               Notas
             </p>
-            <p className='whitespace-pre-wrap text-xs text-amber-800 dark:text-amber-200'>
-              {notasNeg}
+            <p className='whitespace-pre-wrap text-sm text-amber-900 dark:text-amber-200'>
+              {negociacion.notas}
             </p>
           </div>
-        </motion.div>
+        </div>
       ) : null}
 
-      {/* ─── BLOQUE 3: ABONOS RECIENTES ───── */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25, delay: 0.08 }}
-        className='overflow-hidden rounded-xl border border-gray-200/80 bg-white dark:border-gray-700/50 dark:bg-gray-800/50'
-      >
-        <div className='flex items-center justify-between border-b border-gray-100 px-4 py-2.5 dark:border-gray-700/40'>
-          <div className='flex items-center gap-2'>
-            <CreditCard className='h-4 w-4 text-gray-400' />
-            <h3 className='text-sm font-semibold text-gray-900 dark:text-white'>
-              Abonos recibidos
-            </h3>
-          </div>
-          <div className='flex items-center gap-2'>
-            {isLoadingAbonos ? (
-              <RefreshCw className='h-3 w-3 animate-spin text-gray-300 dark:text-gray-600' />
-            ) : null}
-            {canVerAbonos ? (
-              <button
-                onClick={() =>
-                  router.push(
-                    `/abonos?q=${encodeURIComponent(cliente.numero_documento)}`
-                  )
-                }
-                className='inline-flex items-center gap-1.5 rounded-lg border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-[11px] font-semibold text-cyan-700 transition-all hover:border-cyan-300 hover:bg-cyan-100 hover:shadow-sm dark:border-cyan-800 dark:bg-cyan-900/20 dark:text-cyan-400 dark:hover:bg-cyan-900/40'
-              >
-                <ArrowUpRight className='h-3.5 w-3.5' />
-                Ir a Abonos
-              </button>
-            ) : null}
-          </div>
-        </div>
-        {/* Banner de bloqueo si hay descuadre */}
-        {fuentesPago.length > 0 && !estaBalanceado ? (
-          <div className='flex items-center gap-2 border-b border-red-200 bg-red-50 px-4 py-2 dark:border-red-900/40 dark:bg-red-950/30'>
-            <Shield className='h-3.5 w-3.5 flex-shrink-0 text-red-500' />
-            <p className='text-[10px] font-medium text-red-700 dark:text-red-400'>
-              Registro de abonos bloqueado hasta corregir el descuadre
-              financiero
-            </p>
-          </div>
-        ) : null}
-        <div className='p-3'>
-          <AbonosRecientes
-            abonos={abonosParaUI}
-            totalAbonado={totalAbonado}
-            negociacionId={negociacion.id}
-            clienteCC={cliente.numero_documento}
-            fuentesPago={fuentesPago}
-            isLoading={isLoadingAbonos}
-          />
-        </div>
-      </motion.div>
+      <AbonosRecibidosCard
+        abonos={abonos}
+        isLoading={isLoadingAbonos}
+        totalAbonado={totalAbonado}
+        fuentes={fuentesPago}
+        tiposFuentes={tiposFuentes}
+        bloqueado={fuentesPago.length > 0 && !estaBalanceado}
+        canVerAbonos={canVerAbonos}
+        contexto={{
+          cliente: {
+            id: cliente.id,
+            nombres: cliente.nombres,
+            apellidos: cliente.apellidos,
+            numero_documento: cliente.numero_documento,
+          },
+          negociacion: { id: negociacion.id, estado: negociacion.estado },
+          vivienda: {
+            id: vivienda?.id ?? '',
+            numero: vivienda?.numero ?? '',
+            manzana: vivienda?.manzanas?.nombre ?? '',
+          },
+          proyecto: {
+            id: negociacion.proyecto?.id ?? '',
+            nombre: negociacion.proyecto?.nombre ?? '',
+          },
+          financiero: {
+            valorTotal: valorVivienda,
+            totalAbonado,
+            saldoPendiente: saldo,
+          },
+        }}
+      />
 
-      {/* Modal: Historial de cambios al plan financiero */}
+      {/* ─── Modales ─────────────────────────────────────────────────────── */}
       <HistorialNegociacionModal
         isOpen={historialNegOpen}
         onClose={() => setHistorialNegOpen(false)}
-        negociacionId={negociacion?.id}
+        negociacionId={negociacion.id}
       />
 
-      {/* Modal: Redistribuir montos */}
       {puedeAjustarAhora ? (
         <AjusteCierreFinancieroModal
           isOpen={modalAjusteOpen}
@@ -980,7 +390,6 @@ export function NegociacionTab({
         />
       ) : null}
 
-      {/* Modal: Aplicar/Modificar Descuento */}
       {puedeDescuento ? (
         <DescuentoModal
           isOpen={modalDescuentoOpen}
@@ -995,32 +404,27 @@ export function NegociacionTab({
         />
       ) : null}
 
-      {/* Modal Admin: Editar referencia hipotecario */}
       {esAdminPermisos && fuenteEditandoReferencia ? (
         <EditarReferenciaModal
           fuenteId={fuenteEditandoReferencia.id}
           tipoFuente={fuenteEditandoReferencia.tipo}
-          numeroReferenciaInicial={fuenteEditandoReferencia.numeroReferencia}
+          numeroReferenciaInicial={fuenteEditandoReferencia.numero_referencia}
           onClose={() => setFuenteEditandoReferencia(null)}
           onGuardado={() => refetchFuentes()}
         />
       ) : null}
 
-      {/* Modal Admin: Editar abono */}
-      {isAdmin && abonoEditando ? (
-        <ModalEditarAbono
-          isOpen={!!abonoEditando}
-          abono={abonoEditando}
-          onClose={() => setAbonoEditando(null)}
-          onSuccess={() => {
-            setAbonoEditando(null)
-            refetchAbonos()
-            refetchFuentes()
-          }}
+      {esAdminPermisos && fuenteEditandoActa ? (
+        <EditarActaModal
+          fuenteId={fuenteEditandoActa.id}
+          tipoFuente={fuenteEditandoActa.tipo}
+          numeroReferenciaInicial={fuenteEditandoActa.numero_referencia}
+          fechaActaInicial={fuenteEditandoActa.fecha_acta}
+          onClose={() => setFuenteEditandoActa(null)}
+          onGuardado={() => refetchFuentes()}
         />
       ) : null}
 
-      {/* Modal: Marcar como Escriturada */}
       {modalEscriturarOpen && vivienda?.id ? (
         <MarcarEscrituraModal
           viviendaId={vivienda.id}
@@ -1037,7 +441,6 @@ export function NegociacionTab({
         />
       ) : null}
 
-      {/* Modal: Registrar Renuncia */}
       {puedeRenunciar && modalRenunciaOpen ? (
         <RegistrarRenunciaModal
           negociacionId={negociacion.id}
@@ -1049,20 +452,7 @@ export function NegociacionTab({
         />
       ) : null}
 
-      {/* Modal: Editar N° Acta (solo admin) */}
-      {esAdminPermisos && fuenteEditandoActa ? (
-        <EditarActaModal
-          fuenteId={fuenteEditandoActa.id}
-          tipoFuente={fuenteEditandoActa.tipo}
-          numeroReferenciaInicial={fuenteEditandoActa.numeroReferencia}
-          fechaActaInicial={fuenteEditandoActa.fechaActa}
-          onClose={() => setFuenteEditandoActa(null)}
-          onGuardado={() => refetchFuentes()}
-        />
-      ) : null}
-
-      {/* Modal: Registrar devolución de excedente */}
-      {modalDevolucionOpen && negociacion && diferencia < 0 ? (
+      {modalDevolucionOpen && diferencia < 0 ? (
         <ProcesarDevolucionExcedenteModal
           negociacionId={negociacion.id}
           montoExcedente={Math.abs(diferencia)}

@@ -1,182 +1,133 @@
 'use client'
 
-import { motion } from 'framer-motion'
-import { Mail, MapPin, Phone } from 'lucide-react'
+import {
+  Mail,
+  MapPin,
+  MessageCircle,
+  Navigation,
+  Phone,
+  PhoneCall,
+} from 'lucide-react'
 
-import * as styles from '@/app/clientes/[id]/cliente-detalle.styles'
+import { formatTelefono } from '@/lib/utils/format.utils'
 import type { Cliente } from '@/modules/clientes/types'
 
-const EMPTY = 'Sin registrar'
+import { AccionRapida, DetalleCard, FilaDato } from './DetalleCard'
 
-interface ContactoUbicacionCardProps {
-  cliente: Cliente
+/** Solo dígitos; agrega el indicativo de Colombia a celulares de 10 dígitos */
+function numeroWhatsApp(telefono: string) {
+  const d = telefono.replace(/\D/g, '')
+  return d.length === 10 ? `57${d}` : d
 }
 
-const fadeInLeft = {
-  initial: { opacity: 0, x: -20 },
-  animate: { opacity: 1, x: 0 },
-  exit: { opacity: 0, x: 20 },
+const tintTelefono =
+  'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'
+
+function AccionesTelefono({ telefono }: { telefono: string }) {
+  return (
+    <>
+      <AccionRapida
+        icon={PhoneCall}
+        label='Llamar'
+        href={`tel:${telefono.replace(/\s/g, '')}`}
+      />
+      <AccionRapida
+        icon={MessageCircle}
+        label='Escribir por WhatsApp'
+        href={`https://wa.me/${numeroWhatsApp(telefono)}`}
+        externo
+        className='hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-400'
+      />
+    </>
+  )
 }
 
-export function ContactoUbicacionCard({ cliente }: ContactoUbicacionCardProps) {
-  const hasLocation =
-    cliente.ciudad || cliente.departamento || cliente.direccion
+export function ContactoUbicacionCard({ cliente }: { cliente: Cliente }) {
+  const ciudad = [cliente.ciudad, cliente.departamento]
+    .filter(Boolean)
+    .join(', ')
+  const ubicacion = [cliente.direccion, ciudad].filter(Boolean).join(', ')
 
   return (
-    <motion.div
-      {...fadeInLeft}
-      transition={{ delay: 0.1 }}
-      className='group relative overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg dark:border-gray-700/60 dark:bg-gray-800/90 md:row-span-5 md:grid md:grid-rows-subgrid'
+    <DetalleCard
+      icon={Phone}
+      title='Contacto y ubicación'
+      gradient='from-blue-500 to-indigo-600'
+      delay={0.05}
     >
-      {/* Accent bar left */}
-      <div className='absolute inset-y-0 left-0 w-0.5 bg-gradient-to-b from-blue-500 to-indigo-600' />
+      <FilaDato
+        icon={Phone}
+        tint={tintTelefono}
+        label='Teléfono principal'
+        acciones={
+          cliente.telefono ? (
+            <AccionesTelefono telefono={cliente.telefono} />
+          ) : undefined
+        }
+      >
+        {formatTelefono(cliente.telefono)}
+      </FilaDato>
 
-      {/* Header */}
-      <div className='flex items-center gap-2 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-2.5 dark:border-gray-700/60 dark:from-blue-950/30 dark:to-indigo-950/30'>
-        <div
-          className={`${styles.infoCardClasses.iconContainer} bg-gradient-to-br ${styles.gradients.contacto} shadow-sm shadow-blue-500/30`}
-        >
-          <Phone className={styles.infoCardClasses.icon} />
-        </div>
-        <h3 className='text-sm font-semibold text-gray-900 dark:text-white'>
-          Contacto y Ubicación
-        </h3>
-      </div>
+      <FilaDato
+        icon={Phone}
+        tint={tintTelefono}
+        label='Teléfono alternativo'
+        acciones={
+          cliente.telefono_alternativo ? (
+            <AccionesTelefono telefono={cliente.telefono_alternativo} />
+          ) : undefined
+        }
+      >
+        {formatTelefono(cliente.telefono_alternativo)}
+      </FilaDato>
 
-      {/* Teléfono Principal */}
-      {cliente.telefono ? (
-        <div className='flex items-center gap-3 border-b border-gray-100 px-4 py-2.5 dark:border-gray-700/60'>
-          <div className='flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/40'>
-            <Phone className='h-3.5 w-3.5 text-blue-600 dark:text-blue-400' />
-          </div>
-          <div className='min-w-0 flex-1'>
-            <p className='text-xs text-gray-400 dark:text-gray-500'>
-              Teléfono Principal
-            </p>
-            <p className='text-sm font-semibold text-gray-900 dark:text-white'>
-              {cliente.telefono}
-            </p>
-          </div>
-        </div>
-      ) : (
-        <div className='flex items-center gap-3 border-b border-gray-100 px-4 py-2.5 dark:border-gray-700/60'>
-          <div className='flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700/40'>
-            <Phone className='h-3.5 w-3.5 text-gray-400 dark:text-gray-500' />
-          </div>
-          <div>
-            <p className='text-xs text-gray-400 dark:text-gray-500'>
-              Teléfono Principal
-            </p>
-            <p className='text-xs italic text-gray-400 dark:text-gray-500'>
-              {EMPTY}
-            </p>
-          </div>
-        </div>
-      )}
+      <FilaDato
+        icon={Mail}
+        tint='bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400'
+        label='Correo electrónico'
+        acciones={
+          cliente.email ? (
+            <AccionRapida
+              icon={Mail}
+              label='Enviar correo'
+              href={`mailto:${cliente.email}`}
+            />
+          ) : undefined
+        }
+      >
+        {cliente.email ? (
+          <span className='block truncate'>{cliente.email}</span>
+        ) : null}
+      </FilaDato>
 
-      {/* Teléfono Alternativo */}
-      {cliente.telefono_alternativo ? (
-        <div className='flex items-center gap-3 border-b border-gray-100 px-4 py-2.5 dark:border-gray-700/60'>
-          <div className='flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/40'>
-            <Phone className='h-3.5 w-3.5 text-blue-600 dark:text-blue-400' />
-          </div>
-          <div className='min-w-0 flex-1'>
-            <p className='text-xs text-gray-400 dark:text-gray-500'>
-              Teléfono Alternativo
-            </p>
-            <p className='text-sm font-semibold text-gray-900 dark:text-white'>
-              {cliente.telefono_alternativo}
-            </p>
-          </div>
-        </div>
-      ) : (
-        <div className='flex items-center gap-3 border-b border-gray-100 px-4 py-2.5 dark:border-gray-700/60'>
-          <div className='flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700/40'>
-            <Phone className='h-3.5 w-3.5 text-gray-400 dark:text-gray-500' />
-          </div>
-          <div>
-            <p className='text-xs text-gray-400 dark:text-gray-500'>
-              Teléfono Alternativo
-            </p>
-            <p className='text-xs italic text-gray-400 dark:text-gray-500'>
-              {EMPTY}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Email */}
-      {cliente.email ? (
-        <div className='flex items-center gap-3 border-b border-gray-100 px-4 py-2.5 dark:border-gray-700/60'>
-          <div className='flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-900/40'>
-            <Mail className='h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400' />
-          </div>
-          <div className='min-w-0 flex-1'>
-            <p className='text-xs text-gray-400 dark:text-gray-500'>
-              Correo Electrónico
-            </p>
-            <p className='truncate text-sm font-semibold text-gray-900 dark:text-white'>
-              {cliente.email}
-            </p>
-          </div>
-        </div>
-      ) : (
-        <div className='flex items-center gap-3 border-b border-gray-100 px-4 py-2.5 dark:border-gray-700/60'>
-          <div className='flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700/40'>
-            <Mail className='h-3.5 w-3.5 text-gray-400 dark:text-gray-500' />
-          </div>
-          <div>
-            <p className='text-xs text-gray-400 dark:text-gray-500'>
-              Correo Electrónico
-            </p>
-            <p className='text-xs italic text-gray-400 dark:text-gray-500'>
-              {EMPTY}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Sección Ubicación */}
-      {hasLocation ? (
-        <div className='px-4 py-2.5'>
-          <div className='flex items-start gap-3'>
-            <div className='mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/40'>
-              <MapPin className='h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400' />
-            </div>
-            <div className='min-w-0 flex-1 space-y-0.5'>
-              <p className='text-xs text-gray-400 dark:text-gray-500'>
-                Ubicación
-              </p>
-              {cliente.direccion && (
-                <p className='text-sm font-semibold text-gray-900 dark:text-white'>
-                  {cliente.direccion}
-                </p>
-              )}
-              {(cliente.ciudad || cliente.departamento) && (
-                <p className='text-xs text-gray-500 dark:text-gray-400'>
-                  {[cliente.ciudad, cliente.departamento]
-                    .filter(Boolean)
-                    .join(', ')}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className='flex items-center gap-3 px-4 py-2.5'>
-          <div className='flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700/40'>
-            <MapPin className='h-3.5 w-3.5 text-gray-400 dark:text-gray-500' />
-          </div>
-          <div>
-            <p className='text-xs text-gray-400 dark:text-gray-500'>
-              Ubicación
-            </p>
-            <p className='text-xs italic text-gray-400 dark:text-gray-500'>
-              {EMPTY}
-            </p>
-          </div>
-        </div>
-      )}
-    </motion.div>
+      <FilaDato
+        icon={MapPin}
+        tint='bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
+        label='Ubicación'
+        acciones={
+          ubicacion ? (
+            <AccionRapida
+              icon={Navigation}
+              label='Ver en Google Maps'
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ubicacion)}`}
+              externo
+            />
+          ) : undefined
+        }
+      >
+        {ubicacion ? (
+          <>
+            {cliente.direccion && (
+              <span className='block'>{cliente.direccion}</span>
+            )}
+            {ciudad && (
+              <span className='block text-xs font-normal text-slate-500 dark:text-slate-400'>
+                {ciudad}
+              </span>
+            )}
+          </>
+        ) : null}
+      </FilaDato>
+    </DetalleCard>
   )
 }

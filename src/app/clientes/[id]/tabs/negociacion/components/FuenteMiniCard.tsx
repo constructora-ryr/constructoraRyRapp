@@ -1,24 +1,37 @@
 'use client'
 
+/**
+ * Tarjeta de una fuente de pago en el Plan de Pagos. El color y el ícono
+ * salen de la configuración (tipos_fuentes_pago.color / icono), así que
+ * respetan lo que defina el administrador.
+ */
+
 import {
   AlertCircle,
   Building2,
   CheckCircle2,
   ChevronDown,
   DollarSign,
+  Gift,
+  HandCoins,
+  Home,
+  KeyRound,
+  Landmark,
   Pencil,
+  Wallet,
+  type LucideIcon,
 } from 'lucide-react'
 
 import type { FuentePago } from '@/modules/clientes/services/fuentes-pago.service'
+import { formatCOP } from '@/shared/components/list-page'
 import {
   esCreditoConstructora,
   esCreditoHipotecario,
   esSubsidioCajaCompensacion,
   esSubsidioMiCasaYa,
+  getFuenteColorClasses,
 } from '@/shared/constants/fuentes-pago.constants'
-import { formatCurrency } from '@/shared/utils/format'
-
-import { getFuenteColor } from '../hooks'
+import { cn } from '@/shared/utils/helpers'
 
 const MESES = [
   'ene',
@@ -37,25 +50,35 @@ const MESES = [
 
 function formatFechaActa(fecha: string): string {
   const [year, month, day] = fecha.split('-').map(Number)
-  return `${day} de ${MESES[month - 1]} de ${year}`
+  return `${day} ${MESES[month - 1]} ${year}`
 }
 
-interface DocPendienteInfo {
-  nombre: string
-  obligatorio: boolean
+/** Íconos de tipos_fuentes_pago.icono (nombre de lucide) */
+const ICONOS: Record<string, LucideIcon> = {
+  DollarSign,
+  Building2,
+  Home,
+  HandCoins,
+  Landmark,
+  Wallet,
+  Gift,
+  KeyRound,
 }
 
 interface DocsPendientesInfo {
   total: number
   obligatorios: number
-  docs: DocPendienteInfo[]
+  docs: { nombre: string; obligatorio: boolean }[]
 }
 
 interface FuenteMiniCardProps {
   fuente: FuentePago
   valorVivienda: number
   docsPendientes?: DocsPendientesInfo
+  /** tipos_fuentes_pago.color */
   colorToken?: string
+  /** tipos_fuentes_pago.icono */
+  iconoNombre?: string
   cuotasExpandidas?: boolean
   onToggleCuotas?: () => void
   onEditarActa?: () => void
@@ -67,18 +90,20 @@ export function FuenteMiniCard({
   valorVivienda,
   docsPendientes,
   colorToken,
+  iconoNombre,
   cuotasExpandidas,
   onToggleCuotas,
   onEditarActa,
   onEditarReferencia,
 }: FuenteMiniCardProps) {
-  const color = getFuenteColor(colorToken)
+  const color = getFuenteColorClasses(colorToken)
+  const Icono = (iconoNombre && ICONOS[iconoNombre]) || Wallet
   const esCredito = esCreditoConstructora(fuente.tipo)
   const esHipotecario = esCreditoHipotecario(fuente.tipo)
   const esSubsidioConActa =
     esSubsidioCajaCompensacion(fuente.tipo) || esSubsidioMiCasaYa(fuente.tipo)
 
-  // Para crédito constructora: capital = capital_para_cierre, total = monto_aprobado
+  // Crédito constructora: capital = capital_para_cierre, total = monto_aprobado
   const capital = fuente.capital_para_cierre ?? fuente.monto_aprobado
   const montoTotal = fuente.monto_aprobado
   const intereses =
@@ -86,160 +111,181 @@ export function FuenteMiniCard({
       ? montoTotal - fuente.capital_para_cierre
       : 0
 
-  // % contra precio vivienda: siempre capital/valorVivienda (distribución del precio)
-  const pct =
-    valorVivienda > 0 ? ((capital / valorVivienda) * 100).toFixed(1) : '0'
+  // % del precio de la vivienda que cubre esta fuente
+  const pct = valorVivienda > 0 ? (capital / valorVivienda) * 100 : 0
 
   const recibido = fuente.monto_recibido ?? 0
-  // Progreso: recibido vs total real a pagar en esta fuente
   const pctRecibido =
     montoTotal > 0 ? Math.min(100, (recibido / montoTotal) * 100) : 0
+  const completa = pctRecibido >= 100
   const pendientes = docsPendientes?.total ?? 0
   const pendOblig = docsPendientes?.obligatorios ?? 0
 
-  // Texto del alerta de documentos pendientes
-  const alertaDocsTexto = (() => {
-    if (pendientes === 0) return null
-    if (pendOblig === 1) return '1 doc. obligatorio'
-    if (pendOblig > 1) return `${pendOblig} docs. obligatorios`
-    if (pendientes === 1) return '1 doc. pendiente'
-    return `${pendientes} docs. pendientes`
-  })()
+  const alertaDocs =
+    pendientes === 0
+      ? null
+      : pendOblig === 1
+        ? '1 doc. obligatorio'
+        : pendOblig > 1
+          ? `${pendOblig} docs. obligatorios`
+          : pendientes === 1
+            ? '1 doc. pendiente'
+            : `${pendientes} docs. pendientes`
+
+  const detalle =
+    esCredito && intereses > 0
+      ? `Capital ${formatCOP(capital)} · +${formatCOP(intereses)} intereses`
+      : esSubsidioConActa && fuente.numero_referencia
+        ? `Acta No. ${fuente.numero_referencia}${fuente.fecha_acta ? ` · ${formatFechaActa(fuente.fecha_acta)}` : ''}`
+        : esHipotecario && fuente.numero_referencia
+          ? `Ref. ${fuente.numero_referencia}`
+          : null
+
+  const accion: {
+    icon: LucideIcon
+    label: string
+    onClick: () => void
+    desplegable?: boolean
+  } | null =
+    esCredito && onToggleCuotas
+      ? {
+          icon: DollarSign,
+          label: 'Plan de cuotas',
+          onClick: onToggleCuotas,
+          desplegable: true,
+        }
+      : esSubsidioConActa && onEditarActa
+        ? { icon: Pencil, label: 'Editar N° de acta', onClick: onEditarActa }
+        : esHipotecario && onEditarReferencia
+          ? {
+              icon: Pencil,
+              label: 'Editar referencia',
+              onClick: onEditarReferencia,
+            }
+          : null
+  const AccionIcono = accion?.icon
 
   return (
-    <div className='group relative overflow-hidden rounded-xl border border-gray-200/80 bg-white transition-shadow hover:shadow-md dark:border-gray-700/50 dark:bg-gray-800/60'>
-      {/* Barra de color superior */}
-      <div className={`h-1 ${color.barra}`} />
-
-      <div className='p-3'>
-        {/* ── Zona 1: Nombre + % — altura natural ~16px ── */}
-        <div className='flex items-start justify-between gap-1'>
-          <p className='min-w-0 truncate text-xs font-bold leading-tight text-gray-900 dark:text-white'>
+    <div className='flex flex-col rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition-shadow hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800/60'>
+      {/* Tipo + % del precio */}
+      <div className='flex items-start gap-3'>
+        <span
+          className={cn(
+            'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white shadow-sm',
+            color.icon
+          )}
+        >
+          <Icono className='h-5 w-5' />
+        </span>
+        <div className='min-w-0 flex-1'>
+          <p className='break-words text-sm font-bold leading-tight text-slate-900 dark:text-white'>
             {fuente.tipo}
           </p>
-          <span
-            className={`flex-shrink-0 text-[10px] font-bold tabular-nums ${color.texto}`}
-          >
-            {pct}%
-          </span>
-        </div>
-
-        {/* ── Zona 2: Entidad — SIEMPRE h-[18px] con o sin texto ── */}
-        <p className='mt-0.5 flex h-[18px] items-center gap-1 text-[10px] text-gray-400 dark:text-gray-500'>
-          {fuente.entidad ? (
-            <>
-              <Building2 className='h-2.5 w-2.5 flex-shrink-0' />
+          {fuente.entidad && (
+            <p className='mt-0.5 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400'>
+              <Building2 className='h-3 w-3 shrink-0' />
               <span className='truncate'>{fuente.entidad}</span>
-            </>
-          ) : null}
-        </p>
+            </p>
+          )}
+        </div>
+        <span
+          className={cn(
+            'shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums',
+            color.badge
+          )}
+          title='Parte del precio de la vivienda que cubre esta fuente'
+        >
+          {pct.toFixed(1)}%
+        </span>
+      </div>
 
-        {/* ── Zona 3: Monto principal — altura natural ~20px ── */}
-        <p className='mt-1 text-sm font-bold tabular-nums leading-none text-gray-900 dark:text-white'>
-          {formatCurrency(montoTotal)}
+      {/* Monto */}
+      <p className='mt-3 text-xl font-black tabular-nums tracking-tight text-slate-900 dark:text-white'>
+        {formatCOP(montoTotal)}
+      </p>
+      {detalle && (
+        <p
+          className='truncate text-xs text-slate-500 dark:text-slate-400'
+          title={detalle}
+        >
+          {detalle}
         </p>
+      )}
 
-        {/* ── Zona 4: Desglose intereses (crédito) | N° Acta (subsidio) — SIEMPRE h-[18px] ── */}
-        <p className='mt-0.5 flex h-[18px] items-center gap-1 text-[10px] tabular-nums'>
-          {esCredito && intereses > 0 ? (
-            <>
-              <span className='text-gray-400 dark:text-gray-500'>
-                Capital {formatCurrency(capital)}
-              </span>
-              <span className='text-gray-300 dark:text-gray-600'>·</span>
-              <span className='text-violet-500 dark:text-violet-400'>
-                +{formatCurrency(intereses)} int.
-              </span>
-            </>
-          ) : esSubsidioConActa && fuente.numero_referencia ? (
-            <span className='truncate text-gray-500 dark:text-gray-400'>
-              Acta No. {fuente.numero_referencia}
-              {fuente.fecha_acta
-                ? ` del ${formatFechaActa(fuente.fecha_acta)}`
-                : ''}
-            </span>
-          ) : esHipotecario && fuente.numero_referencia ? (
-            <span className='truncate text-gray-500 dark:text-gray-400'>
-              Ref. {fuente.numero_referencia}
-            </span>
-          ) : null}
-        </p>
-
-        {/* ── Zona 5: Barra de progreso
-            SIN mt-auto — siempre a la misma distancia del contenido superior.
-            Como todas las zonas 1-4 tienen alturas fijas, esta barra queda
-            en el mismo Y absoluto en todas las cards. ── */}
-        <div className='mt-3 h-1.5 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700'>
+      {/* Recibido */}
+      <div className='mt-3'>
+        <div className='h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700/60'>
           <div
-            className={`h-full rounded-full ${color.barra} opacity-80 transition-all duration-500`}
+            className={cn(
+              'h-full rounded-full transition-all duration-500',
+              color.barra
+            )}
             style={{ width: `${pctRecibido}%` }}
           />
         </div>
-
-        {/* ── Zona 6: Abonado + alerta docs ── */}
-        <div className='mt-1.5 flex items-center justify-between gap-1'>
-          <span className='text-[10px] text-gray-400 dark:text-gray-500'>
-            Abonado:{' '}
-            <span className='font-medium tabular-nums text-gray-600 dark:text-gray-300'>
-              {formatCurrency(recibido)}
+        <div className='mt-1.5 flex flex-wrap items-center justify-between gap-1 text-xs'>
+          <span className='text-slate-500 dark:text-slate-400'>
+            Recibido{' '}
+            <span className='font-semibold tabular-nums text-slate-700 dark:text-slate-200'>
+              {formatCOP(recibido)}
             </span>
-            {recibido > 0 && (
-              <span
-                className={`ml-1 font-semibold tabular-nums ${
-                  pctRecibido >= 100
-                    ? 'text-emerald-600 dark:text-emerald-400'
-                    : 'text-amber-500 dark:text-amber-400'
-                }`}
-              >
-                ({Math.round(pctRecibido)}%)
-              </span>
-            )}
           </span>
-          {alertaDocsTexto ? (
-            <span className='flex items-center gap-0.5 text-[10px] font-medium text-amber-500 dark:text-amber-400'>
-              <AlertCircle className='h-2.5 w-2.5 flex-shrink-0' />
-              {alertaDocsTexto}
+          {completa ? (
+            <span className='inline-flex items-center gap-1 font-semibold text-emerald-700 dark:text-emerald-400'>
+              <CheckCircle2 className='h-3.5 w-3.5' />
+              Completa
             </span>
-          ) : docsPendientes !== undefined ? (
-            <CheckCircle2 className='h-3 w-3 text-emerald-500 dark:text-emerald-400' />
-          ) : null}
+          ) : (
+            <span
+              className={cn(
+                'font-semibold tabular-nums',
+                recibido > 0
+                  ? 'text-amber-700 dark:text-amber-400'
+                  : 'text-slate-400'
+              )}
+            >
+              {Math.round(pctRecibido)}%
+            </span>
+          )}
         </div>
-
-        {/* ── Zona 7: Botón cuotas (crédito) | Editar acta (subsidio) | Editar ref (hipotecario) | spacer ── */}
-        {esCredito && onToggleCuotas ? (
-          <button
-            type='button'
-            onClick={onToggleCuotas}
-            className='mt-2 flex w-full items-center gap-1 border-t border-gray-100 pt-2 text-[10px] font-semibold text-indigo-600 transition-colors hover:text-indigo-700 dark:border-gray-700/50 dark:text-indigo-400 dark:hover:text-indigo-300'
-          >
-            <DollarSign className='h-3 w-3' />
-            Plan de cuotas
-            <ChevronDown
-              className={`ml-auto h-3 w-3 transition-transform duration-200 ${cuotasExpandidas ? 'rotate-180' : ''}`}
-            />
-          </button>
-        ) : esSubsidioConActa && onEditarActa ? (
-          <button
-            type='button'
-            onClick={onEditarActa}
-            className='mt-2 flex w-full items-center gap-1 border-t border-gray-100 pt-2 text-[10px] font-semibold text-orange-500 transition-colors hover:text-orange-600 dark:border-gray-700/50 dark:text-orange-400 dark:hover:text-orange-300'
-          >
-            <Pencil className='h-3 w-3' />
-            Editar N° Acta
-          </button>
-        ) : esHipotecario && onEditarReferencia ? (
-          <button
-            type='button'
-            onClick={onEditarReferencia}
-            className='mt-2 flex w-full items-center gap-1 border-t border-gray-100 pt-2 text-[10px] font-semibold text-cyan-600 transition-colors hover:text-cyan-700 dark:border-gray-700/50 dark:text-cyan-400 dark:hover:text-cyan-300'
-          >
-            <Pencil className='h-3 w-3' />
-            Editar Referencia
-          </button>
-        ) : (
-          <div aria-hidden className='mt-2 h-[37px]' />
-        )}
       </div>
+
+      {/* Documentos */}
+      {alertaDocs ? (
+        <p className='mt-2 inline-flex items-center gap-1 self-start rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 ring-1 ring-inset ring-amber-600/20 dark:bg-amber-500/10 dark:text-amber-300'>
+          <AlertCircle className='h-3 w-3' />
+          {alertaDocs}
+        </p>
+      ) : docsPendientes !== undefined ? (
+        <p className='mt-2 inline-flex items-center gap-1 self-start text-[11px] font-medium text-emerald-700 dark:text-emerald-400'>
+          <CheckCircle2 className='h-3 w-3' />
+          Documentos al día
+        </p>
+      ) : null}
+
+      {/* Acción (al fondo: las tarjetas de una fila quedan alineadas) */}
+      <div className='flex-1' />
+      {accion && AccionIcono && (
+        <button
+          type='button'
+          onClick={accion.onClick}
+          className={cn(
+            'mt-3 flex h-10 w-full items-center gap-1.5 rounded-xl border border-slate-200 px-3 text-xs font-semibold transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-700/40 sm:h-9',
+            color.texto
+          )}
+        >
+          <AccionIcono className='h-3.5 w-3.5' />
+          {accion.label}
+          {accion.desplegable && (
+            <ChevronDown
+              className={cn(
+                'ml-auto h-4 w-4 transition-transform duration-200',
+                cuotasExpandidas && 'rotate-180'
+              )}
+            />
+          )}
+        </button>
+      )}
     </div>
   )
 }

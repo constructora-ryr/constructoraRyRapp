@@ -1,6 +1,5 @@
 export { BannerDocumentacion } from './BannerDocumentacion'
 export { ContactoUbicacionCard } from './ContactoUbicacionCard'
-export { EstadisticasComerciales } from './EstadisticasComerciales'
 export { InfoPersonalCard } from './InfoPersonalCard'
 export { NotasCard } from './NotasCard'
 export { ResumenNegociacion } from './ResumenNegociacion'
