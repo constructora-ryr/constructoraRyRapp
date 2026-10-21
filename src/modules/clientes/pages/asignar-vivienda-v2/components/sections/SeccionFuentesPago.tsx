@@ -31,6 +31,7 @@ import type {
 } from '@/modules/configuracion/types/campos-dinamicos.types'
 import { CreditoConstructoraForm } from '@/modules/fuentes-pago/components/CreditoConstructoraForm'
 import type { ParametrosCredito } from '@/modules/fuentes-pago/types'
+import { Cargador } from '@/shared/components/carga'
 
 import { styles as s } from '../../styles'
 
@@ -82,10 +83,12 @@ export function SeccionFuentesPago({
 
   if (cargandoTipos) {
     return (
-      <div className={s.loadingRow}>
-        <div className={s.spinner} />
-        <span>Cargando fuentes de pago activas...</span>
-      </div>
+      <Cargador
+        modulo='clientes'
+        tamano='sm'
+        label='Cargando fuentes de pago activas'
+        className='py-8'
+      />
     )
   }
 

@@ -317,8 +317,4 @@ export const styles = {
   datoBadge:
     'text-[10px] tracking-widest border border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-1.5 py-0.5 rounded uppercase ml-1.5',
   charCounter: 'text-[10px] text-gray-400 dark:text-gray-500 text-right mt-0.5',
-  spinner:
-    'w-4 h-4 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin',
-  loadingRow:
-    'flex items-center gap-2 py-8 text-gray-400 dark:text-gray-500 text-xs justify-center',
 } as const

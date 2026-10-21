@@ -1,22 +1,9 @@
-'use client'
-
 import { Users } from 'lucide-react'
 
-import { ModuleLoadingScreen } from '@/shared/components/ui/ModuleLoadingScreen'
+import { PantallaCarga } from '@/shared/components/carga'
 
 export default function Loading() {
   return (
-    <ModuleLoadingScreen
-      Icon={Users}
-      label='Cargando clientes...'
-      ringColors='border-t-cyan-500 border-r-blue-500'
-      ringBg='from-cyan-500/20 to-blue-500/20'
-      iconGradient='from-cyan-600 via-blue-600 to-indigo-600'
-      iconShadow='shadow-cyan-500/50'
-      pageBg='via-cyan-50/30 to-blue-50/30'
-      pageBgDark='dark:via-cyan-950/20 dark:to-blue-950/20'
-      labelColor='text-cyan-600 dark:text-cyan-400'
-      sparkleColor='text-cyan-500'
-    />
+    <PantallaCarga modulo='clientes' icon={Users} label='Cargando clientes' />
   )
 }

@@ -25,7 +25,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { AnimatePresence, motion } from 'framer-motion'
-import { AlertCircle, FileCode, Plus, Save, X } from 'lucide-react'
+import { AlertCircle, FileCode, Loader2, Plus, Save, X } from 'lucide-react'
 
 import type { ConfiguracionCampos } from '../../types/campos-dinamicos.types'
 
@@ -230,7 +230,7 @@ export function ConfiguradorCamposModal({
               >
                 {hook.guardando ? (
                   <>
-                    <div className='h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
+                    <Loader2 className='h-4 w-4 animate-spin' />
                     Guardando...
                   </>
                 ) : (

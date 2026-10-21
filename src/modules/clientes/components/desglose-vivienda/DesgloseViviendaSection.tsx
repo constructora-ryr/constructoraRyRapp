@@ -27,6 +27,8 @@ import {
   TrendingUp,
 } from 'lucide-react'
 
+import { Cargador } from '@/shared/components/carga'
+
 // ============================================
 // TYPES
 // ============================================
@@ -135,12 +137,12 @@ export function DesgloseViviendaSection({
   if (loading) {
     return (
       <div className='rounded-xl border-2 border-cyan-200 bg-white p-6 dark:border-cyan-800 dark:bg-gray-800'>
-        <div className='flex items-center justify-center py-8'>
-          <div className='space-y-2 text-center'>
-            <div className='mx-auto h-8 w-8 animate-spin rounded-full border-4 border-cyan-600 border-t-transparent' />
-            <p className='text-xs text-gray-500'>Cargando desglose...</p>
-          </div>
-        </div>
+        <Cargador
+          modulo='clientes'
+          tamano='sm'
+          label='Cargando desglose'
+          className='py-8'
+        />
       </div>
     )
   }

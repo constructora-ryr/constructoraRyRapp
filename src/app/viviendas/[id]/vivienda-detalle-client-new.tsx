@@ -22,12 +22,11 @@ import { getShortId } from '@/lib/utils/slug.utils'
 import { usePermisosQuery } from '@/modules/usuarios/hooks'
 import { InfoTab } from '@/modules/viviendas/components/detalle/tabs/InfoTab'
 import { useViviendaQuery } from '@/modules/viviendas/hooks/useViviendaQuery'
+import { Cargador } from '@/shared/components/carga'
 import { Button } from '@/shared/components/ui/button'
 
 const TabSpinner = () => (
-  <div className='flex items-center justify-center py-12'>
-    <div className='h-6 w-6 animate-spin rounded-full border-2 border-orange-500 border-t-transparent' />
-  </div>
+  <Cargador modulo='viviendas' label='Cargando' className='py-12' />
 )
 
 const DocumentosTab = dynamic(

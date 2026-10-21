@@ -76,8 +76,6 @@ export const typography = {
 
 // Loading States
 export const loading = {
-  spinner:
-    'animate-spin rounded-full border-2 border-gray-300 border-t-blue-600',
   pulse: 'animate-pulse bg-gray-200 dark:bg-gray-700 rounded',
   skeleton:
     'animate-pulse bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%]',

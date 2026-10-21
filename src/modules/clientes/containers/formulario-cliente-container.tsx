@@ -13,6 +13,7 @@
 'use client'
 
 import { ModalConfirmacion } from '@/shared'
+import { Cargador } from '@/shared/components/carga'
 
 import { ConfirmarCambiosModal } from '../components/ConfirmarCambiosModal'
 import { FormularioCliente } from '../components/formulario-cliente-modern'
@@ -80,10 +81,7 @@ export function FormularioClienteContainer({
         <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-md'>
           <div className='relative w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl dark:bg-gray-900'>
             <div className='flex flex-col items-center gap-4'>
-              <div className='relative'>
-                <div className='h-16 w-16 rounded-full border-4 border-cyan-200 dark:border-cyan-900' />
-                <div className='absolute inset-0 h-16 w-16 animate-spin rounded-full border-4 border-t-cyan-600 dark:border-t-cyan-400' />
-              </div>
+              <Cargador modulo='clientes' />
               <div className='text-center'>
                 <p className='text-base font-semibold text-gray-900 dark:text-gray-100'>
                   Cargando datos del cliente...

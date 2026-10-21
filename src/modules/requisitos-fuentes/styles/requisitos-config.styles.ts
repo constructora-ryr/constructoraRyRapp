@@ -154,10 +154,4 @@ export const requisitosConfigStyles = {
   // ============================================
   // ESTADOS DE CARGA
   // ============================================
-  loading: {
-    container: 'flex flex-col items-center justify-center py-12',
-    spinner:
-      'w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin',
-    text: 'mt-3 text-sm text-gray-600 dark:text-gray-400',
-  },
 } as const

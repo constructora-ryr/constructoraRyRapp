@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 
-import { ArrowLeftRight, X } from 'lucide-react'
+import { ArrowLeftRight, Loader2, X } from 'lucide-react'
 import { createPortal } from 'react-dom'
 
 import { getTodayDateString } from '@/lib/utils/date.utils'
@@ -146,7 +146,7 @@ export function ProcesarPagoExcedenteModal({
             className='flex items-center gap-2 rounded-xl bg-amber-500 px-5 py-2 text-sm font-semibold text-white transition hover:bg-amber-600 disabled:opacity-50'
           >
             {mutation.isPending && (
-              <div className='h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent' />
+              <Loader2 className='h-3.5 w-3.5 animate-spin' />
             )}
             Confirmar devolución
           </button>

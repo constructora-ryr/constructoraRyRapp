@@ -16,7 +16,6 @@ import {
   CheckCircle2,
   DollarSign,
   Home,
-  Loader2,
   Lock,
   MapPin,
   User,
@@ -24,6 +23,7 @@ import {
 
 import { formatCurrency } from '@/lib/utils/format.utils'
 import type { FuenteConAbonos } from '@/modules/clientes/services/traslado-vivienda.service'
+import { Cargador } from '@/shared/components/carga'
 
 import { styles as s } from '../../styles'
 
@@ -58,10 +58,12 @@ export function SeccionOrigenTraslado({
 }: SeccionOrigenTrasladoProps) {
   if (cargandoValidacion) {
     return (
-      <div className={s.loadingRow}>
-        <Loader2 className='h-5 w-5 animate-spin text-cyan-500' />
-        <span>Validando negociación actual...</span>
-      </div>
+      <Cargador
+        modulo='clientes'
+        tamano='sm'
+        label='Validando negociación actual'
+        className='py-8'
+      />
     )
   }
 

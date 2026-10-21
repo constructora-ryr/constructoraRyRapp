@@ -243,12 +243,6 @@ export const sharedAvatarStyles = {
 // ===================
 
 export const sharedUtilityStyles = {
-  // Spinner
-  spinner:
-    'h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent',
-  spinnerPrimary:
-    'h-5 w-5 animate-spin rounded-full border-2 border-purple-600 border-t-transparent',
-
   // Divider
   divider: 'my-6 border-t border-gray-200 dark:border-gray-800',
 

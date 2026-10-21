@@ -3,7 +3,13 @@
 import { useCallback, useMemo } from 'react'
 
 import { motion } from 'framer-motion'
-import { AlertCircle, CheckCircle2, DollarSign, Info } from 'lucide-react'
+import {
+  AlertCircle,
+  CheckCircle2,
+  DollarSign,
+  Info,
+  Loader2,
+} from 'lucide-react'
 
 import { FuentePagoCard } from '@/modules/clientes/components/fuente-pago-card'
 import { pageStyles as s } from '@/modules/clientes/pages/asignar-vivienda/styles'
@@ -140,7 +146,7 @@ export function Paso2FuentesPago({
       {(cargandoTipos || cargandoCampos) && (
         <div className='rounded-lg border border-cyan-200/50 bg-white/80 p-4 shadow-lg backdrop-blur-xl dark:border-cyan-800/50 dark:bg-gray-800/80'>
           <div className='flex items-center gap-3'>
-            <div className='border-3 h-5 w-5 animate-spin rounded-full border-cyan-500 border-t-transparent' />
+            <Loader2 className='h-5 w-5 animate-spin text-cyan-500' />
             <p className='text-sm font-medium text-cyan-700 dark:text-cyan-300'>
               {cargandoTipos
                 ? 'Cargando fuentes de pago activas desde el sistema...'

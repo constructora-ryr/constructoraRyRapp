@@ -3,7 +3,13 @@
 import { useEffect, useState } from 'react'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { AlertTriangle, Clock, LogOut, MousePointer2 } from 'lucide-react'
+import {
+  AlertTriangle,
+  Clock,
+  Loader2,
+  LogOut,
+  MousePointer2,
+} from 'lucide-react'
 
 import Image from 'next/image'
 
@@ -211,7 +217,7 @@ export function IdleWarningModal({
                   <div className='flex items-center justify-center gap-3 rounded-xl border border-gray-200 bg-gradient-to-br from-gray-50 to-gray-100 p-4 dark:border-gray-700 dark:from-gray-800 dark:to-gray-900'>
                     {isClosingSession ? (
                       <>
-                        <div className='h-5 w-5 animate-spin rounded-full border-2 border-red-600 border-t-transparent' />
+                        <Loader2 className='h-5 w-5 animate-spin text-red-600' />
                         <div className='text-center'>
                           <div className='text-sm font-semibold text-red-600 dark:text-red-400'>
                             Cerrando sesión...
@@ -282,7 +288,7 @@ export function IdleWarningModal({
                         }
                       >
                         {isLoggingOut ? (
-                          <div className='h-5 w-5 animate-spin rounded-full border-2 border-gray-400 border-t-transparent' />
+                          <Loader2 className='h-5 w-5 animate-spin text-gray-400' />
                         ) : (
                           <LogOut className='h-5 w-5' />
                         )}

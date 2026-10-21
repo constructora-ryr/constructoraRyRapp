@@ -24,6 +24,8 @@ import {
 
 import Image from 'next/image'
 
+import { Cargador } from '@/shared/components/carga'
+
 import { useInvalidRoleError } from './useInvalidRoleError'
 
 interface InvalidRoleErrorProps {
@@ -49,7 +51,7 @@ export function InvalidRoleError({
   if (!mounted) {
     return (
       <div className='flex min-h-screen items-center justify-center bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50 dark:from-gray-900 dark:via-red-950/20 dark:to-orange-950/20'>
-        <div className='h-12 w-12 animate-spin rounded-full border-b-2 border-red-600' />
+        <Cargador modulo='renuncias' label='Verificando acceso' />
       </div>
     )
   }

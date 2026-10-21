@@ -32,6 +32,7 @@ import {
   X,
 } from 'lucide-react'
 
+import { Cargador } from '@/shared/components/carga'
 import {
   ModernInput,
   ModernSelect,
@@ -258,10 +259,7 @@ export function FormularioCliente({
             {cargandoDatos && esEdicion ? (
               <div className='flex min-h-[600px] items-center justify-center bg-white dark:bg-gray-900'>
                 <div className='flex flex-col items-center gap-4'>
-                  <div className='relative'>
-                    <div className='h-16 w-16 rounded-full border-4 border-cyan-200 dark:border-cyan-900' />
-                    <div className='absolute inset-0 h-16 w-16 animate-spin rounded-full border-4 border-t-cyan-600 dark:border-t-cyan-400' />
-                  </div>
+                  <Cargador modulo='clientes' />
                   <div className='text-center'>
                     <p className='text-base font-semibold text-gray-900 dark:text-gray-100'>
                       Cargando datos del cliente...

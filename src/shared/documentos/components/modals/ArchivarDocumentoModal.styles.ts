@@ -94,8 +94,6 @@ export const getArchivarDocumentoModalStyles = (
       confirmButton: `px-4 py-2 text-sm font-medium text-white bg-gradient-to-r ${theme.classes.gradient.background}
                       ${theme.classes.gradient.hover} rounded-lg transition-all shadow-lg
                       disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 order-1 sm:order-2`,
-      spinner:
-        'w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin',
     },
   } as const
 }

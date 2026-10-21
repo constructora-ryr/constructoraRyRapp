@@ -8,8 +8,10 @@
 import { useEffect, useRef, useState } from 'react'
 
 import { motion } from 'framer-motion'
-import { RefreshCw, UserCheck, X } from 'lucide-react'
+import { Loader2, RefreshCw, UserCheck, X } from 'lucide-react'
 import { createPortal } from 'react-dom'
+
+import { Cargador } from '@/shared/components/carga'
 
 type ModalState = 'confirm' | 'loading' | 'success'
 
@@ -106,11 +108,7 @@ export function ReactivarClienteModal({
               Reactivando cliente...
             </p>
 
-            {/* Doble anillo — mismo patrón que formularios de clientes/viviendas/proyectos */}
-            <div className='relative'>
-              <div className='h-16 w-16 rounded-full border-4 border-cyan-200 dark:border-cyan-900' />
-              <div className='absolute inset-0 h-16 w-16 animate-spin rounded-full border-4 border-t-cyan-600 dark:border-t-cyan-400' />
-            </div>
+            <Cargador modulo='clientes' />
 
             <div className='text-center'>
               <p className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
@@ -223,7 +221,7 @@ export function ReactivarClienteModal({
               transition={{ delay: 0.9 }}
               className='mt-5 flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500'
             >
-              <div className='h-3 w-3 animate-spin rounded-full border-2 border-gray-300 border-t-gray-500 dark:border-gray-600 dark:border-t-gray-300' />
+              <Loader2 className='h-3 w-3 animate-spin text-gray-300' />
               <span>Cerrando automáticamente...</span>
             </motion.div>
           </div>

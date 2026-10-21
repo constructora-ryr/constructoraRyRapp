@@ -16,7 +16,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { DollarSign, Percent, Trash2, X } from 'lucide-react'
+import { DollarSign, Loader2, Percent, Trash2, X } from 'lucide-react'
 import { AlertTriangle } from 'lucide-react'
 import { createPortal } from 'react-dom'
 
@@ -332,7 +332,7 @@ export function DescuentoModal({
                 className={styles.footer.submitButton}
               >
                 {isGuardando ? (
-                  <div className='h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
+                  <Loader2 className='h-4 w-4 animate-spin' />
                 ) : null}
                 {esEdicion ? 'Actualizar Descuento' : 'Aplicar Descuento'}
               </button>

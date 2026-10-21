@@ -13,8 +13,8 @@ import { Building2 } from 'lucide-react'
 
 import { useAuth } from '@/contexts/auth-context'
 import { logger } from '@/lib/utils/logger'
+import { PantallaCarga } from '@/shared/components/carga'
 import { InvalidRoleError } from '@/shared/components/errors'
-import { ModuleLoadingScreen } from '@/shared/components/ui/ModuleLoadingScreen'
 
 const ROLES_VALIDOS = [
   'Administrador',
@@ -38,17 +38,10 @@ export function ProtectedApp({ children }: ProtectedAppProps) {
   // Mientras carga auth, mostrar pantalla de carga consistente
   if (loading) {
     return (
-      <ModuleLoadingScreen
-        Icon={Building2}
-        label='Cargando...'
-        ringColors='border-t-indigo-500 border-r-violet-500'
-        ringBg='from-indigo-500/20 to-violet-500/20'
-        iconGradient='from-indigo-600 via-violet-600 to-purple-600'
-        iconShadow='shadow-indigo-500/50'
-        pageBg='via-indigo-50/30 to-violet-50/30'
-        pageBgDark='dark:via-indigo-950/20 dark:to-violet-950/20'
-        labelColor='text-indigo-600 dark:text-indigo-400'
-        sparkleColor='text-indigo-500'
+      <PantallaCarga
+        icon={Building2}
+        label='Preparando tu sesión'
+        className='h-screen'
       />
     )
   }

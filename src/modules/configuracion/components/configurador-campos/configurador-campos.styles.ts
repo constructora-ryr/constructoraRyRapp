@@ -146,13 +146,6 @@ export const configuradorStyles = {
   // ============================================
   // ESTADOS
   // ============================================
-  loading: {
-    container: 'flex items-center justify-center gap-3 py-12',
-    spinner:
-      'w-6 h-6 border-3 border-blue-500 border-t-transparent rounded-full animate-spin',
-    text: 'text-sm text-blue-700 dark:text-blue-300 font-medium',
-  },
-
   error: {
     container:
       'p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800',

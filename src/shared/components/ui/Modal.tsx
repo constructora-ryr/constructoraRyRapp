@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { X } from 'lucide-react'
+import { Loader2, X } from 'lucide-react'
 
 import { useClickOutside } from '../../hooks/useClickOutside'
 import { cn } from '../../utils/helpers'
@@ -290,9 +290,7 @@ export function ConfirmModal({
             )}
           >
             <span className='flex items-center justify-center gap-2'>
-              {isLoading && (
-                <div className='h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white' />
-              )}
+              {isLoading && <Loader2 className='h-4 w-4 animate-spin' />}
               {isLoading ? 'Procesando...' : confirmText}
             </span>
           </button>

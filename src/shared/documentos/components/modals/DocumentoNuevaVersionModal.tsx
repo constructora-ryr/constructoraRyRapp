@@ -13,7 +13,14 @@ import { ChangeEvent, FormEvent, useState } from 'react'
 
 import { useQueryClient } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'framer-motion'
-import { AlertTriangle, Calendar, FileText, Upload, X } from 'lucide-react'
+import {
+  AlertTriangle,
+  Calendar,
+  FileText,
+  Loader2,
+  Upload,
+  X,
+} from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { toast } from 'sonner'
 
@@ -454,7 +461,7 @@ export function DocumentoNuevaVersionModal({
               >
                 {subiendo ? (
                   <div className='flex items-center justify-center gap-2'>
-                    <div className='h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white' />
+                    <Loader2 className='h-4 w-4 animate-spin' />
                     <span>Subiendo...</span>
                   </div>
                 ) : (

@@ -8,7 +8,14 @@
 import { useEffect } from 'react'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { AlertTriangle, CheckCircle, Info, X, XCircle } from 'lucide-react'
+import {
+  AlertTriangle,
+  CheckCircle,
+  Info,
+  Loader2,
+  X,
+  XCircle,
+} from 'lucide-react'
 
 type ConfirmType = 'danger' | 'warning' | 'info' | 'success'
 
@@ -163,7 +170,7 @@ export function ConfirmModal({
                 >
                   {isLoading ? (
                     <div className='flex items-center gap-2'>
-                      <div className='h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white' />
+                      <Loader2 className='h-4 w-4 animate-spin' />
                       <span>Procesando...</span>
                     </div>
                   ) : (

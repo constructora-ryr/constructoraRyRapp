@@ -97,12 +97,23 @@ module.exports = {
             boxShadow: '0 0 30px rgba(59, 130, 246, 0.5)',
           },
         },
+        // Cargador (shared/components/carga)
+        'cargar-respirar': {
+          '0%, 100%': { transform: 'scale(1)' },
+          '50%': { transform: 'scale(1.06)' },
+        },
+        'cargar-punto': {
+          '0%, 80%, 100%': { transform: 'scale(0.6)', opacity: '0.35' },
+          '40%': { transform: 'scale(1)', opacity: '1' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'pulse-slow': 'pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         glow: 'glow 2s ease-in-out infinite',
+        'cargar-respirar': 'cargar-respirar 1.8s ease-in-out infinite',
+        'cargar-punto': 'cargar-punto 1.2s ease-in-out infinite',
       },
     },
   },

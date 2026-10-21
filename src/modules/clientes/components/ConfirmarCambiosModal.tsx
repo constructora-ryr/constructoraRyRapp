@@ -13,7 +13,7 @@
 'use client'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { AlertCircle, Check, CheckCircle2, X } from 'lucide-react'
+import { AlertCircle, Check, CheckCircle2, Loader2, X } from 'lucide-react'
 
 import type { Cambio } from '../hooks/useDetectarCambios'
 
@@ -175,7 +175,7 @@ export function ConfirmarCambiosModal({
               >
                 {isLoading ? (
                   <>
-                    <div className='h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
+                    <Loader2 className='h-4 w-4 animate-spin' />
                     <span>Guardando...</span>
                   </>
                 ) : (

@@ -10,7 +10,14 @@
 import { useState } from 'react'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { AlertTriangle, Building2, Home, MessageSquare, X } from 'lucide-react'
+import {
+  AlertTriangle,
+  Building2,
+  Home,
+  Loader2,
+  MessageSquare,
+  X,
+} from 'lucide-react'
 
 import type { ClienteInteres } from '../../types'
 import { sharedButtonStyles, sharedModalStyles } from '../styles/shared.styles'
@@ -150,7 +157,7 @@ export function ModalDescartarInteres({
                 >
                   {descartando ? (
                     <>
-                      <div className='h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white' />
+                      <Loader2 className='h-4 w-4 animate-spin' />
                       Descartando...
                     </>
                   ) : (

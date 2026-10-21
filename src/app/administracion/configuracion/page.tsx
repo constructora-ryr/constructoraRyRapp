@@ -24,6 +24,7 @@ import {
 import { FormularioConfiguracion } from '@/modules/configuracion/components/formulario-configuracion'
 import { useConfiguracion } from '@/modules/configuracion/hooks/useConfiguracion'
 import { type CrearConfiguracionDTO } from '@/modules/configuracion/services/configuracion.service'
+import { Cargador } from '@/shared/components/carga'
 
 export default function ConfiguracionPage() {
   const {
@@ -92,12 +93,7 @@ export default function ConfiguracionPage() {
   if (loading) {
     return (
       <div className='flex min-h-screen items-center justify-center'>
-        <div className='text-center'>
-          <div className='mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-4 border-blue-500 border-t-transparent' />
-          <p className='text-gray-600 dark:text-gray-400'>
-            Cargando configuración...
-          </p>
-        </div>
+        <Cargador label='Cargando configuración' tamano='lg' />
       </div>
     )
   }

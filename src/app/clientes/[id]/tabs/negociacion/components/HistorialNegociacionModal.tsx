@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase/client'
 import { formatDateForDisplay } from '@/lib/utils/date.utils'
 import type { EventoHistorialCliente } from '@/modules/clientes/types/historial.types'
 import { humanizarEvento } from '@/modules/clientes/utils/humanizador-eventos'
+import { Cargador } from '@/shared/components/carga'
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
@@ -126,9 +127,11 @@ export function HistorialNegociacionModal({
             {/* Body */}
             <div className='flex-1 overflow-y-auto'>
               {isLoading ? (
-                <div className='flex items-center justify-center py-16'>
-                  <div className='h-6 w-6 animate-spin rounded-full border-2 border-violet-500 border-t-transparent' />
-                </div>
+                <Cargador
+                  modulo='negociaciones'
+                  label='Cargando historial'
+                  className='py-16'
+                />
               ) : eventos.length === 0 ? (
                 <div className='flex flex-col items-center justify-center px-6 py-16 text-center'>
                   <div className='mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-800'>

@@ -1,6 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import { Loader2 } from 'lucide-react'
 
 import type { ClienteResumen } from '../types'
 
@@ -51,7 +52,7 @@ export function ClientesVistaTabla({
           animate={{ opacity: 1 }}
           className='absolute -top-10 left-0 right-0 z-10 flex items-center justify-center gap-2 rounded-lg border border-cyan-200 bg-cyan-50/80 py-2 backdrop-blur-xl dark:border-cyan-800 dark:bg-cyan-950/20'
         >
-          <div className='h-4 w-4 animate-spin rounded-full border-2 border-cyan-600 border-t-transparent' />
+          <Loader2 className='h-4 w-4 animate-spin text-cyan-600' />
           <span className='text-xs font-medium text-cyan-700 dark:text-cyan-400'>
             Actualizando datos...
           </span>

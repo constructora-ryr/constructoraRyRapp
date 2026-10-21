@@ -24,7 +24,7 @@
 
 import { useState } from 'react'
 
-import { AlertCircle, CheckCircle, Upload, X } from 'lucide-react'
+import { AlertCircle, CheckCircle, Loader2, Upload, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { getTodayDateString } from '@/lib/utils/date.utils'
@@ -374,7 +374,7 @@ export function ModalMarcarPasoCompletado({
           >
             {isSubmitting ? (
               <span className='flex items-center gap-2'>
-                <div className='h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
+                <Loader2 className='h-4 w-4 animate-spin' />
                 Guardando...
               </span>
             ) : (

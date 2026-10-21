@@ -34,6 +34,7 @@ import { configuradorStyles as s } from '@/modules/configuracion/components/conf
 import { ConfiguradorCamposModal } from '@/modules/configuracion/components/configurador-campos/ConfiguradorCamposModal'
 import { useTiposFuentesConCampos } from '@/modules/configuracion/hooks/useTiposFuentesConCampos'
 import type { TipoFuentePagoConCampos } from '@/modules/configuracion/types/campos-dinamicos.types'
+import { Cargador } from '@/shared/components/carga'
 
 // ============================================
 // ICONOS DINÁMICOS (TODOS LOS DISPONIBLES)
@@ -161,10 +162,7 @@ export default function FuentesPagoConfigPage() {
         {/* LOADING */}
         {/* ============================================ */}
         {isLoading && (
-          <div className={s.loading.container}>
-            <div className={s.loading.spinner} />
-            <p className={s.loading.text}>Cargando tipos de fuentes...</p>
-          </div>
+          <Cargador label='Cargando tipos de fuentes' className='py-12' />
         )}
 
         {/* ============================================ */}

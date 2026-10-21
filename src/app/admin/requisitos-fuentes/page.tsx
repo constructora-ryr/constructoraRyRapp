@@ -49,6 +49,7 @@ import {
 } from '@/modules/requisitos-fuentes/hooks'
 import { requisitosConfigStyles as styles } from '@/modules/requisitos-fuentes/styles/requisitos-config.styles'
 import type { CrearRequisitoDTO } from '@/modules/requisitos-fuentes/types'
+import { Cargador } from '@/shared/components/carga'
 import { useModal } from '@/shared/components/modals'
 
 export default function ConfiguracionRequisitosPage() {
@@ -327,12 +328,10 @@ export default function ConfiguracionRequisitosPage() {
 
             {/* Loading */}
             {isLoadingCompartidos && (
-              <div className={styles.loading.container}>
-                <div className={styles.loading.spinner} />
-                <p className={styles.loading.text}>
-                  Cargando requisitos compartidos...
-                </p>
-              </div>
+              <Cargador
+                label='Cargando requisitos compartidos'
+                className='py-12'
+              />
             )}
 
             {/* Formulario nuevo compartido */}
@@ -451,10 +450,7 @@ export default function ConfiguracionRequisitosPage() {
 
             {/* Estado: Cargando */}
             {isLoading && (
-              <div className={styles.loading.container}>
-                <div className={styles.loading.spinner} />
-                <p className={styles.loading.text}>Cargando requisitos...</p>
-              </div>
+              <Cargador label='Cargando requisitos' className='py-12' />
             )}
 
             {/* Estado: Error */}

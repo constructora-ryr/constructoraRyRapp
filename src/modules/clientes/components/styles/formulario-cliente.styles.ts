@@ -216,10 +216,6 @@ export const footerStyles = {
 // ===================
 
 export const utilityStyles = {
-  // Spinner de carga
-  spinner:
-    'h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent',
-
   // Badge/Tag
   badge:
     'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium',

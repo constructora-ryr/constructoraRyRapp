@@ -39,6 +39,7 @@ import { useRouter } from 'next/navigation'
 
 import { useAuth } from '@/contexts/auth-context'
 import { logger } from '@/lib/utils/logger'
+import { PantallaCarga } from '@/shared/components/carga'
 
 import { usePermisosQuery } from '../hooks/usePermisosQuery'
 import { usePermissions } from '../hooks/usePermissions'
@@ -178,47 +179,7 @@ export function ProtectedRoute({
  * Diseño minimalista sin mencionar detalles técnicos
  */
 function LoadingPage() {
-  return (
-    <div className='flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950'>
-      <div className='text-center'>
-        {/* Spinner moderno con efecto de pulso */}
-        <div className='relative inline-flex items-center justify-center'>
-          {/* Círculo exterior con pulso */}
-          <div className='absolute h-20 w-20 animate-ping rounded-full bg-violet-500/20 dark:bg-violet-400/20'></div>
-
-          {/* Círculo medio giratorio */}
-          <div className='absolute h-16 w-16 rounded-full border-4 border-violet-200 dark:border-violet-900'></div>
-
-          {/* Spinner principal */}
-          <div className='relative h-16 w-16 animate-spin rounded-full border-4 border-transparent border-r-violet-500 border-t-violet-600 dark:border-r-violet-500 dark:border-t-violet-400'></div>
-
-          {/* Punto central con pulso */}
-          <div className='absolute h-3 w-3 animate-pulse rounded-full bg-violet-600 dark:bg-violet-400'></div>
-        </div>
-
-        {/* Texto genérico y amigable */}
-        <div className='mt-8 space-y-2'>
-          <p className='animate-pulse text-sm font-medium text-gray-700 dark:text-gray-300'>
-            Cargando...
-          </p>
-          <div className='flex items-center justify-center gap-1'>
-            <div
-              className='h-1.5 w-1.5 animate-bounce rounded-full bg-violet-600 dark:bg-violet-400'
-              style={{ animationDelay: '0ms' }}
-            ></div>
-            <div
-              className='h-1.5 w-1.5 animate-bounce rounded-full bg-violet-600 dark:bg-violet-400'
-              style={{ animationDelay: '150ms' }}
-            ></div>
-            <div
-              className='h-1.5 w-1.5 animate-bounce rounded-full bg-violet-600 dark:bg-violet-400'
-              style={{ animationDelay: '300ms' }}
-            ></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
+  return <PantallaCarga className='min-h-screen' />
 }
 
 /**

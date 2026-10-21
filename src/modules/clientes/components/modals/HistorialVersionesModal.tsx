@@ -11,6 +11,8 @@ import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { AlertCircle, History, X } from 'lucide-react'
 
+import { Cargador } from '@/shared/components/carga'
+
 import { useHistorialVersiones } from '../../hooks/useHistorialVersiones'
 
 import { VersionCard } from './components/VersionCard'
@@ -74,9 +76,11 @@ export function HistorialVersionesModal({
           {/* Content */}
           <div className='flex-1 overflow-y-auto p-6'>
             {isLoading ? (
-              <div className='flex items-center justify-center py-12'>
-                <div className='h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent' />
-              </div>
+              <Cargador
+                modulo='negociaciones'
+                label='Cargando versiones'
+                className='py-12'
+              />
             ) : versiones.length === 0 ? (
               <div className='flex flex-col items-center justify-center py-12 text-center'>
                 <AlertCircle className='mb-3 h-12 w-12 text-gray-400' />

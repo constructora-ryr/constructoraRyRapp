@@ -1,7 +1,7 @@
 'use client'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { AlertCircle, Archive, X } from 'lucide-react'
+import { AlertCircle, Archive, Loader2, X } from 'lucide-react'
 
 import { FormSelect } from '@/shared/components/ui/form-select'
 import { type ModuleName } from '@/shared/config/module-themes'
@@ -194,7 +194,7 @@ export function ArchivarDocumentoModal({
               >
                 {procesando ? (
                   <>
-                    <div className={styles.footer.spinner} />
+                    <Loader2 className='h-4 w-4 animate-spin' />
                     Archivando...
                   </>
                 ) : (

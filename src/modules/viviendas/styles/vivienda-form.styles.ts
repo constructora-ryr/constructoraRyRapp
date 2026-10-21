@@ -194,14 +194,3 @@ export const emptyStateClasses = {
   title: 'mt-3 text-base font-medium text-gray-900 dark:text-gray-100',
   description: 'mt-1.5 text-xs text-gray-500 dark:text-gray-400',
 }
-
-// ============================================
-// LOADING STATES
-// ============================================
-
-export const loadingClasses = {
-  spinner:
-    'h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600',
-  container: 'flex items-center justify-center gap-1.5 p-6',
-  text: 'text-xs text-gray-600 dark:text-gray-400',
-}

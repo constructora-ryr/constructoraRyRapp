@@ -20,6 +20,7 @@ import { formatearNumeroRecibo } from '@/modules/abonos/utils/formato-recibo'
 import { usePermisosQuery } from '@/modules/usuarios/hooks'
 import { useAbonosViviendaTab } from '@/modules/viviendas/hooks/useAbonosViviendaTab'
 import type { Vivienda } from '@/modules/viviendas/types'
+import { Cargador } from '@/shared/components/carga'
 import { formatCurrency } from '@/shared/utils'
 
 interface AbonosTabProps {
@@ -129,14 +130,11 @@ export function AbonosTab({ vivienda }: AbonosTabProps) {
 
         {/* Estado de carga */}
         {cargando ? (
-          <div className='flex items-center justify-center py-12'>
-            <div className='flex flex-col items-center gap-3'>
-              <div className='h-6 w-6 animate-spin rounded-full border-2 border-orange-500 border-t-transparent' />
-              <p className='text-sm text-gray-500 dark:text-gray-400'>
-                Cargando abonos...
-              </p>
-            </div>
-          </div>
+          <Cargador
+            modulo='viviendas'
+            label='Cargando abonos'
+            className='py-12'
+          />
         ) : abonos.length === 0 ? (
           /* Estado vacio */
           <div className='flex flex-col items-center justify-center px-4 py-12'>
