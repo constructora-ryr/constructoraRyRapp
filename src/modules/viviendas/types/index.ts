@@ -24,7 +24,7 @@ export interface Vivienda {
   area_lote?: number // m�
   area_construida?: number // m�
   tipo_vivienda?: TipoVivienda
-  certificado_tradicion_url?: string // URL en Supabase Storage
+  certificado_tradicion_url?: string // Ruta en el bucket documentos-viviendas (se lee con URL firmada)
 
   // Informaci�n Financiera
   valor_base: number

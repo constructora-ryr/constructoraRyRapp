@@ -3,6 +3,18 @@ import { errorLog } from '@/lib/utils/logger'
 
 import { obtenerPorId } from './viviendas-consultas.service'
 
+/**
+ * Bucket de los documentos de vivienda: el mismo que usa el visor de
+ * documentos (ENTIDAD_CONFIGS.vivienda), así el certificado se puede ver
+ * desde la pestaña Documentos con URL firmada.
+ */
+const BUCKET_CERTIFICADOS = 'documentos-viviendas'
+
+/**
+ * Sube el certificado de tradición y devuelve su RUTA en el bucket (no una
+ * URL pública): los buckets de documentos son privados y se leen con URLs
+ * firmadas.
+ */
 export async function subirCertificado(
   file: File,
   manzanaId: string,
@@ -22,7 +34,7 @@ export async function subirCertificado(
   const filePath = `${manzana.proyecto_id}/certificados/${fileName}`
 
   const { error: uploadError } = await supabase.storage
-    .from('documentos-proyectos')
+    .from(BUCKET_CERTIFICADOS)
     .upload(filePath, file, { cacheControl: '3600', upsert: false })
 
   if (uploadError) {
@@ -30,11 +42,7 @@ export async function subirCertificado(
     throw uploadError
   }
 
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from('documentos-proyectos').getPublicUrl(filePath)
-
-  return publicUrl
+  return filePath
 }
 
 export async function actualizarCertificado(
@@ -59,13 +67,17 @@ export async function actualizarCertificado(
   return certificadoUrl
 }
 
-export async function eliminarCertificado(url: string): Promise<void> {
-  const path = url.split('/documentos-proyectos/')[1]
+/**
+ * Elimina el certificado. Acepta la ruta (formato actual) o una URL pública
+ * antigua de documentos-proyectos (formato previo, por compatibilidad).
+ */
+export async function eliminarCertificado(rutaOUrl: string): Promise<void> {
+  const legado = rutaOUrl.split('/documentos-proyectos/')[1]
+  const bucket = legado ? 'documentos-proyectos' : BUCKET_CERTIFICADOS
+  const path = legado ?? rutaOUrl
   if (!path) return
 
-  const { error } = await supabase.storage
-    .from('documentos-proyectos')
-    .remove([path])
+  const { error } = await supabase.storage.from(bucket).remove([path])
   if (error) errorLog('Error eliminando certificado', error)
 }
 
