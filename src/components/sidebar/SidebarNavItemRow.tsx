@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
 
+import { Tooltip } from '@/shared/components/ui/Tooltip'
 import type { NavigationItem } from '@/shared/config/navigation.config'
 import { PAPELERA_NAV_NAME } from '@/shared/config/navigation.config'
 
@@ -17,6 +18,11 @@ interface SidebarNavItemRowProps {
   papeleraCount: number
 }
 
+/**
+ * Fila de un módulo. El ícono va en un cuadro con el color del módulo
+ * (suave si está inactivo, degradado si está activo) y el activo se marca
+ * igual tenga o no submenú: fondo suave + barra de color a la izquierda.
+ */
 export function SidebarNavItemRow({
   item,
   isExpanded,
@@ -25,49 +31,63 @@ export function SidebarNavItemRow({
   hasChildren,
   papeleraCount,
 }: SidebarNavItemRowProps) {
-  const rowBg =
-    isModuleActive && !hasChildren
-      ? `bg-gradient-to-r ${item.color} shadow-lg`
-      : isModuleActive && hasChildren
-        ? 'bg-gray-100/80 dark:bg-gray-800/80'
-        : 'hover:bg-gray-100/60 dark:hover:bg-gray-800/60'
-
-  const iconColor =
-    isModuleActive && !hasChildren
-      ? 'text-white drop-shadow-md'
-      : isModuleActive && hasChildren
-        ? 'text-gray-700 dark:text-gray-200'
-        : 'text-gray-600 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-gray-200'
-
-  const titleColor =
-    isModuleActive && !hasChildren
-      ? 'text-white'
-      : 'text-gray-900 dark:text-gray-100'
-
-  const descColor =
-    isModuleActive && !hasChildren
-      ? 'text-white/80'
-      : 'text-gray-500 dark:text-gray-400'
-
   const isPapelera = item.name === PAPELERA_NAV_NAME
+  const contador = isPapelera && papeleraCount > 0 ? papeleraCount : 0
+  const contadorTexto = contador > 99 ? '99+' : String(contador)
 
-  return (
-    <motion.div
-      whileHover={{ scale: 1.01, x: 1 }}
-      whileTap={{ scale: 0.98 }}
-      aria-current={undefined}
-      className={`group relative flex cursor-pointer items-center rounded-lg transition-all duration-200 ${
-        isExpanded ? 'px-2.5 py-2' : 'px-2 py-3'
-      } ${rowBg}`}
+  const tile = (
+    <span
+      className={`relative flex flex-shrink-0 items-center justify-center rounded-xl transition-all duration-200 ${
+        isExpanded ? 'h-8 w-8' : 'h-10 w-10'
+      } ${
+        isModuleActive
+          ? `bg-gradient-to-br ${item.color} text-white shadow-md`
+          : `${item.tint} group-hover:scale-105`
+      }`}
     >
-      {/* Ícono */}
-      <div className={`flex-shrink-0 ${isExpanded ? 'mr-2.5' : 'mx-auto'}`}>
-        <item.icon
-          className={`${isExpanded ? 'h-4 w-4' : 'h-5 w-5'} ${iconColor}`}
-        />
-      </div>
+      <item.icon className={isExpanded ? 'h-4 w-4' : 'h-5 w-5'} />
 
-      {/* Contenido — solo en modo expandido */}
+      {/* Contador en modo colapsado */}
+      {!isExpanded && contador > 0 ? (
+        <motion.span
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 500, damping: 15 }}
+          className='absolute -right-1.5 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 text-[9px] font-bold text-white shadow dark:border-slate-900'
+        >
+          {contadorTexto}
+        </motion.span>
+      ) : null}
+    </span>
+  )
+
+  const fila = (
+    <div
+      className={`group relative flex cursor-pointer items-center rounded-xl transition-colors duration-150 ${
+        isExpanded ? 'gap-2.5 px-2 py-1.5' : 'justify-center py-1'
+      } ${
+        isModuleActive
+          ? isExpanded
+            ? 'bg-slate-100/90 dark:bg-slate-800/80'
+            : ''
+          : isExpanded
+            ? 'hover:bg-slate-100/70 dark:hover:bg-slate-800/60'
+            : ''
+      }`}
+    >
+      {/* Barra de color del activo */}
+      {isModuleActive ? (
+        <motion.span
+          layoutId='sidebar-active-bar'
+          transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+          // -left-2 = borde del menú (más afuera lo recorta overflow-x-hidden)
+          className={`absolute -left-2 top-1/2 h-6 w-1 -translate-y-1/2 rounded-full bg-gradient-to-b ${item.color}`}
+        />
+      ) : null}
+
+      {tile}
+
+      {/* Texto — solo en modo expandido */}
       <AnimatePresence>
         {isExpanded && (
           <motion.div
@@ -76,85 +96,74 @@ export function SidebarNavItemRow({
             animate='expanded'
             exit='collapsed'
             transition={{ duration: 0.2 }}
-            className='flex flex-1 items-center justify-between'
+            className='flex min-w-0 flex-1 items-center justify-between gap-2'
           >
-            <div className='flex flex-col'>
-              <span className={`text-xs font-semibold ${titleColor}`}>
+            <div className='flex min-w-0 flex-col'>
+              <span
+                className={`truncate text-[13px] leading-tight ${
+                  isModuleActive
+                    ? 'font-bold text-slate-900 dark:text-white'
+                    : 'font-semibold text-slate-700 group-hover:text-slate-900 dark:text-slate-200 dark:group-hover:text-white'
+                }`}
+              >
                 {item.name}
               </span>
-              <span className={`text-[10px] ${descColor}`}>
+              <span className='truncate text-[10px] text-slate-500 dark:text-slate-400'>
                 {item.description}
               </span>
             </div>
 
-            {/* Chevron para submenús */}
-            {hasChildren ? (
-              <motion.div
-                animate={{ rotate: isSubmenuOpen ? 180 : 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <ChevronDown
-                  className={`h-3.5 w-3.5 ${
-                    isModuleActive
-                      ? 'text-gray-700 dark:text-gray-200'
-                      : 'text-gray-400 dark:text-gray-500'
-                  }`}
-                />
-              </motion.div>
-            ) : null}
-
-            {/* Badge Papelera */}
-            {isPapelera && papeleraCount > 0 ? (
-              <motion.div
+            {contador > 0 ? (
+              <motion.span
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: 'spring', stiffness: 500, damping: 15 }}
-                className={`flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${
-                  isModuleActive
-                    ? 'bg-white text-red-600'
-                    : 'bg-red-500 text-white'
-                }`}
+                className='flex h-[18px] min-w-[18px] flex-shrink-0 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white'
               >
-                {papeleraCount > 99 ? '99+' : papeleraCount}
-              </motion.div>
+                {contadorTexto}
+              </motion.span>
+            ) : null}
+
+            {hasChildren ? (
+              <motion.span
+                animate={{ rotate: isSubmenuOpen ? 180 : 0 }}
+                transition={{ duration: 0.2 }}
+                className='flex-shrink-0 text-slate-400 dark:text-slate-500'
+              >
+                <ChevronDown className='h-3.5 w-3.5' />
+              </motion.span>
             ) : null}
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  )
 
-      {/* Badge Papelera modo colapsado */}
-      {!isExpanded && isPapelera && papeleraCount > 0 ? (
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: 'spring', stiffness: 500, damping: 15 }}
-          className='absolute -right-1 -top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 text-[9px] font-bold text-white shadow-lg dark:border-gray-900'
-        >
-          {papeleraCount > 99 ? '99+' : papeleraCount}
-        </motion.div>
-      ) : null}
+  if (isExpanded) return fila
 
-      {/* Tooltip modo colapsado */}
-      {!isExpanded ? (
-        <div className='pointer-events-none absolute left-full z-50 ml-2 whitespace-nowrap rounded-lg bg-gray-900 px-2.5 py-1.5 text-xs font-medium text-white opacity-0 shadow-xl transition-opacity duration-200 group-hover:opacity-100 dark:bg-gray-700'>
-          {item.name}
-          {isPapelera && papeleraCount > 0 ? (
-            <span className='ml-1.5 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white'>
-              {papeleraCount}
+  // Colapsado: tooltip (en portal, no lo recorta el scroll del menú)
+  return (
+    <Tooltip
+      side='right'
+      sideOffset={10}
+      delayDuration={80}
+      content={
+        <span className='flex items-center gap-2'>
+          <span>
+            <span className='block font-semibold'>{item.name}</span>
+            <span className='block text-[11px] font-normal text-white/70'>
+              {item.description}
+            </span>
+          </span>
+          {contador > 0 ? (
+            <span className='flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold'>
+              {contadorTexto}
             </span>
           ) : null}
-          <div className='absolute -left-1 top-1/2 h-2 w-2 -translate-y-1/2 rotate-45 bg-gray-900 dark:bg-gray-700' />
-        </div>
-      ) : null}
-
-      {/* Punto indicador activo (solo items sin hijos) */}
-      {!hasChildren && isModuleActive ? (
-        <motion.div
-          layoutId='sidebar-indicator'
-          className='absolute right-2.5 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-white shadow-md'
-          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-        />
-      ) : null}
-    </motion.div>
+        </span>
+      }
+    >
+      {fila}
+    </Tooltip>
   )
 }

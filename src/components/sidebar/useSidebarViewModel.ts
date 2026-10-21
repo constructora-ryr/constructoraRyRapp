@@ -11,7 +11,7 @@ import { navigationGroups } from '@/shared/config/navigation.config'
 /**
  * ViewModel del Sidebar
  * Centraliza toda la lógica de negocio no-navegacional:
- * - Información de usuario (iniciales, nombre, colores de rol)
+ * - Información de usuario (iniciales, nombre)
  * - Logo según tema y estado expandido
  * - Estado de submenús abiertos + auto-expand por ruta
  * - Logout
@@ -49,36 +49,6 @@ export function useSidebarViewModel(pathname: string) {
   }, [perfil?.nombres, perfil?.apellidos, user?.email])
 
   const isAdmin = perfil?.rol === 'Administrador'
-
-  const rolGradient = useMemo(() => {
-    switch (perfil?.rol) {
-      case 'Administrador':
-        return 'from-amber-500 via-yellow-500 to-orange-500'
-      case 'Gerencia':
-        return 'from-blue-500 to-indigo-500'
-      case 'Contabilidad':
-        return 'from-emerald-500 to-teal-500'
-      case 'Administrador de Obra':
-        return 'from-purple-500 to-pink-500'
-      default:
-        return 'from-gray-500 to-slate-500'
-    }
-  }, [perfil?.rol])
-
-  const rolBadgeColor = useMemo(() => {
-    switch (perfil?.rol) {
-      case 'Administrador':
-        return 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/50'
-      case 'Gerencia':
-        return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-      case 'Contabilidad':
-        return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-      case 'Administrador de Obra':
-        return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-      default:
-        return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
-    }
-  }, [perfil?.rol])
 
   // ── Logo ──────────────────────────────────────────────────────────
   const getLogoSrc = useCallback(
@@ -140,8 +110,6 @@ export function useSidebarViewModel(pathname: string) {
     initials,
     displayName,
     isAdmin,
-    rolGradient,
-    rolBadgeColor,
     getLogoSrc,
     openSubmenus,
     toggleSubmenu,

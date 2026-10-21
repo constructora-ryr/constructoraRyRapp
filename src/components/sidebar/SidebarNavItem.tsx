@@ -85,13 +85,13 @@ export function SidebarNavItem({
             transition={{ duration: 0.2, ease: 'easeOut' }}
             className='overflow-hidden'
           >
-            <div className='ml-3 space-y-0.5 border-l-2 border-gray-200/60 pl-3 dark:border-gray-700/60'>
+            <div className='ml-[1.4rem] mt-0.5 space-y-0.5 border-l-2 border-slate-200/80 pl-2.5 dark:border-slate-700/60'>
               {visibleChildren.map(child => (
                 <SidebarSubItem
                   key={child.href}
                   child={child}
                   pathname={pathname}
-                  itemColor={item.color}
+                  itemTint={item.tint}
                   isMobile={isMobile}
                   onCloseSidebar={onCloseSidebar}
                 />

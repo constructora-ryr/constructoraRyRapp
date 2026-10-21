@@ -107,7 +107,7 @@ export function SidebarHeader({
             className='mt-3'
           >
             <div className='group relative'>
-              <Search className='absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400 transition-colors group-focus-within:text-blue-500' />
+              <Search className='absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400 transition-colors group-focus-within:text-indigo-500' />
               <input
                 placeholder='Buscar módulos...'
                 value={searchQuery}

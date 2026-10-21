@@ -1,160 +1,158 @@
 ﻿'use client'
 
-import { AnimatePresence, motion } from 'framer-motion'
-import { Crown, LogOut, Settings } from 'lucide-react'
+import { ChevronsUpDown, LogOut, Moon, Sun, UserRound } from 'lucide-react'
+import { useTheme } from 'next-themes'
 
 import Link from 'next/link'
 
-import { ThemeToggle } from '@/components/theme-toggle'
-import { Button } from '@/shared/components/ui/button'
+import { ROL_VISUAL } from '@/modules/usuarios/config/usuarios-visual'
+import type { Rol } from '@/modules/usuarios/types'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/shared/components/ui/dropdown-menu'
 
 import { AdminCrown } from './AdminCrown'
-import { contentFadeVariants } from './sidebar.styles'
 
 interface SidebarFooterProps {
   isExpanded: boolean
   isAdmin: boolean
   initials: string
   displayName: string
+  email?: string | null
   rol: string | null | undefined
-  rolGradient: string
-  rolBadgeColor: string
   isLoggingOut: boolean
   onLogout: () => void
 }
 
+/**
+ * Pie del sidebar: tarjeta del usuario que abre un menú con perfil, tema y
+ * cierre de sesión. El avatar usa el color del rol (el mismo de Usuarios).
+ */
 export function SidebarFooter({
   isExpanded,
   isAdmin,
   initials,
   displayName,
+  email,
   rol,
-  rolGradient,
-  rolBadgeColor,
   isLoggingOut,
   onLogout,
 }: SidebarFooterProps) {
-  const avatarBase = `flex items-center justify-center rounded-lg bg-gradient-to-br ${rolGradient} shadow-md`
-  const adminRing = isAdmin
-    ? 'shadow-amber-500/40 ring-2 ring-amber-400/20'
-    : ''
+  const { resolvedTheme, setTheme } = useTheme()
+  const oscuro = resolvedTheme === 'dark'
+  const rv = rol ? ROL_VISUAL[rol as Rol] : undefined
+  const RolIcono = rv?.icon
+
+  const avatar = (
+    <span className='relative flex-shrink-0'>
+      {isAdmin && <AdminCrown />}
+      <span
+        className={`flex items-center justify-center rounded-xl bg-gradient-to-br font-bold text-white shadow-md ${
+          rv?.gradient ?? 'from-slate-500 to-slate-700'
+        } ${isExpanded ? 'h-9 w-9 text-sm' : 'h-10 w-10 text-sm'}`}
+      >
+        {initials}
+      </span>
+    </span>
+  )
 
   return (
-    <div className='space-y-2 border-t border-gray-200/50 p-3 dark:border-gray-700/30'>
-      {/* ── Perfil expandido ──────────────────────────────────── */}
-      <AnimatePresence>
-        {isExpanded && (
-          <motion.div
-            variants={contentFadeVariants}
-            initial='collapsed'
-            animate='expanded'
-            exit='collapsed'
-            transition={{ duration: 0.2 }}
-            className='group relative overflow-hidden rounded-xl bg-gradient-to-br from-gray-50 via-white to-gray-50 p-2.5 shadow-md shadow-gray-900/5 dark:from-gray-800 dark:via-gray-800/50 dark:to-gray-800'
+    <div className='border-t border-slate-200/60 p-2.5 dark:border-slate-700/40'>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type='button'
+            aria-label='Menú de usuario'
+            className={`group flex w-full items-center rounded-xl transition-colors hover:bg-slate-100/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 data-[state=open]:bg-slate-100 dark:hover:bg-slate-800/70 dark:data-[state=open]:bg-slate-800 ${
+              isExpanded ? 'gap-2.5 p-2 text-left' : 'justify-center p-1.5'
+            }`}
           >
-            {isAdmin && (
-              <div className='absolute inset-0 bg-gradient-to-br from-amber-500/10 via-yellow-500/10 to-orange-500/10 opacity-50' />
+            {avatar}
+            {isExpanded && (
+              <>
+                <span className='min-w-0 flex-1'>
+                  <span className='block truncate text-[13px] font-bold text-slate-900 dark:text-white'>
+                    {displayName}
+                  </span>
+                  {rv && RolIcono ? (
+                    <span className='mt-0.5 inline-flex items-center gap-1 text-[11px] font-semibold'>
+                      <RolIcono className={`h-3 w-3 ${rv.text}`} />
+                      <span className={rv.text}>{rv.label}</span>
+                    </span>
+                  ) : (
+                    <span className='text-[11px] text-slate-500'>Sin rol</span>
+                  )}
+                </span>
+                <ChevronsUpDown className='h-4 w-4 flex-shrink-0 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300' />
+              </>
             )}
+          </button>
+        </DropdownMenuTrigger>
 
-            <div className='relative flex items-start gap-2'>
-              {/* Avatar */}
-              <div className='relative flex-shrink-0'>
-                {isAdmin && <AdminCrown />}
-                <div className={`h-9 w-9 ${avatarBase} ${adminRing}`}>
-                  <span className='text-sm font-bold text-white drop-shadow-md'>
-                    {initials}
-                  </span>
-                </div>
-              </div>
-
-              {/* Datos de usuario */}
-              <div className='min-w-0 flex-1 space-y-0.5'>
-                <p className='line-clamp-1 text-xs font-bold text-gray-900 dark:text-white'>
-                  {displayName}
-                </p>
-                <div className='flex items-center'>
-                  <span
-                    className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[9px] font-bold ${rolBadgeColor}`}
-                  >
-                    {isAdmin && <Crown className='h-2.5 w-2.5' />}
-                    {rol ?? 'Sin rol'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Logout */}
-              <Button
-                variant='ghost'
-                size='sm'
-                disabled={isLoggingOut}
-                onClick={onLogout}
-                title={isLoggingOut ? 'Cerrando sesión...' : 'Cerrar sesión'}
-                className='flex-shrink-0 rounded-lg p-1.5 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-red-900/20'
-              >
-                <LogOut
-                  className={`h-3.5 w-3.5 text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 ${
-                    isLoggingOut ? 'animate-pulse' : ''
-                  }`}
-                />
-              </Button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ── Avatar colapsado ──────────────────────────────────── */}
-      {!isExpanded && (
-        <div className='relative mx-auto w-fit'>
-          {isAdmin && <AdminCrown />}
-          <div className={`h-11 w-11 ${avatarBase} ${adminRing}`}>
-            <span className='text-base font-bold text-white drop-shadow-md'>
+        <DropdownMenuContent
+          side={isExpanded ? 'top' : 'right'}
+          align={isExpanded ? 'start' : 'end'}
+          sideOffset={8}
+          className='w-60 rounded-xl p-1.5'
+        >
+          <DropdownMenuLabel className='flex items-center gap-2.5 px-2 py-2 font-normal'>
+            <span
+              className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-sm font-bold text-white ${
+                rv?.gradient ?? 'from-slate-500 to-slate-700'
+              }`}
+            >
               {initials}
             </span>
-          </div>
-        </div>
-      )}
-
-      {/* ── Controles inferiores ─────────────────────────────── */}
-      <div
-        className={`flex items-center ${
-          isExpanded ? 'justify-between gap-1' : 'flex-col gap-1.5'
-        }`}
-      >
-        <ThemeToggle
-          className='inline-flex h-7 w-7 items-center justify-center rounded-lg text-gray-600 transition-colors hover:bg-gray-100/80 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800/80 dark:hover:text-gray-200'
-          sunClassName='h-3.5 w-3.5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0'
-          moonClassName='absolute h-3.5 w-3.5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100'
-        />
-
-        <Button
-          variant='ghost'
-          size='sm'
-          asChild
-          title='Mi perfil'
-          className='h-7 w-7 rounded-lg p-0 hover:bg-gray-100/80 dark:hover:bg-gray-800/80'
-        >
-          <Link href='/perfil'>
-            <Settings className='h-3.5 w-3.5' />
-          </Link>
-        </Button>
-
-        {!isExpanded && (
-          <Button
-            variant='ghost'
-            size='sm'
+            <span className='min-w-0'>
+              <span className='block truncate text-sm font-semibold text-slate-900 dark:text-white'>
+                {displayName}
+              </span>
+              {email && (
+                <span className='block truncate text-xs text-slate-500 dark:text-slate-400'>
+                  {email}
+                </span>
+              )}
+            </span>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link href='/perfil' className='cursor-pointer'>
+              <UserRound className='mr-2 h-4 w-4' />
+              Mi perfil
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={e => {
+              // Mantener el menú abierto para ver el cambio
+              e.preventDefault()
+              setTheme(oscuro ? 'light' : 'dark')
+            }}
+          >
+            {oscuro ? (
+              <Sun className='mr-2 h-4 w-4' />
+            ) : (
+              <Moon className='mr-2 h-4 w-4' />
+            )}
+            {oscuro ? 'Modo claro' : 'Modo oscuro'}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
             disabled={isLoggingOut}
-            onClick={onLogout}
-            title={isLoggingOut ? 'Cerrando sesión...' : 'Cerrar sesión'}
-            className='h-7 w-7 rounded-lg p-0 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-red-900/20'
+            onSelect={onLogout}
+            className='text-red-600 focus:text-red-700 dark:text-red-400'
           >
             <LogOut
-              className={`h-3.5 w-3.5 text-gray-600 dark:text-gray-400 ${
-                isLoggingOut ? 'animate-pulse' : ''
-              }`}
+              className={`mr-2 h-4 w-4 ${isLoggingOut ? 'animate-pulse' : ''}`}
             />
-          </Button>
-        )}
-      </div>
+            {isLoggingOut ? 'Cerrando sesión…' : 'Cerrar sesión'}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   )
 }

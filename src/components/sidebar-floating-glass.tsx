@@ -77,24 +77,24 @@ export function SidebarFloatingGlass() {
 
           {/* Navegación */}
           <div className='custom-scrollbar flex-1 space-y-4 overflow-y-auto overflow-x-hidden px-2 py-3'>
-            {navGroups.map(group => (
+            {navGroups.map((group, i) => (
               <div key={group.title}>
-                {/* Título del grupo */}
-                <AnimatePresence>
-                  {isExpanded && (
-                    <motion.div
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -10 }}
-                      transition={{ duration: 0.2 }}
-                      className='mb-2 px-2.5'
-                    >
-                      <h3 className='text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400'>
-                        {group.title}
-                      </h3>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                {/* Título del grupo (expandido) o separador (colapsado) */}
+                {isExpanded ? (
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className='mb-1.5 flex items-center gap-2 px-2'
+                  >
+                    <h3 className='text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500'>
+                      {group.title}
+                    </h3>
+                    <span className='h-px flex-1 bg-slate-200/80 dark:bg-slate-700/60' />
+                  </motion.div>
+                ) : i > 0 ? (
+                  <div className='mx-auto mb-3 h-px w-8 bg-slate-200 dark:bg-slate-700' />
+                ) : null}
 
                 {/* Items */}
                 <div className='space-y-1'>
@@ -126,9 +126,8 @@ export function SidebarFloatingGlass() {
             isAdmin={vm.isAdmin}
             initials={vm.initials}
             displayName={vm.displayName}
+            email={vm.user?.email}
             rol={vm.perfil?.rol}
-            rolGradient={vm.rolGradient}
-            rolBadgeColor={vm.rolBadgeColor}
             isLoggingOut={vm.isLoggingOut}
             onLogout={vm.logout}
           />

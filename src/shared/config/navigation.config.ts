@@ -59,6 +59,8 @@ export interface NavigationItem {
   href: string
   icon: LucideIcon
   color: string
+  /** Fondo suave + color del ícono cuando el módulo no está activo */
+  tint: string
   description: string
   /** Permiso requerido para ver este item */
   requiredPermission?: {
@@ -92,7 +94,8 @@ export const navigationGroups: NavigationGroup[] = [
         name: 'Dashboard',
         href: '/',
         icon: BarChart3,
-        color: 'from-blue-500 to-indigo-500',
+        color: 'from-blue-500 to-indigo-600',
+        tint: 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400',
         description: 'Panel principal',
         // Dashboard no requiere permiso (accesible para todos)
       },
@@ -100,7 +103,8 @@ export const navigationGroups: NavigationGroup[] = [
         name: 'Proyectos',
         href: '/proyectos',
         icon: Building2,
-        color: 'from-green-500 to-emerald-500',
+        color: 'from-green-500 to-emerald-600',
+        tint: 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400',
         description: 'Gestión de proyectos',
         requiredPermission: { modulo: 'proyectos', accion: 'ver' },
         children: [
@@ -125,6 +129,7 @@ export const navigationGroups: NavigationGroup[] = [
         href: '/viviendas',
         icon: Home,
         color: 'from-orange-500 to-amber-500',
+        tint: 'bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400',
         description: 'Administrar viviendas',
         requiredPermission: { modulo: 'viviendas', accion: 'ver' },
         children: [
@@ -153,7 +158,8 @@ export const navigationGroups: NavigationGroup[] = [
         name: 'Clientes',
         href: '/clientes',
         icon: Users,
-        color: 'from-cyan-500 to-blue-500',
+        color: 'from-cyan-500 to-blue-600',
+        tint: 'bg-cyan-50 text-cyan-600 dark:bg-cyan-500/10 dark:text-cyan-400',
         description: 'Base de clientes',
         requiredPermission: { modulo: 'clientes', accion: 'ver' },
         children: [
@@ -177,7 +183,8 @@ export const navigationGroups: NavigationGroup[] = [
         name: 'Abonos',
         href: '/abonos',
         icon: CreditCard,
-        color: 'from-violet-500 to-purple-500',
+        color: 'from-violet-500 to-fuchsia-600',
+        tint: 'bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400',
         description: 'Gestión de pagos',
         requiredPermission: { modulo: 'abonos', accion: 'ver' },
         children: [
@@ -201,7 +208,8 @@ export const navigationGroups: NavigationGroup[] = [
         name: 'Renuncias',
         href: '/renuncias',
         icon: FileX,
-        color: 'from-red-500 to-rose-500',
+        color: 'from-rose-500 to-red-600',
+        tint: 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400',
         description: 'Cancelaciones',
         requiredPermission: { modulo: 'renuncias', accion: 'ver' },
       },
@@ -214,7 +222,8 @@ export const navigationGroups: NavigationGroup[] = [
         name: 'Usuarios',
         href: '/usuarios',
         icon: UserCog,
-        color: 'from-slate-500 to-gray-600',
+        color: 'from-indigo-500 to-sky-500',
+        tint: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400',
         description: 'Gestión de usuarios',
         requiredPermission: { modulo: 'usuarios', accion: 'ver' },
       },
@@ -222,7 +231,8 @@ export const navigationGroups: NavigationGroup[] = [
         name: 'Auditorías',
         href: '/auditorias',
         icon: Activity,
-        color: 'from-teal-500 to-cyan-500',
+        color: 'from-teal-500 to-cyan-600',
+        tint: 'bg-teal-50 text-teal-600 dark:bg-teal-500/10 dark:text-teal-400',
         description: 'Registro de actividad',
         requiredPermission: { modulo: 'auditorias', accion: 'ver' },
       },
@@ -230,7 +240,8 @@ export const navigationGroups: NavigationGroup[] = [
         name: 'Papelera',
         href: '/documentos/eliminados',
         icon: Trash2,
-        color: 'from-red-500 to-rose-500',
+        color: 'from-red-500 to-rose-600',
+        tint: 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400',
         description: 'Documentos eliminados',
         adminOnly: true,
       },
@@ -238,7 +249,8 @@ export const navigationGroups: NavigationGroup[] = [
         name: 'Administración',
         href: '/admin',
         icon: Shield,
-        color: 'from-indigo-500 to-blue-500',
+        color: 'from-slate-600 to-slate-800',
+        tint: 'bg-slate-100 text-slate-600 dark:bg-slate-500/10 dark:text-slate-300',
         description: 'Panel admin',
         requiredPermission: { modulo: 'administracion', accion: 'ver' },
       },
@@ -246,7 +258,8 @@ export const navigationGroups: NavigationGroup[] = [
         name: 'Reportes',
         href: '/reportes',
         icon: FileText,
-        color: 'from-gray-500 to-slate-500',
+        color: 'from-sky-500 to-blue-600',
+        tint: 'bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-400',
         description: 'Informes y análisis',
         requiredPermission: { modulo: 'reportes', accion: 'ver' },
       },
