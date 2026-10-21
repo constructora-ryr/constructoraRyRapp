@@ -2,7 +2,6 @@ import { dehydrate } from '@tanstack/react-query'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import type { Metadata, Viewport } from 'next'
-import { Toaster } from 'sonner'
 
 import { DM_Mono, Inter, Plus_Jakarta_Sans } from 'next/font/google'
 
@@ -12,6 +11,7 @@ import { IdleTimerProvider } from '@/components/IdleTimerProvider'
 import { ProtectedApp } from '@/components/protected-app'
 import { SessionInterceptor } from '@/components/SessionInterceptor'
 import { ThemeProvider } from '@/components/theme-provider'
+import { AppToaster } from '@/components/toasts/AppToaster'
 import { WatchEstadoCuentaProvider } from '@/components/WatchEstadoCuentaProvider'
 // import { PageTransition } from '@/components/page-transition' // ← DESHABILITADO para navegación instantánea
 import { AuthProvider } from '@/contexts/auth-context'
@@ -118,11 +118,7 @@ export default async function RootLayout({
                         </div>
                       </ProtectedApp>
 
-                      <Toaster
-                        position='bottom-right'
-                        duration={4000}
-                        gap={8}
-                      />
+                      <AppToaster />
 
                       {/* Modales globales */}
                       <ConfirmModal />

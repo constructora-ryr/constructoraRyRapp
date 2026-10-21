@@ -386,8 +386,8 @@ export function useEditarVivienda({
 
   const cancelar = useCallback(() => {
     if (hayFormularioConCambios) {
-      toast('¿Salir sin guardar?', {
-        description: 'Los cambios no guardados se perán.',
+      toast.warning('¿Salir sin guardar?', {
+        description: 'Los cambios no guardados se perderán.',
         action: {
           label: 'Sí, salir',
           onClick: () => {
