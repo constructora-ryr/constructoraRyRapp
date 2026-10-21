@@ -1,98 +1,109 @@
 'use client'
 
-import { motion } from 'framer-motion'
-import { AlertCircle, Calendar } from 'lucide-react'
-import type { FieldErrors, Path, UseFormRegister } from 'react-hook-form'
+/**
+ * Fecha del documento y vencimiento. El vencimiento se habilita solo cuando
+ * hay fecha del documento (la validación del schema exige ese orden).
+ */
+
+import { useEffect } from 'react'
+
+import { AlertCircle, CalendarClock, CalendarDays } from 'lucide-react'
+import type {
+  FieldErrors,
+  UseFormRegister,
+  UseFormSetValue,
+  UseFormWatch,
+} from 'react-hook-form'
 
 import { getTodayDateString } from '@/lib/utils/date.utils'
-import { type ModuleName } from '@/shared/config/module-themes'
+import type { DocumentoFormData } from '@/shared/documentos/schemas/documento.schema'
 import { cn } from '@/shared/utils/helpers'
 
-import type { DocumentoFormValuesBase } from './documento-form.types'
+import { documentoFormStyles as s } from './documento-form.styles'
 
-interface FechasInputsProps<TFormValues extends DocumentoFormValuesBase> {
-  moduleName?: ModuleName
-  register: UseFormRegister<TFormValues>
-  errors: FieldErrors<TFormValues>
+interface FechasInputsProps {
+  register: UseFormRegister<DocumentoFormData>
+  watch: UseFormWatch<DocumentoFormData>
+  setValue: UseFormSetValue<DocumentoFormData>
+  errors: FieldErrors<DocumentoFormData>
+  /** Anillo de foco del módulo */
+  foco: string
 }
 
-export function FechasInputs<TFormValues extends DocumentoFormValuesBase>({
-  moduleName: _moduleName = 'proyectos',
+export function FechasInputs({
   register,
+  watch,
+  setValue,
   errors,
-}: FechasInputsProps<TFormValues>) {
-  const fechaDocumentoField = 'fecha_documento' as Path<TFormValues>
-  const fechaVencimientoField = 'fecha_vencimiento' as Path<TFormValues>
+  foco,
+}: FechasInputsProps) {
+  const fechaDocumento = watch('fecha_documento')
+  const fechaVencimiento = watch('fecha_vencimiento')
+
+  // Sin fecha del documento no puede haber vencimiento
+  useEffect(() => {
+    if (!fechaDocumento && fechaVencimiento) {
+      setValue('fecha_vencimiento', '', { shouldValidate: true })
+    }
+  }, [fechaDocumento, fechaVencimiento, setValue])
 
   return (
-    <div>
-      <label className='mb-1.5 block flex items-center gap-1.5 text-xs font-medium text-gray-700 dark:text-gray-300'>
-        <Calendar size={14} />
-        Fechas (opcional)
-      </label>
-      <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
-        {/* Fecha del documento */}
-        <div>
-          <label className='mb-1 block text-xs text-gray-600 dark:text-gray-400'>
-            Fecha del documento
-          </label>
-          <input
-            {...register(fechaDocumentoField)}
-            type='date'
-            max={getTodayDateString()}
-            className={cn(
-              'w-full rounded-xl border-2 bg-white px-4 py-2.5 text-sm transition-all dark:bg-gray-900',
-              'focus:outline-none',
-              errors.fecha_documento
-                ? 'border-red-500 dark:border-red-500'
-                : 'border-gray-200 dark:border-gray-700'
-            )}
-          />
-          {errors.fecha_documento && (
-            <motion.p
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className='mt-1 flex items-center gap-1 text-xs text-red-600 dark:text-red-400'
-            >
-              <AlertCircle size={12} />
-              {errors.fecha_documento.message as string}
-            </motion.p>
+    <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+      <div>
+        <label htmlFor='doc-fecha' className={s.etiqueta}>
+          <CalendarDays className='h-3.5 w-3.5 text-blue-500' />
+          Fecha del documento
+        </label>
+        <input
+          id='doc-fecha'
+          {...register('fecha_documento')}
+          type='date'
+          max={getTodayDateString()}
+          className={cn(
+            s.campo,
+            foco,
+            errors.fecha_documento ? s.campoError : s.campoNormal
           )}
-        </div>
+        />
+        {errors.fecha_documento ? (
+          <p className={s.error}>
+            <AlertCircle className='h-3 w-3 flex-shrink-0' />
+            {errors.fecha_documento.message}
+          </p>
+        ) : (
+          <p className={s.ayuda}>Cuándo se expidió o firmó</p>
+        )}
+      </div>
 
-        {/* Fecha de vencimiento */}
-        <div>
-          <label className='mb-1 block flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400'>
-            <AlertCircle size={12} />
-            Vencimiento
-          </label>
-          <input
-            {...register(fechaVencimientoField)}
-            type='date'
-            className={cn(
-              'w-full rounded-xl border-2 bg-white px-4 py-2.5 text-sm transition-all dark:bg-gray-900',
-              'focus:outline-none',
-              errors.fecha_vencimiento
-                ? 'border-red-500 dark:border-red-500'
-                : 'border-gray-200 dark:border-gray-700'
-            )}
-          />
-          {errors.fecha_vencimiento && (
-            <motion.p
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className='mt-1 flex items-center gap-1 text-xs text-red-600 dark:text-red-400'
-            >
-              <AlertCircle size={12} />
-              {errors.fecha_vencimiento.message as string}
-            </motion.p>
+      <div>
+        <label htmlFor='doc-vencimiento' className={s.etiqueta}>
+          <CalendarClock className='h-3.5 w-3.5 text-orange-500' />
+          Vencimiento
+        </label>
+        <input
+          id='doc-vencimiento'
+          {...register('fecha_vencimiento')}
+          type='date'
+          min={fechaDocumento || undefined}
+          disabled={!fechaDocumento}
+          className={cn(
+            s.campo,
+            foco,
+            errors.fecha_vencimiento ? s.campoError : s.campoNormal
           )}
-          {!errors.fecha_vencimiento && (
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-              Solo si expira
-            </p>
-          )}
-        </div>
+        />
+        {errors.fecha_vencimiento ? (
+          <p className={s.error}>
+            <AlertCircle className='h-3 w-3 flex-shrink-0' />
+            {errors.fecha_vencimiento.message}
+          </p>
+        ) : (
+          <p className={s.ayuda}>
+            {fechaDocumento
+              ? 'Solo si el documento expira'
+              : 'Primero indica la fecha del documento'}
+          </p>
+        )}
       </div>
     </div>
   )

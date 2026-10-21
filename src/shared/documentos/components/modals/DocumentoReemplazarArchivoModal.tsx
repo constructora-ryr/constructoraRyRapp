@@ -17,6 +17,7 @@ import {
 
 import { type ModuleName } from '@/shared/config/module-themes'
 
+import { formatosArchivo } from '../../config/tipos-archivo'
 import { useReemplazarArchivoForm } from '../../hooks'
 import type { DocumentoProyecto, TipoEntidad } from '../../types'
 
@@ -225,7 +226,7 @@ export function DocumentoReemplazarArchivoModal({
                     type='file'
                     onChange={handleFileChange}
                     disabled={reemplazando}
-                    accept='.pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx'
+                    accept={formatosArchivo(tipoEntidad).accept}
                     className={styles.dragDrop.input}
                   />
 

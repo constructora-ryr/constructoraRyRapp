@@ -12,7 +12,7 @@
 import { useEffect, useState } from 'react'
 
 import { AnimatePresence } from 'framer-motion'
-import { ArrowLeft, IdCard } from 'lucide-react'
+import { IdCard, Tags, Upload } from 'lucide-react'
 
 import { useAuth } from '@/contexts/auth-context'
 import { SeccionDocumentosPendientes } from '@/modules/clientes/components/documentos-pendientes'
@@ -22,9 +22,9 @@ import { useDocumentosTab } from '@/modules/clientes/hooks'
 import { useCategoriasSistemaClientes } from '@/modules/clientes/hooks/useCategoriasSistemaClientes'
 import type { Cliente } from '@/modules/clientes/types'
 import { usePermisosQuery } from '@/modules/usuarios/hooks'
-import { moduleThemes } from '@/shared/config/module-themes'
 import { CategoriasManager } from '@/shared/documentos/components/categorias/categorias-manager'
 import { DocumentosLista } from '@/shared/documentos/components/lista/documentos-lista'
+import { DocumentosSubpantalla } from '@/shared/documentos/components/shared/DocumentosSubpantalla'
 import { DocumentoUpload } from '@/shared/documentos/components/upload/documento-upload'
 
 interface DocumentosTabProps {
@@ -39,9 +39,6 @@ export function DocumentosTab({ cliente }: DocumentosTabProps) {
   const canCreate = esAdmin || puede('documentos', 'subir')
   const canVerYSubirDocumentos =
     esAdmin || (puede('documentos', 'ver') && puede('documentos', 'subir'))
-
-  // Tema cyan/azul para clientes (usado en vistas de categorías y upload)
-  const theme = moduleThemes.clientes
 
   // ✅ AUTO-SEED: Verificar y crear categorías del sistema
   const { verificarYCrear } = useCategoriasSistemaClientes()
@@ -79,97 +76,47 @@ export function DocumentosTab({ cliente }: DocumentosTabProps) {
     carpetaIdPendiente,
   } = useDocumentosTab({ clienteId: cliente.id })
 
-  // Si está mostrando categorías (PATRÓN IGUAL A PROYECTOS)
+  // Gestor de categorías (requiere poder subir)
   if (mostrandoCategorias && user && canCreate) {
     return (
-      <div className='space-y-4'>
-        {/* Header con botón volver */}
-        <div
-          className={`rounded-lg border ${theme.classes.border.light} bg-white p-4 shadow-sm dark:bg-gray-800`}
-        >
-          <div className='mb-4 flex items-center gap-2.5'>
-            <button
-              onClick={volverADocumentos}
-              className={`flex items-center gap-1.5 rounded-lg ${theme.classes.button.secondary} px-3 py-1.5 text-xs font-medium transition-colors`}
-            >
-              <ArrowLeft className='h-3.5 w-3.5' />
-              <span>Volver a Documentos</span>
-            </button>
-          </div>
-
-          <h2 className='text-xl font-bold text-gray-900 dark:text-white'>
-            Gestionar Categorías
-          </h2>
-          <p className='mt-1.5 text-xs text-gray-500 dark:text-gray-400'>
-            Organiza los documentos del cliente con categorías personalizadas
-          </p>
-        </div>
-
-        {/* Gestor de categorías */}
-        <div className='rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-800'>
-          <CategoriasManager
-            userId={user.id}
-            onClose={volverADocumentos}
-            modulo='clientes'
-          />
-        </div>
-      </div>
+      <DocumentosSubpantalla
+        moduleName='clientes'
+        icon={Tags}
+        titulo='Gestionar categorías'
+        descripcion='Organiza los documentos del cliente con categorías de color e ícono'
+        onVolver={volverADocumentos}
+      >
+        <CategoriasManager userId={user.id} modulo='clientes' />
+      </DocumentosSubpantalla>
     )
   }
 
-  // Si está mostrando formulario de upload (PATRÓN IGUAL A PROYECTOS)
+  // Formulario de subida
   if (mostrandoUpload && user && canCreate) {
     return (
-      <div className='space-y-3'>
-        {/* Header premium compacto con glassmorphism */}
-        <div className='relative overflow-hidden rounded-xl bg-gradient-to-br from-cyan-600 via-blue-600 to-indigo-600 p-4 shadow-xl shadow-cyan-500/20 dark:from-cyan-700 dark:via-blue-700 dark:to-indigo-800'>
-          <div className='bg-grid-white/10 absolute inset-0 [mask-image:linear-gradient(0deg,transparent,black,transparent)]' />
-          <div className='relative z-10'>
-            <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
-              <div className='flex items-center gap-2.5'>
-                <div className='flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm'>
-                  <IdCard className='h-5 w-5 text-white' />
-                </div>
-                <div className='min-w-0'>
-                  <h2 className='text-base font-bold text-white sm:text-lg'>
-                    {uploadTipoCedula
-                      ? 'Subir Documento de Identidad'
-                      : 'Subir Documento'}
-                  </h2>
-                  <p className='text-xs text-cyan-100 dark:text-cyan-200'>
-                    {uploadTipoCedula
-                      ? 'Sube la cédula o pasaporte oficial del cliente'
-                      : 'Completa la información y selecciona el archivo a subir'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Botón volver */}
-              <button
-                onClick={volverADocumentos}
-                className='flex items-center gap-1.5 self-start rounded-lg border border-white/30 bg-white/20 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-md transition-all hover:bg-white/30 sm:self-auto'
-              >
-                <ArrowLeft className='h-3.5 w-3.5' />
-                <span>Volver</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div
-          className={`rounded-lg border ${theme.classes.border.light} bg-white p-3 shadow-sm dark:bg-gray-800`}
-        >
-          <DocumentoUpload
-            entidadId={cliente.id}
-            tipoEntidad='cliente'
-            moduleName='clientes'
-            metadata={metadataPendiente}
-            carpetaId={carpetaIdPendiente}
-            onSuccess={onSuccessUpload}
-            onCancel={onCancelUpload}
-          />
-        </div>
-      </div>
+      <DocumentosSubpantalla
+        moduleName='clientes'
+        icon={uploadTipoCedula ? IdCard : Upload}
+        titulo={
+          uploadTipoCedula ? 'Subir documento de identidad' : 'Subir documento'
+        }
+        descripcion={
+          uploadTipoCedula
+            ? 'Sube la cédula o pasaporte oficial del cliente'
+            : 'Selecciona el archivo y completa su información'
+        }
+        onVolver={volverADocumentos}
+      >
+        <DocumentoUpload
+          entidadId={cliente.id}
+          tipoEntidad='cliente'
+          moduleName='clientes'
+          metadata={metadataPendiente}
+          carpetaId={carpetaIdPendiente}
+          onSuccess={onSuccessUpload}
+          onCancel={onCancelUpload}
+        />
+      </DocumentosSubpantalla>
     )
   }
 

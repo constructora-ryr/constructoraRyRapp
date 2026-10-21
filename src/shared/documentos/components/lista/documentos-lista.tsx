@@ -11,6 +11,7 @@ import {
   ChevronUp,
   FileText,
   FileX,
+  Folder,
   FolderCog,
   FolderPlus,
   Pin,
@@ -25,7 +26,9 @@ import { SectionLoadingSpinner } from '@/shared/components/ui/SectionLoadingSpin
 import { type ModuleName } from '@/shared/config/module-themes'
 import type { CarpetaConConteo } from '@/shared/documentos/types/carpeta.types'
 import type { DocumentoProyecto } from '@/shared/documentos/types/documento.types'
+import { cn } from '@/shared/utils/helpers'
 
+import { temaDocumentos } from '../../config/documentos-tema'
 import { useDocumentosLista, type SortCol } from '../../hooks'
 import { useDocumentosStore } from '../../store/documentos.store'
 import { obtenerConfiguracionEntidad, type TipoEntidad } from '../../types'
@@ -78,6 +81,7 @@ export function DocumentosLista({
     documentoSeleccionado,
     modalViewerAbierto,
     urlPreview,
+    errorPreview,
     modalArchivarAbierto,
     setModalArchivarAbierto, // ✅ Extraer setter del hook
     documentoParaArchivar,
@@ -93,6 +97,7 @@ export function DocumentosLista({
     cancelarEliminar,
     documentosMostrar,
     documentosOrdenados,
+    navegacionViewer,
     sortCol,
     sortDir,
     toggleSort,
@@ -145,10 +150,8 @@ export function DocumentosLista({
       <button
         type='button'
         onClick={() => toggleSort(col)}
-        className={`flex items-center gap-0.5 text-[11px] font-medium transition-colors ${
-          active
-            ? 'text-gray-700 dark:text-gray-200'
-            : 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300'
+        className={`flex items-center gap-0.5 text-[11px] font-semibold uppercase tracking-wider transition-colors ${
+          active ? 'text-white' : 'text-white/75 hover:text-white'
         }`}
       >
         {label}
@@ -165,6 +168,9 @@ export function DocumentosLista({
     )
   }
 
+  const encabezado =
+    'text-[11px] font-semibold uppercase tracking-wider text-white/75'
+
   // 🆕 Wrapper para refrescar (compatible con tipo void)
   const handleRefresh = async () => {
     await refrescar()
@@ -180,319 +186,307 @@ export function DocumentosLista({
     )
   }
 
-  return (
-    <div className='space-y-6'>
-      {/* 📑 TABS: Activos / Archivados (Papelera ahora es módulo independiente admin-only) */}
-      <div className='flex items-center gap-2 border-b border-gray-200 dark:border-gray-700'>
-        <button
-          onClick={() => setVistaActual('activos')}
-          className={`relative px-4 py-3 text-sm font-medium transition-all duration-200 ${
-            vistaActual === 'activos'
-              ? 'text-gray-900 dark:text-white'
-              : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
-          }`}
-        >
-          <div className='flex items-center gap-2'>
-            <FileText className='h-4 w-4' />
-            <span>Activos</span>
-          </div>
-          {vistaActual === 'activos' && (
-            <motion.div
-              layoutId='activeTab'
-              className='absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-green-500 to-emerald-500'
-            />
-          )}
-        </button>
+  const tema = temaDocumentos(themeModuleName)
+  const ancladosCount = documentosMostrar.filter(d => d.es_importante).length
+  const porVencerCount = documentosMostrar.filter(d => {
+    if (!d.fecha_vencimiento) return false
+    const dias = Math.ceil(
+      (new Date(d.fecha_vencimiento).getTime() - Date.now()) /
+        (1000 * 60 * 60 * 24)
+    )
+    return dias >= 0 && dias <= 30
+  }).length
 
-        <button
-          onClick={() => setVistaActual('archivados')}
-          className={`relative px-4 py-3 text-sm font-medium transition-all duration-200 ${
-            vistaActual === 'archivados'
-              ? 'text-gray-900 dark:text-white'
-              : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
-          }`}
+  const tabs = [
+    { id: 'activos' as const, label: 'Activos', icon: FileText },
+    { id: 'archivados' as const, label: 'Archivados', icon: Archive },
+  ]
+
+  return (
+    <div className='space-y-4'>
+      {/* Encabezado: pestañas + acciones */}
+      <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+        <div
+          role='tablist'
+          aria-label='Estado de los documentos'
+          className='inline-flex gap-1 self-start rounded-2xl border border-slate-200/80 bg-white p-1 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/60'
         >
-          <div className='flex items-center gap-2'>
-            <Archive className='h-4 w-4' />
-            <span>Archivados</span>
+          {tabs.map(t => {
+            const Icon = t.icon
+            const activo = vistaActual === t.id
+            return (
+              <button
+                key={t.id}
+                type='button'
+                role='tab'
+                aria-selected={activo}
+                onClick={() => setVistaActual(t.id)}
+                className={cn(
+                  'flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-150',
+                  activo
+                    ? cn(
+                        'bg-gradient-to-r text-white shadow-md',
+                        tema.gradient,
+                        tema.sombra
+                      )
+                    : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-700/60 dark:hover:text-slate-200'
+                )}
+              >
+                <Icon className='h-4 w-4' />
+                {t.label}
+              </button>
+            )
+          })}
+        </div>
+
+        {canCreate && (onCategoriasClick || onUploadClick) ? (
+          <div className='flex flex-wrap items-center gap-2'>
+            {onCategoriasClick ? (
+              <button
+                type='button'
+                onClick={onCategoriasClick}
+                className='group inline-flex h-10 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300 dark:hover:bg-slate-700'
+              >
+                <FolderCog className='h-4 w-4 transition-transform group-hover:rotate-12' />
+                Categorías
+              </button>
+            ) : null}
+            {onUploadClick ? (
+              <button
+                type='button'
+                onClick={() => onUploadClick(carpetaActualId)}
+                className={cn(
+                  'inline-flex h-10 items-center gap-1.5 rounded-xl bg-gradient-to-r px-4 text-sm font-semibold text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg',
+                  tema.gradient,
+                  tema.sombra
+                )}
+              >
+                <Upload className='h-4 w-4' />
+                Subir documento
+              </button>
+            ) : null}
           </div>
-          {vistaActual === 'archivados' && (
-            <motion.div
-              layoutId='activeTab'
-              className='absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-amber-500 to-orange-500'
-            />
-          )}
-        </button>
+        ) : null}
       </div>
 
-      {/* Contenido según tab activa */}
-      {/* 🎯 USAR MISMA CARD para activos y archivados */}
-      <>
-        {/* 📁 Breadcrumbs de navegación de carpetas */}
-        {breadcrumbs.length > 1 ? (
-          <CarpetaBreadcrumbs
-            breadcrumbs={breadcrumbs}
-            onNavigate={navegarACarpeta}
-            moduleName={themeModuleName}
-          />
-        ) : null}
+      {/* Breadcrumbs de carpetas */}
+      {breadcrumbs.length > 1 ? (
+        <CarpetaBreadcrumbs
+          breadcrumbs={breadcrumbs}
+          onNavigate={navegarACarpeta}
+          moduleName={themeModuleName}
+        />
+      ) : null}
 
-        {/* 📁 Carpetas del nivel actual (solo en vista activos) */}
-        {vistaActual === 'activos' ? (
-          <div className='space-y-2'>
-            {/* Encabezado de sección carpetas */}
-            <div className='flex items-center justify-between'>
-              <h3 className='text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500'>
-                Carpetas
-              </h3>
-              {canCreate ? (
-                <button
-                  type='button'
-                  onClick={() => {
-                    setCarpetaParaEditar(null)
+      {/* Carpetas (solo activos) */}
+      {vistaActual === 'activos' ? (
+        <section className='rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/60'>
+          <div className='mb-3 flex items-center justify-between gap-2'>
+            <h3 className='flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white'>
+              <span
+                className={cn(
+                  'flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br text-white shadow-sm',
+                  tema.gradient
+                )}
+              >
+                <Folder className='h-4 w-4' />
+              </span>
+              Carpetas
+              {carpetas.length > 0 && (
+                <span className='rounded-full bg-slate-100 px-2 py-px text-[11px] font-semibold text-slate-500 dark:bg-slate-700 dark:text-slate-300'>
+                  {carpetas.length}
+                </span>
+              )}
+            </h3>
+            {canCreate ? (
+              <button
+                type='button'
+                onClick={() => {
+                  setCarpetaParaEditar(null)
+                  setModalCarpetaAbierto(true)
+                }}
+                className={cn(
+                  'inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold transition-colors hover:bg-slate-100 dark:hover:bg-slate-700',
+                  tema.texto
+                )}
+              >
+                <FolderPlus className='h-4 w-4' />
+                Nueva carpeta
+              </button>
+            ) : null}
+          </div>
+          {carpetas.length > 0 ? (
+            <div className='grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4'>
+              {carpetas.map(carpeta => (
+                <CarpetaCard
+                  key={carpeta.id}
+                  carpeta={carpeta}
+                  moduleName={themeModuleName}
+                  onOpen={navegarACarpeta}
+                  onRename={c => {
+                    setCarpetaParaEditar(c)
                     setModalCarpetaAbierto(true)
                   }}
-                  className='flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-500 transition-all duration-200 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-300'
-                >
-                  <FolderPlus className='h-3.5 w-3.5' />
-                  Nueva carpeta
-                </button>
-              ) : null}
+                  onDelete={c => {
+                    setCarpetaParaEliminar(c)
+                  }}
+                />
+              ))}
             </div>
+          ) : (
+            <p className='rounded-xl border border-dashed border-slate-200 px-3 py-3 text-center text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400'>
+              Sin carpetas: crea una para organizar los documentos
+            </p>
+          )}
+        </section>
+      ) : null}
 
-            {/* Grid de carpetas */}
-            {carpetas.length > 0 ? (
-              <div className='grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4'>
-                {carpetas.map(carpeta => (
-                  <CarpetaCard
-                    key={carpeta.id}
-                    carpeta={carpeta}
-                    moduleName={themeModuleName}
-                    onOpen={navegarACarpeta}
-                    onRename={c => {
-                      setCarpetaParaEditar(c)
-                      setModalCarpetaAbierto(true)
-                    }}
-                    onDelete={c => {
-                      setCarpetaParaEliminar(c)
-                    }}
-                  />
-                ))}
-              </div>
-            ) : (
-              <p className='py-1 text-xs text-gray-400 dark:text-gray-600'>
-                Sin carpetas — crea una para organizar tus documentos
-              </p>
-            )}
-
-            {/* Separador entre carpetas y documentos */}
-            <div className='border-t border-gray-200 pt-1 dark:border-gray-700' />
-          </div>
-        ) : null}
-
-        {/* ── Sección Archivos ─────────────────────────────────────── */}
-        {(() => {
-          const ancladosCount = documentosMostrar.filter(
-            d => d.es_importante
-          ).length
-          const porVencerCount = documentosMostrar.filter(d => {
-            if (!d.fecha_vencimiento) return false
-            const dias = Math.ceil(
-              (new Date(d.fecha_vencimiento).getTime() - Date.now()) /
-                (1000 * 60 * 60 * 24)
-            )
-            return dias >= 0 && dias <= 30
-          }).length
-          return (
-            <div className='flex items-center justify-between gap-2'>
-              <h3 className='text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500'>
-                Archivos
-              </h3>
-
-              <div className='flex items-center gap-2'>
-                {/* Contadores */}
-                {documentosMostrar.length > 0 ? (
-                  <div className='flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500'>
-                    <span>
-                      {documentosMostrar.length}{' '}
-                      {documentosMostrar.length === 1 ? 'doc' : 'docs'}
-                    </span>
-                    {ancladosCount > 0 ? (
-                      <span className='flex items-center gap-1'>
-                        <Pin className='h-3 w-3 fill-cyan-500 text-cyan-500' />
-                        {ancladosCount}{' '}
-                        {ancladosCount === 1 ? 'anclado' : 'anclados'}
-                      </span>
-                    ) : null}
-                    {porVencerCount > 0 ? (
-                      <span className='flex items-center gap-1 text-orange-400 dark:text-orange-500'>
-                        <Calendar className='h-3 w-3' />
-                        {porVencerCount} por vencer
-                      </span>
-                    ) : null}
-                  </div>
-                ) : null}
-
-                {/* Separador visual solo si hay contadores Y botones visibles */}
-                {documentosMostrar.length > 0 &&
-                canCreate &&
-                (onCategoriasClick ?? onUploadClick) ? (
-                  <span className='h-3 w-px bg-gray-300 dark:bg-gray-600' />
-                ) : null}
-
-                {/* Botón Categorías — solo con permiso crear */}
-                {onCategoriasClick && canCreate ? (
-                  <button
-                    type='button'
-                    onClick={onCategoriasClick}
-                    className='group flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-500 transition-all duration-200 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-300'
-                  >
-                    <FolderCog className='h-3.5 w-3.5 transition-transform group-hover:rotate-12' />
-                    Categorías
-                  </button>
-                ) : null}
-
-                {/* Botón Subir Documento — solo con permiso crear */}
-                {onUploadClick && canCreate ? (
-                  <button
-                    type='button'
-                    onClick={() => onUploadClick(carpetaActualId)}
-                    className='flex items-center gap-1.5 rounded-md bg-cyan-600 px-2.5 py-1 text-xs font-medium text-white transition-all duration-200 hover:bg-cyan-700 dark:bg-cyan-700 dark:hover:bg-cyan-600'
-                  >
-                    <Upload className='h-3.5 w-3.5' />
-                    Subir Documento
-                  </button>
-                ) : null}
-              </div>
-            </div>
-          )
-        })()}
-
-        {/* Filtros (común para ambas vistas) */}
+      {/* Barra de filtros + contadores */}
+      <div className='space-y-2'>
         <DocumentosFiltros
-          documentos={documentosMostrar}
           categorias={categorias}
           moduleName={themeModuleName}
         />
-
-        {/* Lista de documentos */}
-        {documentosMostrar.length === 0 ? (
-          // Con carpetas encima: EmptyState compacto con acción de subir a esta carpeta
-          carpetas.length > 0 && vistaActual === 'activos' ? (
-            <EmptyState
-              icon={FileX}
-              title='Sin archivos en esta ubicación'
-              description='Puedes subir archivos directamente aquí o navegar a una carpeta'
-              action={
-                onUploadClick && canCreate
-                  ? {
-                      label: 'Subir archivo aquí',
-                      onClick: () => onUploadClick?.(carpetaActualId),
-                    }
-                  : undefined
-              }
-              moduleName={themeModuleName}
-              className='py-8'
-            />
-          ) : (
-            <EmptyState
-              icon={vistaActual === 'archivados' ? Archive : FileX}
-              title={
-                vistaActual === 'archivados'
-                  ? 'No hay documentos archivados'
-                  : 'No se encontraron documentos'
-              }
-              description={
-                vistaActual === 'archivados'
-                  ? 'Los documentos que archives aparecerán aquí'
-                  : !hasDocumentos
-                    ? `Aún no has subido ningún documento a este ${config.nombreSingular}`
-                    : 'No hay documentos que coincidan con los filtros aplicados'
-              }
-              action={
-                !hasDocumentos &&
-                onUploadClick &&
-                canCreate &&
-                vistaActual === 'activos'
-                  ? {
-                      label: 'Subir primer documento',
-                      onClick: () => onUploadClick?.(carpetaActualId),
-                    }
-                  : undefined
-              }
-              moduleName={themeModuleName}
-            />
-          )
-        ) : (
-          <div className='overflow-hidden rounded-xl border border-gray-200/70 dark:border-gray-700/60'>
-            {/* Cabecera de tabla con sort por columna */}
-            <div className='flex items-center gap-3 border-b border-gray-200/80 bg-gray-50/80 px-4 py-1.5 dark:border-gray-700/60 dark:bg-gray-800/40'>
-              <div className='flex min-w-0 flex-1 items-center'>
-                {renderSortBtn('titulo', 'Nombre')}
-              </div>
-              <div className='hidden w-40 flex-shrink-0 md:block'>
-                <span className='text-[11px] font-medium text-gray-400 dark:text-gray-500'>
-                  Categoría
-                </span>
-              </div>
-              <div className='hidden w-[160px] flex-shrink-0 lg:block'>
-                <span className='text-[11px] font-medium text-gray-400 dark:text-gray-500'>
-                  Subido por
-                </span>
-              </div>
-              <div className='hidden w-[96px] flex-shrink-0 lg:block'>
-                {renderSortBtn('fecha_creacion', 'Fecha subida')}
-              </div>
-              <div className='hidden w-[72px] flex-shrink-0 text-right lg:block'>
-                {renderSortBtn('tamano_bytes', 'Tamaño')}
-              </div>
-              <div className='w-[68px] flex-shrink-0' />
-            </div>
-            {/* Filas */}
-            <AnimatePresence mode='popLayout'>
-              <motion.div
-                key='lista'
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className='divide-y divide-gray-100/80 dark:divide-gray-800/60'
+        {documentosMostrar.length > 0 ? (
+          <p className='flex flex-wrap items-center gap-x-3 gap-y-1 px-1 text-xs text-slate-500 dark:text-slate-400'>
+            <span className='font-semibold text-slate-700 dark:text-slate-200'>
+              {documentosMostrar.length}{' '}
+              {documentosMostrar.length === 1 ? 'documento' : 'documentos'}
+            </span>
+            {ancladosCount > 0 ? (
+              <span
+                className={cn('inline-flex items-center gap-1', tema.texto)}
               >
-                {documentosOrdenados.map((documento, index) => {
-                  const categoria = getCategoriaByDocumento(documento)
-                  return (
-                    <motion.div
-                      key={documento.id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ delay: index * 0.02 }}
-                    >
-                      <DocumentoCardHorizontal
-                        documento={documento}
-                        categoria={categoria}
-                        categorias={categorias}
-                        tipoEntidad={tipoEntidadFromHook}
-                        onView={handleView}
-                        onDownload={handleDownload}
-                        onToggleImportante={handleToggleImportante}
-                        onArchive={handleArchive}
-                        onDelete={canDelete ? handleDelete : undefined}
-                        onRefresh={handleRefresh}
-                        moduleName={themeModuleName}
-                        esArchivado={vistaActual === 'archivados'}
-                        onMoverACarpeta={doc => {
-                          setDocumentoParaMover(doc)
-                          setModalMoverAbierto(true)
-                        }}
-                      />
-                    </motion.div>
-                  )
-                })}
-              </motion.div>
-            </AnimatePresence>
+                <Pin className='h-3 w-3 fill-current' />
+                {ancladosCount} {ancladosCount === 1 ? 'anclado' : 'anclados'}
+              </span>
+            ) : null}
+            {porVencerCount > 0 ? (
+              <span className='inline-flex items-center gap-1 font-medium text-orange-700 dark:text-orange-400'>
+                <Calendar className='h-3 w-3' />
+                {porVencerCount} por vencer
+              </span>
+            ) : null}
+          </p>
+        ) : null}
+      </div>
+
+      {/* Lista de documentos */}
+      {documentosMostrar.length === 0 ? (
+        carpetas.length > 0 && vistaActual === 'activos' ? (
+          <EmptyState
+            icon={FileX}
+            title='Sin archivos en esta ubicación'
+            description='Puedes subir archivos directamente aquí o abrir una carpeta'
+            action={
+              onUploadClick && canCreate
+                ? {
+                    label: 'Subir archivo aquí',
+                    onClick: () => onUploadClick?.(carpetaActualId),
+                  }
+                : undefined
+            }
+            moduleName={themeModuleName}
+            className='py-8'
+          />
+        ) : (
+          <EmptyState
+            icon={vistaActual === 'archivados' ? Archive : FileX}
+            title={
+              vistaActual === 'archivados'
+                ? 'No hay documentos archivados'
+                : 'No se encontraron documentos'
+            }
+            description={
+              vistaActual === 'archivados'
+                ? 'Los documentos que archives aparecerán aquí'
+                : !hasDocumentos
+                  ? `Aún no has subido ningún documento a este ${config.nombreSingular}`
+                  : 'No hay documentos que coincidan con los filtros aplicados'
+            }
+            action={
+              !hasDocumentos &&
+              onUploadClick &&
+              canCreate &&
+              vistaActual === 'activos'
+                ? {
+                    label: 'Subir primer documento',
+                    onClick: () => onUploadClick?.(carpetaActualId),
+                  }
+                : undefined
+            }
+            moduleName={themeModuleName}
+          />
+        )
+      ) : (
+        <div className='overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-800/60'>
+          {/* Encabezado con el degradado del módulo (solo escritorio) */}
+          <div
+            className={cn(
+              'hidden items-center gap-3 bg-gradient-to-r px-4 py-2.5 md:flex',
+              tema.gradient
+            )}
+          >
+            <div className='flex min-w-0 flex-1 items-center pl-[52px]'>
+              {renderSortBtn('titulo', 'Nombre')}
+            </div>
+            <div className='w-44 flex-shrink-0'>
+              <span className={encabezado}>Categoría</span>
+            </div>
+            <div className='hidden w-[160px] flex-shrink-0 lg:block'>
+              <span className={encabezado}>Subido por</span>
+            </div>
+            <div className='hidden w-[100px] flex-shrink-0 lg:block'>
+              {renderSortBtn('fecha_creacion', 'Fecha')}
+            </div>
+            <div className='hidden w-[76px] flex-shrink-0 justify-end lg:flex'>
+              {renderSortBtn('tamano_bytes', 'Tamaño')}
+            </div>
+            <div className='w-[76px] flex-shrink-0' />
           </div>
-        )}
-      </>
+          <AnimatePresence mode='popLayout'>
+            <motion.div
+              key='lista'
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className='divide-y divide-slate-100 dark:divide-slate-700/50'
+            >
+              {documentosOrdenados.map((documento, index) => {
+                const categoria = getCategoriaByDocumento(documento)
+                return (
+                  <motion.div
+                    key={documento.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ delay: Math.min(index, 15) * 0.015 }}
+                  >
+                    <DocumentoCardHorizontal
+                      documento={documento}
+                      categoria={categoria}
+                      categorias={categorias}
+                      tipoEntidad={tipoEntidadFromHook}
+                      onView={handleView}
+                      onDownload={handleDownload}
+                      onToggleImportante={handleToggleImportante}
+                      onArchive={handleArchive}
+                      onDelete={canDelete ? handleDelete : undefined}
+                      onRefresh={handleRefresh}
+                      moduleName={themeModuleName}
+                      esArchivado={vistaActual === 'archivados'}
+                      onMoverACarpeta={doc => {
+                        setDocumentoParaMover(doc)
+                        setModalMoverAbierto(true)
+                      }}
+                    />
+                  </motion.div>
+                )
+              })}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      )}
 
       {/* Modal Viewer */}
       <DocumentoViewer
@@ -502,6 +496,8 @@ export function DocumentosLista({
         onDownload={handleDownload}
         onDelete={canDelete ? handleDelete : undefined}
         urlPreview={urlPreview}
+        errorPreview={errorPreview}
+        navegacion={navegacionViewer}
         moduleName={themeModuleName}
       />
 

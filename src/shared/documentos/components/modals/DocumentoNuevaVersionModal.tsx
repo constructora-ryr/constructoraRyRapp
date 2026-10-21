@@ -24,6 +24,10 @@ import {
   getTodayDateString,
 } from '@/lib/utils/date.utils'
 import { logger } from '@/lib/utils/logger'
+import {
+  formatosArchivo,
+  validarArchivoDocumento,
+} from '@/shared/documentos/config/tipos-archivo'
 import { documentosKeys } from '@/shared/documentos/hooks/useDocumentosQuery'
 import { DocumentosService } from '@/shared/documentos/services/documentos.service'
 import type { DocumentoProyecto } from '@/shared/documentos/types/documento.types'
@@ -68,28 +72,9 @@ export function DocumentoNuevaVersionModal({
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Validar tipo
-    const allowedTypes = [
-      'application/pdf',
-      'image/jpeg',
-      'image/jpg',
-      'image/png',
-      'image/webp',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'application/vnd.ms-excel',
-    ]
-
-    if (!allowedTypes.includes(file.type)) {
-      setError('Tipo de archivo no permitido. Solo PDF, imágenes, Word o Excel')
-      return
-    }
-
-    // Validar tamaño (50MB)
-    const maxSize = 50 * 1024 * 1024
-    if (file.size > maxSize) {
-      setError('El archivo no puede superar los 50MB')
+    const errorArchivo = validarArchivoDocumento(file, tipoEntidad)
+    if (errorArchivo) {
+      setError(errorArchivo)
       return
     }
 
@@ -289,7 +274,7 @@ export function DocumentoNuevaVersionModal({
                     id='file-upload-version'
                     type='file'
                     onChange={handleFileSelect}
-                    accept='.pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx'
+                    accept={formatosArchivo(tipoEntidad).accept}
                     className='hidden'
                     disabled={subiendo}
                   />

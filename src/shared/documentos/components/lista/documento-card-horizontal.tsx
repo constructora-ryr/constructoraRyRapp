@@ -14,6 +14,7 @@ import {
   FileUp,
   FolderPlus,
   History,
+  Image as ImageIcon,
   Lock,
   MoreVertical,
   Pin,
@@ -35,6 +36,7 @@ import {
   getFileExtension,
 } from '../../types/documento.types'
 import type { TipoEntidad } from '../../types/entidad.types'
+import { colorCategoria } from '../../utils/categoria-color'
 import {
   getAvatarColor,
   getFileTypeColor,
@@ -47,6 +49,31 @@ import {
   DocumentoReemplazarArchivoModal,
   DocumentoVersionesModal,
 } from '../modals'
+
+const insignia =
+  'inline-flex flex-shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ring-inset'
+
+/** Chip de categoría: fondo con su color, punto y nombre (completo en tooltip) */
+function ChipCategoria({
+  categoria,
+}: {
+  categoria: { nombre: string; color: string }
+}) {
+  const hex = colorCategoria(categoria.color)
+  return (
+    <span
+      title={categoria.nombre}
+      className='inline-flex max-w-full items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium text-slate-700 dark:text-slate-200'
+      style={{ backgroundColor: `${hex}1f` }}
+    >
+      <span
+        className='h-2 w-2 flex-shrink-0 rounded-full'
+        style={{ backgroundColor: hex }}
+      />
+      <span className='truncate'>{categoria.nombre}</span>
+    </span>
+  )
+}
 
 interface DocumentoCardHorizontalProps {
   documento: DocumentoProyecto
@@ -127,6 +154,10 @@ export function DocumentoCardHorizontal({
     tipoEntidad,
   })
 
+  const [miniaturaFallo, setMiniaturaFallo] = useState(false)
+  const extension = getFileExtension(documento.nombre_archivo)
+  const colorTipo = getFileTypeColor(extension, documento.tipo_mime)
+
   // Portal positioning para el menú
   const triggerRef = useRef<HTMLButtonElement>(null)
   const [menuPos, setMenuPos] = useState<{
@@ -168,52 +199,41 @@ export function DocumentoCardHorizontal({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -4 }}
       onClick={() => onView(documento)}
-      className='group relative flex cursor-pointer items-center gap-3 overflow-hidden bg-white px-3 py-2 transition-colors duration-100 hover:bg-gray-50/80 dark:bg-transparent dark:hover:bg-gray-800/30'
+      className='group relative flex cursor-pointer items-center gap-3 overflow-hidden px-4 py-3 transition-colors duration-100 hover:bg-slate-50 dark:hover:bg-slate-700/30'
     >
-      {/* ICONO / THUMBNAIL — preview para imágenes, icono para el resto */}
+      {/* ICONO / MINIATURA — color por tipo de archivo; si la imagen no carga, ícono */}
       <div className='relative flex-shrink-0'>
-        {esImagen && thumbnailUrl ? (
-          <div className='h-8 w-8 overflow-hidden rounded-md shadow-sm'>
-            {/* eslint-disable-next-line @next/next/no-img-element -- Thumbnail de Supabase Storage con dimensiones variables; next/image requeriría width/height fijos */}
+        {esImagen && thumbnailUrl && !miniaturaFallo ? (
+          <div className='h-10 w-10 overflow-hidden rounded-xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-700'>
+            {/* eslint-disable-next-line @next/next/no-img-element -- Miniatura firmada de Supabase Storage con dimensiones variables; next/image requeriría width/height fijos */}
             <img
               src={thumbnailUrl}
               alt={documento.titulo}
               loading='lazy'
+              onError={() => setMiniaturaFallo(true)}
               className='h-full w-full object-cover'
             />
           </div>
         ) : (
           <div
-            className='flex h-8 w-8 items-center justify-center rounded-md'
-            style={{
-              background: `${getFileTypeColor(getFileExtension(documento.nombre_archivo), documento.tipo_mime)}18`,
-            }}
+            className='flex h-10 w-10 items-center justify-center rounded-xl'
+            style={{ background: `${colorTipo}1f` }}
           >
-            <FileText
-              size={16}
-              style={{
-                color: getFileTypeColor(
-                  getFileExtension(documento.nombre_archivo),
-                  documento.tipo_mime
-                ),
-              }}
-            />
+            {esImagen ? (
+              <ImageIcon size={18} style={{ color: colorTipo }} />
+            ) : (
+              <FileText size={18} style={{ color: colorTipo }} />
+            )}
           </div>
         )}
-        {/* Extensión superpuesta en la esquina — color por tipo de archivo, no por categoría */}
         <span
-          className='absolute -bottom-1 -right-1 rounded px-1 py-px font-mono text-[9px] font-bold uppercase leading-none tracking-wide text-white shadow-sm'
-          style={{
-            backgroundColor: getFileTypeColor(
-              getFileExtension(documento.nombre_archivo),
-              documento.tipo_mime
-            ),
-          }}
+          className='absolute -bottom-1 -right-1 rounded-md px-1 py-px font-mono text-[9px] font-bold uppercase leading-none tracking-wide text-white shadow-sm ring-2 ring-white dark:ring-slate-800'
+          style={{ backgroundColor: colorTipo }}
         >
-          {getFileExtension(documento.nombre_archivo)}
+          {extension}
         </span>
         {documento.es_importante && (
-          <div className='absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-cyan-500 shadow'>
+          <div className='absolute -left-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-cyan-500 shadow ring-2 ring-white dark:ring-slate-800'>
             <Pin size={8} className='fill-white text-white' />
           </div>
         )}
@@ -221,23 +241,27 @@ export function DocumentoCardHorizontal({
 
       {/* NOMBRE + METADATA — columna principal, crece */}
       <div className='flex min-w-0 flex-1 flex-col'>
-        <div className='flex items-center gap-2'>
+        <div className='flex min-w-0 flex-wrap items-center gap-1.5 md:flex-nowrap'>
           <span
-            className='truncate text-sm font-semibold text-gray-900 dark:text-white'
+            className='line-clamp-2 min-w-0 text-sm font-semibold text-slate-900 dark:text-white md:truncate'
             title={documento.titulo}
           >
             {documento.titulo}
           </span>
           {documento.es_importante && (
-            <span className='flex flex-shrink-0 items-center gap-1 rounded-full bg-cyan-100 px-2 py-0.5 text-[10px] font-bold text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300'>
-              <Pin size={9} className='fill-cyan-600 dark:fill-cyan-400' />
+            <span
+              className={`${insignia} bg-cyan-50 text-cyan-700 ring-cyan-600/20 dark:bg-cyan-500/10 dark:text-cyan-300`}
+            >
+              <Pin size={9} className='fill-current' />
               Anclado
             </span>
           )}
           {documento.es_documento_identidad && (
-            <span className='flex flex-shrink-0 items-center gap-1 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm'>
+            <span
+              className={`${insignia} bg-amber-50 text-amber-800 ring-amber-600/25 dark:bg-amber-500/10 dark:text-amber-300`}
+            >
               <Lock size={9} />
-              Documento de Identidad
+              Identidad
             </span>
           )}
           {estaProtegido && (
@@ -249,18 +273,24 @@ export function DocumentoCardHorizontal({
             </span>
           )}
           {documento.version > 1 && (
-            <span className='flex-shrink-0 rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-purple-700 dark:bg-purple-900/40 dark:text-purple-300'>
+            <span
+              className={`${insignia} bg-violet-50 text-violet-700 ring-violet-600/20 dark:bg-violet-500/10 dark:text-violet-300`}
+            >
               v{documento.version}
             </span>
           )}
           {estaVencido && (
-            <span className='flex flex-shrink-0 items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-700 dark:bg-red-900/40 dark:text-red-300'>
+            <span
+              className={`${insignia} bg-rose-50 text-rose-700 ring-rose-600/20 dark:bg-rose-500/10 dark:text-rose-300`}
+            >
               <AlertCircle size={9} />
               Vencido
             </span>
           )}
           {!estaVencido && estaProximoAVencer && (
-            <span className='flex flex-shrink-0 items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-bold text-orange-700 dark:bg-orange-900/40 dark:text-orange-300'>
+            <span
+              className={`${insignia} bg-orange-50 text-orange-700 ring-orange-600/20 dark:bg-orange-500/10 dark:text-orange-300`}
+            >
               <AlertCircle size={9} />
               Por vencer
             </span>
@@ -271,24 +301,24 @@ export function DocumentoCardHorizontal({
             <BadgeEstadoProceso estadoPaso={estadoProceso.estadoPaso} />
           </div>
         )}
+        {/* Celular: categoría, fecha y tamaño debajo del nombre */}
+        <div className='mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500 dark:text-slate-400 md:hidden'>
+          {categoria && <ChipCategoria categoria={categoria} />}
+          <span className='tabular-nums'>
+            {formatDateCompact(documento.fecha_creacion)}
+          </span>
+          <span className='tabular-nums'>
+            · {formatFileSize(documento.tamano_bytes)}
+          </span>
+        </div>
       </div>
 
-      {/* CATEGORÍA — w-40 hidden below md */}
-      <div className='hidden w-40 flex-shrink-0 items-center gap-1.5 md:flex'>
+      {/* CATEGORÍA — chip con su color; nombre completo al pasar el cursor */}
+      <div className='hidden w-44 flex-shrink-0 md:block'>
         {categoria ? (
-          <>
-            <span
-              className='h-2 w-2 flex-shrink-0 rounded-full'
-              style={{ backgroundColor: categoria.color }}
-            />
-            <span className='truncate text-xs font-medium text-gray-600 dark:text-gray-400'>
-              {categoria.nombre}
-            </span>
-          </>
+          <ChipCategoria categoria={categoria} />
         ) : (
-          <span className='text-xs italic text-gray-400 dark:text-gray-500'>
-            —
-          </span>
+          <span className='text-xs text-slate-300 dark:text-slate-600'>—</span>
         )}
       </div>
 
@@ -311,7 +341,7 @@ export function DocumentoCardHorizontal({
               )}
             </div>
             <span
-              className='truncate text-xs text-gray-600 dark:text-gray-400'
+              className='truncate text-xs text-slate-600 dark:text-slate-300'
               title={`${documento.usuario.nombres} ${documento.usuario.apellidos}`}
             >
               {documento.usuario.nombres} {documento.usuario.apellidos}
@@ -325,27 +355,27 @@ export function DocumentoCardHorizontal({
       </div>
 
       {/* FECHA SUBIDA — w-[96px] hidden below lg */}
-      <div className='hidden w-[96px] flex-shrink-0 lg:block'>
-        <span className='text-xs tabular-nums text-gray-600 dark:text-gray-400'>
+      <div className='hidden w-[100px] flex-shrink-0 lg:block'>
+        <span className='text-xs tabular-nums text-slate-600 dark:text-slate-300'>
           {formatDateCompact(documento.fecha_creacion)}
         </span>
       </div>
       {/* TAMAÑO — w-[72px] hidden below lg */}
-      <div className='hidden w-[72px] flex-shrink-0 text-right lg:block'>
-        <span className='text-xs tabular-nums text-gray-500 dark:text-gray-400'>
+      <div className='hidden w-[76px] flex-shrink-0 text-right lg:block'>
+        <span className='text-xs tabular-nums text-slate-500 dark:text-slate-400'>
           {formatFileSize(documento.tamano_bytes)}
         </span>
       </div>
 
       {/* ACCIONES — w-[68px], visibles en hover */}
       <div
-        className='flex w-[68px] flex-shrink-0 items-center justify-end gap-0.5'
+        className='flex w-auto flex-shrink-0 items-center justify-end gap-0.5 md:w-[76px]'
         onClick={e => e.stopPropagation()}
       >
-        <div className='flex items-center gap-0.5 opacity-0 transition-opacity duration-150 focus-within:opacity-100 group-hover:opacity-100'>
+        <div className='flex items-center gap-0.5 transition-opacity duration-150 focus-within:opacity-100 group-hover:opacity-100 [@media(hover:hover)]:opacity-0'>
           <button
             onClick={() => onDownload(documento)}
-            className='flex items-center justify-center rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-200'
+            className='flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-200 md:h-8 md:w-8'
             title='Descargar'
             aria-label='Descargar documento'
           >
@@ -363,7 +393,7 @@ export function DocumentoCardHorizontal({
                 ref={triggerRef}
                 type='button'
                 onClick={handleAbrirMenu}
-                className='flex items-center justify-center rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-200'
+                className='flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-200 md:h-8 md:w-8'
                 title='Más opciones'
                 aria-label='Más opciones'
               >
@@ -593,112 +623,122 @@ export function DocumentoCardHorizontal({
       {/* fin acciones */}
 
       {/* Modales */}
-      <DocumentoVersionesModal
-        isOpen={modalVersionesAbierto}
-        documentoId={documento.id}
-        onClose={cerrarModalVersiones}
-        onVersionRestaurada={async () => {
-          cerrarModalVersiones()
-          await onRefresh?.()
-        }}
-      />
+      {modalVersionesAbierto && (
+        <DocumentoVersionesModal
+          isOpen={modalVersionesAbierto}
+          documentoId={documento.id}
+          onClose={cerrarModalVersiones}
+          onVersionRestaurada={async () => {
+            cerrarModalVersiones()
+            await onRefresh?.()
+          }}
+        />
+      )}
 
-      <DocumentoNuevaVersionModal
-        isOpen={modalNuevaVersionAbierto}
-        documento={documento}
-        tipoEntidad={tipoEntidad}
-        onClose={cerrarModalNuevaVersion}
-        onSuccess={async () => {
-          cerrarModalNuevaVersion()
-          await onRefresh?.()
-        }}
-      />
+      {modalNuevaVersionAbierto && (
+        <DocumentoNuevaVersionModal
+          isOpen={modalNuevaVersionAbierto}
+          documento={documento}
+          tipoEntidad={tipoEntidad}
+          onClose={cerrarModalNuevaVersion}
+          onSuccess={async () => {
+            cerrarModalNuevaVersion()
+            await onRefresh?.()
+          }}
+        />
+      )}
 
-      <DocumentoEditarMetadatosModal
-        isOpen={modalEditarAbierto}
-        documento={documento}
-        categorias={categorias}
-        tipoEntidad={tipoEntidad}
-        moduleName={moduleName}
-        onClose={cerrarModalEditar}
-        onEditado={async () => {
-          cerrarModalEditar()
-          await onRefresh?.()
-        }}
-      />
+      {modalEditarAbierto && (
+        <DocumentoEditarMetadatosModal
+          isOpen={modalEditarAbierto}
+          documento={documento}
+          categorias={categorias}
+          tipoEntidad={tipoEntidad}
+          moduleName={moduleName}
+          onClose={cerrarModalEditar}
+          onEditado={async () => {
+            cerrarModalEditar()
+            await onRefresh?.()
+          }}
+        />
+      )}
 
-      <DocumentoReemplazarArchivoModal
-        isOpen={modalReemplazarAbierto}
-        documento={documento}
-        tipoEntidad={tipoEntidad}
-        moduleName={moduleName}
-        onClose={cerrarModalReemplazar}
-        onReemplazado={async () => {
-          cerrarModalReemplazar()
-          await onRefresh?.()
-        }}
-      />
+      {modalReemplazarAbierto && (
+        <DocumentoReemplazarArchivoModal
+          isOpen={modalReemplazarAbierto}
+          documento={documento}
+          tipoEntidad={tipoEntidad}
+          moduleName={moduleName}
+          onClose={cerrarModalReemplazar}
+          onReemplazado={async () => {
+            cerrarModalReemplazar()
+            await onRefresh?.()
+          }}
+        />
+      )}
 
       {/* Modal de confirmación de eliminación */}
-      <ConfirmacionModal
-        isOpen={confirmacionEliminar.isOpen}
-        onClose={cerrarConfirmacionEliminar}
-        onConfirm={async () => {
-          await ejecutarEliminacion(tipoEntidad, async () => {
-            await onRefresh?.()
-          })
-        }}
-        variant={
-          confirmacionEliminar.esDocumentoIdentidad
-            ? 'warning'
-            : confirmacionEliminar.esDocumentoCritico
+      {confirmacionEliminar.isOpen && (
+        <ConfirmacionModal
+          isOpen={confirmacionEliminar.isOpen}
+          onClose={cerrarConfirmacionEliminar}
+          onConfirm={async () => {
+            await ejecutarEliminacion(tipoEntidad, async () => {
+              await onRefresh?.()
+            })
+          }}
+          variant={
+            confirmacionEliminar.esDocumentoIdentidad
               ? 'warning'
-              : 'danger'
-        }
-        title={
-          confirmacionEliminar.esDocumentoIdentidad
-            ? '¿Eliminar documento de identidad?'
-            : confirmacionEliminar.esDocumentoCritico
-              ? '¿Eliminar documento crítico?'
-              : '¿Eliminar documento?'
-        }
-        message={(() => {
-          const notasMsg =
-            confirmacionEliminar.notasVinculadas > 0
-              ? `\n\nEste documento está vinculado a ${confirmacionEliminar.notasVinculadas === 1 ? '1 nota' : `${confirmacionEliminar.notasVinculadas} notas`} del historial. El vínculo desaparecerá pero las notas se conservarán.`
-              : ''
-
-          if (confirmacionEliminar.detectando)
-            return 'Verificando el tipo de documento…'
-          if (confirmacionEliminar.esDocumentoIdentidad)
-            return `Este es el documento de identidad del cliente (cédula o pasaporte).\n\nSin él, no podrán realizarse nuevas asignaciones de vivienda. Se moverá a la papelera y solo un usuario con rol de administrador podrá recuperarlo.${notasMsg}`
-          if (confirmacionEliminar.esDocumentoCritico)
-            return `Este documento es un requisito obligatorio para el desembolso${
-              confirmacionEliminar.entidadAfectada
-                ? ` (${confirmacionEliminar.entidadAfectada})`
+              : confirmacionEliminar.esDocumentoCritico
+                ? 'warning'
+                : 'danger'
+          }
+          title={
+            confirmacionEliminar.esDocumentoIdentidad
+              ? '¿Eliminar documento de identidad?'
+              : confirmacionEliminar.esDocumentoCritico
+                ? '¿Eliminar documento crítico?'
+                : '¿Eliminar documento?'
+          }
+          message={(() => {
+            const notasMsg =
+              confirmacionEliminar.notasVinculadas > 0
+                ? `\n\nEste documento está vinculado a ${confirmacionEliminar.notasVinculadas === 1 ? '1 nota' : `${confirmacionEliminar.notasVinculadas} notas`} del historial. El vínculo desaparecerá pero las notas se conservarán.`
                 : ''
-            }. Al eliminarlo quedará registrado como pendiente nuevamente.\n\nSe moverán a la papelera ${
+
+            if (confirmacionEliminar.detectando)
+              return 'Verificando el tipo de documento…'
+            if (confirmacionEliminar.esDocumentoIdentidad)
+              return `Este es el documento de identidad del cliente (cédula o pasaporte).\n\nSin él, no podrán realizarse nuevas asignaciones de vivienda. Se moverá a la papelera y solo un usuario con rol de administrador podrá recuperarlo.${notasMsg}`
+            if (confirmacionEliminar.esDocumentoCritico)
+              return `Este documento es un requisito obligatorio para el desembolso${
+                confirmacionEliminar.entidadAfectada
+                  ? ` (${confirmacionEliminar.entidadAfectada})`
+                  : ''
+              }. Al eliminarlo quedará registrado como pendiente nuevamente.\n\nSe moverán a la papelera ${
+                confirmacionEliminar.totalVersiones > 1
+                  ? `las ${confirmacionEliminar.totalVersiones} versiones`
+                  : 'el documento'
+              }. Puede recuperarlos desde administración.${notasMsg}`
+            return `Esta acción moverá el documento${
               confirmacionEliminar.totalVersiones > 1
-                ? `las ${confirmacionEliminar.totalVersiones} versiones`
-                : 'el documento'
-            }. Puede recuperarlos desde administración.${notasMsg}`
-          return `Esta acción moverá el documento${
-            confirmacionEliminar.totalVersiones > 1
-              ? ` y sus ${confirmacionEliminar.totalVersiones} versiones`
-              : ''
-          } a la papelera. Puede recuperarlo desde el panel de administración.${notasMsg}`
-        })()}
-        confirmText={
-          confirmacionEliminar.esDocumentoIdentidad ||
-          confirmacionEliminar.esDocumentoCritico
-            ? 'Entiendo, eliminar de todas formas'
-            : 'Sí, eliminar'
-        }
-        isLoading={confirmacionEliminar.detectando || eliminando}
-        loadingText={
-          confirmacionEliminar.detectando ? 'Verificando…' : 'Eliminando…'
-        }
-      />
+                ? ` y sus ${confirmacionEliminar.totalVersiones} versiones`
+                : ''
+            } a la papelera. Puede recuperarlo desde el panel de administración.${notasMsg}`
+          })()}
+          confirmText={
+            confirmacionEliminar.esDocumentoIdentidad ||
+            confirmacionEliminar.esDocumentoCritico
+              ? 'Entiendo, eliminar de todas formas'
+              : 'Sí, eliminar'
+          }
+          isLoading={confirmacionEliminar.detectando || eliminando}
+          loadingText={
+            confirmacionEliminar.detectando ? 'Verificando…' : 'Eliminando…'
+          }
+        />
+      )}
     </motion.div>
   )
 }

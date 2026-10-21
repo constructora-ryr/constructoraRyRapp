@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 
 import { logger } from '@/lib/utils/logger'
 
+import { validarArchivoDocumento } from '../config/tipos-archivo'
 import { DocumentosService } from '../services/documentos.service'
 import { type TipoEntidad } from '../types'
 
@@ -70,15 +71,24 @@ export function useReemplazarArchivoForm({
     e.stopPropagation()
     setDragActive(false)
 
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setNuevoArchivo(e.dataTransfer.files[0])
-    }
+    const file = e.dataTransfer.files?.[0]
+    if (file) elegirArchivo(file)
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setNuevoArchivo(e.target.files[0])
+    const file = e.target.files?.[0]
+    if (file) elegirArchivo(file)
+    // Permite volver a elegir el mismo archivo tras un error
+    e.target.value = ''
+  }
+
+  const elegirArchivo = (file: File) => {
+    const error = validarArchivoDocumento(file, tipoEntidad)
+    if (error) {
+      toast.error('No se puede usar este archivo', { description: error })
+      return
     }
+    setNuevoArchivo(file)
   }
 
   const removeFile = () => {

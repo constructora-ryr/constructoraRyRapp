@@ -1,76 +1,10 @@
+/**
+ * Estilos propios del visor de abonos. La carcasa (overlay, encabezado,
+ * cuerpo) y la vista previa son compartidas: @/shared/components/visor-archivo
+ */
 export const abonoDetalleStyles = {
-  // Overlay — sin backdrop-blur: es el mayor causante de lag al scrollear
-  // (obliga al GPU a re-renderizar toda la app en cada frame de scroll)
-  overlay: 'fixed inset-0 z-[9999] bg-slate-950/75',
-
-  // Contenedor del modal
-  // Mobile: full-screen (sin margen, sin rounded — el PDF necesita todo el espacio)
-  // Desktop: inset-6 con rounded-2xl — muestra el backdrop alrededor (patrón modal moderno)
-  modal:
-    'fixed inset-0 md:inset-6 z-[10000] flex flex-col overflow-hidden bg-white dark:bg-slate-900 shadow-2xl md:rounded-2xl',
-
-  // ─── Header ──────────────────────────────────────────────────────────────
-  // El degradado (color de la fuente o rojo si está anulado) se agrega en el componente
-  header: {
-    container:
-      'relative flex flex-wrap items-center justify-between gap-x-4 gap-y-3 overflow-hidden bg-gradient-to-r px-4 py-3.5 sm:px-6',
-    anulado: 'from-red-700 via-red-600 to-rose-600',
-    glow: 'pointer-events-none absolute -right-10 -top-20 h-48 w-48 rounded-full bg-white/10 blur-2xl',
-    left: 'relative flex min-w-0 flex-1 items-center gap-3',
-    iconWrap:
-      'flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-white/20 ring-1 ring-white/30',
-    title:
-      'truncate text-lg font-bold tabular-nums text-white drop-shadow-sm sm:text-xl',
-    subtitle: 'truncate text-sm text-white/80',
-    badgeEstado:
-      'inline-flex items-center gap-1 rounded-full border border-white/40 bg-white/20 px-2.5 py-0.5 text-[11px] font-bold text-white',
-    actions: 'relative flex flex-shrink-0 flex-wrap items-center gap-2',
-    btn: 'inline-flex items-center gap-1.5 rounded-xl border border-white/30 bg-white/15 px-3 py-1.5 text-xs font-semibold text-white transition-all hover:bg-white/30 disabled:opacity-50',
-    btnLabel: 'hidden sm:inline',
-    btnDanger:
-      'inline-flex items-center gap-1.5 rounded-xl border border-red-300/40 bg-red-500/80 px-3 py-1.5 text-xs font-semibold text-white transition-all hover:bg-red-600/90',
-    btnClose:
-      'flex h-8 w-8 items-center justify-center rounded-xl border border-white/30 bg-white/15 text-white transition-all hover:bg-white/30',
-    nav: 'flex items-center gap-0.5 rounded-xl border border-white/30 bg-white/10 p-0.5',
-    navBtn:
-      'flex h-7 w-7 items-center justify-center rounded-lg text-white transition-colors hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent',
-    navLabel:
-      'min-w-[4.5rem] px-1 text-center text-[11px] font-semibold tabular-nums text-white/90',
-  },
-
-  // ─── Layout split ─────────────────────────────────────────────────────────
-  // Mobile: flex-col con scroll (comprobante arriba, datos abajo)
-  // Desktop: flex-row (comprobante izquierda, panel derecho fijo)
-  body: 'flex flex-1 flex-col overflow-y-auto md:flex-row md:overflow-hidden',
-
-  // Panel izquierdo: comprobante — lightbox
-  preview: {
-    container:
-      'relative min-h-[55vh] flex-shrink-0 overflow-hidden bg-slate-950 md:min-h-0 md:flex-1 md:flex-shrink',
-    // Retícula de puntos sutil sobre el fondo oscuro
-    grid: 'pointer-events-none absolute inset-0 opacity-40 [background-image:radial-gradient(rgba(148,163,184,0.25)_1px,transparent_1px)] [background-size:22px_22px]',
-    iframe: 'absolute inset-0 h-full w-full border-0 bg-white',
-    // Imagen: margen para que respire y espacio abajo para la barra
-    imgWrapper: 'absolute inset-4 bottom-20 touch-none',
-    placeholder:
-      'absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center',
-    placeholderIcon:
-      'flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-800 ring-1 ring-slate-700',
-    errorIcon:
-      'flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-500/10 ring-1 ring-rose-500/30',
-    placeholderTitle: 'text-base font-semibold text-slate-200',
-    placeholderSub: 'max-w-xs text-xs text-slate-400',
-    errorBtnPrimary:
-      'inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3.5 py-2 text-xs font-semibold text-white shadow-lg shadow-violet-900/40 transition-all hover:brightness-110',
-    errorBtn:
-      'inline-flex items-center gap-1.5 rounded-xl border border-slate-600 bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-200 transition-colors hover:bg-slate-700',
-    // Barra de herramientas flotante (vidrio oscuro)
-    toolbar:
-      'absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-0.5 rounded-2xl border border-white/10 bg-slate-900/80 p-1 shadow-2xl backdrop-blur-md',
-    toolBtn:
-      'flex h-9 w-9 items-center justify-center rounded-xl text-white/80 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent',
-    toolSep: 'mx-1 h-5 w-px bg-white/15',
-  },
+  // Degradado del encabezado cuando el abono está anulado
+  headerAnulado: 'from-red-700 via-red-600 to-rose-600',
 
   // Panel derecho: información
   sidebar: {

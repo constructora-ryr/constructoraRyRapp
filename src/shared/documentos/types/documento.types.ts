@@ -108,6 +108,8 @@ export interface CategoriaDocumento {
 
   // Sistema flexible multi-módulo
   es_global: boolean // true = disponible en TODOS los módulos
+  /** Categoría base que usan los flujos automáticos (no se elimina) */
+  es_sistema?: boolean
   modulos_permitidos: ModuloDocumento[] // ["proyectos"], ["clientes","viviendas"], etc.
 
   fecha_creacion: string
@@ -261,9 +263,6 @@ export const MIME_TYPES_PERMITIDOS = [
   'application/dwg',
   'image/vnd.dwg',
 ] as const
-
-// Límite de tamaño de archivo (50MB)
-export const MAX_FILE_SIZE = 50 * 1024 * 1024
 
 // Helper para formatear tamaño de archivo
 export function formatFileSize(bytes: number): string {

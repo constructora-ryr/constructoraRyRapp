@@ -13,11 +13,15 @@
  * - ✅ Cache automático
  */
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 
 import { useAuth } from '@/contexts/auth-context'
 import { supabase } from '@/lib/supabase/client'
 import { logger } from '@/lib/utils/logger'
+import {
+  tipoDeArchivo,
+  type VisorNavegacion,
+} from '@/shared/components/visor-archivo'
 
 import { DocumentosService } from '../services'
 import { useDocumentosStore } from '../store/documentos.store'
@@ -70,6 +74,10 @@ export function useDocumentosLista({
     useState<DocumentoProyecto | null>(null)
   const [modalViewerAbierto, setModalViewerAbierto] = useState(false)
   const [urlPreview, setUrlPreview] = useState<string | undefined>(undefined)
+  // No se pudo firmar la URL (p.ej. el archivo ya no existe en Storage)
+  const [errorPreview, setErrorPreview] = useState(false)
+  // Evita que la URL de un documento anterior pise la del actual
+  const previewSolicitado = useRef<string | null>(null)
   const [modalArchivarAbierto, setModalArchivarAbierto] = useState(false)
   const [documentoParaArchivar, setDocumentoParaArchivar] =
     useState<DocumentoProyecto | null>(null)
@@ -235,37 +243,29 @@ export function useDocumentosLista({
     async (documento: DocumentoProyecto) => {
       setDocumentoSeleccionado(documento)
       setModalViewerAbierto(true)
-
-      // Generar URL de preview para PDFs e imágenes
-      const isPDF = documento.tipo_mime?.includes('pdf')
-      const isImage = documento.tipo_mime?.startsWith('image/')
-
-      if (isPDF || isImage) {
-        try {
-          // Obtener configuración de bucket según tipo de entidad
-          const { bucket } = obtenerConfiguracionEntidad(tipoEntidad)
-          const storagePath = documento.url_storage
-
-          // Para buckets privados, usar signed URL temporal (1 hora de validez)
-          const { data, error } = await supabase.storage
-            .from(bucket)
-            .createSignedUrl(storagePath, 3600) // 3600 segundos = 1 hora
-
-          if (error) {
-            logger.error('❌ Error al crear URL firmada:', error)
-            setUrlPreview(undefined)
-          } else if (data?.signedUrl) {
-            setUrlPreview(data.signedUrl)
-          }
-        } catch (error) {
-          logger.error('Error al obtener URL de preview:', error)
-          setUrlPreview(undefined)
-        }
-      } else {
-        setUrlPreview(undefined)
-      }
-
+      setUrlPreview(undefined)
+      setErrorPreview(false)
+      previewSolicitado.current = documento.id
       onViewDocumento?.(documento)
+
+      // URL firmada (1 hora) solo para lo que se puede previsualizar
+      const tipo = tipoDeArchivo(documento.tipo_mime, documento.nombre_archivo)
+
+      if (tipo !== 'otro') {
+        const { bucket } = obtenerConfiguracionEntidad(tipoEntidad)
+        const { data, error } = await supabase.storage
+          .from(bucket)
+          .createSignedUrl(documento.url_storage, 3600)
+          .catch((e: unknown) => ({ data: null, error: e }))
+
+        if (previewSolicitado.current !== documento.id) return
+        if (error || !data?.signedUrl) {
+          logger.error('❌ Error al crear URL firmada:', error)
+          setErrorPreview(true)
+        } else {
+          setUrlPreview(data.signedUrl)
+        }
+      }
     },
     [onViewDocumento, tipoEntidad]
   )
@@ -274,6 +274,8 @@ export function useDocumentosLista({
     setModalViewerAbierto(false)
     setDocumentoSeleccionado(null)
     setUrlPreview(undefined)
+    setErrorPreview(false)
+    previewSolicitado.current = null
   }, [])
 
   const handleDownload = useCallback(
@@ -474,6 +476,24 @@ export function useDocumentosLista({
       return 0
     })
   }, [documentosMostrar, sortCol, sortDir])
+
+  // Anterior/siguiente del visor: mismo orden que la lista en pantalla
+  const navegacionViewer = useMemo<VisorNavegacion | undefined>(() => {
+    if (!documentoSeleccionado) return undefined
+    const i = documentosOrdenados.findIndex(
+      d => d.id === documentoSeleccionado.id
+    )
+    if (i < 0) return undefined
+    const anterior = documentosOrdenados[i - 1]
+    const siguiente = documentosOrdenados[i + 1]
+    return {
+      actual: i + 1,
+      total: documentosOrdenados.length,
+      nombre: 'Documento',
+      onAnterior: anterior ? () => handleView(anterior) : undefined,
+      onSiguiente: siguiente ? () => handleView(siguiente) : undefined,
+    }
+  }, [documentoSeleccionado, documentosOrdenados, handleView])
   // ─────────────────────────────────────────────────────────────────────────────
 
   const getCategoriaByDocumento = useCallback(
@@ -535,6 +555,7 @@ export function useDocumentosLista({
     documentoSeleccionado,
     modalViewerAbierto,
     urlPreview,
+    errorPreview,
     modalArchivarAbierto,
     setModalArchivarAbierto,
     documentoParaArchivar,
@@ -554,6 +575,7 @@ export function useDocumentosLista({
     documentosFiltrados,
     documentosMostrar,
     documentosOrdenados,
+    navegacionViewer,
     sortCol,
     sortDir,
     toggleSort,

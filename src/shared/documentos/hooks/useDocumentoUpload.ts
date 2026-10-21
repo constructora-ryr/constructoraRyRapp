@@ -13,11 +13,12 @@ import { useAuth } from '@/contexts/auth-context'
 import { logger } from '@/lib/utils/logger'
 import { useDocumentoIdentidad } from '@/modules/clientes/documentos/hooks/useDocumentoIdentidad'
 
-import type { DocumentoFormData } from '../schemas/documento.schema'
 import {
-  documentoConArchivoSchema,
-  documentoFormSchema,
-} from '../schemas/documento.schema'
+  formatosArchivo,
+  validarArchivoDocumento,
+} from '../config/tipos-archivo'
+import type { DocumentoFormData } from '../schemas/documento.schema'
+import { documentoFormSchema } from '../schemas/documento.schema'
 import type { TipoEntidad } from '../types'
 import type { TipoDocumentoValidacion } from '../types/tipos-documento'
 import { obtenerInfoTipoDocumento } from '../types/tipos-documento'
@@ -153,20 +154,14 @@ export function useDocumentoUpload({
     tipoEntidad === 'cliente' && yaExisteDocumentoIdentidad
 
   // Validación de archivo
-  const validarArchivo = useCallback((file: File): boolean => {
-    setErrorArchivo(null)
-
-    try {
-      documentoConArchivoSchema.shape.archivo.parse(file)
-      return true
-    } catch (e: unknown) {
-      const mensajeError =
-        (e as { errors?: Array<{ message: string }> })?.errors?.[0]?.message ||
-        'Archivo no válido'
-      setErrorArchivo(mensajeError)
-      return false
-    }
-  }, [])
+  const validarArchivo = useCallback(
+    (file: File): boolean => {
+      const error = validarArchivoDocumento(file, tipoEntidad)
+      setErrorArchivo(error)
+      return error === null
+    },
+    [tipoEntidad]
+  )
 
   // Handlers de archivo
   const handleArchivoSeleccionado = useCallback(
@@ -309,23 +304,22 @@ export function useDocumentoUpload({
 
   return {
     // Estado
+    formatos: formatosArchivo(tipoEntidad),
     isDragging,
     archivoSeleccionado,
     errorArchivo,
     subiendoDocumento,
     categorias,
 
-    // ✅ NUEVO: Info de tipo de documento para validación
+    // Requisito al que se vincula (si viene de uno)
     tipoDocumento,
     infoTipoDocumento,
-    fuentePagoId,
 
-    // Importante
+    // Documento de identidad (solo clientes)
     esDocumentoIdentidad,
-    categoriaIdentidad, // ✅ Para deshabilitar select
-    categoriaSeleccionada, // ✅ Para saber si hay categoría seleccionada
-    checkboxDeshabilitado, // ✅ Para deshabilitar checkbox si ya existe documento de identidad
-    yaExisteDocumentoIdentidad, // ✅ Para mensajes informativos
+    categoriaIdentidad,
+    checkboxDeshabilitado,
+    yaExisteDocumentoIdentidad,
 
     // Refs
     fileInputRef,

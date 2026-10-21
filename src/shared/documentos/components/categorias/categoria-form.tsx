@@ -1,262 +1,257 @@
 'use client'
 
-import { useState } from 'react'
+/**
+ * Formulario de crear/editar categoría: vista previa en vivo, nombre,
+ * descripción, color (paleta) e ícono (por grupos). Validación con zod.
+ */
 
-import { motion } from 'framer-motion'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Check, Loader2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
+import type { z } from 'zod'
 
+import { Tooltip } from '@/shared/components/ui/Tooltip'
+import { type ModuleName } from '@/shared/config/module-themes'
+import { cn } from '@/shared/utils/helpers'
+
+import { ICONOS_CATEGORIA } from '../../config/categoria-iconos'
+import { temaDocumentos } from '../../config/documentos-tema'
+import {
+  categoriaFormSchema,
+  type CategoriaFormData,
+} from '../../schemas/documento.schema'
 import {
   COLORES_CATEGORIA,
   type CategoriaDocumento,
-  type CategoriaFormData,
-} from '@/shared/documentos/types/documento.types'
-
+} from '../../types/documento.types'
+import { colorCategoria } from '../../utils/categoria-color'
 import { CategoriaIcon } from '../shared/categoria-icon'
 
 interface CategoriaFormProps {
-  categoria?: CategoriaDocumento // Para edición
+  /** Para edición */
+  categoria?: CategoriaDocumento
+  moduleName?: ModuleName
   onSubmit: (data: CategoriaFormData) => Promise<void>
   onCancel: () => void
 }
 
-// Íconos disponibles para categorías
-const ICONOS_DISPONIBLES = [
-  // Generales
-  { nombre: 'Folder', icono: 'Folder', label: 'Carpeta' },
-  { nombre: 'FileText', icono: 'FileText', label: 'Documento' },
-  { nombre: 'FileCheck', icono: 'FileCheck', label: 'Licencia' },
-  { nombre: 'FileSignature', icono: 'FileSignature', label: 'Contrato' },
+type CategoriaFormEntrada = z.input<typeof categoriaFormSchema>
 
-  // Identidad
-  { nombre: 'IdCard', icono: 'IdCard', label: 'Identificación' },
-  { nombre: 'CreditCard', icono: 'CreditCard', label: 'Tarjeta' },
-  { nombre: 'UserCheck', icono: 'UserCheck', label: 'Verificación' },
-  { nombre: 'Shield', icono: 'Shield', label: 'Seguridad' },
-  { nombre: 'User', icono: 'User', label: 'Usuario' },
-
-  // Legales
-  { nombre: 'Scale', icono: 'Scale', label: 'Legal' },
-  { nombre: 'Gavel', icono: 'Gavel', label: 'Notarial' },
-  { nombre: 'Award', icono: 'Award', label: 'Certificado' },
-  { nombre: 'FileWarning', icono: 'FileWarning', label: 'Importante' },
-  { nombre: 'ScrollText', icono: 'ScrollText', label: 'Escritura' },
-
-  // Financieros
-  { nombre: 'Receipt', icono: 'Receipt', label: 'Factura' },
-  { nombre: 'Banknote', icono: 'Banknote', label: 'Dinero' },
-  { nombre: 'Calculator', icono: 'Calculator', label: 'Avalúo' },
-  { nombre: 'Wallet', icono: 'Wallet', label: 'Pago' },
-  { nombre: 'DollarSign', icono: 'DollarSign', label: 'Financiero' },
-
-  // Propiedad/Construcción
-  { nombre: 'Home', icono: 'Home', label: 'Vivienda' },
-  { nombre: 'Building2', icono: 'Building2', label: 'Edificio' },
-  { nombre: 'Key', icono: 'Key', label: 'Llave' },
-  { nombre: 'MapPin', icono: 'MapPin', label: 'Ubicación' },
-  { nombre: 'Map', icono: 'Map', label: 'Plano' },
-  { nombre: 'Hammer', icono: 'Hammer', label: 'Construcción' },
-  { nombre: 'Ruler', icono: 'Ruler', label: 'Medidas' },
-
-  // Media
-  { nombre: 'Camera', icono: 'Camera', label: 'Fotografía' },
-  { nombre: 'Image', icono: 'Image', label: 'Imagen' },
-  { nombre: 'Video', icono: 'Video', label: 'Video' },
-]
+const etiqueta =
+  'mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400'
+const campo =
+  'w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 dark:border-slate-700 dark:bg-slate-900/60 dark:text-white'
 
 export function CategoriaForm({
   categoria,
+  moduleName,
   onSubmit,
   onCancel,
 }: CategoriaFormProps) {
-  const [guardando, setGuardando] = useState(false)
-  const [colorSeleccionado, setColorSeleccionado] = useState(
-    categoria?.color || 'blue'
-  )
-  const [iconoSeleccionado, setIconoSeleccionado] = useState(
-    categoria?.icono || 'Folder'
-  )
+  const tema = temaDocumentos(moduleName)
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
     setValue,
     watch,
-  } = useForm<CategoriaFormData>({
+    formState: { errors, isSubmitting },
+  } = useForm<CategoriaFormEntrada, unknown, CategoriaFormData>({
+    resolver: zodResolver(categoriaFormSchema),
     defaultValues: {
-      nombre: categoria?.nombre || '',
-      descripcion: categoria?.descripcion || '',
-      color: categoria?.color || 'blue',
-      icono: categoria?.icono || 'Folder',
+      nombre: categoria?.nombre ?? '',
+      descripcion: categoria?.descripcion ?? '',
+      color: categoria?.color ?? 'blue',
+      icono: categoria?.icono ?? 'Folder',
     },
   })
 
-  // Observar el valor del nombre en tiempo real
-  const nombreActual = watch('nombre')
+  const nombre = watch('nombre')
+  const descripcion = watch('descripcion')
+  const color = watch('color') ?? 'blue'
+  const icono = watch('icono') ?? 'Folder'
+  const hex = colorCategoria(color)
 
-  const onSubmitForm = async (data: CategoriaFormData) => {
-    setGuardando(true)
-    try {
-      await onSubmit({
-        ...data,
-        color: colorSeleccionado,
-        icono: iconoSeleccionado,
-      })
-    } finally {
-      setGuardando(false)
-    }
-  }
+  // Color propio de una categoría del sistema (hex fuera de la paleta)
+  const colorPropio =
+    categoria && !COLORES_CATEGORIA.some(c => c.value === categoria.color)
+      ? categoria.color
+      : null
+
+  const elegir = (campoNombre: 'color' | 'icono', valor: string) =>
+    setValue(campoNombre, valor, { shouldDirty: true })
 
   return (
-    <motion.form
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      onSubmit={handleSubmit(onSubmitForm)}
-      className='space-y-6'
-    >
-      {/* Preview de la categoría */}
-      <div className='flex items-center gap-4 rounded-xl border border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 p-4 dark:border-gray-700 dark:from-gray-800 dark:to-gray-900'>
-        <div className='rounded-lg bg-white p-3 shadow-sm dark:bg-gray-800'>
-          <CategoriaIcon
-            icono={iconoSeleccionado}
-            color={colorSeleccionado}
-            size={32}
-          />
-        </div>
-        <div className='flex-1'>
-          <p className='text-sm text-gray-500 dark:text-gray-400'>
+    <form onSubmit={handleSubmit(onSubmit)} className='space-y-5'>
+      {/* Vista previa */}
+      <div
+        className='flex items-center gap-3 rounded-2xl border p-4'
+        style={{ borderColor: `${hex}40`, backgroundColor: `${hex}0f` }}
+      >
+        <span
+          className='flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl'
+          style={{ backgroundColor: `${hex}26` }}
+        >
+          <CategoriaIcon icono={icono} color={hex} size={24} />
+        </span>
+        <div className='min-w-0'>
+          <p className='text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400'>
             Vista previa
           </p>
-          <p className='font-semibold text-gray-900 dark:text-white'>
-            {nombreActual || 'Nueva Categoría'}
+          <p className='truncate font-semibold text-slate-900 dark:text-white'>
+            {nombre || 'Nueva categoría'}
           </p>
+          {descripcion ? (
+            <p className='truncate text-xs text-slate-500 dark:text-slate-400'>
+              {descripcion}
+            </p>
+          ) : null}
         </div>
       </div>
 
-      {/* Nombre */}
-      <div>
-        <label className='mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300'>
-          Nombre *
-        </label>
-        <input
-          {...register('nombre')}
-          type='text'
-          placeholder='Ej: Licencias y Permisos'
-          className='w-full rounded-xl border border-gray-200 bg-white px-4 py-3 transition-all focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:focus:ring-blue-400'
-        />
-        {errors.nombre && (
-          <p className='mt-1 text-sm text-red-500'>{errors.nombre.message}</p>
-        )}
+      <div className='grid gap-4 md:grid-cols-2'>
+        <div>
+          <label htmlFor='cat-nombre' className={etiqueta}>
+            Nombre *
+          </label>
+          <input
+            id='cat-nombre'
+            {...register('nombre')}
+            type='text'
+            placeholder='Ej: Licencias y permisos'
+            className={cn(campo, tema.foco)}
+          />
+          {errors.nombre ? (
+            <p className='mt-1 text-xs font-medium text-rose-600'>
+              {errors.nombre.message}
+            </p>
+          ) : null}
+        </div>
+
+        <div>
+          <label htmlFor='cat-descripcion' className={etiqueta}>
+            Descripción (opcional)
+          </label>
+          <input
+            id='cat-descripcion'
+            {...register('descripcion')}
+            type='text'
+            placeholder='Qué tipo de documentos agrupa'
+            className={cn(campo, tema.foco)}
+          />
+          {errors.descripcion ? (
+            <p className='mt-1 text-xs font-medium text-rose-600'>
+              {errors.descripcion.message}
+            </p>
+          ) : null}
+        </div>
       </div>
 
-      {/* Descripción */}
-      <div>
-        <label className='mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300'>
-          Descripción (opcional)
-        </label>
-        <textarea
-          {...register('descripcion')}
-          rows={3}
-          placeholder='Describe el tipo de documentos de esta categoría...'
-          className='w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 transition-all focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:focus:ring-blue-400'
-        />
-        {errors.descripcion && (
-          <p className='mt-1 text-sm text-red-500'>
-            {errors.descripcion.message}
-          </p>
-        )}
-      </div>
+      {/* Color */}
+      <fieldset>
+        <legend className={etiqueta}>Color</legend>
+        <div className='flex flex-wrap gap-2'>
+          {[
+            ...(colorPropio
+              ? [{ value: colorPropio, label: 'Color actual' }]
+              : []),
+            ...COLORES_CATEGORIA,
+          ].map(({ value, label }) => {
+            const activo = color === value
+            return (
+              <Tooltip key={value} content={label} side='top'>
+                <button
+                  type='button'
+                  onClick={() => elegir('color', value)}
+                  aria-label={label}
+                  aria-pressed={activo}
+                  className={cn(
+                    'flex h-9 w-9 items-center justify-center rounded-full text-white shadow-sm transition-transform hover:scale-110',
+                    activo &&
+                      'ring-2 ring-slate-900 ring-offset-2 dark:ring-white dark:ring-offset-slate-800'
+                  )}
+                  style={{ backgroundColor: colorCategoria(value) }}
+                >
+                  {activo ? <Check className='h-4 w-4' /> : null}
+                </button>
+              </Tooltip>
+            )
+          })}
+        </div>
+      </fieldset>
 
-      {/* Selector de Color */}
-      <div>
-        <label className='mb-3 block text-sm font-medium text-gray-700 dark:text-gray-300'>
-          Color
-        </label>
-        <div className='grid grid-cols-6 gap-3'>
-          {COLORES_CATEGORIA.map(({ value, label, class: bgClass }) => (
-            <motion.button
-              key={value}
-              type='button'
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                setColorSeleccionado(value)
-                setValue('color', value)
-              }}
-              className={`relative rounded-xl p-4 transition-all ${
-                colorSeleccionado === value
-                  ? 'ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-gray-900'
-                  : 'hover:ring-2 hover:ring-gray-300'
-              } `}
-              title={label}
-            >
-              <div className={`h-8 w-full rounded-lg ${bgClass}`} />
-              {colorSeleccionado === value && (
-                <motion.div
-                  layoutId='color-selected'
-                  className='absolute inset-0 rounded-xl border-2 border-blue-500'
-                />
-              )}
-            </motion.button>
+      {/* Ícono */}
+      <fieldset>
+        <legend className={etiqueta}>Ícono</legend>
+        <div className='max-h-72 space-y-3 overflow-y-auto rounded-2xl border border-slate-200/80 bg-slate-50/60 p-3 dark:border-slate-700/60 dark:bg-slate-900/40'>
+          {ICONOS_CATEGORIA.map(({ grupo, iconos }) => (
+            <div key={grupo}>
+              <p className='mb-1.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400'>
+                {grupo}
+              </p>
+              <div className='grid grid-cols-6 gap-1.5 sm:grid-cols-8 lg:grid-cols-10'>
+                {iconos.map(({ icono: nombreIcono, label }) => {
+                  const activo = icono === nombreIcono
+                  return (
+                    <Tooltip key={nombreIcono} content={label} side='top'>
+                      <button
+                        type='button'
+                        onClick={() => elegir('icono', nombreIcono)}
+                        aria-label={label}
+                        aria-pressed={activo}
+                        className={cn(
+                          'flex aspect-square items-center justify-center rounded-xl transition-all',
+                          activo
+                            ? 'bg-white shadow-md ring-2 dark:bg-slate-800'
+                            : 'text-slate-500 hover:bg-white hover:shadow-sm dark:text-slate-400 dark:hover:bg-slate-800'
+                        )}
+                        style={
+                          activo
+                            ? { ['--tw-ring-color' as string]: hex }
+                            : undefined
+                        }
+                      >
+                        <CategoriaIcon
+                          icono={nombreIcono}
+                          color={activo ? hex : undefined}
+                          size={20}
+                        />
+                      </button>
+                    </Tooltip>
+                  )
+                })}
+              </div>
+            </div>
           ))}
         </div>
-      </div>
+      </fieldset>
 
-      {/* Selector de Ícono */}
-      <div>
-        <label className='mb-3 block text-sm font-medium text-gray-700 dark:text-gray-300'>
-          Ícono
-        </label>
-        <div className='grid max-h-80 grid-cols-5 gap-3 overflow-y-auto rounded-xl bg-gray-50 p-2 dark:bg-gray-800/50 sm:grid-cols-6 lg:grid-cols-8'>
-          {ICONOS_DISPONIBLES.map(({ nombre, icono, label }) => (
-            <motion.button
-              key={nombre}
-              type='button'
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                setIconoSeleccionado(icono)
-                setValue('icono', icono)
-              }}
-              className={`relative flex items-center justify-center rounded-xl p-4 transition-all ${
-                iconoSeleccionado === icono
-                  ? 'bg-blue-50 ring-2 ring-blue-500 dark:bg-blue-900/20'
-                  : 'bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700'
-              } `}
-              title={label}
-            >
-              <CategoriaIcon
-                icono={icono}
-                color={colorSeleccionado}
-                size={24}
-              />
-            </motion.button>
-          ))}
-        </div>
-      </div>
-
-      {/* Botones */}
-      <div className='flex gap-3 pt-4'>
+      <div className='flex flex-col-reverse gap-2 border-t border-slate-200 pt-4 dark:border-slate-700 sm:flex-row sm:justify-end'>
         <button
           type='button'
           onClick={onCancel}
-          disabled={guardando}
-          className='flex-1 rounded-xl bg-gray-100 px-6 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+          disabled={isSubmitting}
+          className='h-10 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700'
         >
           Cancelar
         </button>
         <button
           type='submit'
-          disabled={guardando}
-          className='flex-1 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-3 font-medium text-white shadow-lg shadow-blue-500/30 transition-all hover:from-blue-700 hover:to-purple-700 disabled:cursor-not-allowed disabled:opacity-50'
+          disabled={isSubmitting}
+          className={cn(
+            'inline-flex h-10 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r px-5 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg disabled:opacity-60',
+            tema.gradient,
+            tema.sombra
+          )}
         >
-          {guardando
-            ? 'Guardando...'
+          {isSubmitting ? <Loader2 className='h-4 w-4 animate-spin' /> : null}
+          {isSubmitting
+            ? 'Guardando…'
             : categoria
-              ? 'Actualizar'
-              : 'Crear Categoría'}
+              ? 'Guardar cambios'
+              : 'Crear categoría'}
         </button>
       </div>
-    </motion.form>
+    </form>
   )
 }

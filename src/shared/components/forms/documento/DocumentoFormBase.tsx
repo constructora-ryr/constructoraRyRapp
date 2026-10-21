@@ -1,275 +1,244 @@
 'use client'
 
-import type { BaseSyntheticEvent, ReactNode, RefObject } from 'react'
+/**
+ * Formulario de subida de documento en secciones numeradas: archivo, datos,
+ * categoría y fechas. Las secciones 2–4 aparecen al elegir el archivo.
+ * El estado y la validación viven en useDocumentoUpload.
+ */
+
+import type { BaseSyntheticEvent, RefObject } from 'react'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { FileCheck, Loader2 } from 'lucide-react'
+import { AlertCircle, Loader2, UploadCloud } from 'lucide-react'
 import type {
   FieldErrors,
-  Path,
-  PathValue,
   UseFormRegister,
   UseFormSetValue,
   UseFormWatch,
 } from 'react-hook-form'
 
-import {
-  AccordionWizardField,
-  AccordionWizardTextarea,
-  getAccordionWizardStyles,
-} from '@/shared/components/accordion-wizard'
 import { type ModuleName } from '@/shared/config/module-themes'
+import { temaDocumentos } from '@/shared/documentos/config/documentos-tema'
+import type { FormatosArchivo } from '@/shared/documentos/config/tipos-archivo'
+import type { DocumentoFormData } from '@/shared/documentos/schemas/documento.schema'
 import { cn } from '@/shared/utils/helpers'
 
 import { ArchivoSelector } from './ArchivoSelector'
-import { CategoriaSelect } from './CategoriaSelect'
-import type {
-  CategoriaDocumentoBase,
-  DocumentoFormValuesBase,
-} from './documento-form.types'
+import { CategoriaSelector } from './CategoriaSelector'
+import { documentoFormStyles as s } from './documento-form.styles'
+import type { CategoriaDocumentoBase } from './documento-form.types'
 import { FechasInputs } from './FechasInputs'
+import { SeccionFormulario } from './SeccionFormulario'
 
-interface DocumentoFormBaseProps<TFormValues extends DocumentoFormValuesBase> {
-  mode: 'create' | 'edit'
+interface DocumentoFormBaseProps {
   moduleName?: ModuleName
 
-  // Estado de archivo (solo para mode='create')
-  archivoSeleccionado?: File | null
-  errorArchivo?: string | null
-  isDragging?: boolean
-  fileInputRef?: RefObject<HTMLInputElement | null>
+  // Archivo
+  archivoSeleccionado: File | null
+  errorArchivo: string | null
+  isDragging: boolean
+  fileInputRef: RefObject<HTMLInputElement | null>
+  formatos?: FormatosArchivo
+  onDragOver: (e: React.DragEvent<HTMLDivElement>) => void
+  onDragLeave: (e: React.DragEvent<HTMLDivElement>) => void
+  onDrop: (e: React.DragEvent<HTMLDivElement>) => void
+  onFileInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onLimpiarArchivo: () => void
 
-  // Datos del formulario
+  // Datos
   categorias: CategoriaDocumentoBase[]
   isSubmitting: boolean
-  esDocumentoIdentidad?: boolean
-  categoriaIdentidad?: CategoriaDocumentoBase | undefined
-  categoriaBloqueada?: boolean
+  /** Motivo por el que la categoría no se puede cambiar */
+  categoriaBloqueadaPor?: string
 
   // React Hook Form
-  register: UseFormRegister<TFormValues>
+  register: UseFormRegister<DocumentoFormData>
   handleSubmit: (e?: BaseSyntheticEvent) => Promise<void>
-  errors: FieldErrors<TFormValues>
-  setValue: UseFormSetValue<TFormValues>
-  watch: UseFormWatch<TFormValues>
+  errors: FieldErrors<DocumentoFormData>
+  setValue: UseFormSetValue<DocumentoFormData>
+  watch: UseFormWatch<DocumentoFormData>
 
-  // Handlers de archivo (solo para mode='create')
-  onDragOver?: (e: React.DragEvent<HTMLDivElement>) => void
-  onDragLeave?: (e: React.DragEvent<HTMLDivElement>) => void
-  onDrop?: (e: React.DragEvent<HTMLDivElement>) => void
-  onFileInputChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
-  onLimpiarArchivo?: () => void
-
-  // Handlers de formulario
   onCancel?: () => void
-
-  // Campos específicos del módulo (inyectados entre categoría y fechas)
-  extraFields?: ReactNode
-
-  // Textos personalizables
-  submitButtonText?: string
-  submittingButtonText?: string
 }
 
-export function DocumentoFormBase<TFormValues extends DocumentoFormValuesBase>({
-  mode,
+function MensajeError({ mensaje }: { mensaje?: string }) {
+  if (!mensaje) return null
+  return (
+    <p className={s.error}>
+      <AlertCircle className='h-3 w-3 flex-shrink-0' />
+      {mensaje}
+    </p>
+  )
+}
+
+export function DocumentoFormBase({
   moduleName = 'proyectos',
   archivoSeleccionado,
   errorArchivo,
-  isDragging = false,
+  isDragging,
   fileInputRef,
-  categorias,
-  isSubmitting,
-  esDocumentoIdentidad = false,
-  categoriaIdentidad,
-  categoriaBloqueada = false,
-  register,
-  handleSubmit,
-  errors,
-  setValue,
-  watch,
+  formatos,
   onDragOver,
   onDragLeave,
   onDrop,
   onFileInputChange,
   onLimpiarArchivo,
+  categorias,
+  isSubmitting,
+  categoriaBloqueadaPor,
+  register,
+  handleSubmit,
+  errors,
+  setValue,
+  watch,
   onCancel,
-  extraFields,
-  submitButtonText = 'Subir documento',
-  submittingButtonText = 'Subiendo...',
-}: DocumentoFormBaseProps<TFormValues>) {
-  const styles = getAccordionWizardStyles(moduleName)
-  const categoriaIdField = 'categoria_id' as Path<TFormValues>
-  const tituloField = 'titulo' as Path<TFormValues>
-  const descripcionField = 'descripcion' as Path<TFormValues>
-  const categoriaId = (watch(categoriaIdField) as string | undefined) ?? ''
-
-  const showArchivoSelector = mode === 'create'
-  const showFormFields =
-    mode === 'edit' || (mode === 'create' && archivoSeleccionado)
+}: DocumentoFormBaseProps) {
+  const tema = temaDocumentos(moduleName)
+  const categoriaId = watch('categoria_id') ?? ''
+  const titulo = watch('titulo') ?? ''
 
   return (
-    <motion.form
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      onSubmit={handleSubmit}
-      className='space-y-4'
-    >
-      {/* ZONA DE ARCHIVO - Solo en creación */}
-      {showArchivoSelector &&
-        fileInputRef &&
-        onDragOver &&
-        onDragLeave &&
-        onDrop &&
-        onFileInputChange &&
-        onLimpiarArchivo && (
-          <ArchivoSelector
-            moduleName={moduleName}
-            archivoSeleccionado={archivoSeleccionado || null}
-            errorArchivo={errorArchivo || null}
-            isDragging={isDragging}
-            fileInputRef={fileInputRef}
-            onDragOver={onDragOver}
-            onDragLeave={onDragLeave}
-            onDrop={onDrop}
-            onFileInputChange={onFileInputChange}
-            onLimpiarArchivo={onLimpiarArchivo}
-          />
-        )}
+    <form onSubmit={handleSubmit} className='space-y-6'>
+      <SeccionFormulario
+        numero={1}
+        titulo='Archivo'
+        descripcion='El documento que vas a subir'
+        gradient={tema.gradient}
+      >
+        <ArchivoSelector
+          moduleName={moduleName}
+          archivoSeleccionado={archivoSeleccionado}
+          errorArchivo={errorArchivo}
+          isDragging={isDragging}
+          fileInputRef={fileInputRef}
+          formatos={formatos}
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+          onDrop={onDrop}
+          onFileInputChange={onFileInputChange}
+          onLimpiarArchivo={onLimpiarArchivo}
+        />
+      </SeccionFormulario>
 
-      {/* FORMULARIO DE METADATOS */}
-      <AnimatePresence>
-        {showFormFields && (
+      <AnimatePresence initial={false}>
+        {archivoSeleccionado ? (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
+            key='datos'
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            className='space-y-6'
           >
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={styles.section.active.replace(
-                'overflow-hidden',
-                'overflow-visible'
-              )}
+            <SeccionFormulario
+              numero={2}
+              titulo='Datos del documento'
+              descripcion='Así aparecerá en la lista de documentos'
+              gradient={tema.gradient}
             >
-              {/* Header */}
-              <div className='flex items-center gap-3 border-b border-gray-100 px-6 py-4 dark:border-gray-800'>
-                <div className={styles.stepCircle.active}>
-                  <FileCheck className='h-4 w-4 text-current opacity-70' />
-                </div>
-                <div>
-                  <h3 className='text-sm font-semibold text-gray-900 dark:text-white'>
-                    Información del Documento
-                  </h3>
-                  <p className='text-xs text-gray-500 dark:text-gray-400'>
-                    Completa los datos del archivo seleccionado
-                  </p>
-                </div>
-              </div>
-
-              {/* Campos */}
-              <div className='space-y-4 px-6 py-5'>
-                {/* Título */}
-                <AccordionWizardField
-                  label='Título del documento'
-                  moduleName={moduleName}
-                  required
-                  error={errors.titulo?.message as string | undefined}
+              <div>
+                <label htmlFor='doc-titulo' className={s.etiqueta}>
+                  Título <span className='text-rose-500'>*</span>
+                  <span className='ml-auto font-normal tabular-nums text-slate-400'>
+                    {titulo.length}/200
+                  </span>
+                </label>
+                <input
+                  id='doc-titulo'
+                  {...register('titulo')}
                   maxLength={200}
-                  {...register(tituloField)}
+                  placeholder='Ej: Promesa de compraventa firmada'
+                  className={cn(
+                    s.campo,
+                    tema.foco,
+                    errors.titulo ? s.campoError : s.campoNormal
+                  )}
                 />
-
-                {/* Descripción */}
-                <AccordionWizardTextarea
-                  label='Descripción (opcional)'
-                  moduleName={moduleName}
-                  rows={3}
-                  error={errors.descripcion?.message as string | undefined}
-                  {...register(descripcionField)}
-                />
-
-                {/* Categoría */}
-                <CategoriaSelect
-                  moduleName={moduleName}
-                  categorias={categorias}
-                  value={categoriaId}
-                  onChange={value =>
-                    setValue(
-                      categoriaIdField,
-                      value as PathValue<TFormValues, typeof categoriaIdField>
-                    )
-                  }
-                  errors={errors}
-                  disabled={esDocumentoIdentidad || categoriaBloqueada}
-                  helperText={
-                    esDocumentoIdentidad && categoriaIdentidad
-                      ? `Categoría: ${categoriaIdentidad.nombre}`
-                      : categoriaBloqueada
-                        ? 'Categoría asignada por requisito'
-                        : undefined
-                  }
-                />
-
-                {/* Campos específicos del módulo */}
-                {extraFields}
-
-                {/* Fechas */}
-                <FechasInputs
-                  moduleName={moduleName}
-                  register={register}
-                  errors={errors}
-                />
+                <MensajeError mensaje={errors.titulo?.message} />
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              <div>
+                <label htmlFor='doc-descripcion' className={s.etiqueta}>
+                  Descripción{' '}
+                  <span className='font-normal text-slate-400'>(opcional)</span>
+                </label>
+                <textarea
+                  id='doc-descripcion'
+                  {...register('descripcion')}
+                  rows={2}
+                  placeholder='Notas para encontrarlo después: número de radicado, notaría, observaciones…'
+                  className={cn(
+                    s.campo,
+                    'resize-y',
+                    tema.foco,
+                    errors.descripcion ? s.campoError : s.campoNormal
+                  )}
+                />
+                <MensajeError mensaje={errors.descripcion?.message} />
+              </div>
+            </SeccionFormulario>
 
-      {/* BOTONES FOOTER */}
-      {showFormFields && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className='flex items-center justify-between gap-3'
-        >
-          {onCancel ? (
-            <button
-              type='button'
-              onClick={onCancel}
-              disabled={isSubmitting}
-              className={cn(
-                styles.navigation.backButton,
-                'disabled:opacity-50'
-              )}
+            <SeccionFormulario
+              numero={3}
+              titulo='Categoría'
+              descripcion='Ayuda a filtrar y encontrar el documento'
+              gradient={tema.gradient}
             >
-              Cancelar
-            </button>
-          ) : (
-            <span />
-          )}
+              <CategoriaSelector
+                categorias={categorias}
+                value={categoriaId}
+                onChange={value =>
+                  setValue('categoria_id', value, { shouldDirty: true })
+                }
+                bloqueadaPor={categoriaBloqueadaPor}
+              />
+              <MensajeError mensaje={errors.categoria_id?.message} />
+            </SeccionFormulario>
 
-          <button
-            type='submit'
-            disabled={
-              (mode === 'create' && !archivoSeleccionado) || isSubmitting
-            }
-            className={styles.navigation.nextButton}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 size={16} className='animate-spin' />
-                {submittingButtonText}
-              </>
-            ) : (
-              <>
-                <FileCheck size={16} />
-                {submitButtonText}
-              </>
-            )}
-          </button>
-        </motion.div>
-      )}
-    </motion.form>
+            <SeccionFormulario
+              numero={4}
+              titulo='Fechas'
+              descripcion='Opcional: sirven para avisar cuando un documento vence'
+              gradient={tema.gradient}
+            >
+              <FechasInputs
+                register={register}
+                watch={watch}
+                setValue={setValue}
+                errors={errors}
+                foco={tema.foco}
+              />
+            </SeccionFormulario>
+
+            <div className='flex flex-col-reverse gap-2 border-t border-slate-200 pt-4 dark:border-slate-700 sm:flex-row sm:items-center sm:justify-end'>
+              {onCancel ? (
+                <button
+                  type='button'
+                  onClick={onCancel}
+                  disabled={isSubmitting}
+                  className='h-11 rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700'
+                >
+                  Cancelar
+                </button>
+              ) : null}
+              <button
+                type='submit'
+                disabled={isSubmitting}
+                className={cn(
+                  'inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-r px-6 text-sm font-semibold text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:translate-y-0 disabled:opacity-60',
+                  tema.gradient,
+                  tema.sombra
+                )}
+              >
+                {isSubmitting ? (
+                  <Loader2 className='h-4 w-4 animate-spin' />
+                ) : (
+                  <UploadCloud className='h-4 w-4' />
+                )}
+                {isSubmitting ? 'Subiendo…' : 'Subir documento'}
+              </button>
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </form>
   )
 }

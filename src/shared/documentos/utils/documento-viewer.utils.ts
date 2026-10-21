@@ -104,3 +104,40 @@ export function formatearValorMetadata(
 
   return String(value)
 }
+
+/** Campos internos de metadata que no se muestran en el visor */
+const CAMPOS_METADATA_OCULTOS = new Set([
+  'fuente_pago_id',
+  'reemplazo',
+  'version_anterior',
+  'archivo_anterior',
+  'justificacion_reemplazo',
+  'requisito_config_id',
+  'tipo_documento_sistema',
+  'auto_check_identidad',
+  'alcance',
+  'tipo_fuente',
+  'entidad',
+  'entidad_fuente',
+  'nivel_validacion',
+  'fuentes_aplicables',
+])
+
+/** Entradas de metadata visibles para el usuario (sin internas ni vacías) */
+export function entradasMetadataVisibles(
+  metadata: Record<string, unknown> | null | undefined
+): [string, unknown][] {
+  if (!metadata) return []
+  return Object.entries(metadata).filter(
+    ([key, value]) =>
+      !CAMPOS_METADATA_OCULTOS.has(key) && value !== null && value !== undefined
+  )
+}
+
+/** Días hasta una fecha (negativo si ya pasó); null si no es válida */
+export function diasHasta(fecha: string | null | undefined): number | null {
+  if (!fecha) return null
+  const t = new Date(fecha).getTime()
+  if (isNaN(t)) return null
+  return Math.ceil((t - Date.now()) / (1000 * 60 * 60 * 24))
+}

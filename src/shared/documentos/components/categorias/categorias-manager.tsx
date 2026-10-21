@@ -1,31 +1,38 @@
 'use client'
 
+/**
+ * Gestor de categorías de documentos de un módulo: lista en tarjetas y
+ * formulario de crear/editar en la misma pantalla. La lógica vive en
+ * useCategoriasManager.
+ */
+
 import { AnimatePresence, motion } from 'framer-motion'
-import { Edit2, GripVertical, Plus, Trash2, X } from 'lucide-react'
+import { ArrowLeft, FolderPlus, Plus, Tags } from 'lucide-react'
 
 import { useAuth } from '@/contexts/auth-context'
 import { ModalConfirmacion } from '@/shared'
 import { EmptyState } from '@/shared/components/ui/EmptyState'
 import { LoadingSpinner } from '@/shared/components/ui/Loading'
+import { cn } from '@/shared/utils/helpers'
 
+import { temaDocumentos } from '../../config/documentos-tema'
 import { useCategoriasManager } from '../../hooks'
-import { CategoriaIcon } from '../shared/categoria-icon'
 
 import { CategoriaForm } from './categoria-form'
+import { CategoriaCard } from './CategoriaCard'
 
 interface CategoriasManagerProps {
   userId: string
-  onClose: () => void
-  modulo?: 'proyectos' | 'clientes' | 'viviendas' // ← Nuevo prop
+  modulo?: 'proyectos' | 'clientes' | 'viviendas'
 }
 
 export function CategoriasManager({
   userId,
-  onClose,
   modulo = 'proyectos',
 }: CategoriasManagerProps) {
   const { perfil } = useAuth()
   const esAdministrador = perfil?.rol === 'Administrador'
+  const tema = temaDocumentos(modulo)
 
   const {
     modo,
@@ -54,42 +61,28 @@ export function CategoriasManager({
     )
   }
 
-  if (modo === 'crear') {
+  if (modo === 'crear' || (modo === 'editar' && categoriaEditando)) {
+    const editando = modo === 'editar' ? categoriaEditando : null
     return (
-      <div>
-        <div className='mb-6 flex items-center justify-between'>
-          <h3 className='text-xl font-bold text-gray-900 dark:text-white'>
-            Nueva Categoría
-          </h3>
+      <div className='space-y-5'>
+        <div className='flex items-center gap-2'>
           <button
+            type='button'
             onClick={handleVolverALista}
-            className='rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800'
+            aria-label='Volver a categorías'
+            className='flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 dark:hover:bg-slate-700 dark:hover:text-slate-200'
           >
-            <X size={20} />
+            <ArrowLeft className='h-4 w-4' />
           </button>
-        </div>
-        <CategoriaForm onSubmit={handleCrear} onCancel={handleVolverALista} />
-      </div>
-    )
-  }
-
-  if (modo === 'editar' && categoriaEditando) {
-    return (
-      <div>
-        <div className='mb-6 flex items-center justify-between'>
-          <h3 className='text-xl font-bold text-gray-900 dark:text-white'>
-            Editar Categoría
+          <h3 className='text-base font-bold text-slate-900 dark:text-white'>
+            {editando ? `Editar "${editando.nombre}"` : 'Nueva categoría'}
           </h3>
-          <button
-            onClick={handleVolverALista}
-            className='rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800'
-          >
-            <X size={20} />
-          </button>
         </div>
         <CategoriaForm
-          categoria={categoriaEditando}
-          onSubmit={handleActualizar}
+          key={editando?.id ?? 'nueva'}
+          categoria={editando ?? undefined}
+          moduleName={modulo}
+          onSubmit={editando ? handleActualizar : handleCrear}
           onCancel={handleVolverALista}
         />
       </div>
@@ -97,136 +90,94 @@ export function CategoriasManager({
   }
 
   return (
-    <div>
-      <div className='mb-6 flex items-center justify-between'>
-        <div>
-          <h3 className='text-xl font-bold text-gray-900 dark:text-white'>
-            Mis Categorías
-          </h3>
-          <p className='mt-1 text-sm text-gray-500 dark:text-gray-400'>
-            Organiza tus documentos con categorías personalizadas
-          </p>
-        </div>
+    <div className='space-y-4'>
+      <div className='flex flex-wrap items-center justify-between gap-3'>
+        <p className='flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300'>
+          <Tags className={cn('h-4 w-4', tema.texto)} />
+          <span>
+            <strong className='font-semibold text-slate-900 dark:text-white'>
+              {categorias.length}
+            </strong>{' '}
+            {categorias.length === 1 ? 'categoría' : 'categorías'} en este
+            módulo
+          </span>
+        </p>
         <button
+          type='button'
           onClick={handleIrACrear}
-          className='flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-2 font-medium text-white shadow-lg shadow-blue-500/30 transition-all hover:from-blue-700 hover:to-purple-700'
+          className={cn(
+            'inline-flex h-10 items-center gap-1.5 rounded-xl bg-gradient-to-r px-4 text-sm font-semibold text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg',
+            tema.gradient,
+            tema.sombra
+          )}
         >
-          <Plus size={20} />
-          Nueva
+          <Plus className='h-4 w-4' />
+          Nueva categoría
         </button>
       </div>
 
       {!tieneCategorias ? (
         <EmptyState
-          icon={Plus}
+          icon={FolderPlus}
           title='Sin categorías'
-          description='Crea tu primera categoría para organizar tus documentos'
-          action={{
-            label: 'Crear categoría',
-            onClick: handleIrACrear,
-          }}
+          description='Crea tu primera categoría para organizar los documentos'
+          action={{ label: 'Crear categoría', onClick: handleIrACrear }}
+          moduleName={modulo}
         />
       ) : (
-        <div className='space-y-3'>
+        <div className='grid grid-cols-1 gap-2.5 lg:grid-cols-2'>
           <AnimatePresence mode='popLayout'>
             {categorias.map((categoria, index) => (
               <motion.div
                 key={categoria.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ delay: index * 0.05 }}
-                className='group relative'
+                layout
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.97 }}
+                transition={{ delay: Math.min(index, 12) * 0.03 }}
               >
-                <div className='flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-4 transition-all hover:shadow-lg dark:border-gray-700 dark:bg-gray-800'>
-                  {/* Drag handle */}
-                  <div className='cursor-grab text-gray-400 hover:text-gray-600 active:cursor-grabbing dark:hover:text-gray-300'>
-                    <GripVertical size={20} />
-                  </div>
-
-                  {/* Ícono */}
-                  <div className='rounded-lg bg-gray-50 p-3 dark:bg-gray-900'>
-                    <CategoriaIcon
-                      icono={categoria.icono}
-                      color={categoria.color}
-                      size={24}
-                    />
-                  </div>
-
-                  {/* Info */}
-                  <div className='min-w-0 flex-1'>
-                    <h4 className='font-semibold text-gray-900 dark:text-white'>
-                      {categoria.nombre}
-                    </h4>
-                    {categoria.descripcion && (
-                      <p className='truncate text-sm text-gray-500 dark:text-gray-400'>
-                        {categoria.descripcion}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Acciones */}
-                  <div className='flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100'>
-                    <button
-                      onClick={() => handleIrAEditar(categoria)}
-                      className='rounded-lg p-2 text-blue-600 transition-colors hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20'
-                      title='Editar'
-                    >
-                      <Edit2 size={18} />
-                    </button>
-                    {/* 🔒 Solo Administradores pueden eliminar */}
-                    {esAdministrador && (
-                      <button
-                        onClick={() =>
-                          handleEliminar(categoria.id, categoria.nombre)
-                        }
-                        disabled={eliminando === categoria.id}
-                        className='rounded-lg p-2 text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-900/20'
-                        title='Eliminar (Solo Administradores)'
-                      >
-                        {eliminando === categoria.id ? (
-                          <LoadingSpinner size='sm' />
-                        ) : (
-                          <Trash2 size={18} />
-                        )}
-                      </button>
-                    )}
-                  </div>
-                </div>
+                <CategoriaCard
+                  categoria={categoria}
+                  onEditar={handleIrAEditar}
+                  onEliminar={
+                    esAdministrador && !categoria.es_sistema
+                      ? c => handleEliminar(c.id, c.nombre)
+                      : undefined
+                  }
+                  eliminando={eliminando === categoria.id}
+                />
               </motion.div>
             ))}
           </AnimatePresence>
         </div>
       )}
 
-      {/* Botón cerrar */}
-      <div className='mt-6 border-t border-gray-200 pt-6 dark:border-gray-700'>
-        <button
-          onClick={onClose}
-          className='w-full rounded-xl bg-gray-100 px-4 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-        >
-          Cerrar
-        </button>
-      </div>
+      {categorias.some(c => c.es_sistema) ? (
+        <p className='text-xs text-slate-500 dark:text-slate-400'>
+          Las categorías del sistema las usan los procesos automáticos (cédula,
+          cartas de aprobación, desembolsos…). Puedes editarlas, pero no
+          eliminarlas.
+        </p>
+      ) : null}
 
-      {/* Modal de Confirmación de Eliminación */}
       <ModalConfirmacion
         isOpen={modalEliminarAbierto}
         onClose={cancelarEliminar}
         onConfirm={confirmarEliminar}
-        title='Eliminar Categoría'
+        title='Eliminar categoría'
         message={
           categoriaAEliminar ? (
             <div className='space-y-3'>
               <p className='text-base'>
-                ¿Estás seguro de eliminar la categoría{' '}
-                <span className='font-bold text-gray-900 dark:text-white'>
+                ¿Seguro que quieres eliminar la categoría{' '}
+                <span className='font-bold text-slate-900 dark:text-white'>
                   {categoriaAEliminar.nombre}
                 </span>
                 ?
               </p>
-              <p className='text-sm text-gray-600 dark:text-gray-400'>
-                Esta acción no se puede deshacer.
+              <p className='text-sm text-slate-600 dark:text-slate-400'>
+                Esta acción no se puede deshacer. Si tiene documentos asociados
+                no se eliminará.
               </p>
             </div>
           ) : null

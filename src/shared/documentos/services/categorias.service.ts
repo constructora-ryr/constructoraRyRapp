@@ -23,7 +23,7 @@ export class CategoriasService {
     const { data, error } = await supabase
       .from('categorias_documento')
       .select(
-        'id,user_id,nombre,descripcion,color,icono,orden,es_global,modulos_permitidos,fecha_creacion'
+        'id,user_id,nombre,descripcion,color,icono,orden,es_global,es_sistema,modulos_permitidos,fecha_creacion'
       )
       .eq('user_id', userId)
       .order('orden', { ascending: true })
@@ -47,7 +47,7 @@ export class CategoriasService {
     const { data, error } = await supabase
       .from('categorias_documento')
       .select(
-        'id,user_id,nombre,descripcion,color,icono,orden,es_global,modulos_permitidos,fecha_creacion'
+        'id,user_id,nombre,descripcion,color,icono,orden,es_global,es_sistema,modulos_permitidos,fecha_creacion'
       )
       .eq('es_global', true)
       .contains('modulos_permitidos', [modulo])
@@ -177,6 +177,20 @@ export class CategoriasService {
 
     if (usuario.rol !== 'Administrador') {
       throw new Error('Solo los administradores pueden eliminar categorías')
+    }
+
+    // Las categorías del sistema las usan los flujos automáticos (cédula,
+    // cartas de aprobación, desembolsos…): no se eliminan
+    const { data: categoria } = await supabase
+      .from('categorias_documento')
+      .select('es_sistema')
+      .eq('id', categoriaId)
+      .single()
+
+    if (categoria?.es_sistema) {
+      throw new Error(
+        'Esta es una categoría del sistema y no se puede eliminar. Puedes editar su nombre, color o ícono.'
+      )
     }
 
     // ✅ VALIDACIÓN 1: Verificar si tiene documentos asociados en PROYECTOS

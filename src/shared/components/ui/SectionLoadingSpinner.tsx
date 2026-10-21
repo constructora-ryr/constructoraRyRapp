@@ -5,7 +5,7 @@
  * pages, and modals. Replaces plain Loader2 + text patterns.
  *
  * Design: rotating ring + pulsing inner glow + optional icon + bouncing dots
- * + fading label. Based on the ContentLoadingState in AbonoDetallePreviewPanel.
+ * + fading label. Same look as VisorCargando in shared/components/visor-archivo.
  *
  * Usage:
  * ```tsx

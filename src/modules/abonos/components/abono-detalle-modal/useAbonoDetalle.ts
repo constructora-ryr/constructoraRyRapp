@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
 import { toast } from 'sonner'
 
@@ -54,8 +54,6 @@ export interface AbonoParaDetalle {
 
 interface UseAbonoDetalleProps {
   abono: AbonoParaDetalle | null
-  isOpen: boolean
-  onClose: () => void
   onAnulado?: () => void
   /** Datos financieros de la negociación — pasados desde el parent para evitar fetch extra */
   negociacionFinancials?: {
@@ -63,76 +61,33 @@ interface UseAbonoDetalleProps {
     totalAbonado: number
     saldoPendiente: number
   } | null
-  /** Navegación entre abonos con ← → (si el padre la ofrece) */
-  onAnterior?: () => void
-  onSiguiente?: () => void
 }
 
+/** La API route /api/abonos/comprobante hace redirect 302 al signed URL */
+const urlComprobante = (path: string) =>
+  `/api/abonos/comprobante?path=${encodeURIComponent(path)}`
+
+/**
+ * Lógica del visor de abonos. Teclado, foco y portal los maneja la carcasa
+ * compartida (VisorArchivoModal).
+ */
 export function useAbonoDetalle({
   abono,
-  isOpen,
-  onClose,
   onAnulado,
   negociacionFinancials,
-  onAnterior,
-  onSiguiente,
 }: UseAbonoDetalleProps) {
-  const [comprobanteUrl, setComprobanteUrl] = useState<string | null>(null)
-  const [loadingComprobante, setLoadingComprobante] = useState(false)
   const [generandoRecibo, setGenerandoRecibo] = useState(false)
   const [showModalAnular, setShowModalAnular] = useState(false)
 
-  // Portal: montar solo en cliente (SSR-safe)
-  const [mounted, setMounted] = useState(false)
-  const closeButtonRef = useRef<HTMLButtonElement>(null)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  // Escape cierra; ← → pasan al abono anterior/siguiente. Con el modal de
-  // anulación abierto, el teclado es suyo.
-  useEffect(() => {
-    if (!isOpen || showModalAnular) return
-    const handler = (e: KeyboardEvent) => {
-      const el = e.target as HTMLElement | null
-      if (el?.tagName === 'INPUT' || el?.tagName === 'TEXTAREA') return
-      if (e.key === 'Escape') onClose()
-      else if (e.key === 'ArrowLeft' && onAnterior) onAnterior()
-      else if (e.key === 'ArrowRight' && onSiguiente) onSiguiente()
-    }
-    document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
-  }, [isOpen, onClose, onAnterior, onSiguiente, showModalAnular])
-
-  // Focus trap: mover foco al botón cerrar al abrir
-  useEffect(() => {
-    if (isOpen) {
-      const timer = setTimeout(() => closeButtonRef.current?.focus(), 50)
-      return () => clearTimeout(timer)
-    }
-  }, [isOpen])
-
-  // Construir URL del comprobante cuando cambia el abono
-  useEffect(() => {
-    if (!abono?.comprobante_url) {
-      setComprobanteUrl(null)
-      return
-    }
-    setLoadingComprobante(true)
-    // La API route /api/abonos/comprobante hace redirect 302 al signed URL
-    setComprobanteUrl(
-      `/api/abonos/comprobante?path=${encodeURIComponent(abono.comprobante_url)}`
-    )
-    setLoadingComprobante(false)
-  }, [abono?.comprobante_url])
+  const comprobanteUrl = abono?.comprobante_url
+    ? urlComprobante(abono.comprobante_url)
+    : null
 
   // Descargar el comprobante original
   const handleDescargarComprobante = useCallback(() => {
     if (!abono?.comprobante_url) return
-    const url = `/api/abonos/comprobante?path=${encodeURIComponent(abono.comprobante_url)}`
     const link = document.createElement('a')
-    link.href = url
+    link.href = urlComprobante(abono.comprobante_url)
     link.download = `comprobante-${formatearNumeroRecibo(abono.numero_recibo)}.pdf`
     document.body.appendChild(link)
     link.click()
@@ -179,21 +134,6 @@ export function useAbonoDetalle({
     !estaAnulado && abono?.negociacion.estado === 'Cerrada por Renuncia'
   const tieneComprobante = Boolean(abono?.comprobante_url)
 
-  // Valores derivados del abono (evitan cálculos en el componente)
-  const esImagen = useMemo(
-    () =>
-      abono?.comprobante_url
-        ? /\.(jpe?g|png|webp)$/i.test(abono.comprobante_url)
-        : false,
-    [abono?.comprobante_url]
-  )
-
-  const esPDF = useMemo(
-    () =>
-      abono?.comprobante_url ? /\.pdf$/i.test(abono.comprobante_url) : false,
-    [abono?.comprobante_url]
-  )
-
   const viviendaLabel = useMemo(() => {
     if (!abono) return ''
     return abono.vivienda.manzana.identificador
@@ -202,13 +142,8 @@ export function useAbonoDetalle({
   }, [abono])
 
   return {
-    mounted,
-    closeButtonRef,
     comprobanteUrl,
-    loadingComprobante,
     tieneComprobante,
-    esImagen,
-    esPDF,
     esNegociacionActiva,
     estaAnulado,
     esRenuncia,

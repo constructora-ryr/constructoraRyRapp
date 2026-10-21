@@ -1,7 +1,1 @@
-export { ArchivoSelector } from './ArchivoSelector'
-export { CategoriaSelect } from './CategoriaSelect'
-export { DescripcionTextarea } from './DescripcionTextarea'
 export { DocumentoFormBase } from './DocumentoFormBase'
-export { FechasInputs } from './FechasInputs'
-export { ImportanteToggle } from './ImportanteToggle'
-export { TituloInput } from './TituloInput'

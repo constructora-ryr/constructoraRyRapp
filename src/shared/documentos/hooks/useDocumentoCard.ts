@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
 import { useAuth } from '@/contexts/auth-context'
-import { logger } from '@/lib/utils/logger'
 import { usePermisosQuery } from '@/modules/usuarios/hooks/usePermisosQuery'
 import type { DocumentoProyecto } from '@/shared/documentos/types/documento.types'
 import { useClickOutside } from '@/shared/hooks'
@@ -16,6 +15,8 @@ interface UseDocumentoCardProps {
   documento: DocumentoProyecto
   esDocumentoProyecto?: boolean
 }
+
+const ESTADO_PROCESO_NINGUNO = { esDeProceso: false } as const
 
 export function useDocumentoCard({
   documento,
@@ -67,18 +68,23 @@ export function useDocumentoCard({
   const [modalNuevaVersionAbierto, setModalNuevaVersionAbierto] =
     useState(false)
 
-  // 🔒 Estados de protección (solo para documentos de clientes)
-  const [estaProtegido, setEstaProtegido] = useState(false)
-  const [procesoInfo, setProcesoInfo] = useState<{
+  // 🔒 Protección por proceso: DESACTIVADA. El servicio que la calculaba
+  // (DocumentosClienteService.esDocumentoDeProceso/obtenerEstadoProceso) se
+  // eliminó y la verificación respondía siempre "no protegido", con un
+  // efecto y 4 estados por fila. Se devuelven esos mismos valores fijos.
+  // Para reactivarla, calcularla en UNA consulta para toda la lista (no por
+  // fila) y pasarla como prop.
+  const estaProtegido = false
+  const procesoInfo: {
     pasoNombre?: string
     procesoCompletado: boolean
-  } | null>(null)
-  const [estadoProceso, setEstadoProceso] = useState<{
+  } | null = null
+  const estadoProceso: {
     esDeProceso: boolean
     estadoPaso?: 'Pendiente' | 'En Proceso' | 'Completado' | 'Omitido'
     nombrePaso?: string
-  }>({ esDeProceso: false })
-  const [verificando, setVerificando] = useState(false)
+  } = ESTADO_PROCESO_NINGUNO
+  const verificando = false
 
   // 📅 Cálculos de fechas (memoizados)
   const estaProximoAVencer = useMemo(() => {
@@ -114,67 +120,6 @@ export function useDocumentoCard({
   const menuRef = useClickOutside<HTMLDivElement>(() => {
     setMenuAbierto(false)
   })
-
-  const verificarProteccion = useCallback(async () => {
-    const documentoId = documento.id
-    if (!documentoId) return
-
-    // Validar que documentoId sea un UUID válido
-    // UUIDs tienen formato: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    const uuidRegex =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-    if (!uuidRegex.test(documentoId)) {
-      // Si no es un UUID válido (ej: "cedula-ciudadania"), no hacer verificación
-      setEstaProtegido(false)
-      setProcesoInfo(null)
-      setEstadoProceso({ esDeProceso: false })
-      setVerificando(false)
-      return
-    }
-
-    setVerificando(true)
-    try {
-      // ⚠️ DESHABILITADO: Servicio legacy eliminado
-      // TODO: Migrar estos métodos al servicio genérico
-      // const estadoProc = await DocumentosClienteService.obtenerEstadoProceso(documentoId)
-      // setEstadoProceso(estadoProc)
-
-      // const resultado = await DocumentosClienteService.esDocumentoDeProceso(documentoId)
-      // setEstaProtegido(resultado.esDeProceso && resultado.procesoCompletado)
-      // setProcesoInfo({
-      //   pasoNombre: resultado.pasoNombre,
-      //   procesoCompletado: resultado.procesoCompletado
-      // })
-
-      // Por ahora: asumir que no está protegido
-      setEstaProtegido(false)
-      setProcesoInfo(null)
-      setEstadoProceso({ esDeProceso: false })
-    } catch (error) {
-      logger.error('Error al verificar protección:', error)
-      setEstaProtegido(false)
-      setProcesoInfo(null)
-      setEstadoProceso({ esDeProceso: false })
-    } finally {
-      setVerificando(false)
-    }
-  }, [documento.id])
-
-  // Verificar si el documento está protegido (SOLO para documentos de clientes con procesos)
-  useEffect(() => {
-    // ✅ SKIP verificación para documentos de proyectos
-    if (esDocumentoProyecto) {
-      setEstaProtegido(false)
-      setProcesoInfo(null)
-      setEstadoProceso({ esDeProceso: false })
-      setVerificando(false)
-      return
-    }
-
-    if (documento.id) {
-      verificarProteccion()
-    }
-  }, [documento.id, esDocumentoProyecto, verificarProteccion])
 
   const toggleMenu = useCallback(() => {
     setMenuAbierto(prev => !prev)
