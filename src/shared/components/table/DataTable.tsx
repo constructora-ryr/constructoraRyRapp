@@ -12,7 +12,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import { Fragment, useState, type ReactNode } from 'react'
 
 import {
   flexRender,
@@ -64,6 +64,17 @@ interface DataTableProps<TData> {
   variant?: 'gradient' | 'clean'
   /** Solo 'clean': encabezado con degradado del módulo, p.ej. 'from-cyan-600 via-indigo-600 to-violet-600' */
   headerGradient?: string
+  /**
+   * Separadores entre filas de distinto grupo (p.ej. por mes). Solo se
+   * muestran cuando la tabla está ordenada por una de `columnas`.
+   */
+  rowGroups?: RowGroups<TData>
+}
+
+interface RowGroups<TData> {
+  columnas: string[]
+  clave: (row: TData) => string
+  render: (clave: string, row: TData) => ReactNode
 }
 
 const gradientClasses = {
@@ -116,6 +127,7 @@ export function DataTable<TData>({
   compact = false,
   variant = 'gradient',
   headerGradient,
+  rowGroups,
 }: DataTableProps<TData>) {
   const clean = variant === 'clean'
   // En 'gradient' solo se alinea si la columna lo pide: así las tablas
@@ -130,6 +142,8 @@ export function DataTable<TData>({
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize })
 
   const theme = gradientClasses[gradientColor]
+  const agrupar =
+    !!rowGroups && rowGroups.columnas.includes(sorting[0]?.id ?? '')
 
   const table = useReactTable({
     data,
@@ -258,46 +272,64 @@ export function DataTable<TData>({
             }
           >
             {table.getRowModel().rows.length > 0 ? (
-              table.getRowModel().rows.map((row, idx) => (
-                <tr
-                  key={row.id}
-                  onClick={
-                    onRowClick ? () => onRowClick(row.original) : undefined
-                  }
-                  className={cn(
-                    clean
-                      ? 'group transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/30'
-                      : cn(
-                          'group transition-all duration-200',
-                          theme.hover,
-                          idx % 2 === 0
-                            ? 'bg-white dark:bg-gray-800'
-                            : 'bg-gray-50/30 dark:bg-gray-800/30'
-                        ),
-                    onRowClick && 'cursor-pointer'
-                  )}
-                >
-                  {row.getVisibleCells().map(cell => (
-                    <td
-                      key={cell.id}
+              table.getRowModel().rows.map((row, idx, filas) => {
+                const clave = agrupar ? rowGroups.clave(row.original) : ''
+                const nuevoGrupo =
+                  agrupar &&
+                  (idx === 0 ||
+                    rowGroups.clave(filas[idx - 1].original) !== clave)
+                return (
+                  <Fragment key={row.id}>
+                    {nuevoGrupo && (
+                      <tr>
+                        <td
+                          colSpan={row.getVisibleCells().length}
+                          className='p-0'
+                        >
+                          {rowGroups.render(clave, row.original)}
+                        </td>
+                      </tr>
+                    )}
+                    <tr
+                      onClick={
+                        onRowClick ? () => onRowClick(row.original) : undefined
+                      }
                       className={cn(
                         clean
-                          ? 'px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300'
+                          ? 'group transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/30'
                           : cn(
-                              'text-sm text-gray-700 dark:text-gray-300',
-                              compact ? 'px-3 py-2' : 'px-4 py-3.5'
+                              'group transition-all duration-200',
+                              theme.hover,
+                              idx % 2 === 0
+                                ? 'bg-white dark:bg-gray-800'
+                                : 'bg-gray-50/30 dark:bg-gray-800/30'
                             ),
-                        alignText(cell.column.columnDef.meta?.align)
+                        onRowClick && 'cursor-pointer'
                       )}
                     >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </td>
-                  ))}
-                </tr>
-              ))
+                      {row.getVisibleCells().map(cell => (
+                        <td
+                          key={cell.id}
+                          className={cn(
+                            clean
+                              ? 'px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300'
+                              : cn(
+                                  'text-sm text-gray-700 dark:text-gray-300',
+                                  compact ? 'px-3 py-2' : 'px-4 py-3.5'
+                                ),
+                            alignText(cell.column.columnDef.meta?.align)
+                          )}
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  </Fragment>
+                )
+              })
             ) : (
               <tr>
                 <td

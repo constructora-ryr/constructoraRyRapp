@@ -63,6 +63,9 @@ interface UseAbonoDetalleProps {
     totalAbonado: number
     saldoPendiente: number
   } | null
+  /** Navegación entre abonos con ← → (si el padre la ofrece) */
+  onAnterior?: () => void
+  onSiguiente?: () => void
 }
 
 export function useAbonoDetalle({
@@ -71,6 +74,8 @@ export function useAbonoDetalle({
   onClose,
   onAnulado,
   negociacionFinancials,
+  onAnterior,
+  onSiguiente,
 }: UseAbonoDetalleProps) {
   const [comprobanteUrl, setComprobanteUrl] = useState<string | null>(null)
   const [loadingComprobante, setLoadingComprobante] = useState(false)
@@ -85,15 +90,20 @@ export function useAbonoDetalle({
     setMounted(true)
   }, [])
 
-  // Cerrar con Escape
+  // Escape cierra; ← → pasan al abono anterior/siguiente. Con el modal de
+  // anulación abierto, el teclado es suyo.
   useEffect(() => {
-    if (!isOpen) return
+    if (!isOpen || showModalAnular) return
     const handler = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null
+      if (el?.tagName === 'INPUT' || el?.tagName === 'TEXTAREA') return
       if (e.key === 'Escape') onClose()
+      else if (e.key === 'ArrowLeft' && onAnterior) onAnterior()
+      else if (e.key === 'ArrowRight' && onSiguiente) onSiguiente()
     }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
-  }, [isOpen, onClose])
+  }, [isOpen, onClose, onAnterior, onSiguiente, showModalAnular])
 
   // Focus trap: mover foco al botón cerrar al abrir
   useEffect(() => {
@@ -165,6 +175,8 @@ export function useAbonoDetalle({
   const esAdmin = perfil?.rol === 'Administrador'
   const esNegociacionActiva = abono?.negociacion.estado === 'Activa'
   const estaAnulado = abono?.estado === 'Anulado'
+  const esRenuncia =
+    !estaAnulado && abono?.negociacion.estado === 'Cerrada por Renuncia'
   const tieneComprobante = Boolean(abono?.comprobante_url)
 
   // Valores derivados del abono (evitan cálculos en el componente)
@@ -199,6 +211,7 @@ export function useAbonoDetalle({
     esPDF,
     esNegociacionActiva,
     estaAnulado,
+    esRenuncia,
     generandoRecibo,
     showModalAnular,
     setShowModalAnular,

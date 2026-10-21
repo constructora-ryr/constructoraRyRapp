@@ -1,15 +1,11 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
 import { useAbonosQuery, type AbonoConInfo } from './useAbonosQuery'
 
 // Re-export para consumidores externos
 export type { AbonoConInfo }
-
-export const PAGE_SIZE = 10
-export const PAGE_SIZE_OPTIONS = [10, 25, 50] as const
-export type PageSizeOption = (typeof PAGE_SIZE_OPTIONS)[number]
 
 export type RangoFecha =
   | 'todo'
@@ -19,6 +15,10 @@ export type RangoFecha =
   | 'este-ano'
   | 'personalizado'
 
+/** Estado visible del abono (ver ABONO_ESTADO_BADGE) */
+export type EstadoAbonoVisible = 'Activo' | 'Anulado' | 'Renuncia'
+export type EstadoAbonoFiltro = EstadoAbonoVisible | 'Todos'
+
 export interface FiltrosAbonos {
   busqueda: string
   fuente: string // nombre de fuente o 'todas'
@@ -26,31 +26,75 @@ export interface FiltrosAbonos {
   rango: RangoFecha
   fechaDesde: string // YYYY-MM-DD, solo para 'personalizado'
   fechaHasta: string // YYYY-MM-DD, solo para 'personalizado'
-  mostrarActivos: boolean
-  mostrarAnulados: boolean
-  mostrarRenunciados: boolean
-}
-
-export type OrdenCampo = 'recibo' | 'fecha'
-export type OrdenDireccion = 'asc' | 'desc'
-
-export interface OrdenAbonos {
-  campo: OrdenCampo
-  direccion: OrdenDireccion
+  estado: EstadoAbonoFiltro
 }
 
 export interface EstadisticasAbonos {
-  totalAbonos: number
-  montoTotal: number
-  montoEsteMes: number
-  abonosEsteMes: number
+  /** Conteo por estado con los demás filtros aplicados (tarjetas de filtro) */
+  conteos: Record<EstadoAbonoFiltro, number>
+  /** Suma de lo filtrado sin contar anulados */
+  montoFiltrado: number
+  /** Recaudo por tipo de fuente (mayor primero), sin aplicar el filtro de fuente */
+  porFuente: { tipo: string; monto: number }[]
+  /** 'YYYY-MM' → recibos y monto de lo filtrado (separadores de la tabla) */
+  porMes: Record<string, { recibos: number; monto: number }>
+  /** Encabezado (sin filtros, solo abonos vigentes) */
+  totalRecaudado: number
+  recaudadoEsteAnio: number
+  /** fecha_abono del abono vigente más reciente */
+  ultimoAbono: string | null
+}
+
+const FILTROS_INICIALES: FiltrosAbonos = {
+  busqueda: '',
+  fuente: 'todas',
+  entidad: 'todas',
+  rango: 'todo',
+  fechaDesde: '',
+  fechaHasta: '',
+  estado: 'Activo',
+}
+
+/** Un abono anulado cuenta como anulado aunque sea de una renuncia */
+export function estadoVisibleAbono(a: AbonoConInfo): EstadoAbonoVisible {
+  if (a.estado === 'Anulado') return 'Anulado'
+  if (a.negociacion?.estado === 'Cerrada por Renuncia') return 'Renuncia'
+  return 'Activo'
+}
+
+const pad = (n: number) => String(n).padStart(2, '0')
+const toDateStr = (d: Date) =>
+  `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+
+/** [desde, hasta] en YYYY-MM-DD; null = sin límite */
+function limitesRango(f: FiltrosAbonos): [string | null, string | null] | null {
+  const ahora = new Date()
+  const y = ahora.getFullYear()
+  const m = ahora.getMonth()
+  switch (f.rango) {
+    case 'todo':
+      return null
+    case 'este-mes':
+      return [toDateStr(new Date(y, m, 1)), toDateStr(new Date(y, m + 1, 0))]
+    case 'mes-anterior':
+      return [toDateStr(new Date(y, m - 1, 1)), toDateStr(new Date(y, m, 0))]
+    case 'ultimos-3-meses':
+      return [
+        toDateStr(new Date(y, m - 2, 1)),
+        toDateStr(new Date(y, m + 1, 0)),
+      ]
+    case 'este-ano':
+      return [`${y}-01-01`, `${y}-12-31`]
+    case 'personalizado':
+      return [f.fechaDesde || null, f.fechaHasta || null]
+  }
 }
 
 /**
  * 🎣 HOOK: useAbonosList
  *
  * Wrapper de presentación sobre useAbonosQuery (React Query).
- * Agrega filtrado local, paginación, estadísticas y meses disponibles.
+ * Filtra en memoria; el orden y la paginación los hace la tabla.
  */
 export function useAbonosList(initialBusqueda = '') {
   const {
@@ -61,253 +105,150 @@ export function useAbonosList(initialBusqueda = '') {
   } = useAbonosQuery()
 
   const [filtros, setFiltros] = useState<FiltrosAbonos>({
+    ...FILTROS_INICIALES,
     busqueda: initialBusqueda,
-    fuente: 'todas',
-    entidad: 'todas',
-    rango: 'todo',
-    fechaDesde: '',
-    fechaHasta: '',
-    mostrarActivos: true,
-    mostrarAnulados: false,
-    mostrarRenunciados: false,
   })
 
-  const [paginaActual, setPaginaActual] = useState(1)
-  const [pageSize, setPageSize] = useState<PageSizeOption>(PAGE_SIZE)
-  const [orden, setOrden] = useState<OrdenAbonos>({
-    campo: 'recibo',
-    direccion: 'desc',
-  })
+  // Búsqueda + período: base común de tarjetas, barra de fuentes y tabla
+  const abonosBase = useMemo(() => {
+    const termino = filtros.busqueda.toLowerCase().trim()
+    const limites = limitesRango(filtros)
 
-  const toggleOrden = useCallback((campo: OrdenCampo) => {
-    setOrden(prev =>
-      prev.campo === campo
-        ? { campo, direccion: prev.direccion === 'asc' ? 'desc' : 'asc' }
-        : { campo, direccion: 'desc' }
-    )
-  }, [])
-
-  // Desestructurar para deps primitivas en useEffect
-  const {
-    busqueda,
-    fuente,
-    entidad,
-    rango,
-    fechaDesde,
-    fechaHasta,
-    mostrarActivos,
-    mostrarAnulados,
-    mostrarRenunciados,
-  } = filtros
-
-  // Resetear a página 1 al cambiar cualquier filtro o tamaño de página
-  useEffect(() => {
-    setPaginaActual(1)
-  }, [
-    busqueda,
-    fuente,
-    entidad,
-    rango,
-    fechaDesde,
-    fechaHasta,
-    mostrarActivos,
-    mostrarAnulados,
-    mostrarRenunciados,
-    pageSize,
-  ])
-
-  /**
-   * 🔍 Filtrar abonos según criterios
-   */
-  const abonosFiltrados = useMemo(() => {
-    let resultado = [...abonos]
-
-    // Filtrado por categoría (checklist): activos, anulados, renunciados
-    resultado = resultado.filter(a => {
-      const esAnulado = a.estado === 'Anulado'
-      const esDeRenuncia = a.negociacion?.estado === 'Cerrada por Renuncia'
-
-      // Anulados tienen prioridad: un abono anulado de renuncia → anulado
-      if (esAnulado) return filtros.mostrarAnulados
-      if (esDeRenuncia) return filtros.mostrarRenunciados
-      return filtros.mostrarActivos
-    })
-
-    // Filtro por búsqueda (nombre, CC, RYR-XXXX, vivienda, proyecto)
-    if (filtros.busqueda.trim()) {
-      const termino = filtros.busqueda.toLowerCase().trim()
-      resultado = resultado.filter(abono => {
+    return abonos.filter(abono => {
+      // Búsqueda: nombre, CC, RYR-15, "A17", proyecto
+      if (termino) {
         const nombreCompleto =
           `${abono.cliente.nombres} ${abono.cliente.apellidos}`.toLowerCase()
-        const documento = abono.cliente.numero_documento.toLowerCase()
-        const recibo = abono.numero_recibo.toLowerCase()
-        // Vivienda: acepta "A17", "17", "a", "mz.a casa 17"…
         const viviendaRef =
           `${abono.vivienda.manzana.identificador}${abono.vivienda.numero}`.toLowerCase()
-        const proyectoNombre = abono.proyecto.nombre.toLowerCase()
-        const reciboMatch = recibo.includes(termino)
-        return (
+        const coincide =
           nombreCompleto.includes(termino) ||
-          documento.includes(termino) ||
-          reciboMatch ||
+          abono.cliente.numero_documento.toLowerCase().includes(termino) ||
+          abono.numero_recibo.toLowerCase().includes(termino) ||
           viviendaRef.includes(termino) ||
-          proyectoNombre.includes(termino)
-        )
-      })
-    }
-
-    // Filtro por fuente de pago
-    if (filtros.fuente && filtros.fuente !== 'todas') {
-      resultado = resultado.filter(
-        abono => abono.fuente_pago.tipo === filtros.fuente
-      )
-    }
-
-    // Filtro por entidad (Comfenalco, Comfandi, etc.)
-    if (filtros.entidad && filtros.entidad !== 'todas') {
-      resultado = resultado.filter(
-        abono => abono.fuente_pago.entidad === filtros.entidad
-      )
-    }
-
-    // Filtro por rango de fecha
-    if (filtros.rango !== 'todo') {
-      const ahora = new Date()
-      const pad = (n: number) => String(n).padStart(2, '0')
-      const toDateStr = (d: Date) =>
-        `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-
-      let desdeStr: string | null = null
-      let hastaStr: string | null = null
-
-      if (filtros.rango === 'este-mes') {
-        desdeStr = toDateStr(new Date(ahora.getFullYear(), ahora.getMonth(), 1))
-        hastaStr = toDateStr(
-          new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0)
-        )
-      } else if (filtros.rango === 'mes-anterior') {
-        desdeStr = toDateStr(
-          new Date(ahora.getFullYear(), ahora.getMonth() - 1, 1)
-        )
-        hastaStr = toDateStr(new Date(ahora.getFullYear(), ahora.getMonth(), 0))
-      } else if (filtros.rango === 'ultimos-3-meses') {
-        desdeStr = toDateStr(
-          new Date(ahora.getFullYear(), ahora.getMonth() - 2, 1)
-        )
-        hastaStr = toDateStr(
-          new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0)
-        )
-      } else if (filtros.rango === 'este-ano') {
-        desdeStr = `${ahora.getFullYear()}-01-01`
-        hastaStr = `${ahora.getFullYear()}-12-31`
-      } else if (filtros.rango === 'personalizado') {
-        desdeStr = filtros.fechaDesde || null
-        hastaStr = filtros.fechaHasta || null
+          abono.proyecto.nombre.toLowerCase().includes(termino)
+        if (!coincide) return false
       }
 
-      resultado = resultado.filter(abono => {
-        const fechaAbono = abono.fecha_abono.substring(0, 10)
-        if (desdeStr && fechaAbono < desdeStr) return false
-        if (hastaStr && fechaAbono > hastaStr) return false
-        return true
-      })
-    }
+      if (limites) {
+        const fecha = abono.fecha_abono.substring(0, 10)
+        const [desde, hasta] = limites
+        if (desde && fecha < desde) return false
+        if (hasta && fecha > hasta) return false
+      }
 
-    return resultado
+      return true
+    })
   }, [abonos, filtros])
 
-  // ─── Ordenamiento ────────────────────────────────────────────────────────
-  const abonosOrdenados = useMemo(() => {
-    const extraerNumero = (recibo: string) => {
-      const match = recibo.match(/(\d+)$/)
-      return match ? parseInt(match[1], 10) : 0
-    }
+  const coincideFuente = useCallback(
+    (a: AbonoConInfo) =>
+      (filtros.fuente === 'todas' || a.fuente_pago.tipo === filtros.fuente) &&
+      (filtros.entidad === 'todas' ||
+        a.fuente_pago.entidad === filtros.entidad),
+    [filtros.fuente, filtros.entidad]
+  )
+  const coincideEstado = useCallback(
+    (a: AbonoConInfo) =>
+      filtros.estado === 'Todos' || estadoVisibleAbono(a) === filtros.estado,
+    [filtros.estado]
+  )
 
-    const resultado = [...abonosFiltrados]
-    resultado.sort((a, b) => {
-      const cmp =
-        orden.campo === 'recibo'
-          ? extraerNumero(a.numero_recibo) - extraerNumero(b.numero_recibo)
-          : a.fecha_abono.localeCompare(b.fecha_abono)
-      return orden.direccion === 'asc' ? cmp : -cmp
-    })
-    return resultado
-  }, [abonosFiltrados, orden])
+  // Todos los filtros menos el estado: base de los conteos de las tarjetas
+  const abonosSinEstado = useMemo(
+    () => abonosBase.filter(coincideFuente),
+    [abonosBase, coincideFuente]
+  )
 
-  // ─── Paginación ──────────────────────────────────────────────────────────
-  const totalFiltrado = abonosOrdenados.length
-  const totalPaginas = Math.max(1, Math.ceil(totalFiltrado / pageSize))
+  const abonosFiltrados = useMemo(
+    () => abonosSinEstado.filter(coincideEstado),
+    [abonosSinEstado, coincideEstado]
+  )
 
-  const abonosPaginados = useMemo(() => {
-    const inicio = (paginaActual - 1) * pageSize
-    return abonosOrdenados.slice(inicio, inicio + pageSize)
-  }, [abonosOrdenados, paginaActual, pageSize])
-
-  // ─── Estadísticas (sobre el total filtrado, no solo la página actual) ───
   const estadisticas = useMemo<EstadisticasAbonos>(() => {
-    const ahora = new Date()
-    const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1)
-
-    const abonosEsteMes = abonosFiltrados.filter(abono => {
-      const fechaAbono = new Date(abono.fecha_abono)
-      return fechaAbono >= inicioMes
+    const conteos: Record<EstadoAbonoFiltro, number> = {
+      Todos: abonosSinEstado.length,
+      Activo: 0,
+      Anulado: 0,
+      Renuncia: 0,
+    }
+    abonosSinEstado.forEach(a => {
+      conteos[estadoVisibleAbono(a)]++
     })
+
+    const sumar = (lista: AbonoConInfo[]) =>
+      lista.reduce(
+        (sum, a) => (a.estado === 'Anulado' ? sum : sum + Number(a.monto)),
+        0
+      )
+
+    // Barra de fuentes: todos los filtros menos fuente/entidad, para que el
+    // segmento elegido se resalte en vez de ocupar el 100 %
+    const montos = new Map<string, number>()
+    abonosBase
+      .filter(a => a.estado !== 'Anulado' && coincideEstado(a))
+      .forEach(a => {
+        const tipo = a.fuente_pago.tipo
+        montos.set(tipo, (montos.get(tipo) ?? 0) + Number(a.monto))
+      })
+    const porFuente = Array.from(montos, ([tipo, monto]) => ({ tipo, monto }))
+      .filter(f => f.monto > 0)
+      .sort((x, y) => y.monto - x.monto)
+
+    // Separadores por mes de la tabla (sobre lo filtrado, todas las páginas)
+    const porMes: EstadisticasAbonos['porMes'] = {}
+    abonosFiltrados.forEach(a => {
+      const mes = a.fecha_abono.substring(0, 7)
+      const g = (porMes[mes] ??= { recibos: 0, monto: 0 })
+      g.recibos++
+      if (a.estado !== 'Anulado') g.monto += Number(a.monto)
+    })
+
+    // Encabezado: recaudo vigente, sin filtros
+    const vigentes = abonos.filter(a => estadoVisibleAbono(a) === 'Activo')
+    const anio = String(new Date().getFullYear())
+    const ultimoAbono = vigentes.reduce<string | null>(
+      (max, a) => (!max || a.fecha_abono > max ? a.fecha_abono : max),
+      null
+    )
 
     return {
-      totalAbonos: abonosFiltrados.length,
-      montoTotal: abonosFiltrados.reduce(
-        (sum, abono) => sum + Number(abono.monto),
-        0
+      conteos,
+      montoFiltrado: sumar(abonosFiltrados),
+      porFuente,
+      porMes,
+      totalRecaudado: sumar(vigentes),
+      recaudadoEsteAnio: sumar(
+        vigentes.filter(a => a.fecha_abono.startsWith(anio))
       ),
-      montoEsteMes: abonosEsteMes.reduce(
-        (sum, abono) => sum + Number(abono.monto),
-        0
-      ),
-      abonosEsteMes: abonosEsteMes.length,
+      ultimoAbono,
     }
-  }, [abonosFiltrados])
+  }, [abonos, abonosBase, abonosSinEstado, abonosFiltrados, coincideEstado])
 
   // ─── Control de filtros ───────────────────────────────────────────────────
-  const actualizarFiltros = (nuevosFiltros: Partial<FiltrosAbonos>) => {
-    setFiltros(prev => ({
-      ...prev,
-      ...nuevosFiltros,
-      // Al cambiar fuente, resetear entidad para no quedar con filtro huérfano
-      ...(nuevosFiltros.fuente !== undefined &&
-      nuevosFiltros.entidad === undefined
-        ? { entidad: 'todas' }
-        : {}),
-    }))
-  }
+  const actualizarFiltros = useCallback(
+    (nuevosFiltros: Partial<FiltrosAbonos>) => {
+      setFiltros(prev => ({
+        ...prev,
+        ...nuevosFiltros,
+        // Al cambiar fuente, resetear entidad para no quedar con filtro huérfano
+        ...(nuevosFiltros.fuente !== undefined &&
+        nuevosFiltros.entidad === undefined
+          ? { entidad: 'todas' }
+          : {}),
+      }))
+    },
+    []
+  )
 
-  const limpiarFiltros = () => {
-    setFiltros({
-      busqueda: '',
-      fuente: 'todas',
-      entidad: 'todas',
-      rango: 'todo',
-      fechaDesde: '',
-      fechaHasta: '',
-      mostrarActivos: true,
-      mostrarAnulados: false,
-      mostrarRenunciados: false,
-    })
-  }
+  const limpiarFiltros = useCallback(() => setFiltros(FILTROS_INICIALES), [])
 
-  const toggleMostrarActivos = useCallback(() => {
-    setFiltros(prev => ({ ...prev, mostrarActivos: !prev.mostrarActivos }))
-  }, [])
-
-  const toggleMostrarAnulados = useCallback(() => {
-    setFiltros(prev => ({ ...prev, mostrarAnulados: !prev.mostrarAnulados }))
-  }, [])
-
-  const toggleMostrarRenunciados = useCallback(() => {
-    setFiltros(prev => ({
-      ...prev,
-      mostrarRenunciados: !prev.mostrarRenunciados,
-    }))
-  }, [])
+  const hayFiltros =
+    filtros.busqueda.trim() !== '' ||
+    filtros.fuente !== 'todas' ||
+    filtros.entidad !== 'todas' ||
+    filtros.rango !== 'todo' ||
+    filtros.estado !== FILTROS_INICIALES.estado
 
   const fuentesUnicas = useMemo(() => {
     const set = new Set<string>()
@@ -331,8 +272,7 @@ export function useAbonosList(initialBusqueda = '') {
   }, [abonos, filtros.fuente])
 
   return {
-    abonos: abonosPaginados,
-    abonosCompletos: abonos,
+    abonos: abonosFiltrados,
     totalSinFiltrar: abonos.length,
     estadisticas,
     fuentesUnicas,
@@ -340,17 +280,7 @@ export function useAbonosList(initialBusqueda = '') {
     filtros,
     actualizarFiltros,
     limpiarFiltros,
-    toggleMostrarActivos,
-    toggleMostrarAnulados,
-    toggleMostrarRenunciados,
-    paginaActual,
-    totalPaginas,
-    totalFiltrado,
-    setPaginaActual,
-    pageSize,
-    setPageSize,
-    orden,
-    toggleOrden,
+    hayFiltros,
     isLoading,
     error: queryError?.message ?? null,
     refetch: refrescar,

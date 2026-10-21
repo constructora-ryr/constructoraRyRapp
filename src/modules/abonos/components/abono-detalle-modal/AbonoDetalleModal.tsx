@@ -3,20 +3,24 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   Ban,
+  ChevronLeft,
+  ChevronRight,
   Download,
   FileText,
   Loader2,
   Pencil,
-  Receipt,
   X,
 } from 'lucide-react'
 import { createPortal } from 'react-dom'
 
 import { formatDateForDisplay } from '@/lib/utils/date.utils'
-import { formatCurrency } from '@/lib/utils/format.utils'
 import { formatNombreCompleto } from '@/lib/utils/string.utils'
+import { formatCOP } from '@/shared/components/list-page'
+import { ABONO_ESTADO_BADGE } from '@/shared/config/estados.colors'
+import { cn } from '@/shared/utils/helpers'
 
 import { formatearNumeroRecibo } from '../../utils/formato-recibo'
+import { fuenteVisual } from '../lista/fuente-visual'
 import { ModalAnularAbono } from '../modal-anular-abono'
 
 import { abonoDetalleStyles as s } from './AbonoDetalleModal.styles'
@@ -39,6 +43,14 @@ interface AbonoDetalleModalProps {
     totalAbonado: number
     saldoPendiente: number
   } | null
+  /** Pasar al abono anterior/siguiente sin cerrar (botones y ← →) */
+  navegacion?: {
+    /** Posición 1-based del abono actual */
+    actual: number
+    total: number
+    onAnterior?: () => void
+    onSiguiente?: () => void
+  }
 }
 
 export function AbonoDetalleModal({
@@ -51,6 +63,7 @@ export function AbonoDetalleModal({
   canAnular,
   canVerCliente,
   negociacionFinancials,
+  navegacion,
 }: AbonoDetalleModalProps) {
   const {
     mounted,
@@ -62,6 +75,7 @@ export function AbonoDetalleModal({
     esPDF,
     esNegociacionActiva,
     estaAnulado,
+    esRenuncia,
     generandoRecibo,
     showModalAnular,
     setShowModalAnular,
@@ -75,6 +89,8 @@ export function AbonoDetalleModal({
     isOpen,
     onClose,
     negociacionFinancials,
+    onAnterior: navegacion?.onAnterior,
+    onSiguiente: navegacion?.onSiguiente,
     onAnulado: () => {
       onAnulado?.()
       onClose()
@@ -83,9 +99,17 @@ export function AbonoDetalleModal({
 
   if (!mounted) return null
 
+  const fuente = abono ? fuenteVisual(abono.fuente_pago.tipo) : null
+  const FuenteIcono = fuente?.icon
+  const estado =
+    ABONO_ESTADO_BADGE[
+      estaAnulado ? 'Anulado' : esRenuncia ? 'Renuncia' : 'Activo'
+    ]
+  const EstadoIcono = estado.icon
+
   return createPortal(
     <AnimatePresence>
-      {isOpen && abono ? (
+      {isOpen && abono && fuente && FuenteIcono ? (
         <>
           {/* Overlay */}
           <motion.div
@@ -109,48 +133,75 @@ export function AbonoDetalleModal({
             aria-modal='true'
             aria-label={`Detalle del abono ${formatearNumeroRecibo(abono.numero_recibo)}`}
           >
-            {/* Header */}
+            {/* Header: color de la fuente (rojo si está anulado) */}
             <div
-              className={
-                estaAnulado ? s.header.containerAnulado : s.header.container
-              }
+              className={cn(
+                s.header.container,
+                estaAnulado ? s.header.anulado : fuente.gradient
+              )}
             >
+              <span aria-hidden className={s.header.glow} />
               <div className={s.header.left}>
                 <div className={s.header.iconWrap}>
                   {estaAnulado ? (
                     <Ban className='h-5 w-5 text-white' />
                   ) : (
-                    <Receipt className='h-5 w-5 text-white' />
+                    <FuenteIcono className='h-5 w-5 text-white' />
                   )}
                 </div>
                 <div className='min-w-0'>
-                  <div className='flex items-center gap-2'>
+                  <div className='flex min-w-0 items-center gap-2'>
                     <p className={s.header.title}>
                       {formatearNumeroRecibo(abono.numero_recibo)}
                       {' · '}
-                      {formatCurrency(abono.monto)}
-                    </p>
-                    {estaAnulado ? (
-                      <span className={s.header.badgeAnulado}>
-                        <Ban className='h-2.5 w-2.5' />
-                        Anulado
+                      <span className={estaAnulado ? 'line-through' : ''}>
+                        {formatCOP(Number(abono.monto))}
                       </span>
-                    ) : null}
+                    </p>
+                    <span className={s.header.badgeEstado}>
+                      <EstadoIcono className='h-3 w-3' />
+                      {estado.label}
+                    </span>
                   </div>
-                  <p
-                    className={
-                      estaAnulado ? s.header.subtitleAnulado : s.header.subtitle
-                    }
-                  >
+                  <p className={s.header.subtitle}>
                     {formatNombreCompleto(
                       `${abono.cliente.nombres} ${abono.cliente.apellidos}`
                     )}{' '}
-                    &middot; {formatDateForDisplay(abono.fecha_abono)}
+                    &middot; {abono.fuente_pago.tipo} &middot;{' '}
+                    {formatDateForDisplay(abono.fecha_abono)}
                   </p>
                 </div>
               </div>
 
               <div className={s.header.actions}>
+                {navegacion && navegacion.total > 1 ? (
+                  <div className={s.header.nav}>
+                    <button
+                      type='button'
+                      onClick={navegacion.onAnterior}
+                      disabled={!navegacion.onAnterior}
+                      className={s.header.navBtn}
+                      aria-label='Abono anterior (←)'
+                      title='Anterior (←)'
+                    >
+                      <ChevronLeft className='h-4 w-4' />
+                    </button>
+                    <span className={s.header.navLabel}>
+                      {navegacion.actual} de {navegacion.total}
+                    </span>
+                    <button
+                      type='button'
+                      onClick={navegacion.onSiguiente}
+                      disabled={!navegacion.onSiguiente}
+                      className={s.header.navBtn}
+                      aria-label='Abono siguiente (→)'
+                      title='Siguiente (→)'
+                    >
+                      <ChevronRight className='h-4 w-4' />
+                    </button>
+                  </div>
+                ) : null}
+
                 {tieneComprobante ? (
                   <button
                     onClick={handleDescargarComprobante}
@@ -158,7 +209,7 @@ export function AbonoDetalleModal({
                     title='Descargar comprobante original'
                   >
                     <Download className='h-3.5 w-3.5' />
-                    Comprobante
+                    <span className={s.header.btnLabel}>Comprobante</span>
                   </button>
                 ) : null}
 
@@ -173,7 +224,7 @@ export function AbonoDetalleModal({
                   ) : (
                     <FileText className='h-3.5 w-3.5' />
                   )}
-                  Generar Recibo
+                  <span className={s.header.btnLabel}>Generar recibo</span>
                 </button>
 
                 {esNegociacionActiva && !estaAnulado ? (
@@ -188,7 +239,7 @@ export function AbonoDetalleModal({
                         title='Editar este abono'
                       >
                         <Pencil className='h-3.5 w-3.5' />
-                        Editar
+                        <span className={s.header.btnLabel}>Editar</span>
                       </button>
                     ) : null}
                     {esAdmin || canAnular ? (
@@ -198,7 +249,7 @@ export function AbonoDetalleModal({
                         title='Anular este abono'
                       >
                         <Ban className='h-3.5 w-3.5' />
-                        Anular
+                        <span className={s.header.btnLabel}>Anular</span>
                       </button>
                     ) : null}
                   </>
@@ -223,12 +274,14 @@ export function AbonoDetalleModal({
                 tieneComprobante={tieneComprobante}
                 esImagen={esImagen}
                 esPDF={esPDF}
+                anulado={estaAnulado}
               />
               <AbonoDetalleSidebarPanel
                 abono={abono}
                 estaAnulado={estaAnulado}
-                viviendaLabel={viviendaLabel}
+                esRenuncia={esRenuncia}
                 canVerCliente={canVerCliente}
+                negociacionFinancials={negociacionFinancials}
               />
             </div>
 

@@ -1,22 +1,47 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
-import { CreditCard, Receipt, SlidersHorizontal } from 'lucide-react'
+import { motion } from 'framer-motion'
+import {
+  CalendarClock,
+  CreditCard,
+  Plus,
+  Receipt,
+  TrendingUp,
+  Wallet,
+  type LucideIcon,
+} from 'lucide-react'
 
 import { useRouter, useSearchParams } from 'next/navigation'
 
+import { formatDateCompact } from '@/lib/utils/date.utils'
 import { AbonoDetalleModal } from '@/modules/abonos/components/abono-detalle-modal/AbonoDetalleModal'
-import { AbonosListFiltros } from '@/modules/abonos/components/lista/AbonosListFiltros'
-import { AbonosListHeader } from '@/modules/abonos/components/lista/AbonosListHeader'
-import { AbonosListMetricas } from '@/modules/abonos/components/lista/AbonosListMetricas'
-import { AbonosTabla } from '@/modules/abonos/components/lista/AbonosTabla'
+import {
+  aEditable,
+  AbonosTabla,
+} from '@/modules/abonos/components/lista/AbonosTabla'
+import { RecaudoPorFuente } from '@/modules/abonos/components/lista/RecaudoPorFuente'
 import { ModalAnularAbono } from '@/modules/abonos/components/modal-anular-abono'
 import { ModalEditarAbono } from '@/modules/abonos/components/modal-editar-abono'
-import { useAbonosList } from '@/modules/abonos/hooks/useAbonosList'
+import {
+  useAbonosList,
+  type EstadoAbonoFiltro,
+  type RangoFecha,
+} from '@/modules/abonos/hooks/useAbonosList'
 import type { AbonoConInfo } from '@/modules/abonos/hooks/useAbonosQuery'
 import type { AbonoParaEditar } from '@/modules/abonos/types/editar-abono.types'
+import {
+  EstadoFiltroCards,
+  formatCOP,
+  ListPageHeader,
+  ListSearchToolbar,
+  type EstadoFiltroOpcion,
+} from '@/shared/components/list-page'
 import { EmptyState } from '@/shared/components/ui/EmptyState'
+import { FilterDropdown } from '@/shared/components/ui/filter-dropdown'
+import { NoResults } from '@/shared/components/ui/NoResults'
+import { ABONO_ESTADO_BADGE } from '@/shared/config/estados.colors'
 
 interface AbonosListPageProps {
   canCreate?: boolean
@@ -24,6 +49,44 @@ interface AbonosListPageProps {
   canDelete?: boolean
   canView?: boolean
   isAdmin?: boolean
+}
+
+const RANGOS: { value: RangoFecha; label: string }[] = [
+  { value: 'todo', label: 'Todo el tiempo' },
+  { value: 'este-mes', label: 'Este mes' },
+  { value: 'mes-anterior', label: 'Mes anterior' },
+  { value: 'ultimos-3-meses', label: 'Últimos 3 meses' },
+  { value: 'este-ano', label: 'Este año' },
+  { value: 'personalizado', label: 'Personalizado…' },
+]
+
+const FILTRO_ACTIVO =
+  'border-violet-400 bg-violet-50 text-violet-700 dark:border-violet-500/70 dark:bg-violet-900/20 dark:text-violet-300'
+
+const inputFecha =
+  'h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200 dark:focus:ring-violet-900'
+
+/** Cifra en vidrio dentro del encabezado */
+function DatoHero({
+  icon: Icon,
+  label,
+  valor,
+}: {
+  icon: LucideIcon
+  label: string
+  valor: string
+}) {
+  return (
+    <div className='flex items-center gap-2.5 rounded-xl bg-white/15 px-3 py-2 ring-1 ring-white/25 backdrop-blur-sm'>
+      <Icon className='h-4 w-4 shrink-0 text-white/80' />
+      <div className='leading-tight'>
+        <p className='text-[10px] font-medium uppercase tracking-wider text-white/70'>
+          {label}
+        </p>
+        <p className='text-sm font-bold tabular-nums text-white'>{valor}</p>
+      </div>
+    </div>
+  )
 }
 
 export function AbonosListPage({
@@ -37,7 +100,7 @@ export function AbonosListPage({
   const searchParams = useSearchParams()
   const initialQ = searchParams.get('q') ?? ''
 
-  // â”€â”€â”€ Estado de modales â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Estado de modales ───────────────────────────────────────────────────
   const [abonoSeleccionado, setAbonoSeleccionado] =
     useState<AbonoConInfo | null>(null)
   const [modalDetalleOpen, setModalDetalleOpen] = useState(false)
@@ -56,92 +119,283 @@ export function AbonosListPage({
     setAbonoSeleccionado(null)
   }, [])
 
-  // â”€â”€â”€ Datos y filtros â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const irARegistrar = useCallback(
+    () => router.push('/abonos/registrar'),
+    [router]
+  )
+
+  // ─── Datos y filtros ─────────────────────────────────────────────────────
   const {
     abonos,
+    totalSinFiltrar,
     estadisticas,
     fuentesUnicas,
     entidadesUnicas,
     filtros,
     actualizarFiltros,
     limpiarFiltros,
-    toggleMostrarActivos,
-    toggleMostrarAnulados,
-    toggleMostrarRenunciados,
-    paginaActual,
-    totalPaginas,
-    totalFiltrado,
-    totalSinFiltrar,
-    setPaginaActual,
-    pageSize,
-    setPageSize,
-    orden,
-    toggleOrden,
+    hayFiltros,
     isLoading,
     error,
     refetch,
   } = useAbonosList(initialQ)
 
-  // â”€â”€â”€ Loading â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  if (isLoading) {
-    return (
-      <div className='min-h-screen bg-gradient-to-br from-slate-50 via-violet-50 to-purple-50 dark:from-gray-950 dark:via-slate-900 dark:to-gray-900'>
-        <div className='mx-auto max-w-7xl space-y-4 px-4 py-6 sm:px-6 lg:px-8'>
-          <div className='h-28 animate-pulse rounded-2xl bg-violet-200 dark:bg-violet-900/30' />
-          <div className='grid grid-cols-2 gap-3 lg:grid-cols-4'>
-            {[...Array(4)].map((_, i) => (
-              <div
-                key={i}
-                className='h-24 animate-pulse rounded-xl bg-gray-100 dark:bg-gray-800'
-              />
-            ))}
-          </div>
-          <div className='h-12 animate-pulse rounded-xl bg-gray-100 dark:bg-gray-800' />
-          <div className='h-80 animate-pulse rounded-xl bg-gray-100 dark:bg-gray-800' />
-        </div>
-      </div>
-    )
+  // Navegación ← → del visor: mismo orden por defecto de la tabla (fecha de
+  // pago, más reciente primero)
+  const abonosEnOrden = useMemo(
+    () =>
+      [...abonos].sort(
+        (x, y) =>
+          y.fecha_abono.localeCompare(x.fecha_abono) ||
+          y.numero_recibo.localeCompare(x.numero_recibo, undefined, {
+            numeric: true,
+          })
+      ),
+    [abonos]
+  )
+  const indiceSeleccionado = abonoSeleccionado
+    ? abonosEnOrden.findIndex(a => a.id === abonoSeleccionado.id)
+    : -1
+  const navegacion =
+    indiceSeleccionado >= 0
+      ? {
+          actual: indiceSeleccionado + 1,
+          total: abonosEnOrden.length,
+          onAnterior:
+            indiceSeleccionado > 0
+              ? () =>
+                  setAbonoSeleccionado(abonosEnOrden[indiceSeleccionado - 1])
+              : undefined,
+          onSiguiente:
+            indiceSeleccionado < abonosEnOrden.length - 1
+              ? () =>
+                  setAbonoSeleccionado(abonosEnOrden[indiceSeleccionado + 1])
+              : undefined,
+        }
+      : undefined
+
+  // Las tarjetas de conteo son también el filtro de estado
+  const conEstilo = (estado: string) => {
+    const cfg = ABONO_ESTADO_BADGE[estado]
+    return {
+      icon: cfg.icon,
+      gradient: cfg.gradient,
+      text: cfg.text,
+      selected: cfg.selected,
+    }
   }
 
-  // â”€â”€â”€ Error â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const { conteos } = estadisticas
+  const opcionesEstado: EstadoFiltroOpcion<EstadoAbonoFiltro>[] = [
+    {
+      value: 'Todos',
+      label: 'Todos',
+      count: conteos.Todos,
+      icon: Receipt,
+      gradient: 'from-violet-500 to-purple-600',
+      text: 'text-violet-700 dark:text-violet-400',
+      selected:
+        'border-violet-400 bg-violet-50/80 ring-2 ring-violet-400/40 dark:border-violet-500/60 dark:bg-violet-500/10',
+    },
+    {
+      value: 'Activo',
+      label: 'Válidos',
+      count: conteos.Activo,
+      ...conEstilo('Activo'),
+    },
+    {
+      value: 'Anulado',
+      label: 'Anulados',
+      count: conteos.Anulado,
+      ...conEstilo('Anulado'),
+    },
+    {
+      value: 'Renuncia',
+      label: 'De renuncias',
+      count: conteos.Renuncia,
+      ...conEstilo('Renuncia'),
+    },
+  ]
+
+  const total = abonos.length
+  const resultado =
+    total === 0
+      ? 'Sin resultados'
+      : `${total} recibo${total !== 1 ? 's' : ''} · ${formatCOP(estadisticas.montoFiltrado)}`
+
+  // ─── Error ───────────────────────────────────────────────────────────────
   if (error) {
     return (
-      <div className='flex min-h-screen items-center justify-center bg-slate-50 dark:bg-gray-950'>
+      <div className='flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-950'>
         <div className='space-y-2 text-center'>
           <Receipt className='mx-auto h-10 w-10 text-red-400' />
-          <p className='text-sm text-gray-600 dark:text-gray-400'>{error}</p>
+          <p className='text-sm text-slate-600 dark:text-slate-400'>{error}</p>
         </div>
       </div>
     )
   }
 
-  // â”€â”€â”€ Vista principal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Vista principal ─────────────────────────────────────────────────────
   return (
     <>
-      <div className='min-h-screen bg-gradient-to-br from-slate-50 via-violet-50 to-purple-50 dark:from-gray-950 dark:via-slate-900 dark:to-gray-900'>
-        <div className='mx-auto max-w-7xl space-y-4 px-4 py-6 sm:px-6 lg:px-8'>
-          <AbonosListHeader
-            totalAbonos={estadisticas.totalAbonos}
-            canCreate={canCreate}
-            onRegistrar={() => router.push('/abonos/registrar')}
+      <div className='min-h-screen bg-gradient-to-br from-slate-50 via-violet-50/60 to-purple-50/60 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950'>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.15 }}
+          className='mx-auto max-w-[1400px] space-y-5 px-4 py-6 sm:px-6 lg:py-8'
+        >
+          <ListPageHeader
+            icon={CreditCard}
+            heroGradient='from-violet-600 via-purple-600 to-fuchsia-600'
+            title='Abonos'
+            subtitle='Recibos de pago de los clientes'
+            breadcrumbs={[
+              { label: 'Dashboard', href: '/' },
+              { label: 'Abonos' },
+            ]}
+            actions={
+              <>
+                {!isLoading && (
+                  <div className='flex flex-wrap gap-2'>
+                    <DatoHero
+                      icon={Wallet}
+                      label='Total recaudado'
+                      valor={formatCOP(estadisticas.totalRecaudado)}
+                    />
+                    <DatoHero
+                      icon={TrendingUp}
+                      label={`Recaudado ${new Date().getFullYear()}`}
+                      valor={formatCOP(estadisticas.recaudadoEsteAnio)}
+                    />
+                    {estadisticas.ultimoAbono && (
+                      <DatoHero
+                        icon={CalendarClock}
+                        label='Último abono'
+                        valor={formatDateCompact(estadisticas.ultimoAbono)}
+                      />
+                    )}
+                  </div>
+                )}
+                {canCreate && (
+                  <button
+                    type='button'
+                    onClick={irARegistrar}
+                    className='inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-violet-700 shadow-lg shadow-violet-900/20 transition-all hover:-translate-y-0.5 hover:bg-violet-50 hover:shadow-xl'
+                  >
+                    <Plus className='h-4 w-4' />
+                    Registrar abono
+                  </button>
+                )}
+              </>
+            }
           />
 
-          <AbonosListMetricas estadisticas={estadisticas} />
-
-          <AbonosListFiltros
-            filtros={filtros}
-            fuentesUnicas={fuentesUnicas}
-            entidadesUnicas={entidadesUnicas}
-            totalFiltrado={totalFiltrado}
-            montoTotalFiltrado={estadisticas.montoTotal}
-            actualizarFiltros={actualizarFiltros}
-            limpiarFiltros={limpiarFiltros}
-            toggleMostrarActivos={toggleMostrarActivos}
-            toggleMostrarAnulados={toggleMostrarAnulados}
-            toggleMostrarRenunciados={toggleMostrarRenunciados}
+          <EstadoFiltroCards
+            ariaLabel='Filtrar abonos por estado'
+            total={conteos.Todos}
+            opciones={opcionesEstado}
+            seleccionado={filtros.estado}
+            onSeleccionar={estado => actualizarFiltros({ estado })}
           />
 
-          {totalFiltrado === 0 ? (
+          {!isLoading && (
+            <RecaudoPorFuente
+              porFuente={estadisticas.porFuente}
+              seleccionada={filtros.fuente}
+              onSeleccionar={fuente => actualizarFiltros({ fuente })}
+            />
+          )}
+
+          <div className='space-y-2'>
+            <ListSearchToolbar
+              value={filtros.busqueda}
+              onChange={busqueda => actualizarFiltros({ busqueda })}
+              placeholder='Buscar por cliente, cédula, recibo, vivienda (A17) o proyecto…'
+              resultado={resultado}
+              onLimpiar={hayFiltros ? limpiarFiltros : undefined}
+            >
+              <FilterDropdown
+                value={filtros.rango}
+                placeholder='Todo el tiempo'
+                allValue='todo'
+                activeClassName={FILTRO_ACTIVO}
+                options={RANGOS}
+                onChange={v =>
+                  actualizarFiltros({
+                    rango: v as RangoFecha,
+                    fechaDesde: '',
+                    fechaHasta: '',
+                  })
+                }
+              />
+              <FilterDropdown
+                value={filtros.fuente}
+                placeholder='Todas las fuentes'
+                allValue='todas'
+                activeClassName={FILTRO_ACTIVO}
+                options={[
+                  { value: 'todas', label: 'Todas las fuentes' },
+                  ...fuentesUnicas.map(f => ({ value: f, label: f })),
+                ]}
+                onChange={fuente => actualizarFiltros({ fuente })}
+              />
+              {entidadesUnicas.length > 0 && (
+                <FilterDropdown
+                  value={filtros.entidad}
+                  placeholder='Todas las entidades'
+                  allValue='todas'
+                  activeClassName={FILTRO_ACTIVO}
+                  options={[
+                    { value: 'todas', label: 'Todas las entidades' },
+                    ...entidadesUnicas.map(e => ({ value: e, label: e })),
+                  ]}
+                  onChange={entidad => actualizarFiltros({ entidad })}
+                />
+              )}
+            </ListSearchToolbar>
+
+            {filtros.rango === 'personalizado' && (
+              <div className='flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400'>
+                <label htmlFor='abonos-desde'>Desde</label>
+                <input
+                  id='abonos-desde'
+                  type='date'
+                  value={filtros.fechaDesde}
+                  max={filtros.fechaHasta || undefined}
+                  onChange={e =>
+                    actualizarFiltros({ fechaDesde: e.target.value })
+                  }
+                  className={inputFecha}
+                />
+                <label htmlFor='abonos-hasta'>hasta</label>
+                <input
+                  id='abonos-hasta'
+                  type='date'
+                  value={filtros.fechaHasta}
+                  min={filtros.fechaDesde || undefined}
+                  onChange={e =>
+                    actualizarFiltros({ fechaHasta: e.target.value })
+                  }
+                  className={inputFecha}
+                />
+              </div>
+            )}
+          </div>
+
+          {isLoading ? (
+            <div className='overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-800/60'>
+              <div className='h-11 animate-pulse bg-gradient-to-r from-violet-200 to-fuchsia-200 dark:from-violet-900/40 dark:to-fuchsia-900/40' />
+              <div className='space-y-3 p-4'>
+                {[...Array(6)].map((_, i) => (
+                  <div
+                    key={i}
+                    className='h-12 animate-pulse rounded-lg bg-slate-100 dark:bg-slate-700/50'
+                  />
+                ))}
+              </div>
+            </div>
+          ) : total === 0 ? (
             totalSinFiltrar === 0 ? (
               <EmptyState
                 icon={Receipt}
@@ -150,8 +404,8 @@ export function AbonosListPage({
                 action={
                   canCreate
                     ? {
-                        label: 'Registrar Primer Abono',
-                        onClick: () => router.push('/abonos/registrar'),
+                        label: 'Registrar primer abono',
+                        onClick: irARegistrar,
                         icon: CreditCard,
                       }
                     : undefined
@@ -159,15 +413,10 @@ export function AbonosListPage({
                 moduleName='abonos'
               />
             ) : (
-              <EmptyState
-                icon={SlidersHorizontal}
-                title='Sin resultados para estos filtros'
-                description='No hay abonos que coincidan con los filtros aplicados. Intenta con un rango de fechas diferente o limpia los filtros.'
-                action={{
-                  label: 'Limpiar filtros',
-                  onClick: limpiarFiltros,
-                }}
+              <NoResults
                 moduleName='abonos'
+                onLimpiarFiltros={limpiarFiltros}
+                mensaje='No hay abonos que coincidan con los filtros aplicados'
               />
             )
           ) : (
@@ -178,25 +427,29 @@ export function AbonosListPage({
               onAbonoClick={handleAbonoClick}
               onEditar={setAbonoEditando}
               onAnular={setAbonoAnulando}
-              orden={orden}
-              toggleOrden={toggleOrden}
-              paginaActual={paginaActual}
-              totalPaginas={totalPaginas}
-              totalFiltrado={totalFiltrado}
-              pageSize={pageSize}
-              setPaginaActual={setPaginaActual}
-              setPageSize={setPageSize}
+              porMes={estadisticas.porMes}
             />
           )}
-        </div>
+        </motion.div>
       </div>
 
-      {/* â”€â”€â”€ Modales â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ─── Modales ─────────────────────────────────────────────────────── */}
       <AbonoDetalleModal
         abono={abonoSeleccionado}
         isOpen={modalDetalleOpen}
         onClose={handleCerrarDetalle}
         canVerCliente={isAdmin || canView}
+        canEditar={isAdmin || canEdit}
+        canAnular={isAdmin || canDelete}
+        onEditar={
+          isAdmin || canEdit
+            ? a => {
+                const original = abonos.find(x => x.id === a.id)
+                if (original) setAbonoEditando(aEditable(original))
+              }
+            : undefined
+        }
+        navegacion={navegacion}
         onAnulado={() => {
           handleCerrarDetalle()
           refetch()

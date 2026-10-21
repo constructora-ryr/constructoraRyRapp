@@ -10,6 +10,7 @@
 
 import {
   BadgeCheck,
+  Ban,
   CheckCircle2,
   Clock,
   Heart,
@@ -210,5 +211,34 @@ export const VIVIENDA_ESTADO_BADGE: Record<string, EstadoBadge> = {
     badge: badge.amber,
     icon: CheckCircle2,
     ...acento.amber,
+  },
+}
+
+/**
+ * Clave = estado visible del abono: 'Activo' y 'Anulado' vienen de
+ * abonos_historial.estado; 'Renuncia' = abono activo de una negociación
+ * cerrada por renuncia (cuenta para la devolución, no como recaudo vigente)
+ */
+export const ABONO_ESTADO_BADGE: Record<string, EstadoBadge> = {
+  Activo: {
+    label: 'Válido',
+    dot: 'bg-emerald-500',
+    badge: badge.emerald,
+    icon: CheckCircle2,
+    ...acento.emerald,
+  },
+  Anulado: {
+    label: 'Anulado',
+    dot: 'bg-rose-500',
+    badge: badge.rose,
+    icon: Ban,
+    ...acento.rose,
+  },
+  Renuncia: {
+    label: 'De renuncia',
+    dot: 'bg-slate-400',
+    badge: badge.slate,
+    icon: UserMinus,
+    ...acento.slate,
   },
 }

@@ -24,7 +24,12 @@ interface FilterDropdownProps {
   /** Valor que representa "sin filtro activo" (default: '') */
   allValue?: string
   align?: 'start' | 'center' | 'end'
+  /** Clases del botón con filtro activo (por defecto, naranja de Viviendas) */
+  activeClassName?: string
 }
+
+const ACTIVO_POR_DEFECTO =
+  'border-orange-400 bg-orange-50 text-orange-700 dark:border-orange-500/70 dark:bg-orange-900/20 dark:text-orange-300'
 
 export function FilterDropdown({
   value,
@@ -33,6 +38,7 @@ export function FilterDropdown({
   onChange,
   allValue = '',
   align = 'start',
+  activeClassName = ACTIVO_POR_DEFECTO,
 }: FilterDropdownProps) {
   const selected = options.find(o => o.value === value)
   const isActive = value !== allValue
@@ -44,7 +50,7 @@ export function FilterDropdown({
           className={[
             'inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border-2 px-3 py-2 text-sm font-medium transition-all focus:outline-none',
             isActive
-              ? 'border-orange-400 bg-orange-50 text-orange-700 dark:border-orange-500/70 dark:bg-orange-900/20 dark:text-orange-300'
+              ? activeClassName
               : 'border-gray-200 bg-gray-50 text-gray-600 hover:border-gray-300 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-400 dark:hover:border-gray-600 dark:hover:bg-gray-800/70',
           ].join(' ')}
         >
