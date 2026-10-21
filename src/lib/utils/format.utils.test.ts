@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { formatCurrency, formatFileSize } from './format.utils'
+import { formatCurrency, formatFileSize, formatTelefono } from './format.utils'
 
 describe('formatFileSize', () => {
   it('should return "0 B" for null', () => {
@@ -81,5 +81,24 @@ describe('formatCurrency', () => {
     const result = formatCurrency(-50000)
     expect(result).toContain('50')
     expect(result).toContain('000')
+  })
+})
+
+describe('formatTelefono', () => {
+  it('agrupa un celular de 10 dígitos', () => {
+    expect(formatTelefono('3148905064')).toBe('314 890 5064')
+  })
+  it('ignora espacios y guiones existentes', () => {
+    expect(formatTelefono('314-890 5064')).toBe('314 890 5064')
+  })
+  it('agrupa un fijo de 7 dígitos', () => {
+    expect(formatTelefono('4451234')).toBe('445 1234')
+  })
+  it('respeta el indicativo +57', () => {
+    expect(formatTelefono('+573148905064')).toBe('+57 314 890 5064')
+  })
+  it('deja igual otros formatos y vacíos', () => {
+    expect(formatTelefono('12345')).toBe('12345')
+    expect(formatTelefono(null)).toBe('')
   })
 })

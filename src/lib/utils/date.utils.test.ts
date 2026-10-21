@@ -84,8 +84,8 @@ describe('formatDateCompact', () => {
     expect(formatDateCompact('')).toBe('')
   })
 
-  it('formatea correctamente a dd-MMM-yyyy', () => {
-    expect(formatDateCompact('2023-02-16')).toBe('16-feb-2023')
+  it('formatea correctamente a dd MMM yyyy', () => {
+    expect(formatDateCompact('2023-02-16')).toBe('16 feb 2023')
   })
 
   it('usa abreviaciones correctas para todos los meses', () => {
@@ -105,12 +105,12 @@ describe('formatDateCompact', () => {
     ]
     meses.forEach((abr, i) => {
       const mes = String(i + 1).padStart(2, '0')
-      expect(formatDateCompact(`2025-${mes}-15`)).toBe(`15-${abr}-2025`)
+      expect(formatDateCompact(`2025-${mes}-15`)).toBe(`15 ${abr} 2025`)
     })
   })
 
   it('no sufre timezone shift con timestamp T12:00:00', () => {
-    expect(formatDateCompact('2025-10-26T12:00:00')).toBe('26-oct-2025')
+    expect(formatDateCompact('2025-10-26T12:00:00')).toBe('26 oct 2025')
   })
 })
 

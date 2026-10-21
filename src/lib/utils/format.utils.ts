@@ -42,3 +42,20 @@ export function formatCurrency(value: number | null | undefined): string {
     maximumFractionDigits: 0,
   }).format(value)
 }
+
+/**
+ * Formatea un teléfono colombiano para mostrarlo (no para guardarlo):
+ * - Celular de 10 dígitos: "3148905064" → "314 890 5064"
+ * - Fijo de 7 dígitos:     "4451234"    → "445 1234"
+ * - Con indicativo +57:    "573148905064" → "+57 314 890 5064"
+ * Cualquier otro formato se devuelve tal cual.
+ */
+export function formatTelefono(telefono: string | null | undefined): string {
+  if (!telefono) return ''
+  const d = telefono.replace(/\D/g, '')
+  if (d.length === 10) return `${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6)}`
+  if (d.length === 7) return `${d.slice(0, 3)} ${d.slice(3)}`
+  if (d.length === 12 && d.startsWith('57'))
+    return `+57 ${d.slice(2, 5)} ${d.slice(5, 8)} ${d.slice(8)}`
+  return telefono
+}

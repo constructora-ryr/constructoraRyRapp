@@ -100,21 +100,21 @@ export function formatDateShort(dateString: string): string {
 }
 
 /**
- * Formatea una fecha en formato compacto con mes abreviado dd-MMM-yyyy
+ * Formatea una fecha en formato compacto con mes abreviado: dd MMM yyyy
  *
  * ⚠️ USAR ESTA FUNCIÓN para mostrar fechas compactas con mes en texto
  * ⚠️ NO USA Date OBJECTS - Evita timezone shift completamente
  *
  * @param dateString - Fecha en formato ISO o timestamp de la DB
- * @returns Fecha en formato dd-MMM-yyyy (ej: "16-feb-2023")
+ * @returns Fecha en formato dd MMM yyyy (ej: "16 feb 2023")
  *
  * @example
  * ```ts
  * formatDateCompact("2023-02-16")
- * // → "16-feb-2023"
+ * // → "16 feb 2023"
  *
  * formatDateCompact("2023-02-16T12:00:00")
- * // → "16-feb-2023"
+ * // → "16 feb 2023"
  * ```
  */
 export function formatDateCompact(dateString: string): string {
@@ -141,7 +141,7 @@ export function formatDateCompact(dateString: string): string {
   ]
   const monthAbbr = monthNames[parseInt(month) - 1]
 
-  return `${day}-${monthAbbr}-${year}` // dd-MMM-yyyy
+  return `${day} ${monthAbbr} ${year}` // dd MMM yyyy
 }
 
 /**
