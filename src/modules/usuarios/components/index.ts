@@ -9,9 +9,6 @@
 // ── V2: Módulo reescrito ─────────────────────────────────────────────────
 export { EditarUsuarioView } from './EditarUsuarioView'
 export { NuevoUsuarioView } from './NuevoUsuarioView'
-export { UsuariosHeaderPremium } from './UsuariosHeaderPremium'
-export { UsuariosListaFiltros } from './UsuariosListaFiltros'
-export { UsuariosMetricasPremium } from './UsuariosMetricasPremium'
 export { UsuariosPageMain } from './UsuariosPageMain'
 export { UsuariosTabla } from './UsuariosTabla'
 

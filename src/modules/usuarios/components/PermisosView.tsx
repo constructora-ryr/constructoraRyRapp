@@ -1,19 +1,19 @@
 ﻿/**
- * PermisosView — Administración de permisos RBAC
+ * PermisosView — Administración de permisos por rol (RBAC)
  *
- * Componente presentacional que muestra la matriz de permisos
- * por módulo x acción x rol, con toggles editables en línea.
+ * Matriz módulo × acción × rol con interruptores que se guardan al instante.
  *
- * - Sin emojis
- * - Sin datos hardcodeados (todo viene de la BD via hook)
+ * - Tarjetas por rol con su avance (y filtro por rol al hacer clic)
+ * - Buscador + filtro de módulo + expandir/colapsar todo
+ * - Módulos en acordeón, reordenables arrastrando (orden guardado en el navegador)
+ * - Cada módulo muestra cuántas acciones tiene activas cada rol
  * - Administrador siempre tiene acceso total (no editable)
- * - Diseño v4: accordion por módulo + drag-and-drop para reordenar
+ * - Sin datos hardcodeados: todo viene de la BD vía usePermisosAdmin
  */
 
 'use client'
 
-import type { ElementType } from 'react'
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core'
 import {
@@ -35,88 +35,168 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
-  Activity,
   AlertCircle,
-  BarChart3,
-  Building2,
   Check,
   ChevronDown,
-  CreditCard,
-  FileText,
+  ChevronsDownUp,
+  ChevronsUpDown,
+  CloudCheck,
   GripVertical,
-  Handshake,
-  Home,
   Loader2,
+  Lock,
   Minus,
   RotateCcw,
-  Search,
-  Settings2,
   Shield,
-  UserCog,
-  Users,
-  X,
 } from 'lucide-react'
 
-import { FormSelect } from '@/shared/components/ui/form-select'
+import { ListSearchToolbar } from '@/shared/components/list-page'
+import { FilterDropdown } from '@/shared/components/ui/filter-dropdown'
+import { cn } from '@/shared/utils/helpers'
 
+import { ROL_VISUAL } from '../config/usuarios-visual'
 import {
   ETIQUETA_ACCION,
   ETIQUETA_MODULO,
-  ETIQUETA_ROL,
   usePermisosAdmin,
+  type MatrizPermisos,
 } from '../hooks/usePermisosAdmin'
 import type { Rol } from '../types'
 
-import {
-  MODULE_ACCENT,
-  MODULE_ICON_BG,
-  ROL_VISUAL,
-  sharedStyles as ss,
-} from './PermisosView.styles'
+import { moduloVisual, toggleStyles as ts } from './PermisosView.styles'
 
-// ── Module icon map ───────────────────────────────────────────────────────────
-const MODULE_ICONS: Record<string, ElementType> = {
-  proyectos: Building2,
-  viviendas: Home,
-  clientes: Users,
-  documentos: FileText,
-  negociaciones: Handshake,
-  abonos: CreditCard,
-  usuarios: UserCog,
-  auditorias: Activity,
-  reportes: BarChart3,
-  administracion: Settings2,
-}
+const FILTRO_ACTIVO =
+  'border-indigo-400 bg-indigo-50 text-indigo-700 dark:border-indigo-500/70 dark:bg-indigo-900/20 dark:text-indigo-300'
 
-// ── Role filter chips ─────────────────────────────────────────────────────────
-const ROLE_CHIPS: Array<{ value: Rol | 'todos'; label: string }> = [
-  { value: 'todos', label: 'Todos' },
-  { value: 'Contabilidad', label: 'Contabilidad' },
-  { value: 'Administrador de Obra', label: 'Adm. Obra' },
-  { value: 'Gerencia', label: 'Gerencia' },
-]
+const btnHerramienta =
+  'inline-flex h-10 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300 dark:hover:bg-slate-700'
 
-// ── Helper ────────────────────────────────────────────────────────────────────
-function moduleActionsTotal(
-  matriz: Record<string, Record<string, Record<string, unknown>>>
-) {
+/** Activos / totales de un rol en un módulo (o en todos) */
+function contar(matriz: MatrizPermisos, rol: Rol, modulos: string[]) {
+  let activos = 0
   let total = 0
-  Object.values(matriz).forEach(acciones => {
-    Object.values(acciones).forEach(roles => {
-      total += Object.keys(roles).filter(r => r !== 'Administrador').length
+  modulos.forEach(m => {
+    Object.values(matriz[m] ?? {}).forEach(porRol => {
+      const p = porRol[rol]
+      if (!p) return
+      total++
+      if (p.permitido) activos++
     })
   })
-  return total
+  return { activos, total }
 }
 
-// ── SortableModuleSection ─────────────────────────────────────────────────────
-interface SortableModuleSectionProps {
+// ── Tarjeta resumen por rol ──────────────────────────────────────────────────
+function TarjetaRol({
+  rol,
+  activos,
+  total,
+  seleccionado,
+  onClick,
+}: {
+  rol: Rol
+  activos: number
+  total: number
+  seleccionado: boolean
+  onClick?: () => void
+}) {
+  const v = ROL_VISUAL[rol]
+  const Icono = v.icon
+  const esAdmin = rol === 'Administrador'
+  const pct = esAdmin
+    ? 100
+    : total > 0
+      ? Math.round((activos / total) * 100)
+      : 0
+
+  const contenido = (
+    <>
+      <div className='flex items-center gap-3'>
+        <span
+          className={cn(
+            'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-sm',
+            v.gradient
+          )}
+        >
+          <Icono className='h-5 w-5' />
+        </span>
+        <div className='min-w-0'>
+          <p className='truncate text-sm font-bold text-slate-900 dark:text-white'>
+            {v.label}
+          </p>
+          <p className='text-xs text-slate-500 dark:text-slate-400'>
+            {esAdmin ? (
+              <span className='inline-flex items-center gap-1'>
+                <Lock className='h-3 w-3' />
+                Acceso total
+              </span>
+            ) : (
+              <>
+                <span className={cn('font-bold tabular-nums', v.text)}>
+                  {activos}
+                </span>{' '}
+                de {total} permisos
+              </>
+            )}
+          </p>
+        </div>
+        <span className={cn('ml-auto text-lg font-black tabular-nums', v.text)}>
+          {pct}%
+        </span>
+      </div>
+      <div className='mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700/60'>
+        <div
+          className={cn(
+            'h-full rounded-full bg-gradient-to-r transition-all duration-500',
+            v.gradient
+          )}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </>
+  )
+
+  const base =
+    'rounded-2xl border p-4 text-left shadow-sm transition-all duration-150'
+  if (!onClick) {
+    return (
+      <div
+        className={cn(
+          base,
+          'border-slate-200/80 bg-white dark:border-slate-700/60 dark:bg-slate-800/60'
+        )}
+      >
+        {contenido}
+      </div>
+    )
+  }
+  return (
+    <button
+      type='button'
+      onClick={onClick}
+      aria-pressed={seleccionado}
+      title={seleccionado ? 'Mostrar todos los roles' : `Ver solo ${v.label}`}
+      className={cn(
+        base,
+        'hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400',
+        seleccionado
+          ? v.selected
+          : 'border-slate-200/80 bg-white hover:border-slate-300 dark:border-slate-700/60 dark:bg-slate-800/60 dark:hover:border-slate-600'
+      )}
+    >
+      {contenido}
+    </button>
+  )
+}
+
+// ── Sección de módulo (reordenable) ──────────────────────────────────────────
+interface SeccionModuloProps {
   modulo: string
   isCollapsed: boolean
   isDndEnabled: boolean
   isDraggingAny: boolean
-  rolesFiltrados: Rol[]
-  matriz: Record<string, Record<string, Record<string, unknown>>>
+  roles: Rol[]
+  matriz: MatrizPermisos
+  acciones: string[]
   savingIds: Set<string>
   onToggleCollapsed: (modulo: string) => void
   onTogglePermiso: (
@@ -128,17 +208,18 @@ interface SortableModuleSectionProps {
   ) => void
 }
 
-function SortableModuleSection({
+function SeccionModulo({
   modulo,
   isCollapsed,
   isDndEnabled,
   isDraggingAny,
-  rolesFiltrados,
+  roles,
   matriz,
+  acciones,
   savingIds,
   onToggleCollapsed,
   onTogglePermiso,
-}: SortableModuleSectionProps) {
+}: SeccionModuloProps) {
   const {
     attributes,
     listeners,
@@ -148,166 +229,171 @@ function SortableModuleSection({
     isDragging,
   } = useSortable({ id: modulo, disabled: !isDndEnabled })
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.4 : 1,
-  }
-
-  const Icon = (MODULE_ICONS[modulo] ?? Shield) as ElementType
-  const accionesDelModulo = Object.keys(matriz[modulo] ?? {}).sort()
-  const accentColor = MODULE_ACCENT[modulo] ?? 'bg-gray-400'
-  const iconBg =
-    MODULE_ICON_BG[modulo] ?? 'bg-gray-100 text-gray-600 dark:text-gray-400'
+  const mv = moduloVisual(modulo)
+  const Icono = mv.icon
+  const nombre = ETIQUETA_MODULO[modulo] ?? modulo
 
   return (
-    <tbody ref={setNodeRef} style={style}>
-      <tr
-        className={[
-          ss.trModule,
-          isDndEnabled && !isDragging
-            ? 'cursor-grab active:cursor-grabbing'
-            : '',
-        ].join(' ')}
-      >
-        <td colSpan={2 + rolesFiltrados.length} className='px-4 py-2'>
+    <tbody
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.4 : 1,
+      }}
+    >
+      {/* Encabezado del módulo */}
+      <tr className='border-t border-slate-200 bg-slate-50/80 first:border-t-0 dark:border-slate-700 dark:bg-slate-900/40'>
+        <td className='px-3 py-2.5'>
           <div className='flex items-center gap-2.5'>
             {isDndEnabled ? (
               <span
                 {...attributes}
                 {...listeners}
-                className='flex-shrink-0 cursor-grab text-gray-300 hover:text-gray-500 active:cursor-grabbing dark:text-gray-600 dark:hover:text-gray-400'
+                className='flex-shrink-0 cursor-grab text-slate-300 hover:text-slate-500 active:cursor-grabbing dark:text-slate-600 dark:hover:text-slate-400'
                 title='Arrastrar para reordenar'
-                aria-label='Arrastrar módulo'
+                aria-label={`Arrastrar ${nombre}`}
               >
                 <GripVertical className='h-4 w-4' />
               </span>
             ) : null}
-            <div className={`w-0.5 self-stretch rounded-full ${accentColor}`} />
-            <div
-              className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md ${iconBg}`}
-            >
-              <Icon className='h-3.5 w-3.5' />
-            </div>
-            <span className='text-xs font-bold uppercase tracking-wide text-gray-800 dark:text-gray-100'>
-              {ETIQUETA_MODULO[modulo] ?? modulo}
-            </span>
-            <span className='rounded-full bg-gray-200/80 px-2 py-0.5 text-[10px] font-semibold text-gray-500 dark:bg-gray-700/80 dark:text-gray-400'>
-              {accionesDelModulo.length}
-            </span>
-            <div className='flex-1' />
             <button
+              type='button'
               onClick={() => {
                 if (!isDraggingAny) onToggleCollapsed(modulo)
               }}
-              className='flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold text-gray-400 transition-colors hover:bg-gray-200/60 hover:text-gray-600 dark:hover:bg-gray-700/60 dark:hover:text-gray-300'
-              aria-label={isCollapsed ? 'Expandir módulo' : 'Colapsar módulo'}
               aria-expanded={!isCollapsed}
+              className='group flex min-w-0 items-center gap-2.5 text-left'
             >
               <motion.span
                 animate={{ rotate: isCollapsed ? -90 : 0 }}
                 transition={{ duration: 0.2 }}
-                className='inline-flex'
+                className='inline-flex text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300'
               >
-                <ChevronDown className='h-3.5 w-3.5' />
+                <ChevronDown className='h-4 w-4' />
               </motion.span>
-              {isCollapsed ? 'Expandir' : 'Colapsar'}
+              <span
+                className={cn(
+                  'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br text-white shadow-sm',
+                  mv.gradient
+                )}
+              >
+                <Icono className='h-4 w-4' />
+              </span>
+              <span className='truncate text-sm font-bold text-slate-900 dark:text-white'>
+                {nombre}
+              </span>
+              <span className='rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-500 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:ring-slate-700'>
+                {acciones.length}{' '}
+                {acciones.length === 1 ? 'acción' : 'acciones'}
+              </span>
             </button>
           </div>
         </td>
+        {/* Admin: siempre todo */}
+        <td className='px-2 py-2.5 text-center'>
+          <span className='text-[11px] font-bold tabular-nums text-rose-500 dark:text-rose-300'>
+            {acciones.length}/{acciones.length}
+          </span>
+        </td>
+        {/* Resumen por rol en este módulo */}
+        {roles.map(rol => {
+          const { activos, total } = contar(matriz, rol, [modulo])
+          const v = ROL_VISUAL[rol]
+          return (
+            <td key={rol} className='px-2 py-2.5 text-center'>
+              {total > 0 ? (
+                <span
+                  className={cn(
+                    'inline-flex rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums ring-1 ring-inset',
+                    activos > 0
+                      ? v.badge
+                      : 'bg-slate-100 text-slate-400 ring-slate-200 dark:bg-slate-800 dark:text-slate-500 dark:ring-slate-700'
+                  )}
+                >
+                  {activos}/{total}
+                </span>
+              ) : null}
+            </td>
+          )
+        })}
       </tr>
 
+      {/* Acciones */}
       <AnimatePresence initial={false}>
         {!isCollapsed
-          ? accionesDelModulo.map((accion, idx) => (
+          ? acciones.map(accion => (
               <motion.tr
                 key={`${modulo}-${accion}`}
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.18, delay: idx * 0.01 }}
-                className={ss.trAction}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                className='transition-colors hover:bg-indigo-50/40 dark:hover:bg-slate-700/20'
               >
-                <td className='py-2.5 pl-8 pr-4'>
-                  <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                <td className='py-2 pl-14 pr-4'>
+                  <span className='text-sm text-slate-700 dark:text-slate-300'>
                     {ETIQUETA_ACCION[accion] ?? accion}
                   </span>
                 </td>
-                <td className='px-3 py-2.5 text-center'>
+                <td className='px-2 py-2 text-center'>
                   <span
-                    className={ss.toggleAdmin}
-                    title='Administrador tiene acceso total'
-                    aria-label='Administrador — acceso total'
+                    className={ts.admin}
+                    title='El Administrador tiene acceso total'
+                    aria-label='Administrador: acceso total'
                   >
-                    <Check className='h-3.5 w-3.5' />
+                    <Check className='h-4 w-4' strokeWidth={3} />
                   </span>
                 </td>
-                {rolesFiltrados.map(rol => {
-                  const permisoRaw = (
-                    matriz[modulo] as
-                      | Record<
-                          string,
-                          Record<
-                            string,
-                            {
-                              id: string
-                              permitido: boolean
-                              descripcion?: string | null
-                            }
-                          >
-                        >
-                      | undefined
-                  )?.[accion]?.[rol]
-                  const v =
-                    ROL_VISUAL[rol as Exclude<Rol, 'Administrador'>] ?? null
-                  if (!permisoRaw) {
+                {roles.map(rol => {
+                  const permiso = matriz[modulo]?.[accion]?.[rol]
+                  if (!permiso) {
                     return (
-                      <td key={rol} className='px-3 py-2.5 text-center'>
-                        <span className='inline-flex h-7 w-7 items-center justify-center text-gray-200 dark:text-gray-700'>
-                          <Minus className='h-3.5 w-3.5' />
+                      <td key={rol} className='px-2 py-2 text-center'>
+                        <span
+                          className='inline-flex h-8 w-8 items-center justify-center text-slate-200 dark:text-slate-700'
+                          title='No aplica'
+                        >
+                          <Minus className='h-4 w-4' />
                         </span>
                       </td>
                     )
                   }
+                  const v = ROL_VISUAL[rol]
+                  const guardando = savingIds.has(permiso.id)
+                  const etiqueta = `${ETIQUETA_ACCION[accion] ?? accion} en ${ETIQUETA_MODULO[modulo] ?? modulo} — ${v.label}`
                   return (
-                    <td key={rol} className='px-3 py-2.5 text-center'>
+                    <td key={rol} className='px-2 py-2 text-center'>
                       <button
+                        type='button'
                         onClick={() =>
                           onTogglePermiso(
-                            permisoRaw.id,
-                            permisoRaw.permitido,
+                            permiso.id,
+                            permiso.permitido,
                             rol,
                             modulo,
                             accion
                           )
                         }
-                        disabled={savingIds.has(permisoRaw.id)}
-                        className={[
-                          ss.toggleBase,
-                          savingIds.has(permisoRaw.id)
-                            ? 'cursor-not-allowed bg-gray-100 opacity-70 dark:bg-gray-700'
-                            : permisoRaw.permitido
-                              ? (v?.toggleOn ??
-                                'bg-indigo-500 text-white hover:bg-indigo-600 focus:ring-indigo-500/30')
-                              : ss.toggleOff,
-                        ].join(' ')}
-                        title={
-                          savingIds.has(permisoRaw.id)
-                            ? 'Guardando...'
-                            : permisoRaw.descripcion ||
-                              `${ETIQUETA_ACCION[accion] ?? accion} en ${ETIQUETA_MODULO[modulo] ?? modulo} — ${ETIQUETA_ROL[rol]}`
-                        }
-                        aria-label={`${permisoRaw.permitido ? 'Desactivar' : 'Activar'} permiso ${accion} en ${modulo} para ${rol}`}
-                        aria-pressed={permisoRaw.permitido}
-                        aria-busy={savingIds.has(permisoRaw.id)}
-                      >
-                        {savingIds.has(permisoRaw.id) ? (
-                          <Loader2 className='h-3.5 w-3.5 animate-spin text-gray-400 dark:text-gray-500' />
-                        ) : permisoRaw.permitido ? (
-                          <Check className='h-3.5 w-3.5' />
-                        ) : (
-                          <X className='h-3.5 w-3.5' />
+                        disabled={guardando}
+                        className={cn(
+                          ts.base,
+                          permiso.permitido ? cn(ts.on, v.gradient) : ts.off
                         )}
+                        title={
+                          guardando
+                            ? 'Guardando…'
+                            : (permiso.descripcion ?? etiqueta)
+                        }
+                        aria-label={`${permiso.permitido ? 'Quitar' : 'Dar'} permiso: ${etiqueta}`}
+                        aria-pressed={permiso.permitido}
+                        aria-busy={guardando}
+                      >
+                        {guardando ? (
+                          <Loader2 className='h-4 w-4 animate-spin' />
+                        ) : permiso.permitido ? (
+                          <Check className='h-4 w-4' strokeWidth={3} />
+                        ) : null}
                       </button>
                     </td>
                   )
@@ -320,33 +406,34 @@ function SortableModuleSection({
   )
 }
 
-// ── DragOverlay module preview ────────────────────────────────────────────────
-function ModuleDragPreview({ modulo }: { modulo: string }) {
-  const Icon = (MODULE_ICONS[modulo] ?? Shield) as ElementType
-  const accentColor = MODULE_ACCENT[modulo] ?? 'bg-gray-400'
-  const iconBg = MODULE_ICON_BG[modulo] ?? 'bg-gray-100 text-gray-600'
+// ── Vista previa al arrastrar ────────────────────────────────────────────────
+function ModuloArrastrado({ modulo }: { modulo: string }) {
+  const mv = moduloVisual(modulo)
+  const Icono = mv.icon
   return (
-    <div className='flex items-center gap-2.5 rounded-lg border border-indigo-200 bg-white/95 px-4 py-2 shadow-2xl shadow-indigo-500/20 dark:border-indigo-700 dark:bg-gray-800/95'>
+    <div className='flex items-center gap-2.5 rounded-xl border border-indigo-200 bg-white/95 px-4 py-2.5 shadow-2xl shadow-indigo-500/20 dark:border-indigo-700 dark:bg-slate-800/95'>
       <GripVertical className='h-4 w-4 text-indigo-400' />
-      <div className={`h-5 w-0.5 rounded-full ${accentColor}`} />
-      <div
-        className={`flex h-6 w-6 items-center justify-center rounded-md ${iconBg}`}
+      <span
+        className={cn(
+          'flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br text-white',
+          mv.gradient
+        )}
       >
-        <Icon className='h-3.5 w-3.5' />
-      </div>
-      <span className='text-xs font-bold uppercase tracking-wide text-gray-800 dark:text-gray-100'>
+        <Icono className='h-4 w-4' />
+      </span>
+      <span className='text-sm font-bold text-slate-900 dark:text-white'>
         {ETIQUETA_MODULO[modulo] ?? modulo}
       </span>
     </div>
   )
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
+// ── Componente ───────────────────────────────────────────────────────────────
 export function PermisosView() {
   const {
-    permisosFiltrados,
     matriz,
     modulosFiltrados,
+    roles,
     rolesFiltrados,
     isLoading,
     error,
@@ -363,6 +450,8 @@ export function PermisosView() {
     handleToggle,
     collapsed,
     toggleCollapsed,
+    colapsarTodos,
+    expandirTodos,
     tieneOrdenPersonalizado,
     reordenarModulos,
     resetOrden,
@@ -377,6 +466,27 @@ export function PermisosView() {
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
+
+  // Acciones visibles por módulo (la búsqueda también filtra por acción)
+  const accionesPorModulo = useMemo(() => {
+    const termino = busqueda.toLowerCase().trim()
+    const r: Record<string, string[]> = {}
+    modulosFiltrados.forEach(m => {
+      const todas = Object.keys(matriz[m] ?? {}).sort((a, b) =>
+        (ETIQUETA_ACCION[a] ?? a).localeCompare(ETIQUETA_ACCION[b] ?? b)
+      )
+      const coincideModulo = (ETIQUETA_MODULO[m] ?? m)
+        .toLowerCase()
+        .includes(termino)
+      r[m] =
+        !termino || coincideModulo
+          ? todas
+          : todas.filter(a =>
+              (ETIQUETA_ACCION[a] ?? a).toLowerCase().includes(termino)
+            )
+    })
+    return r
+  }, [matriz, modulosFiltrados, busqueda])
 
   function handleDragStart(event: DragStartEvent) {
     setActiveDragId(String(event.active.id))
@@ -398,22 +508,30 @@ export function PermisosView() {
 
   if (isLoading) {
     return (
-      <div className='flex items-center justify-center p-20'>
-        <div className='h-8 w-8 animate-spin rounded-full border-[3px] border-indigo-200 border-t-indigo-600' />
+      <div className='space-y-4'>
+        <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-4'>
+          {[...Array(4)].map((_, i) => (
+            <div
+              key={i}
+              className='h-24 animate-pulse rounded-2xl bg-white dark:bg-slate-800/60'
+            />
+          ))}
+        </div>
+        <div className='h-96 animate-pulse rounded-2xl bg-white dark:bg-slate-800/60' />
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className='rounded-xl border border-red-200 bg-red-50/80 p-6 dark:border-red-800/50 dark:bg-red-900/20'>
+      <div className='rounded-2xl border border-rose-200 bg-rose-50 p-6 dark:border-rose-800/50 dark:bg-rose-950/30'>
         <div className='flex items-center gap-3'>
-          <AlertCircle className='h-5 w-5 flex-shrink-0 text-red-500' />
+          <AlertCircle className='h-5 w-5 flex-shrink-0 text-rose-500' />
           <div>
-            <p className='text-sm font-semibold text-red-900 dark:text-red-100'>
+            <p className='text-sm font-semibold text-rose-900 dark:text-rose-100'>
               Error al cargar permisos
             </p>
-            <p className='mt-0.5 text-xs text-red-700 dark:text-red-300'>
+            <p className='mt-0.5 text-xs text-rose-700 dark:text-rose-300'>
               {(error as Error).message}
             </p>
           </div>
@@ -424,151 +542,116 @@ export function PermisosView() {
 
   if (modulosTodos.length === 0) {
     return (
-      <div className='py-12 text-center'>
-        <Shield className='mx-auto mb-3 h-10 w-10 text-gray-300 dark:text-gray-600' />
-        <p className='text-sm text-gray-400 dark:text-gray-500'>
+      <div className='rounded-2xl border border-slate-200 bg-white py-12 text-center dark:border-slate-700/60 dark:bg-slate-800/60'>
+        <Shield className='mx-auto mb-3 h-10 w-10 text-slate-300 dark:text-slate-600' />
+        <p className='text-sm text-slate-500 dark:text-slate-400'>
           No hay permisos configurados en el sistema
         </p>
       </div>
     )
   }
 
-  const totalConfigurable = moduleActionsTotal(matriz)
+  const modulosVisibles = modulosFiltrados.filter(
+    m => (accionesPorModulo[m] ?? []).length > 0
+  )
+  const accionesVisibles = modulosVisibles.reduce(
+    (s, m) => s + accionesPorModulo[m].length,
+    0
+  )
+  const todosColapsados =
+    modulosVisibles.length > 0 && modulosVisibles.every(m => collapsed.has(m))
+  const resultado = `${modulosVisibles.length} módulo${modulosVisibles.length !== 1 ? 's' : ''} · ${accionesVisibles} acciones`
 
   return (
-    <div className='space-y-4'>
-      {/* Encabezado */}
-      <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
-        <div className='flex items-center gap-3'>
-          <div className='flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/30'>
-            <Shield className='h-5 w-5 text-white' />
-          </div>
-          <div>
-            <h2 className='text-base font-bold text-gray-900 dark:text-white'>
-              Permisos por Rol
-            </h2>
-            <p className='mt-0.5 text-xs text-gray-500 dark:text-gray-400'>
-              {permisosFiltrados.length} de {totalConfigurable} permisos
-              configurables
-            </p>
-          </div>
-        </div>
-        <div className='flex items-center gap-2'>
-          <span className='flex items-center gap-1.5 rounded-lg border border-gray-200/60 bg-white/80 px-3 py-1.5 dark:border-gray-700/60 dark:bg-gray-800/80'>
-            <span className='h-1.5 w-1.5 rounded-full bg-indigo-500' />
-            <span className='text-xs font-medium text-gray-600 dark:text-gray-400'>
-              {rolesFiltrados.length} roles
-            </span>
-          </span>
-          <span className='flex items-center gap-1.5 rounded-lg border border-gray-200/60 bg-white/80 px-3 py-1.5 dark:border-gray-700/60 dark:bg-gray-800/80'>
-            <span className='h-1.5 w-1.5 rounded-full bg-purple-500' />
-            <span className='text-xs font-medium text-gray-600 dark:text-gray-400'>
-              {modulosFiltrados.length} módulos
-            </span>
-          </span>
-          <span className='hidden items-center gap-1.5 rounded-lg border border-emerald-200/60 bg-emerald-50/80 px-3 py-1.5 dark:border-emerald-800/40 dark:bg-emerald-900/20 sm:flex'>
-            <Check className='h-3.5 w-3.5 text-emerald-500' />
-            <span className='text-xs font-medium text-emerald-700 dark:text-emerald-300'>
-              Cambios guardados automáticamente
-            </span>
-          </span>
-        </div>
+    <div className='space-y-5'>
+      {/* Tarjetas por rol */}
+      <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-4'>
+        <TarjetaRol
+          rol='Administrador'
+          activos={0}
+          total={0}
+          seleccionado={false}
+        />
+        {roles.map(rol => {
+          const { activos, total } = contar(matriz, rol, modulosTodos)
+          return (
+            <TarjetaRol
+              key={rol}
+              rol={rol}
+              activos={activos}
+              total={total}
+              seleccionado={filtroRol === rol}
+              onClick={() => setFiltroRol(filtroRol === rol ? 'todos' : rol)}
+            />
+          )
+        })}
       </div>
 
-      {/* Filtros */}
-      <div className='rounded-xl border border-gray-200/50 bg-white/90 p-3 shadow-sm backdrop-blur-xl dark:border-gray-700/50 dark:bg-gray-800/90'>
-        <div className='flex flex-wrap items-center gap-2'>
-          <div className='relative min-w-[200px] flex-1'>
-            <Search className='pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400' />
-            <input
-              type='text'
-              placeholder='Buscar módulo o acción...'
-              value={busqueda}
-              onChange={e => setBusqueda(e.target.value)}
-              className='w-full rounded-lg border border-gray-200 bg-gray-50 py-1.5 pl-9 pr-3 text-sm transition-all placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-200'
-              aria-label='Buscar permisos'
-            />
-          </div>
-          <FormSelect
+      {/* Buscador y herramientas */}
+      <div className='space-y-2'>
+        <ListSearchToolbar
+          value={busqueda}
+          onChange={setBusqueda}
+          placeholder='Buscar módulo o acción…'
+          resultado={resultado}
+          onLimpiar={hayFiltrosActivos ? limpiarFiltros : undefined}
+        >
+          <FilterDropdown
             value={filtroModulo}
-            onChange={e => setFiltroModulo(e.target.value)}
-            className='rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-200'
-            aria-label='Filtrar por módulo'
+            placeholder='Todos los módulos'
+            allValue='todos'
+            activeClassName={FILTRO_ACTIVO}
+            options={[
+              { value: 'todos', label: 'Todos los módulos' },
+              ...modulosTodos.map(m => ({
+                value: m,
+                label: ETIQUETA_MODULO[m] ?? m,
+              })),
+            ]}
+            onChange={setFiltroModulo}
+          />
+          <button
+            type='button'
+            onClick={() =>
+              todosColapsados ? expandirTodos() : colapsarTodos(modulosVisibles)
+            }
+            className={btnHerramienta}
           >
-            <option value='todos'>Todos los módulos</option>
-            {modulosTodos.map(mod => (
-              <option key={mod} value={mod}>
-                {ETIQUETA_MODULO[mod] ?? mod}
-              </option>
-            ))}
-          </FormSelect>
-          {hayFiltrosActivos ? (
-            <button
-              onClick={limpiarFiltros}
-              className='flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-indigo-600 transition-colors hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-900/20'
-              aria-label='Limpiar filtros'
-            >
-              <X className='h-3 w-3' />
-              Limpiar
-            </button>
-          ) : null}
+            {todosColapsados ? (
+              <ChevronsUpDown className='h-3.5 w-3.5' />
+            ) : (
+              <ChevronsDownUp className='h-3.5 w-3.5' />
+            )}
+            {todosColapsados ? 'Expandir todo' : 'Colapsar todo'}
+          </button>
           {tieneOrdenPersonalizado ? (
             <button
+              type='button'
               onClick={resetOrden}
-              className='flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700/50'
-              title='Restablecer orden alfabético'
-              aria-label='Restablecer orden de módulos'
+              className={btnHerramienta}
+              title='Volver al orden alfabético'
             >
-              <RotateCcw className='h-3 w-3' />
+              <RotateCcw className='h-3.5 w-3.5' />
               Restablecer orden
             </button>
           ) : null}
-        </div>
-
-        {isDndEnabled ? (
-          <p className='mt-2 flex items-center gap-1 text-[10px] text-gray-400 dark:text-gray-500'>
-            Arrastra por
-            <GripVertical className='inline h-3 w-3' />
-            para reordenar módulos
-          </p>
-        ) : null}
-
-        <div className='mt-2.5 flex flex-wrap items-center gap-1.5 border-t border-gray-100 pt-2.5 dark:border-gray-700/50'>
-          <span className='mr-1 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500'>
-            Rol
+        </ListSearchToolbar>
+        <p className='flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-500 dark:text-slate-400'>
+          <span className='inline-flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400'>
+            <CloudCheck className='h-3.5 w-3.5' />
+            Los cambios se guardan al instante
           </span>
-          {ROLE_CHIPS.map(chip => {
-            const isActive = filtroRol === chip.value
-            const v =
-              chip.value !== 'todos'
-                ? ROL_VISUAL[chip.value as Exclude<Rol, 'Administrador'>]
-                : null
-            return (
-              <button
-                key={chip.value}
-                onClick={() => setFiltroRol(chip.value as Rol | 'todos')}
-                className={[
-                  'rounded-full px-3.5 py-1 text-xs font-semibold transition-all',
-                  isActive && chip.value === 'todos'
-                    ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
-                    : !isActive && chip.value === 'todos'
-                      ? 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600'
-                      : isActive && v
-                        ? `bg-gradient-to-r ${v.gradient} text-white shadow-sm`
-                        : v
-                          ? `${v.bg} hover:opacity-80`
-                          : '',
-                ].join(' ')}
-              >
-                {chip.label}
-              </button>
-            )
-          })}
-        </div>
+          {isDndEnabled ? (
+            <span className='inline-flex items-center gap-1'>
+              Arrastra <GripVertical className='h-3 w-3' /> para reordenar
+              módulos
+            </span>
+          ) : null}
+        </p>
       </div>
 
-      {/* Tabla */}
-      <div className='overflow-hidden rounded-xl border border-gray-200/50 bg-white/80 shadow-sm backdrop-blur-xl dark:border-gray-700/50 dark:bg-gray-800/80'>
+      {/* Matriz */}
+      <div className='overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-800/60'>
         <div className='overflow-x-auto'>
           <DndContext
             sensors={sensors}
@@ -577,39 +660,22 @@ export function PermisosView() {
             onDragEnd={handleDragEnd}
           >
             <table className='w-full text-sm'>
-              <thead className='border-b border-gray-200 dark:border-gray-700'>
-                <tr className='bg-gray-50/80 dark:bg-gray-900/60'>
-                  <th className='px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400'>
-                    Acción
+              <thead className='bg-gradient-to-r from-indigo-700 via-indigo-600 to-sky-500'>
+                <tr>
+                  <th className='px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-white'>
+                    Módulo / acción
                   </th>
-                  <th className='min-w-[100px] px-3 py-3 text-center'>
-                    <div className='flex flex-col items-center gap-1'>
-                      <div className='flex h-6 w-6 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 shadow-sm'>
-                        <Shield className='h-3.5 w-3.5 text-white' />
-                      </div>
-                      <span className='text-[10px] font-semibold uppercase tracking-wider text-indigo-500 dark:text-indigo-400'>
-                        Admin
-                      </span>
-                    </div>
-                  </th>
-                  {rolesFiltrados.map(rol => {
-                    const v =
-                      ROL_VISUAL[rol as Exclude<Rol, 'Administrador'>] ?? null
+                  {(['Administrador', ...rolesFiltrados] as Rol[]).map(rol => {
+                    const v = ROL_VISUAL[rol]
+                    const Icono = v.icon
                     return (
-                      <th
-                        key={rol}
-                        className='min-w-[104px] px-3 py-3 text-center'
-                      >
-                        <div className='flex flex-col items-center gap-1'>
-                          {v ? (
-                            <div
-                              className={`h-1.5 w-10 rounded-full bg-gradient-to-r ${v.gradient}`}
-                            />
-                          ) : null}
-                          <span
-                            className={`text-[10px] font-semibold uppercase tracking-wider ${v?.header ?? 'text-gray-500 dark:text-gray-400'}`}
-                          >
-                            {ETIQUETA_ROL[rol]}
+                      <th key={rol} className='min-w-[112px] px-2 py-3'>
+                        <div className='flex flex-col items-center gap-1.5'>
+                          <span className='flex h-7 w-7 items-center justify-center rounded-lg bg-white/20 text-white ring-1 ring-white/30'>
+                            <Icono className='h-4 w-4' />
+                          </span>
+                          <span className='text-[11px] font-semibold uppercase tracking-wider text-white'>
+                            {v.label}
                           </span>
                         </div>
                       </th>
@@ -619,31 +685,32 @@ export function PermisosView() {
               </thead>
 
               <SortableContext
-                items={modulosFiltrados}
+                items={modulosVisibles}
                 strategy={verticalListSortingStrategy}
               >
-                {modulosFiltrados.length === 0 ? (
+                {modulosVisibles.length === 0 ? (
                   <tbody>
                     <tr>
                       <td
                         colSpan={2 + rolesFiltrados.length}
-                        className='py-10 text-center text-sm text-gray-400 dark:text-gray-500'
+                        className='py-12 text-center text-sm text-slate-400 dark:text-slate-500'
                       >
-                        Sin resultados para los filtros aplicados
+                        Ningún módulo o acción coincide con la búsqueda
                       </td>
                     </tr>
                   </tbody>
                 ) : null}
 
-                {modulosFiltrados.map(modulo => (
-                  <SortableModuleSection
+                {modulosVisibles.map(modulo => (
+                  <SeccionModulo
                     key={modulo}
                     modulo={modulo}
                     isCollapsed={collapsed.has(modulo)}
                     isDndEnabled={isDndEnabled}
                     isDraggingAny={activeDragId !== null}
-                    rolesFiltrados={rolesFiltrados}
+                    roles={rolesFiltrados}
                     matriz={matriz}
+                    acciones={accionesPorModulo[modulo]}
                     savingIds={savingIds}
                     onToggleCollapsed={toggleCollapsed}
                     onTogglePermiso={handleToggle}
@@ -653,35 +720,32 @@ export function PermisosView() {
             </table>
 
             <DragOverlay>
-              {activeDragId ? (
-                <ModuleDragPreview modulo={activeDragId} />
-              ) : null}
+              {activeDragId ? <ModuloArrastrado modulo={activeDragId} /> : null}
             </DragOverlay>
           </DndContext>
         </div>
 
         {/* Leyenda */}
-        <div className='flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 bg-gray-50/60 px-4 py-2.5 text-xs dark:border-gray-700/50 dark:bg-gray-900/30'>
-          <div className='flex items-center gap-4'>
-            <span className='flex items-center gap-1.5 font-semibold text-indigo-600 dark:text-indigo-400'>
-              <span className='flex h-4 w-4 items-center justify-center rounded bg-indigo-500'>
-                <Check className='h-2.5 w-2.5 text-white' />
+        <div className='flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/60 px-4 py-3 text-xs dark:border-slate-700/60 dark:bg-slate-900/30'>
+          <div className='flex flex-wrap items-center gap-4'>
+            <span className='flex items-center gap-1.5 font-medium text-slate-600 dark:text-slate-300'>
+              <span className='flex h-5 w-5 items-center justify-center rounded-md bg-gradient-to-br from-indigo-500 to-sky-500 text-white'>
+                <Check className='h-3 w-3' strokeWidth={3} />
               </span>
               Permitido
             </span>
-            <span className='flex items-center gap-1.5 text-gray-500 dark:text-gray-400'>
-              <span className='flex h-4 w-4 items-center justify-center rounded bg-gray-200 dark:bg-gray-700'>
-                <X className='h-2.5 w-2.5' />
-              </span>
-              Denegado
+            <span className='flex items-center gap-1.5 text-slate-500 dark:text-slate-400'>
+              <span className='h-5 w-5 rounded-md border-2 border-dashed border-slate-300 dark:border-slate-600' />
+              Sin permiso
             </span>
-            <span className='flex items-center gap-1.5 text-gray-400 dark:text-gray-500'>
-              <Minus className='h-3.5 w-3.5' />
+            <span className='flex items-center gap-1.5 text-slate-400 dark:text-slate-500'>
+              <Minus className='h-4 w-4' />
               No aplica
             </span>
           </div>
-          <span className='italic text-gray-400 dark:text-gray-500'>
-            Administrador siempre tiene acceso total (no editable)
+          <span className='flex items-center gap-1 text-slate-400 dark:text-slate-500'>
+            <Lock className='h-3 w-3' />
+            El Administrador siempre tiene acceso total
           </span>
         </div>
       </div>

@@ -126,6 +126,12 @@ export function usePermisosAdmin() {
     })
   }, [])
 
+  const colapsarTodos = useCallback(
+    (modulosAColapsar: string[]) => setCollapsed(new Set(modulosAColapsar)),
+    []
+  )
+  const expandirTodos = useCallback(() => setCollapsed(new Set()), [])
+
   // ── Orden personalizado con localStorage ─────────────────────────────────
   const ORDEN_KEY = 'permisos-modulos-orden'
 
@@ -345,6 +351,8 @@ export function usePermisosAdmin() {
     // Accordion
     collapsed,
     toggleCollapsed,
+    colapsarTodos,
+    expandirTodos,
 
     // Orden DnD
     tieneOrdenPersonalizado,

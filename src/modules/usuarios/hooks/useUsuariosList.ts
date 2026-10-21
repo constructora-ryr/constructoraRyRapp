@@ -3,109 +3,107 @@
  * HOOK: useUsuariosList
  * ============================================
  *
- * Lógica de UI para la lista de usuarios:
- * filtros, búsqueda, modales, selección activa.
- * Consume useUsuariosListQuery — NO hace fetch directo.
+ * Lógica de UI para la lista de usuarios: búsqueda, filtro por estado
+ * (tarjetas) y por rol. Trae la lista completa una vez (son pocos usuarios)
+ * y filtra en memoria. Consume useUsuariosListQuery — NO hace fetch directo.
  */
 
 'use client'
 
 import { useCallback, useMemo, useState } from 'react'
 
-import type {
-  EstadoUsuario,
-  FiltrosUsuarios,
-  Rol,
-  UsuarioCompleto,
-} from '../types'
-
 import {
-  useUsuariosEstadisticasQuery,
-  useUsuariosListQuery,
-} from './useUsuariosQuery'
+  estadoVisibleUsuario,
+  type EstadoUsuarioVisible,
+} from '../config/usuarios-visual'
+import type { Rol } from '../types'
 
-// ============================================
-// TIPOS INTERNOS
-// ============================================
+import { useUsuariosListQuery } from './useUsuariosQuery'
 
-type ModalState =
-  | { tipo: 'cerrado' }
-  | { tipo: 'crear' }
-  | { tipo: 'editar'; usuario: UsuarioCompleto }
-  | { tipo: 'cambiarEstado'; usuario: UsuarioCompleto }
-  | { tipo: 'cambiarRol'; usuario: UsuarioCompleto }
-
-// ============================================
-// HOOK
-// ============================================
+export type EstadoUsuarioFiltro = EstadoUsuarioVisible | 'Todos'
 
 export function useUsuariosList() {
   // ── Filtros ──────────────────────────────────────────────────────────
   const [busqueda, setBusqueda] = useState('')
   const [rolFiltro, setRolFiltro] = useState<Rol | ''>('')
-  const [estadoFiltro, setEstadoFiltro] = useState<EstadoUsuario | ''>('')
+  const [estadoFiltro, setEstadoFiltro] = useState<EstadoUsuarioFiltro>('Todos')
 
-  // Filtros para React Query (solo valores con dato)
-  const filtrosQuery = useMemo<FiltrosUsuarios>(
-    () => ({
-      busqueda: busqueda.trim() || undefined,
-      rol: rolFiltro || undefined,
-      estado: estadoFiltro || undefined,
-    }),
-    [busqueda, rolFiltro, estadoFiltro]
-  )
-
-  // ── Queries ───────────────────────────────────────────────────────────
+  // ── Query (sin filtros: la lista es corta) ─────────────────────────────
   const {
-    data: usuarios = [],
+    data: todos = [],
     isLoading: cargandoUsuarios,
     error: errorUsuarios,
-  } = useUsuariosListQuery(filtrosQuery)
+  } = useUsuariosListQuery()
 
-  const { data: estadisticas, isLoading: cargandoEstadisticas } =
-    useUsuariosEstadisticasQuery()
+  // Búsqueda + rol: base de los conteos de las tarjetas
+  const usuariosSinEstado = useMemo(() => {
+    const termino = busqueda.toLowerCase().trim()
+    return todos.filter(u => {
+      if (rolFiltro && u.rol !== rolFiltro) return false
+      if (!termino) return true
+      return (
+        `${u.nombres} ${u.apellidos}`.toLowerCase().includes(termino) ||
+        u.email.toLowerCase().includes(termino) ||
+        (u.telefono ?? '').includes(termino)
+      )
+    })
+  }, [todos, busqueda, rolFiltro])
 
-  // ── Estado de modales ─────────────────────────────────────────────────
-  const [modal, setModal] = useState<ModalState>({ tipo: 'cerrado' })
-
-  // ── Acciones de modales ───────────────────────────────────────────────
-  const abrirCrear = useCallback(() => setModal({ tipo: 'crear' }), [])
-
-  const abrirEditar = useCallback(
-    (usuario: UsuarioCompleto) => setModal({ tipo: 'editar', usuario }),
-    []
+  const usuarios = useMemo(
+    () =>
+      estadoFiltro === 'Todos'
+        ? usuariosSinEstado
+        : usuariosSinEstado.filter(
+            u => estadoVisibleUsuario(u) === estadoFiltro
+          ),
+    [usuariosSinEstado, estadoFiltro]
   )
 
-  const abrirCambiarEstado = useCallback(
-    (usuario: UsuarioCompleto) => setModal({ tipo: 'cambiarEstado', usuario }),
-    []
+  const conteos = useMemo(() => {
+    const c: Record<EstadoUsuarioFiltro, number> = {
+      Todos: usuariosSinEstado.length,
+      Activo: 0,
+      Pendiente: 0,
+      Inactivo: 0,
+      Bloqueado: 0,
+    }
+    usuariosSinEstado.forEach(u => {
+      c[estadoVisibleUsuario(u)]++
+    })
+    return c
+  }, [usuariosSinEstado])
+
+  // Encabezado (sin filtros): quién puede entrar y quién entró hoy
+  const conAcceso = useMemo(
+    () => todos.filter(u => estadoVisibleUsuario(u) === 'Activo').length,
+    [todos]
   )
+  const activosHoy = useMemo(() => {
+    const hoy = new Date().toDateString()
+    return todos.filter(
+      u => u.ultimo_acceso && new Date(u.ultimo_acceso).toDateString() === hoy
+    ).length
+  }, [todos])
 
-  const abrirCambiarRol = useCallback(
-    (usuario: UsuarioCompleto) => setModal({ tipo: 'cambiarRol', usuario }),
-    []
-  )
-
-  const cerrarModal = useCallback(() => setModal({ tipo: 'cerrado' }), [])
-
-  // ── Limpiar filtros ───────────────────────────────────────────────────
   const limpiarFiltros = useCallback(() => {
     setBusqueda('')
     setRolFiltro('')
-    setEstadoFiltro('')
+    setEstadoFiltro('Todos')
   }, [])
 
   const hayFiltrosActivos =
-    busqueda !== '' || rolFiltro !== '' || estadoFiltro !== ''
+    busqueda.trim() !== '' || rolFiltro !== '' || estadoFiltro !== 'Todos'
 
   return {
     // Datos
     usuarios,
-    estadisticas,
+    totalUsuarios: todos.length,
+    conteos,
+    conAcceso,
+    activosHoy,
 
     // Estados de carga
     cargandoUsuarios,
-    cargandoEstadisticas,
     errorUsuarios,
 
     // Filtros
@@ -117,13 +115,5 @@ export function useUsuariosList() {
     setEstadoFiltro,
     hayFiltrosActivos,
     limpiarFiltros,
-
-    // Modales
-    modal,
-    abrirCrear,
-    abrirEditar,
-    abrirCambiarEstado,
-    abrirCambiarRol,
-    cerrarModal,
   }
 }

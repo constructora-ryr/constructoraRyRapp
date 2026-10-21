@@ -3,27 +3,77 @@
  * ✅ Página propia (REGLA #-11)
  * ✅ Datos precargados desde useEditarUsuario
  * ✅ Email en solo lectura (no editable)
+ * ✅ Rol en tarjetas, estado segmentado y vista previa en vivo
+ * ✅ Uno mismo no puede cambiarse el rol ni el estado (evita quedarse sin acceso)
  */
 
 'use client'
 
 import { motion } from 'framer-motion'
-import { AlertCircle, ArrowLeft, Loader2, Save, UserCog } from 'lucide-react'
+import {
+  AlertCircle,
+  CalendarPlus,
+  Clock,
+  Info,
+  Loader2,
+  LogIn,
+  Save,
+  ShieldCheck,
+  UserCog,
+  UserRound,
+} from 'lucide-react'
 
-import { FormSelect } from '@/shared/components/ui/form-select'
+import { useAuth } from '@/contexts/auth-context'
+import { formatDateCompact, formatRelativeDate } from '@/lib/utils/date.utils'
+import { ListPageHeader } from '@/shared/components/list-page'
 
 import { useEditarUsuario } from '../hooks/useEditarUsuario'
-import { usuariosPageStyles as styles } from '../styles/usuarios-page.styles'
+import { getNombreCompleto, type EstadoUsuario, type Rol } from '../types'
+
 import {
-  ESTADOS_USUARIO_UI,
-  ROLES_UI,
-  getIniciales,
-  type EstadoUsuario,
-  type Rol,
-} from '../types'
+  CampoTexto,
+  EstadoSelector,
+  FormSection,
+  formStyles as s,
+  RolSelector,
+  UsuarioPreview,
+} from './UsuarioFormUI'
 
 interface EditarUsuarioViewProps {
   id: string
+}
+
+function DatoCuenta({
+  icon: Icon,
+  label,
+  valor,
+  detalle,
+}: {
+  icon: React.ComponentType<{ className?: string }>
+  label: string
+  valor: string
+  detalle?: string
+}) {
+  return (
+    <div className='flex items-start gap-3 py-2.5'>
+      <span className='flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 ring-1 ring-inset ring-indigo-600/20 dark:bg-indigo-500/10 dark:text-indigo-300 dark:ring-indigo-400/20'>
+        <Icon className='h-4 w-4' />
+      </span>
+      <div className='min-w-0'>
+        <p className='text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500'>
+          {label}
+        </p>
+        <p className='text-sm font-semibold text-slate-900 dark:text-white'>
+          {valor}
+        </p>
+        {detalle && (
+          <p className='truncate text-xs text-slate-500 dark:text-slate-400'>
+            {detalle}
+          </p>
+        )}
+      </div>
+    </div>
+  )
 }
 
 export function EditarUsuarioView({ id }: EditarUsuarioViewProps) {
@@ -38,232 +88,222 @@ export function EditarUsuarioView({ id }: EditarUsuarioViewProps) {
     handleSubmit,
     handleVolver,
   } = useEditarUsuario(id)
+  const { user: currentUser } = useAuth()
 
-  const s = styles.formulario
+  const migas = [
+    { label: 'Dashboard', href: '/' },
+    { label: 'Usuarios', href: '/usuarios' },
+    { label: usuario ? getNombreCompleto(usuario) : 'Editar' },
+  ]
 
-  // ── Loading ───────────────────────────────────────────────────────────────
+  // ── Loading ─────────────────────────────────────────────────────────────
   if (cargandoUsuario) {
     return (
       <div className={s.page}>
         <div className={s.content}>
-          <div className='flex items-center justify-center py-20'>
-            <div className='flex flex-col items-center gap-3'>
-              <div className='border-3 h-10 w-10 animate-spin rounded-full border-indigo-500 border-t-transparent' />
-              <p className='text-sm text-gray-500 dark:text-gray-400'>
-                Cargando usuario...
-              </p>
-            </div>
+          <div className='h-28 animate-pulse rounded-2xl bg-gradient-to-r from-indigo-200 to-sky-200 dark:from-indigo-900/40 dark:to-sky-900/40' />
+          <div className={s.layout}>
+            <div className='h-96 animate-pulse rounded-2xl bg-white dark:bg-slate-800/60' />
+            <div className='h-72 animate-pulse rounded-2xl bg-white dark:bg-slate-800/60' />
           </div>
         </div>
       </div>
     )
   }
 
-  // ── Error de carga o usuario no encontrado ────────────────────────────────
+  // ── Error de carga o usuario no encontrado ──────────────────────────────
   if (errorCarga || !usuario) {
     return (
       <div className={s.page}>
         <div className={s.content}>
-          <nav className={s.nav}>
-            <button onClick={handleVolver} className={s.backButton}>
-              <ArrowLeft className={s.backIcon} />
-              Volver a Usuarios
-            </button>
-          </nav>
+          <ListPageHeader
+            icon={UserCog}
+            heroGradient='from-indigo-700 via-indigo-600 to-sky-500'
+            title='Editar usuario'
+            breadcrumbs={migas}
+          />
           <div className={`${s.card} py-12 text-center`}>
-            <AlertCircle className='mx-auto mb-3 h-10 w-10 text-red-400' />
-            <p className='text-sm font-semibold text-gray-900 dark:text-white'>
+            <AlertCircle className='mx-auto mb-3 h-10 w-10 text-rose-400' />
+            <p className='text-sm font-semibold text-slate-900 dark:text-white'>
               Usuario no encontrado
             </p>
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-              El usuario solicitado no existe o no tienes permisos para
-              editarlo.
+            <p className='mt-1 text-xs text-slate-500 dark:text-slate-400'>
+              El usuario no existe o no tienes permisos para editarlo.
             </p>
+            <button
+              type='button'
+              onClick={handleVolver}
+              className={`${s.cancel} mt-5`}
+            >
+              Volver a Usuarios
+            </button>
           </div>
         </div>
       </div>
     )
   }
 
-  const iniciales = getIniciales(usuario)
+  const esYo = currentUser?.id === usuario.id
+  const ultimoAcceso = usuario.ultimo_acceso ?? usuario.ultimo_login
+  const creadoPor =
+    'creado_por_nombre' in usuario
+      ? (usuario as { creado_por_nombre?: string | null }).creado_por_nombre
+      : null
 
-  // ── Formulario ────────────────────────────────────────────────────────────
+  // ── Formulario ──────────────────────────────────────────────────────────
   return (
     <div className={s.page}>
       <div className={s.content}>
-        {/* Breadcrumb nav */}
-        <nav className={s.nav}>
-          <button onClick={handleVolver} className={s.backButton}>
-            <ArrowLeft className={s.backIcon} />
-            Volver a Usuarios
-          </button>
-        </nav>
+        <ListPageHeader
+          icon={UserCog}
+          heroGradient='from-indigo-700 via-indigo-600 to-sky-500'
+          title='Editar usuario'
+          subtitle={usuario.email}
+          breadcrumbs={migas}
+        />
 
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className={s.header}
-        >
-          <div className={s.headerPattern} />
-          <div className={s.headerContent}>
-            <div className={s.headerIcon}>
-              <UserCog className={s.headerIconInner} />
-            </div>
-            <div>
-              <h1 className={s.headerTitle}>Editar Usuario</h1>
-              <p className={s.headerSubtitle}>
-                Modifica los datos y permisos del usuario
-              </p>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Card formulario */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.1 }}
-          className={s.card}
-        >
-          <form onSubmit={handleSubmit} noValidate className={s.section}>
-            {/* Info del usuario (solo lectura) */}
-            <div className={s.infoCard}>
-              <div className={s.infoIcon}>{iniciales}</div>
-              <div>
-                <p className={s.infoLabel}>Cuenta de acceso</p>
-                <p className={s.infoValue}>{usuario.email}</p>
-              </div>
-            </div>
-
-            {/* Sección: Datos personales */}
-            <p className={s.sectionTitle}>Datos personales</p>
-
-            <div className={s.grid2}>
-              <div className={s.field}>
-                <label htmlFor='nombres' className={s.labelRequired}>
-                  Nombres
-                </label>
-                <input
+        <form onSubmit={handleSubmit} noValidate className={s.layout}>
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`${s.card} space-y-7`}
+          >
+            <FormSection
+              icon={UserRound}
+              title='Datos personales'
+              description='El correo de acceso no se puede cambiar'
+            >
+              <div className='grid gap-4 sm:grid-cols-2'>
+                <CampoTexto
                   id='nombres'
-                  type='text'
+                  label='Nombres'
+                  requerido
                   value={form.nombres}
                   onChange={e => handleChange('nombres', e.target.value)}
-                  className={errores.nombres ? s.inputError : s.input}
+                  error={errores.nombres}
                 />
-                {errores.nombres ? (
-                  <p className={s.errorText}>{errores.nombres}</p>
-                ) : null}
-              </div>
-
-              <div className={s.field}>
-                <label htmlFor='apellidos' className={s.labelRequired}>
-                  Apellidos
-                </label>
-                <input
+                <CampoTexto
                   id='apellidos'
-                  type='text'
+                  label='Apellidos'
+                  requerido
                   value={form.apellidos}
                   onChange={e => handleChange('apellidos', e.target.value)}
-                  className={errores.apellidos ? s.inputError : s.input}
+                  error={errores.apellidos}
                 />
-                {errores.apellidos ? (
-                  <p className={s.errorText}>{errores.apellidos}</p>
-                ) : null}
               </div>
-            </div>
-
-            <div className={s.grid1}>
-              <div className={s.field}>
-                <label htmlFor='telefono' className={s.label}>
-                  Teléfono
-                </label>
-                <input
+              <div className='grid gap-4 sm:grid-cols-2'>
+                <CampoTexto
+                  id='email'
+                  label='Correo electrónico'
+                  value={usuario.email}
+                  readOnly
+                  disabled
+                />
+                <CampoTexto
                   id='telefono'
+                  label='Teléfono'
                   type='tel'
+                  placeholder='+57 300 123 4567'
                   value={form.telefono}
                   onChange={e => handleChange('telefono', e.target.value)}
-                  className={s.input}
                 />
               </div>
-            </div>
+            </FormSection>
 
-            {/* Sección: Rol y estado */}
-            <p className={s.sectionTitle}>Rol y estado</p>
+            <FormSection
+              icon={ShieldCheck}
+              title='Rol y acceso'
+              description='Qué puede hacer y si puede entrar al sistema'
+              gradient='from-violet-500 to-fuchsia-500'
+            >
+              {esYo && (
+                <div className='flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-700/50 dark:bg-amber-950/30 dark:text-amber-300'>
+                  <Info className='mt-px h-4 w-4 shrink-0' />
+                  Estás editando tu propia cuenta: tu rol y estado solo los
+                  puede cambiar otro administrador.
+                </div>
+              )}
+              <RolSelector
+                value={form.rol}
+                onChange={(rol: Rol) => handleChange('rol', rol)}
+                disabled={esYo}
+              />
+              <EstadoSelector
+                value={form.estado}
+                onChange={(estado: EstadoUsuario) =>
+                  handleChange('estado', estado)
+                }
+                disabled={esYo}
+              />
+            </FormSection>
 
-            <div className={s.grid2}>
-              <div className={s.field}>
-                <label htmlFor='rol' className={s.labelRequired}>
-                  Rol
-                </label>
-                <FormSelect
-                  id='rol'
-                  value={form.rol}
-                  onChange={e => handleChange('rol', e.target.value as Rol)}
-                  className={s.select}
-                >
-                  {ROLES_UI.map(rol => (
-                    <option key={rol.value} value={rol.value}>
-                      {rol.label}
-                    </option>
-                  ))}
-                </FormSelect>
-              </div>
-
-              <div className={s.field}>
-                <label htmlFor='estado' className={s.labelRequired}>
-                  Estado
-                </label>
-                <FormSelect
-                  id='estado'
-                  value={form.estado}
-                  onChange={e =>
-                    handleChange('estado', e.target.value as EstadoUsuario)
-                  }
-                  className={s.select}
-                >
-                  {ESTADOS_USUARIO_UI.map(estado => (
-                    <option key={estado.value} value={estado.value}>
-                      {estado.label}
-                    </option>
-                  ))}
-                </FormSelect>
-              </div>
-            </div>
-
-            {/* Footer */}
             <div className={s.footer}>
               <button
                 type='button'
                 onClick={handleVolver}
-                className={s.cancelButton}
+                className={s.cancel}
                 disabled={cargando}
               >
                 Cancelar
               </button>
-              <motion.button
-                type='submit'
-                whileHover={{ scale: cargando ? 1 : 1.02 }}
-                whileTap={{ scale: cargando ? 1 : 0.98 }}
-                disabled={cargando}
-                className={s.submitButton}
-              >
+              <button type='submit' disabled={cargando} className={s.submit}>
                 {cargando ? (
                   <>
-                    <Loader2 className={`${s.submitIcon} animate-spin`} />
-                    Guardando...
+                    <Loader2 className='h-4 w-4 animate-spin' />
+                    Guardando…
                   </>
                 ) : (
                   <>
-                    <Save className={s.submitIcon} />
-                    Guardar Cambios
+                    <Save className='h-4 w-4' />
+                    Guardar cambios
                   </>
                 )}
-              </motion.button>
+              </button>
             </div>
-          </form>
-        </motion.div>
+          </motion.div>
+
+          <UsuarioPreview
+            nombres={form.nombres}
+            apellidos={form.apellidos}
+            email={usuario.email}
+            telefono={form.telefono}
+            rol={form.rol}
+            estado={form.estado}
+          >
+            <div className='rounded-2xl border border-slate-200/80 bg-white px-4 py-2 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/60'>
+              <DatoCuenta
+                icon={Clock}
+                label='Último acceso'
+                valor={
+                  ultimoAcceso ? formatRelativeDate(ultimoAcceso) : 'Nunca'
+                }
+                detalle={
+                  ultimoAcceso ? formatDateCompact(ultimoAcceso) : undefined
+                }
+              />
+              <div className='border-t border-slate-100 dark:border-slate-700/60' />
+              <DatoCuenta
+                icon={LogIn}
+                label='Primer ingreso'
+                valor={
+                  usuario.ultimo_login ? 'Ya ingresó' : 'Aún no ha ingresado'
+                }
+                detalle={
+                  usuario.debe_cambiar_password
+                    ? 'Debe cambiar su contraseña'
+                    : undefined
+                }
+              />
+              <div className='border-t border-slate-100 dark:border-slate-700/60' />
+              <DatoCuenta
+                icon={CalendarPlus}
+                label='Cuenta creada'
+                valor={formatDateCompact(usuario.fecha_creacion)}
+                detalle={creadoPor ? `por ${creadoPor}` : undefined}
+              />
+            </div>
+          </UsuarioPreview>
+        </form>
       </div>
     </div>
   )
