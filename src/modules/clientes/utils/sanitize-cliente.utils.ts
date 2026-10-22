@@ -67,6 +67,20 @@ export function sanitizeCrearClienteDTO(
 }
 
 /**
+ * Al editar, null BORRA el dato en la BD. Por eso:
+ * - vacío a propósito → null (borrar)
+ * - valor válido → el valor
+ * - valor inválido → undefined (no se envía: se conserva lo que había)
+ */
+function paraActualizar<T>(
+  valor: string | null,
+  sanear: (v: string) => T | null
+): T | null | undefined {
+  if (valor === null || valor.trim() === '') return null
+  return sanear(valor) ?? undefined
+}
+
+/**
  * Sanitizar datos de actualización de cliente
  * Similar a crear pero todos los campos son opcionales
  */
@@ -103,10 +117,14 @@ export function sanitizeActualizarClienteDTO(
 
   // ⚠️ CRÍTICO: Validar que el campo no sea undefined antes de sanitizar
   if (datos.fecha_nacimiento !== undefined)
-    sanitized.fecha_nacimiento = sanitizeDate(datos.fecha_nacimiento)
+    sanitized.fecha_nacimiento = paraActualizar(
+      datos.fecha_nacimiento,
+      sanitizeDate
+    )
   if (datos.estado_civil !== undefined)
-    sanitized.estado_civil =
-      sanitizeEnum(datos.estado_civil, VALID_ESTADOS_CIVILES) ?? null
+    sanitized.estado_civil = paraActualizar(datos.estado_civil, v =>
+      sanitizeEnum(v, VALID_ESTADOS_CIVILES)
+    )
 
   // Estado (si se está actualizando)
   if (datos.estado !== undefined) sanitized.estado = datos.estado
