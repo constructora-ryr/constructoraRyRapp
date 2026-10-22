@@ -400,6 +400,7 @@ export default function ClienteDetalleClient({
               <HistorialTab
                 clienteId={clienteUUID}
                 clienteNombre={`${cliente.nombres} ${cliente.apellidos}`}
+                onIrATab={cambiarTab}
               />
             </div>
           )}

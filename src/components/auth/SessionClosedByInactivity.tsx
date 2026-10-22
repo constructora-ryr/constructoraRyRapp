@@ -41,7 +41,7 @@ export function SessionClosedByInactivity() {
       {/* Fondo con imagen de construcción (FULL SCREEN - igual que login) */}
       <div className='fixed inset-0 z-0 h-full w-full'>
         <Image
-          src='/images/fondo-login.png'
+          src='/images/fondo-login.webp'
           alt='Fondo Constructora RyR'
           fill
           sizes='100vw'

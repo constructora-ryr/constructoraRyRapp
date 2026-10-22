@@ -1,4 +1,6 @@
-'use client'
+/**
+ * Nota manual: contenido con formato y, si tiene, el documento vinculado.
+ */
 
 import { useState } from 'react'
 
@@ -11,6 +13,8 @@ import type { DocumentoVinculado } from '@/modules/clientes/types/notas-historia
 import { RichTextContent } from '@/shared/components/rich-text/RichTextContent'
 import { DocumentosService } from '@/shared/documentos/services/documentos.service'
 
+import { Aviso, Seccion } from './piezas'
+
 function DocumentoVinculadoCard({
   documento,
 }: {
@@ -18,14 +22,14 @@ function DocumentoVinculadoCard({
 }) {
   const [abriendo, setAbriendo] = useState(false)
 
-  const handleAbrir = async () => {
+  const abrir = async () => {
     setAbriendo(true)
     try {
       const url = await DocumentosService.obtenerUrlDescarga(
         documento.url_storage,
         'cliente'
       )
-      window.open(url, '_blank')
+      window.open(url, '_blank', 'noopener')
     } catch (error) {
       logger.error('Error al abrir documento vinculado:', error)
       toast.error('No se pudo abrir el documento')
@@ -37,26 +41,19 @@ function DocumentoVinculadoCard({
   return (
     <button
       type='button'
-      onClick={handleAbrir}
+      onClick={abrir}
       disabled={abriendo}
-      className='group flex w-full items-center gap-3 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3 text-left transition-colors hover:border-indigo-400 hover:bg-indigo-100 disabled:opacity-60 dark:border-indigo-800 dark:bg-indigo-950/30 dark:hover:border-indigo-600 dark:hover:bg-indigo-950/50'
+      className='flex w-full items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-left transition-colors hover:bg-blue-100 disabled:opacity-60 dark:border-blue-500/30 dark:bg-blue-500/10 dark:hover:bg-blue-500/20'
     >
-      <div className='flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-indigo-100 dark:bg-indigo-900/50'>
-        {abriendo ? (
-          <Loader2 className='h-4 w-4 animate-spin text-indigo-600 dark:text-indigo-400' />
-        ) : (
-          <FileText className='h-4 w-4 text-indigo-600 dark:text-indigo-400' />
-        )}
-      </div>
-      <div className='min-w-0 flex-1'>
-        <p className='truncate text-sm font-medium text-indigo-900 dark:text-indigo-100'>
-          {documento.titulo}
-        </p>
-        <p className='text-xs text-indigo-500 dark:text-indigo-400'>
-          {abriendo ? 'Abriendo...' : 'Ver documento'}
-        </p>
-      </div>
-      <ExternalLink className='h-4 w-4 shrink-0 text-indigo-400 transition-colors group-hover:text-indigo-600 dark:text-indigo-600 dark:group-hover:text-indigo-400' />
+      {abriendo ? (
+        <Loader2 className='h-4 w-4 flex-shrink-0 animate-spin text-blue-600' />
+      ) : (
+        <FileText className='h-4 w-4 flex-shrink-0 text-blue-600 dark:text-blue-300' />
+      )}
+      <span className='min-w-0 flex-1 truncate text-sm font-semibold text-blue-800 dark:text-blue-200'>
+        {documento.titulo}
+      </span>
+      <ExternalLink className='h-3.5 w-3.5 flex-shrink-0 text-blue-500' />
     </button>
   )
 }
@@ -66,32 +63,32 @@ export function NotaManualRenderer({
 }: {
   evento: EventoHistorialHumanizado
 }) {
-  const esImportante = evento.metadata?.esImportante === true
-  const contenido = evento.descripcion ?? ''
-  const documentoVinculado = evento.metadata?.documentoVinculado as
+  const documento = evento.metadata?.documentoVinculado as
     | DocumentoVinculado
     | null
     | undefined
 
   return (
-    <div className='space-y-3'>
-      {esImportante && (
-        <div className='flex items-center gap-1.5 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 dark:border-yellow-800 dark:bg-yellow-950/30'>
-          <Star className='h-3.5 w-3.5 text-yellow-600 dark:text-yellow-400' />
-          <span className='text-xs font-semibold text-yellow-700 dark:text-yellow-300'>
-            Nota importante
-          </span>
-        </div>
-      )}
-      <div className='rounded-lg border border-gray-100 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50'>
+    <div className='space-y-4'>
+      {evento.metadata?.esImportante === true ? (
+        <Aviso
+          icon={Star}
+          tono='aviso'
+          etiqueta='Nota importante'
+          texto='Marcada para destacarse en el historial'
+        />
+      ) : null}
+      <div className='rounded-xl border border-slate-200/80 bg-slate-50 p-4 dark:border-slate-700/60 dark:bg-slate-800/60'>
         <RichTextContent
-          html={contenido}
-          className='text-gray-700 dark:text-gray-300'
+          html={evento.descripcion ?? ''}
+          className='text-slate-700 dark:text-slate-200'
         />
       </div>
-      {documentoVinculado && (
-        <DocumentoVinculadoCard documento={documentoVinculado} />
-      )}
+      {documento ? (
+        <Seccion titulo='Documento vinculado' sinCaja>
+          <DocumentoVinculadoCard documento={documento} />
+        </Seccion>
+      ) : null}
     </div>
   )
 }

@@ -8,10 +8,12 @@ export function ConditionalLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
 
   if (isPublicUIRoute(pathname)) {
-    // Layout para rutas públicas (login, etc) - CENTRADO
+    // Rutas públicas (login, restablecer, bienvenida): ancho completo y con
+    // scroll propio (el contenedor de la app es h-screen overflow-hidden).
+    // Cada página se centra a sí misma.
     return (
       <div
-        className='flex flex-1 items-center justify-center'
+        className='custom-scrollbar flex flex-1 flex-col overflow-y-auto'
         suppressHydrationWarning
       >
         {children}

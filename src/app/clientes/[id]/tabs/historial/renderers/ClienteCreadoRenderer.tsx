@@ -1,9 +1,6 @@
 /**
- * ClienteCreadoRenderer
- * Vista estructurada del momento en que el cliente fue registrado
+ * Cliente creado: los datos con que se registró, por secciones.
  */
-
-'use client'
 
 import {
   Briefcase,
@@ -21,175 +18,92 @@ import {
 
 import type { EventoHistorialHumanizado } from '@/modules/clientes/types/historial.types'
 
-import { formatearValor } from './formatearValor'
+import { Banner, Dato, Datos } from './piezas'
 
-interface Props {
+export function ClienteCreadoRenderer({
+  evento,
+}: {
   evento: EventoHistorialHumanizado
-}
-
-interface CampoProps {
-  icono: React.ReactNode
-  label: string
-  valor: unknown
-  negrita?: boolean
-}
-
-function Campo({ icono, label, valor, negrita = false }: CampoProps) {
-  const texto = formatearValor(valor)
-  if (texto === '—') return null
-  return (
-    <div className='flex items-start gap-2.5 border-b border-gray-100 py-2 last:border-0 dark:border-gray-800'>
-      <div className='mt-0.5 shrink-0 text-gray-400 dark:text-gray-500'>
-        {icono}
-      </div>
-      <div className='min-w-0 flex-1'>
-        <p className='text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500'>
-          {label}
-        </p>
-        <p
-          className={`mt-0.5 text-sm text-gray-900 dark:text-white ${negrita ? 'font-bold' : 'font-medium'}`}
-        >
-          {texto}
-        </p>
-      </div>
-    </div>
-  )
-}
-
-export function ClienteCreadoRenderer({ evento }: Props) {
+}) {
   const d = evento.detalles ?? []
   const get = (campo: string) => d.find(x => x.campo === campo)?.valorNuevo
+  const tieneEconomico =
+    get('ocupacion') ?? get('empresa') ?? get('ingresos_mensuales')
+
+  const nombre = [get('nombres'), get('apellidos')].filter(Boolean).join(' ')
+  const documento = [get('tipo_documento'), get('numero_documento')]
+    .filter(Boolean)
+    .join(' ')
 
   return (
-    <div className='space-y-0 divide-y-0'>
-      {/* Sección: Identidad */}
-      <section className='mb-3'>
-        <p className='mb-1 text-[10px] font-bold uppercase tracking-widest text-cyan-600 dark:text-cyan-400'>
-          Identidad
-        </p>
-        <div className='overflow-hidden rounded-xl border border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-900/50'>
-          <Campo
-            icono={<User className='h-4 w-4' />}
-            label='Nombres'
-            valor={get('nombres')}
-            negrita
-          />
-          <Campo
-            icono={<User className='h-4 w-4' />}
-            label='Apellidos'
-            valor={get('apellidos')}
-            negrita
-          />
-          <Campo
-            icono={<CreditCard className='h-4 w-4' />}
-            label='Tipo de documento'
-            valor={get('tipo_documento')}
-          />
-          <Campo
-            icono={<CreditCard className='h-4 w-4' />}
-            label='Número de documento'
-            valor={get('numero_documento')}
-          />
-          <Campo
-            icono={<Calendar className='h-4 w-4' />}
-            label='Fecha de nacimiento'
-            valor={get('fecha_nacimiento')}
-          />
-          <Campo
-            icono={<Heart className='h-4 w-4' />}
-            label='Estado civil'
-            valor={get('estado_civil')}
-          />
-        </div>
-      </section>
+    <div className='space-y-4'>
+      <Banner
+        compacto
+        tono='info'
+        etiqueta='Cliente registrado'
+        valor={nombre || 'Cliente'}
+        nota={documento || undefined}
+      />
 
-      {/* Sección: Contacto */}
-      <section className='mb-3'>
-        <p className='mb-1 text-[10px] font-bold uppercase tracking-widest text-cyan-600 dark:text-cyan-400'>
-          Contacto
-        </p>
-        <div className='overflow-hidden rounded-xl border border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-900/50'>
-          <Campo
-            icono={<Phone className='h-4 w-4' />}
-            label='Teléfono'
-            valor={get('telefono')}
-          />
-          <Campo
-            icono={<Phone className='h-4 w-4' />}
-            label='Teléfono alternativo'
-            valor={get('telefono_alternativo')}
-          />
-          <Campo
-            icono={<Mail className='h-4 w-4' />}
-            label='Correo electrónico'
-            valor={get('email')}
-          />
-        </div>
-      </section>
+      <Datos titulo='Identidad' tono='info'>
+        <Dato icon={User} label='Nombres' valor={get('nombres')} destacado />
+        <Dato
+          icon={User}
+          label='Apellidos'
+          valor={get('apellidos')}
+          destacado
+        />
+        <Dato
+          icon={CreditCard}
+          label='Tipo de documento'
+          valor={get('tipo_documento')}
+        />
+        <Dato
+          icon={CreditCard}
+          label='Número de documento'
+          valor={get('numero_documento')}
+          copiable
+        />
+        <Dato
+          icon={Calendar}
+          label='Fecha de nacimiento'
+          valor={get('fecha_nacimiento')}
+        />
+        <Dato icon={Heart} label='Estado civil' valor={get('estado_civil')} />
+      </Datos>
 
-      {/* Sección: Ubicación */}
-      <section className='mb-3'>
-        <p className='mb-1 text-[10px] font-bold uppercase tracking-widest text-cyan-600 dark:text-cyan-400'>
-          Ubicación
-        </p>
-        <div className='overflow-hidden rounded-xl border border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-900/50'>
-          <Campo
-            icono={<Home className='h-4 w-4' />}
-            label='Dirección'
-            valor={get('direccion')}
-          />
-          <Campo
-            icono={<MapPin className='h-4 w-4' />}
-            label='Ciudad'
-            valor={get('ciudad')}
-          />
-          <Campo
-            icono={<MapPin className='h-4 w-4' />}
-            label='Departamento'
-            valor={get('departamento')}
-          />
-        </div>
-      </section>
+      <Datos titulo='Contacto'>
+        <Dato icon={Phone} label='Teléfono' valor={get('telefono')} />
+        <Dato
+          icon={Phone}
+          label='Teléfono alternativo'
+          valor={get('telefono_alternativo')}
+        />
+        <Dato icon={Mail} label='Correo electrónico' valor={get('email')} />
+      </Datos>
 
-      {/* Sección: Económico */}
-      {(get('ocupacion') ?? get('empresa') ?? get('ingresos_mensuales')) ? (
-        <section className='mb-3'>
-          <p className='mb-1 text-[10px] font-bold uppercase tracking-widest text-cyan-600 dark:text-cyan-400'>
-            Información económica
-          </p>
-          <div className='overflow-hidden rounded-xl border border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-900/50'>
-            <Campo
-              icono={<Briefcase className='h-4 w-4' />}
-              label='Ocupación'
-              valor={get('ocupacion')}
-            />
-            <Campo
-              icono={<Building className='h-4 w-4' />}
-              label='Empresa'
-              valor={get('empresa')}
-            />
-            <Campo
-              icono={<Briefcase className='h-4 w-4' />}
-              label='Ingresos mensuales'
-              valor={get('ingresos_mensuales')}
-            />
-          </div>
-        </section>
+      <Datos titulo='Ubicación'>
+        <Dato icon={Home} label='Dirección' valor={get('direccion')} />
+        <Dato icon={MapPin} label='Ciudad' valor={get('ciudad')} />
+        <Dato icon={MapPin} label='Departamento' valor={get('departamento')} />
+      </Datos>
+
+      {tieneEconomico ? (
+        <Datos titulo='Información económica'>
+          <Dato icon={Briefcase} label='Ocupación' valor={get('ocupacion')} />
+          <Dato icon={Building} label='Empresa' valor={get('empresa')} />
+          <Dato
+            icon={Briefcase}
+            label='Ingresos mensuales'
+            valor={get('ingresos_mensuales')}
+            formato='moneda'
+          />
+        </Datos>
       ) : null}
 
-      {/* Estado inicial */}
-      <section>
-        <p className='mb-1 text-[10px] font-bold uppercase tracking-widest text-cyan-600 dark:text-cyan-400'>
-          Estado inicial
-        </p>
-        <div className='overflow-hidden rounded-xl border border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-900/50'>
-          <Campo
-            icono={<Smile className='h-4 w-4' />}
-            label='Estado del cliente'
-            valor={get('estado')}
-          />
-        </div>
-      </section>
+      <Datos titulo='Estado inicial'>
+        <Dato icon={Smile} label='Estado del cliente' valor={get('estado')} />
+      </Datos>
     </div>
   )
 }

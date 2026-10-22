@@ -1,17 +1,17 @@
 /**
- * Factory de renderers para el Historial de Cliente
- * Mapea TipoEventoHistorial → componente de renderer específico
+ * Qué renderer muestra el detalle de cada tipo de evento del historial.
+ * Los tipos sin renderer propio usan CambioGenericoRenderer (antes → ahora).
  */
+
+import type { ComponentType } from 'react'
 
 import type { EventoHistorialHumanizado } from '@/modules/clientes/types/historial.types'
 
 import { AbonoEditadoRenderer } from './AbonoEditadoRenderer'
 import { AbonoRegistradoRenderer } from './AbonoRegistradoRenderer'
 import { CambioGenericoRenderer } from './CambioGenericoRenderer'
-import { ClienteActualizadoRenderer } from './ClienteActualizadoRenderer'
 import { ClienteCreadoRenderer } from './ClienteCreadoRenderer'
-import { DevolucionExcedenteRenderer } from './DevolucionExcedenteRenderer'
-import { DevolucionProcesadaRenderer } from './DevolucionProcesadaRenderer'
+import { DevolucionRenderer } from './DevolucionRenderer'
 import { DocumentoRenderer } from './DocumentoRenderer'
 import { NegociacionActualizadaRenderer } from './NegociacionActualizadaRenderer'
 import { NegociacionCreadaRenderer } from './NegociacionCreadaRenderer'
@@ -19,64 +19,32 @@ import { NotaManualRenderer } from './NotaManualRenderer'
 import { RenunciaRenderer } from './RenunciaRenderer'
 import { TrasladoViviendaRenderer } from './TrasladoViviendaRenderer'
 
-type RendererComponent = React.ComponentType<{
-  evento: EventoHistorialHumanizado
-}>
+type Renderer = ComponentType<{ evento: EventoHistorialHumanizado }>
 
-const RENDERERS: Partial<Record<string, RendererComponent>> = {
-  // Cliente
+const RENDERERS: Partial<Record<string, Renderer>> = {
   cliente_creado: ClienteCreadoRenderer,
-  cliente_actualizado: ClienteActualizadoRenderer,
-  cliente_estado_cambiado: ClienteActualizadoRenderer,
 
-  // Negociación
   negociacion_creada: NegociacionCreadaRenderer,
-  traslado_vivienda: TrasladoViviendaRenderer,
-  negociacion_cerrada_traslado: CambioGenericoRenderer,
   negociacion_actualizada: NegociacionActualizadaRenderer,
-  negociacion_estado_cambiada: CambioGenericoRenderer,
-  negociacion_completada: CambioGenericoRenderer,
+  traslado_vivienda: TrasladoViviendaRenderer,
 
-  // Abono
   abono_registrado: AbonoRegistradoRenderer,
-  abono_editado: AbonoEditadoRenderer,
   abono_anulado: AbonoRegistradoRenderer,
+  abono_editado: AbonoEditadoRenderer,
 
-  // Renuncia
   renuncia_creada: RenunciaRenderer,
   renuncia_aprobada: RenunciaRenderer,
   renuncia_rechazada: RenunciaRenderer,
-  renuncia_devolucion_procesada: DevolucionProcesadaRenderer,
+  renuncia_devolucion_procesada: DevolucionRenderer,
+  excedente_devolucion_procesada: DevolucionRenderer,
 
-  // Devolución excedente
-  excedente_devolucion_procesada: DevolucionExcedenteRenderer,
-
-  // Documentos
   documento_subido: DocumentoRenderer,
   documento_actualizado: DocumentoRenderer,
   documento_eliminado: DocumentoRenderer,
 
-  // Interés y genérico
-  interes_registrado: CambioGenericoRenderer,
-  interes_actualizado: CambioGenericoRenderer,
-
-  // Notas manuales
   nota_manual: NotaManualRenderer,
 }
 
-export function getEventoRenderer(tipo: string): RendererComponent {
+export function getEventoRenderer(tipo: string): Renderer {
   return RENDERERS[tipo] ?? CambioGenericoRenderer
-}
-
-export {
-  AbonoRegistradoRenderer,
-  CambioGenericoRenderer,
-  ClienteActualizadoRenderer,
-  ClienteCreadoRenderer,
-  DevolucionProcesadaRenderer,
-  DocumentoRenderer,
-  NegociacionActualizadaRenderer,
-  NegociacionCreadaRenderer,
-  RenunciaRenderer,
-  TrasladoViviendaRenderer,
 }

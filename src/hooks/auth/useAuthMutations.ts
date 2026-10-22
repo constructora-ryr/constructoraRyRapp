@@ -38,7 +38,7 @@ export function useLoginMutation() {
 
   return useMutation({
     mutationFn: async ({ email, password }: LoginCredentials) => {
-      debugLog('ðŸ” Login mutation iniciado', { email })
+      debugLog('Login mutation iniciado', { email })
 
       // 1. Iniciar sesión con Supabase Auth
       const { data: authData, error: authError } =
@@ -47,7 +47,7 @@ export function useLoginMutation() {
           password,
         })
 
-      debugLog('ðŸ“¥ Respuesta de Supabase Auth', {
+      debugLog('Respuesta de Supabase Auth', {
         hasUser: !!authData?.user,
         hasSession: !!authData?.session,
       })
@@ -85,7 +85,7 @@ export function useLoginMutation() {
 
       const { data: perfilData, error: perfilError } = perfilResult
 
-      debugLog('ðŸ”¥ Perfil obtenido', {
+      debugLog('Perfil obtenido', {
         hasPerfil: !!perfilData,
         rol: perfilData?.rol,
       })
@@ -145,7 +145,7 @@ export function useLogoutMutation() {
 
   return useMutation({
     mutationFn: async () => {
-      debugLog('ðŸ” Ejecutando supabase.auth.signOut()...')
+      debugLog('Ejecutando supabase.auth.signOut()...')
       const { error } = await supabase.auth.signOut()
       if (error) {
         errorLog('logout-mutation', error)

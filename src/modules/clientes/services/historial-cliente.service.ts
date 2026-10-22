@@ -94,24 +94,35 @@ class HistorialClienteService {
       if (eventosFiltrados.length === 0) return []
 
       // ── PASO 3: Enriquecer con datos de usuarios (1 round-trip) ─────
-      const usuarioIds = [
-        ...new Set(
-          eventosFiltrados
-            .map(e => e.usuario_id)
-            .filter((id): id is string => Boolean(id))
-        ),
+      // Por id y, si no coincide (p.ej. base restaurada), por correo
+      const unicos = (valores: (string | null)[]) => [
+        ...new Set(valores.filter((v): v is string => Boolean(v))),
       ]
+      const usuarioIds = unicos(eventosFiltrados.map(e => e.usuario_id))
+      const correos = unicos(eventosFiltrados.map(e => e.usuario_email))
 
-      const { data: usuarios } = await supabase
-        .from('usuarios')
-        .select('id,email,nombres,apellidos,rol')
-        .in('id', usuarioIds)
+      const filtros = [
+        usuarioIds.length ? `id.in.(${usuarioIds.join(',')})` : null,
+        correos.length
+          ? `email.in.(${correos.map(c => `"${c}"`).join(',')})`
+          : null,
+      ].filter(Boolean)
 
-      const usuariosMap = new Map((usuarios ?? []).map(u => [u.id, u]))
+      const { data: usuarios } = filtros.length
+        ? await supabase
+            .from('usuarios')
+            .select('id,email,nombres,apellidos,rol')
+            .or(filtros.join(','))
+        : { data: [] }
+
+      const porId = new Map((usuarios ?? []).map(u => [u.id, u]))
+      const porCorreo = new Map((usuarios ?? []).map(u => [u.email, u]))
 
       // ── PASO 4: Mapear al tipo EventoHistorialCliente ────────────────
       return eventosFiltrados.map(evento => {
-        const usuario = usuariosMap.get(evento.usuario_id ?? '')
+        const usuario =
+          porId.get(evento.usuario_id ?? '') ??
+          porCorreo.get(evento.usuario_email ?? '')
         const nombreCompleto = usuario
           ? [usuario.nombres, usuario.apellidos].filter(Boolean).join(' ') ||
             null
@@ -147,173 +158,15 @@ class HistorialClienteService {
         }
       }) as unknown as EventoHistorialCliente[]
     } catch (error) {
-      const mensaje =
-        error instanceof Error ? error.message : 'Error desconocido'
       logger.error(
         '❌ [CLIENTES] Error obteniendo historial del cliente:',
-        mensaje,
         error
       )
-      return []
+      // Se propaga para que la pestaña muestre el error (no "sin eventos")
+      throw error
     }
   }
 
-  /**
-   * ✅ REFACTORIZADO: Obtener eventos por tipo de tabla
-   * Útil para filtros en la UI
-   *
-   * @param clienteId - ID del cliente
-   * @param tabla - Tipo de tabla ('clientes' | 'negociaciones' | 'abonos_historial' | etc)
-   * @param limit - Número máximo de eventos
-   */
-  async obtenerEventosPorTipo(
-    clienteId: string,
-    tabla: string,
-    limit = 50
-  ): Promise<EventoHistorialCliente[]> {
-    try {
-      let query = supabase
-        .from('audit_log')
-        .select(
-          'id,tabla,accion,registro_id,fecha_evento,usuario_id,usuario_email,usuario_nombres,datos_anteriores,datos_nuevos,cambios_especificos,metadata,modulo'
-        )
-        .eq('tabla', tabla)
-
-      if (tabla === 'clientes') {
-        query = query.eq('registro_id', clienteId)
-      } else {
-        query = query.contains('metadata', { cliente_id: clienteId })
-      }
-
-      const { data: eventos, error } = await query
-        .order('fecha_evento', { ascending: false })
-        .limit(limit)
-
-      if (error) throw error
-
-      // Obtener usuarios
-      const usuarioIds = [
-        ...new Set(
-          (eventos || [])
-            .map(e => e.usuario_id)
-            .filter((id): id is string => Boolean(id))
-        ),
-      ]
-      const { data: usuarios } = await supabase
-        .from('usuarios')
-        .select('id,email,nombres,rol')
-        .in('id', usuarioIds)
-
-      const usuariosMap = new Map((usuarios || []).map(u => [u.id, u]))
-
-      return (eventos || []).map(evento => {
-        const usuario = usuariosMap.get(evento.usuario_id ?? '')
-        return {
-          id: evento.id,
-          tabla: evento.tabla,
-          accion: evento.accion,
-          registro_id: evento.registro_id,
-          fecha_evento: evento.fecha_evento,
-          usuario_email: usuario?.email || 'Sistema',
-          usuario_nombres: usuario?.nombres || null,
-          usuario_rol: usuario?.rol || null,
-          datos_anteriores: evento.datos_anteriores,
-          datos_nuevos: evento.datos_nuevos,
-          cambios_especificos: evento.cambios_especificos,
-          metadata: evento.metadata,
-          modulo: evento.modulo,
-        }
-      }) as unknown as EventoHistorialCliente[]
-    } catch (error) {
-      const mensaje =
-        error instanceof Error ? error.message : 'Error desconocido'
-      logger.error(
-        '❌ [CLIENTES] Error obteniendo eventos por tipo:',
-        mensaje,
-        error
-      )
-      return []
-    }
-  }
-
-  /**
-   * Obtener estadísticas de actividad del cliente
-   *
-   * @param clienteId - ID del cliente
-   * @returns Resumen de actividad
-   */
-  async obtenerEstadisticasActividad(clienteId: string) {
-    try {
-      const eventos = await this.obtenerHistorial(clienteId, 1000) // Sin límite para stats
-
-      const stats = {
-        total_eventos: eventos.length,
-        eventos_por_tipo: {
-          clientes: eventos.filter(e => e.tabla === 'clientes').length,
-          negociaciones: eventos.filter(e => e.tabla === 'negociaciones')
-            .length,
-          abonos: eventos.filter(e => e.tabla === 'abonos_historial').length,
-          renuncias: eventos.filter(e => e.tabla === 'renuncias').length,
-          intereses: eventos.filter(e => e.tabla === 'intereses').length,
-          documentos: eventos.filter(e => e.tabla === 'documentos_cliente')
-            .length,
-        },
-        eventos_por_accion: {
-          creaciones: eventos.filter(e => e.accion === 'CREATE').length,
-          actualizaciones: eventos.filter(e => e.accion === 'UPDATE').length,
-          eliminaciones: eventos.filter(e => e.accion === 'DELETE').length,
-        },
-        primer_evento: eventos[eventos.length - 1]?.fecha_evento || null,
-        ultimo_evento: eventos[0]?.fecha_evento || null,
-      }
-
-      return stats
-    } catch (error) {
-      const mensaje =
-        error instanceof Error ? error.message : 'Error desconocido'
-      logger.error(
-        '❌ [CLIENTES] Error obteniendo estadísticas:',
-        mensaje,
-        error
-      )
-      return null
-    }
-  }
-
-  /**
-   * Buscar eventos por término
-   *
-   * @param clienteId - ID del cliente
-   * @param termino - Término de búsqueda
-   * @returns Eventos que coincidan con el término
-   */
-  async buscarEventos(
-    clienteId: string,
-    termino: string
-  ): Promise<EventoHistorialCliente[]> {
-    try {
-      const eventos = await this.obtenerHistorial(clienteId, 500)
-
-      const terminoLower = termino.toLowerCase()
-
-      return eventos.filter(evento => {
-        // Buscar en usuario_email, usuario_nombres, metadata
-        const textoEvento = JSON.stringify({
-          usuario_email: evento.usuario_email,
-          usuario_nombres: evento.usuario_nombres,
-          metadata: evento.metadata,
-          datos_nuevos: evento.datos_nuevos,
-        }).toLowerCase()
-
-        return textoEvento.includes(terminoLower)
-      })
-    } catch (error) {
-      const mensaje =
-        error instanceof Error ? error.message : 'Error desconocido'
-      logger.error('❌ [CLIENTES] Error buscando eventos:', mensaje, error)
-      return []
-    }
-  }
   /**
    * Oculta un evento del historial (soft-hide vía API route).
    * Solo Administradores pueden llamarlo — el endpoint lo valida.

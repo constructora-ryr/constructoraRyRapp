@@ -151,7 +151,7 @@ export default function BienvenidaPage() {
       {/* Fondo — igual que login */}
       <div className='fixed inset-0 z-0 h-screen w-screen'>
         <Image
-          src='/images/fondo-login.png'
+          src='/images/fondo-login.webp'
           alt='Fondo Constructora RyR'
           fill
           sizes='100vw'

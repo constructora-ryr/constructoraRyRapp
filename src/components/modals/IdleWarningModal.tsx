@@ -41,7 +41,7 @@ const LEVEL_CONFIG = {
       'Por seguridad, cerraremos tu sesión pronto si no detectamos actividad.',
   },
   critical: {
-    title: 'ðŸš¨ Tu sesión está por expirar',
+    title: 'Tu sesión está por expirar',
     icon: AlertTriangle,
     gradient: 'from-red-700 via-red-600 to-red-800',
     iconBg: 'bg-red-600',
@@ -97,7 +97,7 @@ export function IdleWarningModal({
     }
   }, [isOpen])
 
-  // ðŸš¨ CRÍTICO: Cerrar sesión automáticamente cuando llegue a 0 (SOLO si ya empezó countdown)
+  // CRÍTICO: Cerrar sesión automáticamente cuando llegue a 0 (SOLO si ya empezó countdown)
   useEffect(() => {
     if (
       countdown === 0 &&

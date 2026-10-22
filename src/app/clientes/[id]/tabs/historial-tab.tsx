@@ -1,12 +1,7 @@
 /**
- * Tab de Historial del Cliente
- * Línea de tiempo cronológica con todos los movimientos del cliente:
- * creación, ediciones, negociaciones, abonos, renuncias, intereses, documentos y notas manuales.
- *
- * ARQUITECTURA:
- * - Componente orquestador (< 150 líneas)
- * - Lógica en useHistorialCliente hook
- * - UI separada en historial/components/
+ * Pestaña Historial del cliente: línea de tiempo de todo lo que pasó con el
+ * cliente (creación, ediciones, negociación, abonos, documentos, renuncias,
+ * intereses y notas manuales). Datos y filtros en useHistorialCliente.
  */
 
 'use client'
@@ -14,8 +9,7 @@
 import { useEffect, useMemo, useState } from 'react'
 
 import { useQueryClient } from '@tanstack/react-query'
-import { AnimatePresence } from 'framer-motion'
-import { Clock, Eye, EyeOff, Filter, Lock, X } from 'lucide-react'
+import { AlertCircle, Clock, Lock, SearchX } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { formatDateCompact } from '@/lib/utils/date.utils'
@@ -31,23 +25,48 @@ import { useModal } from '@/shared/components/modals'
 import { HistorialEsqueleto } from '../components/TabsEsqueletos'
 
 import {
-  HistorialFiltros,
-  HistorialResumen,
-  NotaModal,
-  TimelineGrupoFecha,
-} from './historial/components'
+  EventoDetalleModal,
+  type TabCliente,
+} from './historial/components/EventoDetalleModal'
+import { HistorialFiltros } from './historial/components/HistorialFiltros'
+import { NotaModal } from './historial/components/NotaModal'
+import { DiaTimeline } from './historial/timeline/DiaTimeline'
+import type { AccionesEvento } from './historial/timeline/EventoCard'
 
 interface HistorialTabProps {
   clienteId: string
   clienteNombre: string
+  /** Para "Ver en Negociación", "Ver en Documentos"… desde el detalle */
+  onIrATab?: (tab: TabCliente) => void
 }
 
-export function HistorialTab({ clienteId, clienteNombre }: HistorialTabProps) {
+/** Lleva a la nota abierta desde "Actividad de clientes" y la resalta */
+function useScrollANotaPendiente(listo: boolean) {
+  useEffect(() => {
+    if (!listo) return
+    const notaId = sessionStorage.getItem('cliente-nota-intent')
+    if (!notaId) return
+    sessionStorage.removeItem('cliente-nota-intent')
+    const timer = setTimeout(() => {
+      const el = document.getElementById(`evento-${notaId}`)
+      if (!el) return
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      el.classList.add('ring-2', 'ring-teal-500', 'rounded-2xl')
+      setTimeout(
+        () => el.classList.remove('ring-2', 'ring-teal-500', 'rounded-2xl'),
+        2000
+      )
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [listo])
+}
+
+export function HistorialTab({
+  clienteId,
+  clienteNombre,
+  onIrATab,
+}: HistorialTabProps) {
   const queryClient = useQueryClient()
-  const [mostrarModalNota, setMostrarModalNota] = useState(false)
-  const [notaIdSeleccionado, setNotaIdSeleccionado] = useState<string | null>(
-    null
-  )
   const { confirm } = useModal()
   const { eliminarNota } = useNotasHistorial(clienteId)
   const { puede, esAdmin, isLoading: permisosLoading } = usePermisosQuery()
@@ -55,9 +74,16 @@ export function HistorialTab({ clienteId, clienteNombre }: HistorialTabProps) {
   const tienePermiso = esAdmin || puede('clientes', 'ver_historial')
   const canAnotarHistorial = esAdmin || puede('clientes', 'anotar_historial')
 
+  const [modalNota, setModalNota] = useState<{ notaId: string | null } | null>(
+    null
+  )
+  // Id del evento abierto en el detalle (se navega por la lista visible)
+  const [detalleId, setDetalleId] = useState<string | null>(null)
+
   const {
     eventosAgrupados,
     estadisticas,
+    conteoPorCategoria,
     isLoading,
     error,
     busqueda,
@@ -65,62 +91,37 @@ export function HistorialTab({ clienteId, clienteNombre }: HistorialTabProps) {
     categoria,
     setCategoria,
     limpiarFiltros,
-    tieneAplicados,
     mostrarOcultos,
     setMostrarOcultos,
     ocultarEvento,
     restaurarEvento,
   } = useHistorialCliente({ clienteId, habilitado: tienePermiso })
 
-  // Scroll a nota específica si viene desde Actividad de Clientes
-  useEffect(() => {
-    if (isLoading) return
-    const notaIntent = sessionStorage.getItem('cliente-nota-intent')
-    if (!notaIntent) return
-    sessionStorage.removeItem('cliente-nota-intent')
-    const timer = setTimeout(() => {
-      const el = document.getElementById(`evento-${notaIntent}`)
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-        el.style.transition = 'outline 0.4s ease'
-        el.style.outline = '2px solid #0d9488'
-        el.style.borderRadius = '12px'
-        setTimeout(() => {
-          el.style.outline = ''
-        }, 2000)
-      }
-    }, 400)
-    return () => clearTimeout(timer)
-  }, [isLoading])
+  useScrollANotaPendiente(!isLoading)
 
-  // Aplanar eventos para calcular permisos
-  const todosLosEventos = useMemo(() => {
-    return eventosAgrupados.flatMap(g => g.eventos)
-  }, [eventosAgrupados])
-
+  const todosLosEventos = useMemo(
+    () => eventosAgrupados.flatMap(g => g.eventos),
+    [eventosAgrupados]
+  )
   const { notasEditables } = usePermisosNotasHistorial(todosLosEventos)
+  const indiceDetalle = detalleId
+    ? todosLosEventos.findIndex(e => e.id === detalleId)
+    : -1
 
-  // Formatear fecha del primer evento para el resumen
-  const primerEventoFormateado = estadisticas.primerEvento
-    ? formatDateCompact(estadisticas.primerEvento)
-    : null
-
-  // ========== HANDLERS DE NOTAS ==========
-  const handleEditarNota = async (notaId: string) => {
+  const editarNota = async (notaId: string) => {
     try {
       await queryClient.prefetchQuery({
         queryKey: ['nota-historial', notaId],
         queryFn: () => notasHistorialService.obtenerNotaPorId(notaId),
       })
-      setNotaIdSeleccionado(notaId)
-      setMostrarModalNota(true)
+      setModalNota({ notaId })
     } catch (err) {
       logger.error('Error cargando nota:', err)
-      toast.error('Error al cargar la nota')
+      toast.error('No se pudo cargar la nota')
     }
   }
 
-  const handleEliminarNota = async (notaId: string) => {
+  const borrarNota = async (notaId: string) => {
     const confirmado = await confirm({
       title: '¿Eliminar nota?',
       message:
@@ -129,32 +130,32 @@ export function HistorialTab({ clienteId, clienteNombre }: HistorialTabProps) {
       cancelText: 'Cancelar',
       variant: 'danger',
     })
-    if (confirmado) {
-      try {
-        await eliminarNota(notaId)
-      } catch (err) {
-        logger.error('Error eliminando nota:', err)
-      }
+    if (!confirmado) return
+    try {
+      await eliminarNota(notaId)
+    } catch (err) {
+      logger.error('Error eliminando nota:', err)
     }
   }
 
-  const handleCerrarModal = () => {
-    setMostrarModalNota(false)
-    setNotaIdSeleccionado(null)
+  const acciones: AccionesEvento = {
+    onVerDetalle: evento => setDetalleId(evento.id),
+    onEditarNota: editarNota,
+    onEliminarNota: borrarNota,
+    notasEditables,
+    onOcultarEvento: esAdmin ? ocultarEvento : undefined,
+    onRestaurarEvento: esAdmin ? restaurarEvento : undefined,
   }
 
-  // ========== ESTADOS ==========
   if (permisosLoading) return <HistorialEsqueleto />
 
   if (!tienePermiso) {
     return (
-      <div className='p-6'>
-        <EmptyState
-          icon={<Lock className='h-12 w-12 text-gray-400' />}
-          title='Sin acceso al historial'
-          description='No tienes permisos para ver el historial de este cliente. Contacta a un administrador si necesitas acceso.'
-        />
-      </div>
+      <EmptyState
+        icon={<Lock className='h-12 w-12' />}
+        title='Sin acceso al historial'
+        description='No tienes permiso para ver el historial de este cliente. Pide acceso a un administrador.'
+      />
     )
   }
 
@@ -162,117 +163,98 @@ export function HistorialTab({ clienteId, clienteNombre }: HistorialTabProps) {
 
   if (error) {
     return (
-      <div className='p-6'>
-        <EmptyState
-          icon={<X className='h-12 w-12 text-red-500' />}
-          title='Error al cargar historial'
-          description='Ocurrió un error al cargar el historial del cliente'
-        />
-      </div>
-    )
-  }
-
-  if (estadisticas.total === 0) {
-    return (
-      <div className='p-6'>
-        <EmptyState
-          icon={<Clock className='h-12 w-12 text-gray-400' />}
-          title='Sin historial'
-          description='Este cliente aún no tiene eventos registrados'
-        />
-      </div>
-    )
-  }
-
-  // ========== RENDER ==========
-  return (
-    <div className='space-y-4 py-4'>
-      {/* Resumen del ciclo de vida */}
-      <HistorialResumen
-        total={estadisticas.total}
-        estaSemana={estadisticas.estaSemana}
-        esteMes={estadisticas.esteMes}
-        criticos={estadisticas.criticos}
-        primerEvento={primerEventoFormateado}
+      <EmptyState
+        icon={<AlertCircle className='h-12 w-12 text-rose-500' />}
+        title='No se pudo cargar el historial'
+        description='Revisa tu conexión y vuelve a abrir la pestaña.'
       />
+    )
+  }
 
-      {/* Filtros */}
+  if (estadisticas.total === 0 && !mostrarOcultos) {
+    return (
+      <EmptyState
+        icon={<Clock className='h-12 w-12' />}
+        title='Sin historial todavía'
+        description='Aquí aparecerá todo lo que pase con este cliente.'
+      />
+    )
+  }
+
+  return (
+    <div className='space-y-5 py-2'>
       <HistorialFiltros
+        resumen={estadisticas}
+        desde={
+          estadisticas.primerEvento
+            ? formatDateCompact(estadisticas.primerEvento)
+            : null
+        }
+        conteoPorCategoria={conteoPorCategoria}
         busqueda={busqueda}
         onBusquedaChange={setBusqueda}
         categoriaActiva={categoria}
         onCategoriaChange={setCategoria}
-        totalFiltrados={estadisticas.filtrados}
-        totalGeneral={estadisticas.total}
-        tieneAplicados={tieneAplicados}
-        onLimpiarFiltros={limpiarFiltros}
-        onAgregarNota={() => setMostrarModalNota(true)}
-        canAgregarNota={canAnotarHistorial}
+        onAgregarNota={
+          canAnotarHistorial ? () => setModalNota({ notaId: null }) : undefined
+        }
+        mostrarOcultos={mostrarOcultos}
+        onToggleOcultos={esAdmin ? () => setMostrarOcultos(v => !v) : undefined}
       />
 
-      {/* Toggle ocultos — solo admins */}
-      {esAdmin ? (
-        <div className='flex justify-end'>
-          <button
-            type='button'
-            onClick={() => setMostrarOcultos(v => !v)}
-            className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
-              mostrarOcultos
-                ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-400'
-                : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:border-white/10 dark:bg-white/[0.03] dark:text-white/40 dark:hover:text-white/60'
-            }`}
-          >
-            {mostrarOcultos ? (
-              <Eye className='h-3.5 w-3.5' />
-            ) : (
-              <EyeOff className='h-3.5 w-3.5' />
-            )}
-            {mostrarOcultos ? 'Ocultar ocultos' : 'Mostrar ocultos'}
-          </button>
-        </div>
-      ) : null}
-
-      {/* Timeline */}
       {estadisticas.filtrados === 0 ? (
-        <div className='py-8'>
-          <EmptyState
-            icon={<Filter className='h-12 w-12 text-gray-400' />}
-            title='Sin resultados'
-            description='No se encontraron eventos con los filtros aplicados'
-          />
-        </div>
+        <EmptyState
+          icon={<SearchX className='h-12 w-12' />}
+          title='Sin resultados'
+          description='Ningún evento coincide con la búsqueda o la categoría elegida.'
+          action={
+            <button
+              type='button'
+              onClick={limpiarFiltros}
+              className='rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200'
+            >
+              Limpiar filtros
+            </button>
+          }
+        />
       ) : (
-        <div className='relative pl-8'>
-          {/* Línea vertical del timeline */}
-          <div className='absolute bottom-4 left-[15px] top-0 w-[2px] bg-gradient-to-b from-cyan-300 via-cyan-200 to-transparent dark:from-cyan-700 dark:via-cyan-800' />
-
-          <AnimatePresence>
-            {eventosAgrupados.map(grupo => (
-              <TimelineGrupoFecha
-                key={grupo.fecha}
-                fecha={grupo.fecha}
-                fechaFormateada={grupo.fechaFormateada}
-                total={grupo.total}
-                eventos={grupo.eventos}
-                onEditarNota={handleEditarNota}
-                onEliminarNota={handleEliminarNota}
-                notasEditables={notasEditables}
-                onOcultarEvento={esAdmin ? ocultarEvento : undefined}
-                onRestaurarEvento={esAdmin ? restaurarEvento : undefined}
-              />
-            ))}
-          </AnimatePresence>
+        <div className='space-y-6'>
+          {eventosAgrupados.map(grupo => (
+            <DiaTimeline key={grupo.fecha} grupo={grupo} acciones={acciones} />
+          ))}
         </div>
       )}
 
-      {/* Modal de nota */}
-      <NotaModal
-        isOpen={mostrarModalNota}
-        onClose={handleCerrarModal}
-        clienteId={clienteId}
-        clienteNombre={clienteNombre}
-        notaId={notaIdSeleccionado}
-      />
+      {indiceDetalle >= 0 ? (
+        <EventoDetalleModal
+          evento={todosLosEventos[indiceDetalle]}
+          onClose={() => setDetalleId(null)}
+          onIrATab={onIrATab}
+          navegacion={{
+            actual: indiceDetalle + 1,
+            total: todosLosEventos.length,
+            nombre: 'Evento',
+            onAnterior:
+              indiceDetalle > 0
+                ? () => setDetalleId(todosLosEventos[indiceDetalle - 1].id)
+                : undefined,
+            onSiguiente:
+              indiceDetalle < todosLosEventos.length - 1
+                ? () => setDetalleId(todosLosEventos[indiceDetalle + 1].id)
+                : undefined,
+          }}
+        />
+      ) : null}
+
+      {modalNota ? (
+        <NotaModal
+          key={modalNota.notaId ?? 'nueva'}
+          onClose={() => setModalNota(null)}
+          clienteId={clienteId}
+          clienteNombre={clienteNombre}
+          notaId={modalNota.notaId}
+        />
+      ) : null}
     </div>
   )
 }

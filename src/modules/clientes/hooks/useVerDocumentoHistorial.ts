@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 
+import { toast } from 'sonner'
+
 import { supabase } from '@/lib/supabase/client'
 import { logger } from '@/lib/utils/logger'
 
@@ -25,6 +27,9 @@ export function useVerDocumentoHistorial() {
           'Error generando URL firmada para documento historial:',
           error
         )
+        toast.error('No se pudo abrir el archivo', {
+          description: 'Puede que ya no exista en el almacenamiento.',
+        })
         return
       }
 

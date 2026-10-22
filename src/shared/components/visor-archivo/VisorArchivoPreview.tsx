@@ -66,6 +66,8 @@ interface VisorArchivoPreviewProps {
   acento?: string
   /** Anterior/siguiente en la barra flotante (el teclado lo maneja la carcasa) */
   navegacion?: VisorNavegacion
+  /** Tamaño del contenedor (por defecto llena el cuerpo de un visor) */
+  className?: string
 }
 
 type Estado = 'cargando' | 'listo' | 'error'
@@ -80,6 +82,7 @@ export function VisorArchivoPreview({
   onDescargar,
   acento = 'from-slate-600 to-slate-800',
   navegacion,
+  className,
 }: VisorArchivoPreviewProps) {
   const [estado, setEstado] = useState<Estado>('cargando')
   // Cambiar la key fuerza a recargar imagen/iframe
@@ -235,7 +238,12 @@ export function VisorArchivoPreview({
   }
 
   return (
-    <div className='relative min-h-[55vh] flex-shrink-0 overflow-hidden bg-slate-950 md:min-h-0 md:flex-1 md:flex-shrink'>
+    <div
+      className={cn(
+        'relative min-h-[55vh] flex-shrink-0 overflow-hidden bg-slate-950 md:min-h-0 md:flex-1 md:flex-shrink',
+        className
+      )}
+    >
       {/* Retícula de puntos */}
       <div
         aria-hidden

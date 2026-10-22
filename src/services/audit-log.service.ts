@@ -38,39 +38,20 @@ class AuditLogService {
     metadata = {},
   }: LogSecurityEventParams): Promise<void> {
     try {
-      // Obtener información adicional del navegador
-      const userAgent =
-        typeof window !== 'undefined' ? window.navigator.userAgent : 'Unknown'
-
-      // Obtener usuario actual si está autenticado
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      const logData = {
-        tipo,
-        usuario_email: usuarioEmail,
-        usuario_id: user?.id || null,
-        user_agent: userAgent,
-        metadata: {
-          ...metadata,
-          timestamp_cliente: new Date().toISOString(),
-          url: typeof window !== 'undefined' ? window.location.href : null,
-        },
+      // Lo registra el servidor (IP real, usuario de la sesión). El
+      // navegador no puede escribir en audit_log_seguridad.
+      const res = await fetch('/api/auth/evento-seguridad', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tipo, email: usuarioEmail, metadata }),
+        keepalive: true,
+      })
+      if (!res.ok && res.status !== 429) {
+        logger.error('❌ Error registrando evento de seguridad:', res.status)
       }
-
-      const { error } = await supabase
-        .from('audit_log_seguridad')
-        .insert(logData)
-
-      if (error) {
-        logger.error('❌ Error registrando evento de auditoría:', error)
-        // No lanzar error para no interrumpir el flujo principal
-      }
-      // Registro exitoso silencioso (sin logs en desarrollo)
     } catch (error) {
+      // No interrumpir el flujo principal por un fallo de auditoría
       logger.error('❌ Excepción en logSecurityEvent:', error)
-      // Fallar silenciosamente para no afectar la experiencia del usuario
     }
   }
 

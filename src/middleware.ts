@@ -88,6 +88,9 @@ const PUBLIC_ROUTES = [
   '/update-password',
   '/auth/callback',
   '/bienvenida',
+  // Registro de eventos de seguridad: los intentos fallidos ocurren sin sesión
+  // (la ruta valida el tipo y limita por IP)
+  '/api/auth/evento-seguridad',
 ]
 
 /**

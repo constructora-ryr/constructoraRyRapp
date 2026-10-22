@@ -123,41 +123,6 @@ export interface DetalleEvento {
 }
 
 /**
- * Filtros para el historial
- */
-export interface FiltrosHistorial {
-  tipo?: TipoEventoHistorial[]
-  tabla?: string[]
-  accion?: ('CREATE' | 'UPDATE' | 'DELETE')[]
-  fecha_desde?: string
-  fecha_hasta?: string
-  busqueda?: string
-  usuario?: string
-}
-
-/**
- * Estadísticas de actividad del cliente
- */
-export interface EstadisticasHistorial {
-  total_eventos: number
-  eventos_por_tipo: {
-    clientes: number
-    negociaciones: number
-    abonos: number
-    renuncias: number
-    intereses: number
-    documentos: number
-  }
-  eventos_por_accion: {
-    creaciones: number
-    actualizaciones: number
-    eliminaciones: number
-  }
-  primer_evento: string | null
-  ultimo_evento: string | null
-}
-
-/**
  * Agrupación de eventos por fecha
  */
 export interface GrupoEventosPorFecha {

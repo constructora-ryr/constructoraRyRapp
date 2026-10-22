@@ -33,7 +33,7 @@ export function CuentaDesactivadaOverlay({ visible }: Props) {
       {/* Fondo */}
       <div className='absolute inset-0'>
         <Image
-          src='/images/fondo-login.png'
+          src='/images/fondo-login.webp'
           alt='Fondo'
           fill
           sizes='100vw'
