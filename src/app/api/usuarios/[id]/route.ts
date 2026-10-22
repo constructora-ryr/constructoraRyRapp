@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-import { supabaseAdmin } from '@/lib/supabase/admin'
+import { adminComo } from '@/lib/supabase/admin'
 import { createRouteClient } from '@/lib/supabase/server-route'
 import { logger } from '@/lib/utils/logger'
 
@@ -26,6 +26,7 @@ export async function DELETE(
     if (!user) {
       return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
     }
+    const admin = adminComo(user.id)
 
     // 2. Verificar que el solicitante es Administrador activo
     const { data: caller } = await supabase
@@ -51,7 +52,7 @@ export async function DELETE(
 
     // 4. Verificar que el usuario objetivo tiene invitación pendiente
     //    (nunca inició sesión = ultimo_login IS NULL y debe_cambiar_password = true)
-    const { data: target } = await supabaseAdmin
+    const { data: target } = await admin
       .from('usuarios')
       .select('ultimo_login, debe_cambiar_password, nombres, apellidos')
       .eq('id', id)
@@ -75,7 +76,7 @@ export async function DELETE(
     }
 
     // 5. Eliminar de public.usuarios primero (evita depender del CASCADE)
-    const { error: deletePublicError } = await supabaseAdmin
+    const { error: deletePublicError } = await admin
       .from('usuarios')
       .delete()
       .eq('id', id)
@@ -92,8 +93,7 @@ export async function DELETE(
     }
 
     // 6. Eliminar de auth.users (limpia la cuenta de autenticación)
-    const { error: deleteAuthError } =
-      await supabaseAdmin.auth.admin.deleteUser(id)
+    const { error: deleteAuthError } = await admin.auth.admin.deleteUser(id)
 
     if (deleteAuthError) {
       // La fila pública ya fue eliminada; loguear pero no fallar (el usuario

@@ -1,307 +1,195 @@
 /**
- * PasoLegalNuevo - Paso 3: Información legal
- * ✅ Componente presentacional puro
- * ✅ Lógica en usePasoLegal hook
+ * PasoLegalNuevo — Paso 3: matrícula (verificada mientras se escribe),
+ * nomenclatura, áreas en m² y tipo de lote. Se usa en crear y en editar.
  */
 
 'use client'
 
-import { useCallback, useRef, useState } from 'react'
+import { FileText, MapPin, Maximize, Square, Spline } from 'lucide-react'
+import type {
+  FieldErrors,
+  UseFormRegister,
+  UseFormWatch,
+} from 'react-hook-form'
 
-import { AnimatePresence, motion } from 'framer-motion'
-import { AlertCircle, FileText, Hash, MapPin, Maximize } from 'lucide-react'
-import type { FieldErrors, UseFormRegister } from 'react-hook-form'
-
-import { FormSelect } from '@/shared/components/ui/form-select'
 import { cn } from '@/shared/utils/helpers'
 
+import { useCampoDecimal } from '../hooks/useCampoDecimal'
+import { useVerificacionMatricula } from '../hooks/useVerificacionMatricula'
 import type { ViviendaSchemaType } from '../schemas/vivienda.schemas'
 import { nuevaViviendaStyles as styles } from '../styles/nueva-vivienda.styles'
+
+import { EstadoMatricula } from './formulario/EstadoMatricula'
+import { ErrorCampo, EtiquetaCampo } from './formulario/piezas'
+
+const TIPOS_LOTE = [
+  {
+    valor: 'Regular',
+    icon: Square,
+    descripcion: 'Lote rectangular',
+  },
+  {
+    valor: 'Irregular',
+    icon: Spline,
+    descripcion: 'Lote con forma atípica',
+  },
+] as const
 
 interface PasoLegalProps {
   register: UseFormRegister<ViviendaSchemaType>
   errors: FieldErrors<ViviendaSchemaType>
+  watch: UseFormWatch<ViviendaSchemaType>
+  /** En edición, para no contar la propia vivienda como duplicada */
+  viviendaId?: string
 }
 
-export function PasoLegalNuevo({ register, errors }: PasoLegalProps) {
-  const [areaHint, setAreaHint] = useState<string | null>(null)
-  const hintTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const showAreaHint = useCallback((message: string) => {
-    if (hintTimeoutRef.current) clearTimeout(hintTimeoutRef.current)
-    setAreaHint(message)
-    hintTimeoutRef.current = setTimeout(() => setAreaHint(null), 2500)
-  }, [])
-
-  // ✅ Prevenir teclas inválidas con retroalimentación visual
-  const handleDecimalKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      const { key, ctrlKey, metaKey } = e
-      if (
-        ctrlKey ||
-        metaKey ||
-        [
-          'Backspace',
-          'Delete',
-          'ArrowLeft',
-          'ArrowRight',
-          'Tab',
-          'Home',
-          'End',
-        ].includes(key)
-      )
-        return
-
-      const input = e.currentTarget
-      const value = input.value
-      const selStart = input.selectionStart ?? value.length
-      const selEnd = input.selectionEnd ?? value.length
-      const hasSelection = selStart !== selEnd
-
-      if (!/[\d.]/.test(key)) {
-        e.preventDefault()
-        showAreaHint('Solo se permiten números y punto decimal')
-        return
-      }
-
-      if (key === '.' && value.includes('.') && !hasSelection) {
-        e.preventDefault()
-        showAreaHint('Solo se permite un punto decimal')
-        return
-      }
-
-      if (/\d/.test(key) && value.includes('.') && !hasSelection) {
-        const dotIndex = value.indexOf('.')
-        const decimals = value.slice(dotIndex + 1)
-        if (selStart > dotIndex && decimals.length >= 3) {
-          e.preventDefault()
-          showAreaHint('Máximo 3 decimales (Ej: 66.125)')
-          return
-        }
-      }
-    },
-    [showAreaHint]
+export function PasoLegalNuevo({
+  register,
+  errors,
+  watch,
+  viviendaId,
+}: PasoLegalProps) {
+  const decimal = useCampoDecimal()
+  const matricula = useVerificacionMatricula(
+    watch('matricula_inmobiliaria'),
+    viviendaId
   )
+  const tipo = watch('tipo_vivienda')
 
-  // ✅ Filtrar input para operaciones de pegado (fallback)
-  const handleDecimalInput = useCallback(
-    (e: React.FormEvent<HTMLInputElement>) => {
-      const input = e.currentTarget
-      let cleaned = input.value.replace(/[^\d.]/g, '')
-      const parts = cleaned.split('.')
-      if (parts.length > 2) {
-        cleaned = parts[0] + '.' + parts.slice(1).join('')
-      }
-      if (parts.length === 2 && parts[1].length > 3) {
-        cleaned = parts[0] + '.' + parts[1].slice(0, 3)
-      }
-      if (input.value !== cleaned) {
-        input.value = cleaned
-        showAreaHint('Se ajustó el valor — solo números con hasta 3 decimales')
-      }
-    },
-    [showAreaHint]
+  const campoArea = (
+    campo: 'area_lote' | 'area_construida',
+    etiqueta: string,
+    ejemplo: string
+  ) => (
+    <div>
+      <EtiquetaCampo htmlFor={campo}>{etiqueta}</EtiquetaCampo>
+      <div className={styles.field.inputWrapper}>
+        <Maximize className={styles.field.inputIcon} />
+        <input
+          {...register(campo)}
+          id={campo}
+          type='text'
+          inputMode='decimal'
+          placeholder={ejemplo}
+          onKeyDown={decimal.onKeyDown}
+          onInput={decimal.onInput}
+          className={cn(
+            styles.field.input,
+            'pr-10',
+            errors[campo] && styles.field.inputError
+          )}
+        />
+        <span className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-gray-400'>
+          m²
+        </span>
+      </div>
+      <ErrorCampo mensaje={errors[campo]?.message} />
+    </div>
   )
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
-      transition={{ duration: 0.2 }}
-      className='space-y-3'
-    >
-      {/* Título del paso */}
-      <div>
-        <h2 className='mb-1 text-xl font-bold text-gray-900 dark:text-white'>
-          Información Legal
-        </h2>
-        <p className='text-sm text-gray-600 dark:text-gray-400'>
-          Datos catastrales y documentos de la vivienda
-        </p>
-      </div>
-
-      {/* Matrícula Inmobiliaria */}
-      <div className={styles.field.container}>
-        <label htmlFor='matricula_inmobiliaria' className={styles.field.label}>
-          Matrícula Inmobiliaria{' '}
-          <span className={styles.field.required}>*</span>
-        </label>
-        <div className={styles.field.inputWrapper}>
-          <FileText className={styles.field.inputIcon} />
-          <input
-            {...register('matricula_inmobiliaria')}
-            id='matricula_inmobiliaria'
-            type='text'
-            placeholder='Ej: 050-123456'
-            className={cn(
-              styles.field.input,
-              errors.matricula_inmobiliaria && styles.field.inputError
-            )}
-          />
-        </div>
-        {errors.matricula_inmobiliaria && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={styles.field.error}
-          >
-            <AlertCircle className={styles.field.errorIcon} />
-            {errors.matricula_inmobiliaria.message as string}
-          </motion.div>
-        )}
-      </div>
-
-      {/* Nomenclatura */}
-      <div className={styles.field.container}>
-        <label htmlFor='nomenclatura' className={styles.field.label}>
-          Nomenclatura <span className={styles.field.required}>*</span>
-        </label>
-        <div className={styles.field.inputWrapper}>
-          <MapPin className={styles.field.inputIcon} />
-          <input
-            {...register('nomenclatura')}
-            id='nomenclatura'
-            type='text'
-            placeholder='Ej: Calle 123 # 45-67'
-            className={cn(
-              styles.field.input,
-              errors.nomenclatura && styles.field.inputError
-            )}
-          />
-        </div>
-        {errors.nomenclatura && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={styles.field.error}
-          >
-            <AlertCircle className={styles.field.errorIcon} />
-            {errors.nomenclatura.message as string}
-          </motion.div>
-        )}
-      </div>
-
-      {/* Áreas */}
+    <div className='space-y-4'>
       <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-        {/* Área del Lote */}
-        <div className={styles.field.container}>
-          <label htmlFor='area_lote' className={styles.field.label}>
-            Área del Lote (m²) <span className={styles.field.required}>*</span>
-          </label>
+        <div>
+          <EtiquetaCampo
+            htmlFor='matricula_inmobiliaria'
+            extra={<EstadoMatricula estado={matricula} />}
+          >
+            Matrícula inmobiliaria
+          </EtiquetaCampo>
           <div className={styles.field.inputWrapper}>
-            <Maximize className={styles.field.inputIcon} />
+            <FileText className={styles.field.inputIcon} />
             <input
-              {...register('area_lote')}
-              id='area_lote'
+              {...register('matricula_inmobiliaria')}
+              id='matricula_inmobiliaria'
               type='text'
-              inputMode='decimal'
-              placeholder='66.125'
-              onKeyDown={handleDecimalKeyDown}
-              onInput={handleDecimalInput}
+              inputMode='numeric'
+              autoComplete='off'
+              placeholder='Ej: 373-123456'
               className={cn(
                 styles.field.input,
-                errors.area_lote && styles.field.inputError
+                (errors.matricula_inmobiliaria ||
+                  matricula.estado === 'duplicada') &&
+                  styles.field.inputError
               )}
             />
           </div>
-          {errors.area_lote && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={styles.field.error}
-            >
-              <AlertCircle className={styles.field.errorIcon} />
-              {errors.area_lote.message as string}
-            </motion.div>
-          )}
+          <ErrorCampo mensaje={errors.matricula_inmobiliaria?.message} />
         </div>
 
-        {/* Área Construida */}
-        <div className={styles.field.container}>
-          <label htmlFor='area_construida' className={styles.field.label}>
-            Área Construida (m²){' '}
-            <span className={styles.field.required}>*</span>
-          </label>
+        <div>
+          <EtiquetaCampo htmlFor='nomenclatura'>Nomenclatura</EtiquetaCampo>
           <div className={styles.field.inputWrapper}>
-            <Maximize className={styles.field.inputIcon} />
+            <MapPin className={styles.field.inputIcon} />
             <input
-              {...register('area_construida')}
-              id='area_construida'
+              {...register('nomenclatura')}
+              id='nomenclatura'
               type='text'
-              inputMode='decimal'
-              placeholder='41.00'
-              onKeyDown={handleDecimalKeyDown}
-              onInput={handleDecimalInput}
+              placeholder='Ej: Calle 12 # 3-45'
               className={cn(
                 styles.field.input,
-                errors.area_construida && styles.field.inputError
+                errors.nomenclatura && styles.field.inputError
               )}
             />
           </div>
-          {errors.area_construida && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={styles.field.error}
-            >
-              <AlertCircle className={styles.field.errorIcon} />
-              {errors.area_construida.message as string}
-            </motion.div>
-          )}
+          <ErrorCampo mensaje={errors.nomenclatura?.message} />
         </div>
+
+        {campoArea('area_lote', 'Área del lote', '66.125')}
+        {campoArea('area_construida', 'Área construida', '41.5')}
       </div>
 
-      {/* Hint dinámico para campos de área */}
-      <AnimatePresence>
-        {areaHint ? (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-            className={styles.field.error}
-          >
-            <AlertCircle className={styles.field.errorIcon} />
-            {areaHint}
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-
-      {/* Tipo de Vivienda */}
-      <div className={styles.field.container}>
-        <label htmlFor='tipo_vivienda' className={styles.field.label}>
-          Tipo de Vivienda <span className={styles.field.required}>*</span>
-        </label>
-        <div className={styles.field.inputWrapper}>
-          <Hash className={styles.field.inputIcon} />
-          <FormSelect
-            {...register('tipo_vivienda')}
-            id='tipo_vivienda'
-            className={cn(
-              styles.field.select,
-              errors.tipo_vivienda && styles.field.inputError
-            )}
-          >
-            <option value=''>Selecciona un tipo</option>
-            <option value='Regular'>Regular</option>
-            <option value='Irregular'>Irregular</option>
-          </FormSelect>
-        </div>
-        {errors.tipo_vivienda && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={styles.field.error}
-          >
-            <AlertCircle className={styles.field.errorIcon} />
-            {errors.tipo_vivienda.message as string}
-          </motion.div>
-        )}
-        <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-          Regular: Lote rectangular. Irregular: Lote con formas atípicas.
+      {decimal.aviso ? (
+        <p className='text-xs font-medium text-amber-600 dark:text-amber-400'>
+          {decimal.aviso}
         </p>
+      ) : null}
+
+      <div>
+        <EtiquetaCampo>Tipo de lote</EtiquetaCampo>
+        <div role='radiogroup' className='grid grid-cols-2 gap-2'>
+          {TIPOS_LOTE.map(({ valor, icon: Icon, descripcion }) => {
+            const activo = tipo === valor
+            return (
+              <label
+                key={valor}
+                className={cn(
+                  'flex cursor-pointer items-center gap-3 rounded-xl border-2 p-3 transition-all has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-orange-500/50',
+                  activo
+                    ? 'border-orange-500 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/40 dark:to-amber-950/30'
+                    : 'border-gray-200 bg-white hover:border-orange-300 dark:border-gray-700 dark:bg-gray-900'
+                )}
+              >
+                <input
+                  {...register('tipo_vivienda')}
+                  type='radio'
+                  value={valor}
+                  className='sr-only'
+                />
+                <span
+                  className={cn(
+                    'flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg',
+                    activo
+                      ? 'bg-gradient-to-br from-orange-500 to-amber-500 text-white'
+                      : 'bg-gray-100 text-gray-500 dark:bg-gray-800'
+                  )}
+                >
+                  <Icon className='h-4 w-4' />
+                </span>
+                <span className='min-w-0'>
+                  <span className='block text-sm font-bold text-gray-900 dark:text-white'>
+                    {valor}
+                  </span>
+                  <span className='block text-xs text-gray-500 dark:text-gray-400'>
+                    {descripcion}
+                  </span>
+                </span>
+              </label>
+            )
+          })}
+        </div>
+        <ErrorCampo mensaje={errors.tipo_vivienda?.message} />
       </div>
-    </motion.div>
+    </div>
   )
 }

@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 /**
  * Orquestador del detalle de cliente.
@@ -36,6 +36,10 @@ import {
 import { useEliminarClienteMutation } from '@/modules/clientes/hooks/useClientesQuery'
 import { useReactivarCliente } from '@/modules/clientes/hooks/useReactivarCliente'
 import type { Cliente } from '@/modules/clientes/types'
+import {
+  DetalleTabs,
+  type TabDetalle,
+} from '@/shared/components/detalle/DetalleTabs'
 import { useModal } from '@/shared/components/modals'
 import { Tooltip } from '@/shared/components/ui'
 import { DocumentosListaEsqueleto } from '@/shared/documentos/components/lista/DocumentosListaEsqueleto'
@@ -45,10 +49,6 @@ import {
   ClienteNoEncontrado,
 } from './components/ClienteDetalleEstados'
 import { ClienteDetalleHeader } from './components/ClienteDetalleHeader'
-import {
-  ClienteDetalleTabs,
-  type TabDetalle,
-} from './components/ClienteDetalleTabs'
 import {
   HistorialEsqueleto,
   InteresesEsqueleto,
@@ -327,7 +327,9 @@ export default function ClienteDetalleClient({
           motivoNoEliminar={motivoNoEliminar(cliente)}
         />
 
-        <ClienteDetalleTabs
+        <DetalleTabs
+          tema='clientes'
+          etiqueta='Secciones del cliente'
           tabs={tabs}
           activa={activeTab as TabId}
           onCambiar={cambiarTab}

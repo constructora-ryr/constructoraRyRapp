@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { isAdmin } from '@/lib/auth/server'
-import { supabaseAdmin } from '@/lib/supabase/admin'
+import { adminComo } from '@/lib/supabase/admin'
 import { createRouteClient } from '@/lib/supabase/server-route'
 import { logger } from '@/lib/utils/logger'
 
@@ -40,6 +40,7 @@ export async function PATCH(request: NextRequest) {
     if (authError || !user) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
+    const admin = adminComo(user.id)
 
     if (!(await isAdmin())) {
       return NextResponse.json(
@@ -94,7 +95,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // 3. Obtener nombre completo del admin (snapshot — JWT no incluye apellidos)
-    const { data: adminData, error: adminError } = await supabaseAdmin
+    const { data: adminData, error: adminError } = await admin
       .from('usuarios')
       .select('nombres, apellidos')
       .eq('id', user.id)
@@ -110,7 +111,7 @@ export async function PATCH(request: NextRequest) {
       `${adminData.nombres} ${adminData.apellidos}`.trim()
 
     // 4. Obtener el abono (verificar existencia y estado) + contexto completo en paralelo
-    const { data: abono, error: fetchError } = await supabaseAdmin
+    const { data: abono, error: fetchError } = await admin
       .from('abonos_historial')
       .select(
         'id, negociacion_id, fuente_pago_id, monto, estado, numero_recibo, metodo_pago, fecha_abono, numero_referencia, notas, mora_incluida, comprobante_url'
@@ -134,14 +135,14 @@ export async function PATCH(request: NextRequest) {
 
     // 4b. Contexto enriquecido para metadata del audit_log (en paralelo)
     const [{ data: contexto }, { data: fuente }] = await Promise.all([
-      supabaseAdmin
+      admin
         .from('negociaciones')
         .select(
           'id, cliente_id, valor_total_pagar, saldo_pendiente, clientes(id, nombres, apellidos), viviendas(numero, manzanas(nombre, proyectos(nombre)))'
         )
         .eq('id', abono.negociacion_id)
         .single(),
-      supabaseAdmin
+      admin
         .from('fuentes_pago')
         .select('tipo, monto_aprobado')
         .eq('id', abono.fuente_pago_id)
@@ -161,7 +162,7 @@ export async function PATCH(request: NextRequest) {
       | undefined
 
     // 5. Soft delete — UPDATE estado = 'Anulado' (trigger recalculará saldos)
-    const { data: abonoActualizado, error: updateError } = await supabaseAdmin
+    const { data: abonoActualizado, error: updateError } = await admin
       .from('abonos_historial')
       .update({
         estado: 'Anulado',
@@ -184,7 +185,7 @@ export async function PATCH(request: NextRequest) {
 
     // 5b. Si la negociación estaba Completada y ahora el saldo volvió a > 0,
     //     revertir negociación → Activa, vivienda → Asignada, cliente → Activo.
-    const { data: negPost } = await supabaseAdmin
+    const { data: negPost } = await admin
       .from('negociaciones')
       .select('id, estado, saldo_pendiente, vivienda_id, cliente_id')
       .eq('id', abono.negociacion_id)
@@ -196,19 +197,19 @@ export async function PATCH(request: NextRequest) {
       negPost.estado === 'Completada'
     ) {
       const revertOps = [
-        supabaseAdmin
+        admin
           .from('negociaciones')
           .update({ estado: 'Activa', fecha_completada: null })
           .eq('id', abono.negociacion_id),
         negPost.vivienda_id
-          ? supabaseAdmin
+          ? admin
               .from('viviendas')
               .update({ estado: 'Asignada' })
               .eq('id', negPost.vivienda_id)
               .eq('estado', 'Propietario')
           : Promise.resolve({ error: null }),
         negPost.cliente_id
-          ? supabaseAdmin
+          ? admin
               .from('clientes')
               .update({ estado: 'Activo' })
               .eq('id', negPost.cliente_id)
@@ -227,7 +228,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // 6. Registrar en audit_log con metadata completa (mismos nombres de campo que el renderer)
-    await supabaseAdmin
+    await admin
       .from('audit_log')
       .insert({
         accion: 'ANULAR',

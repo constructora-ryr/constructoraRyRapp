@@ -15,11 +15,11 @@ export {
   useProyectosActivosQuery,
   useProyectosFiltroQuery,
   useSiguienteNumeroViviendaQuery,
-  useViviendaQuery,
   useViviendasQuery,
   verificarMatriculaUnica,
   viviendasKeys,
 } from './useViviendasQuery'
+export { useViviendaQuery } from './useViviendaQuery'
 
 // ============================================
 // HOOKS DE LÓGICA UI
@@ -27,6 +27,5 @@ export {
 export { useEditarVivienda } from './useEditarVivienda'
 export { useEditarViviendaAccordion } from './useEditarViviendaAccordion'
 export { useNuevaViviendaAccordion } from './useNuevaViviendaAccordion'
-export { usePasoLegal } from './usePasoLegal'
 export { usePasoUbicacion } from './usePasoUbicacion'
 export { useViviendasList } from './useViviendasList'

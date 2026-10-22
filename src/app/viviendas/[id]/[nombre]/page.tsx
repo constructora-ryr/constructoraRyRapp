@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { logger } from '@/lib/utils/logger'
 import { resolverSlugViviendaServer } from '@/lib/utils/slug.server'
 
-import ViviendaDetalleClient from '../vivienda-detalle-client-new'
+import ViviendaDetalleClient from '../vivienda-detalle-client'
 
 interface PageProps {
   params: Promise<{ id: string; nombre: string }>

@@ -17,52 +17,60 @@ import {
   subirCertificado,
 } from './viviendas-storage.service'
 
+/** Errores de índices únicos de la BD, en palabras del usuario */
+function traducirErrorCreacion(error: { code?: string; message?: string }) {
+  if (error.code !== '23505')
+    return new Error(error.message || 'No se pudo crear la vivienda')
+  if (error.message?.includes('idx_matricula_inmobiliaria_unica'))
+    return new Error(
+      'Esa matrícula inmobiliaria ya está registrada en otra vivienda'
+    )
+  if (error.message?.includes('idx_vivienda_manzana_numero_unico'))
+    return new Error(
+      'Esa casa ya fue registrada en la manzana (quizá por otra persona hace un momento)'
+    )
+  return new Error('Ya existe una vivienda con esos datos')
+}
+
+/**
+ * Crea la vivienda en estado Disponible. El certificado de tradición se sube
+ * después, desde la pestaña Documentos de la vivienda.
+ */
 export async function crear(formData: ViviendaFormData): Promise<Vivienda> {
   const resultado = await verificarMatriculaUnica(
     formData.matricula_inmobiliaria
   )
   if (!resultado.esUnica && resultado.viviendaDuplicada) {
     throw new Error(
-      `La matrícula inmobiliaria "${formData.matricula_inmobiliaria}" ya está registrada en la Mz. ${resultado.viviendaDuplicada.manzana} Casa #${resultado.viviendaDuplicada.numero}`
+      `La matrícula inmobiliaria "${formData.matricula_inmobiliaria}" ya está registrada en la Mz. ${resultado.viviendaDuplicada.manzana} casa ${resultado.viviendaDuplicada.numero}`
     )
   }
 
-  let certificadoUrl: string | undefined
-  if (formData.certificado_tradicion_file) {
-    certificadoUrl = await subirCertificado(
-      formData.certificado_tradicion_file,
-      formData.manzana_id,
-      formData.numero
-    )
-  }
-
-  const formDataSanitizada = sanitizeViviendaFormData(formData)
+  const datos = sanitizeViviendaFormData(formData)
   const gastosNotariales = await obtenerGastosNotariales()
-
-  const viviendaData = {
-    manzana_id: formDataSanitizada.manzana_id,
-    numero: formDataSanitizada.numero,
-    estado: 'Disponible' as const,
-    lindero_norte: formDataSanitizada.lindero_norte,
-    lindero_sur: formDataSanitizada.lindero_sur,
-    lindero_oriente: formDataSanitizada.lindero_oriente,
-    lindero_occidente: formDataSanitizada.lindero_occidente,
-    matricula_inmobiliaria: formDataSanitizada.matricula_inmobiliaria,
-    nomenclatura: formDataSanitizada.nomenclatura,
-    area: formDataSanitizada.area_construida || 0,
-    area_lote: formDataSanitizada.area_lote,
-    area_construida: formDataSanitizada.area_construida,
-    tipo_vivienda: formDataSanitizada.tipo_vivienda,
-    certificado_tradicion_url: certificadoUrl || null,
-    valor_base: formDataSanitizada.valor_base,
-    es_esquinera: formDataSanitizada.es_esquinera,
-    recargo_esquinera: formDataSanitizada.recargo_esquinera,
-    gastos_notariales: gastosNotariales,
-  }
 
   const { data, error } = await supabase
     .from('viviendas')
-    .insert(viviendaData)
+    .insert({
+      manzana_id: datos.manzana_id,
+      numero: datos.numero,
+      estado: 'Disponible' as const,
+      lindero_norte: datos.lindero_norte,
+      lindero_sur: datos.lindero_sur,
+      lindero_oriente: datos.lindero_oriente,
+      lindero_occidente: datos.lindero_occidente,
+      matricula_inmobiliaria: datos.matricula_inmobiliaria,
+      nomenclatura: datos.nomenclatura,
+      area: datos.area_construida || 0,
+      area_lote: datos.area_lote,
+      area_construida: datos.area_construida,
+      tipo_vivienda: datos.tipo_vivienda,
+      valor_base: datos.valor_base,
+      es_esquinera: datos.es_esquinera,
+      // valor_total (columna generada) suma el recargo: sin esquina, 0
+      recargo_esquinera: datos.es_esquinera ? datos.recargo_esquinera : 0,
+      gastos_notariales: gastosNotariales,
+    })
     .select(
       `
       *,
@@ -77,10 +85,10 @@ export async function crear(formData: ViviendaFormData): Promise<Vivienda> {
 
   if (error) {
     errorLog('[VIVIENDAS] Error al crear vivienda', error)
-    throw error
+    throw traducirErrorCreacion(error)
   }
 
-  const viviendaCreada: Vivienda = {
+  return {
     ...data,
     total_abonado: 0,
     cantidad_abonos: 0,
@@ -89,62 +97,6 @@ export async function crear(formData: ViviendaFormData): Promise<Vivienda> {
     fecha_creacion: new Date(data.fecha_creacion ?? Date.now()),
     fecha_actualizacion: new Date(data.fecha_actualizacion ?? Date.now()),
   } as unknown as Vivienda
-
-  if (certificadoUrl && formData.certificado_tradicion_file) {
-    try {
-      const { data: categoria } = await supabase
-        .from('categorias_documento')
-        .select('id')
-        .eq('nombre', 'Certificado de Tradición')
-        .contains('modulos_permitidos', ['viviendas'])
-        .eq('es_sistema', true)
-        .maybeSingle()
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      const { error: docError } = await supabase
-        .from('documentos_vivienda')
-        .insert({
-          vivienda_id: data.id,
-          categoria_id: categoria?.id || null,
-          titulo: 'Certificado de Tradición y Libertad',
-          descripcion:
-            'Documento oficial de tradición y libertad de la vivienda (subido en creación)',
-          nombre_archivo: (formData.certificado_tradicion_file as File).name,
-          nombre_original: (formData.certificado_tradicion_file as File).name,
-          tamano_bytes: formData.certificado_tradicion_file.size,
-          tipo_mime: formData.certificado_tradicion_file.type,
-          url_storage: certificadoUrl,
-          etiquetas: ['certificado', 'tradición', 'legal'],
-          version: 1,
-          es_version_actual: true,
-          estado: 'activo',
-          subido_por: user?.id ?? '',
-          es_importante: true,
-          metadata: {
-            origen: 'creacion_vivienda',
-            matricula: formData.matricula_inmobiliaria,
-            nomenclatura: formData.nomenclatura,
-          },
-        })
-
-      if (docError)
-        errorLog('[VIVIENDAS] Error al crear registro de documento', docError)
-    } catch (error) {
-      if (error instanceof Error) {
-        errorLog('[VIVIENDAS] Error inesperado al crear documento', error)
-      } else {
-        errorLog(
-          '[VIVIENDAS] Error desconocido al crear documento',
-          String(error)
-        )
-      }
-    }
-  }
-
-  return viviendaCreada
 }
 
 export async function actualizar(

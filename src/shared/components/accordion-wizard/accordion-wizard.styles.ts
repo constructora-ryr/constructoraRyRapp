@@ -29,19 +29,19 @@ const PAGE_BG: Record<string, string> = {
 
 const SECTION_ACTIVE: Record<string, string> = {
   proyectos:
-    'border-green-300 dark:border-green-700 border-l-4 border-l-green-500 bg-white dark:bg-gray-900 shadow-lg shadow-green-500/5',
+    'border-green-300 dark:border-green-700 bg-white dark:bg-gray-900 shadow-xl shadow-green-500/10',
   viviendas:
-    'border-orange-300 dark:border-orange-700 border-l-4 border-l-orange-500 bg-white dark:bg-gray-900 shadow-lg shadow-orange-500/5',
+    'border-orange-300 dark:border-orange-700 bg-white dark:bg-gray-900 shadow-xl shadow-orange-500/10',
   clientes:
-    'border-cyan-300 dark:border-cyan-700 border-l-4 border-l-cyan-500 bg-white dark:bg-gray-900 shadow-lg shadow-cyan-500/5',
+    'border-cyan-300 dark:border-cyan-700 bg-white dark:bg-gray-900 shadow-xl shadow-cyan-500/10',
   negociaciones:
-    'border-pink-300 dark:border-pink-700 border-l-4 border-l-pink-500 bg-white dark:bg-gray-900 shadow-lg shadow-pink-500/5',
+    'border-pink-300 dark:border-pink-700 bg-white dark:bg-gray-900 shadow-xl shadow-pink-500/10',
   abonos:
-    'border-blue-300 dark:border-blue-700 border-l-4 border-l-blue-500 bg-white dark:bg-gray-900 shadow-lg shadow-blue-500/5',
+    'border-blue-300 dark:border-blue-700 bg-white dark:bg-gray-900 shadow-xl shadow-blue-500/10',
   documentos:
-    'border-red-300 dark:border-red-700 border-l-4 border-l-red-500 bg-white dark:bg-gray-900 shadow-lg shadow-red-500/5',
+    'border-red-300 dark:border-red-700 bg-white dark:bg-gray-900 shadow-xl shadow-red-500/10',
   auditorias:
-    'border-blue-300 dark:border-blue-700 border-l-4 border-l-blue-500 bg-white dark:bg-gray-900 shadow-lg shadow-blue-500/5',
+    'border-blue-300 dark:border-blue-700 bg-white dark:bg-gray-900 shadow-xl shadow-blue-500/10',
 }
 
 const STEP_CIRCLE_ACTIVE: Record<string, string> = {
@@ -59,16 +59,6 @@ const STEP_CIRCLE_ACTIVE: Record<string, string> = {
     'w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center',
   auditorias:
     'w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center',
-}
-
-const STEP_NUMBER_ACTIVE: Record<string, string> = {
-  proyectos: 'text-sm font-bold text-green-600 dark:text-green-400',
-  viviendas: 'text-sm font-bold text-orange-600 dark:text-orange-400',
-  clientes: 'text-sm font-bold text-cyan-600 dark:text-cyan-400',
-  negociaciones: 'text-sm font-bold text-pink-600 dark:text-pink-400',
-  abonos: 'text-sm font-bold text-blue-600 dark:text-blue-400',
-  documentos: 'text-sm font-bold text-red-600 dark:text-red-400',
-  auditorias: 'text-sm font-bold text-blue-600 dark:text-blue-400',
 }
 
 const FIELD_LABEL_VALID: Record<string, string> = {
@@ -133,20 +123,19 @@ export const getAccordionWizardStyles = (moduleName: ModuleName) => {
     section: {
       base: 'rounded-2xl border-2 transition-all duration-200',
       completed:
-        'border-gray-200 dark:border-gray-700 border-l-4 border-l-green-500 bg-white dark:bg-gray-900 hover:shadow-md cursor-pointer px-6 py-4',
+        'group rounded-2xl border border-gray-200 bg-white px-4 py-3 sm:px-5 cursor-pointer transition-all hover:border-green-300 hover:shadow-md dark:border-gray-800 dark:bg-gray-900/70 dark:hover:border-green-800',
       active: `rounded-2xl border-2 overflow-hidden ${SECTION_ACTIVE[moduleName] ?? SECTION_ACTIVE[fallback]}`,
       pending:
-        'border-gray-200 dark:border-gray-800 border-l-4 border-l-gray-300 dark:border-l-gray-600 bg-gray-50 dark:bg-gray-900/50 px-6 py-4 opacity-50',
+        'rounded-2xl border border-dashed border-gray-300 px-4 py-3 sm:px-5 opacity-60 dark:border-gray-700',
     },
     stepCircle: {
-      completed:
-        'w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center',
       active: STEP_CIRCLE_ACTIVE[moduleName] ?? STEP_CIRCLE_ACTIVE[fallback],
+      completed:
+        'w-9 h-9 flex-shrink-0 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 shadow-sm shadow-green-500/30 flex items-center justify-center',
       pending:
-        'w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center',
+        'w-9 h-9 flex-shrink-0 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center',
     },
     stepNumber: {
-      active: STEP_NUMBER_ACTIVE[moduleName] ?? STEP_NUMBER_ACTIVE[fallback],
       pending: 'text-sm font-medium text-gray-400 dark:text-gray-500',
     },
     progressBar: {
@@ -175,6 +164,6 @@ export const getAccordionWizardStyles = (moduleName: ModuleName) => {
       dotActive: DOT_ACTIVE[moduleName] ?? DOT_ACTIVE[fallback],
       dotPending: 'w-2 bg-gray-300 dark:bg-gray-600',
     },
-    editButton: `${theme.classes.text.primary} text-xs font-medium flex items-center gap-1 hover:opacity-80 transition-opacity`,
+    editButton: `${theme.classes.text.primary} flex flex-shrink-0 items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors hover:bg-gray-100 dark:hover:bg-gray-800`,
   } as const
 }

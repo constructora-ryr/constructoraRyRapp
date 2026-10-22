@@ -2,12 +2,13 @@
 
 /**
  * Crear o editar una nota del historial. Lógica en useNotaFormulario; la
- * carcasa es la misma de "Ver detalle" (ModalHistorial).
+ * carcasa es la misma de "Ver detalle" (ModalDetalle).
  */
 
 import { FileEdit, Info, Loader2, Save, Star } from 'lucide-react'
 
 import { Cargador } from '@/shared/components/carga'
+import { ModalDetalle } from '@/shared/components/modals/ModalDetalle'
 import { RichTextEditor } from '@/shared/components/rich-text/RichTextEditor'
 import { cn } from '@/shared/utils/helpers'
 
@@ -17,8 +18,6 @@ import {
   MIN_CONTENIDO,
   useNotaFormulario,
 } from '../nota/useNotaFormulario'
-
-import { ModalHistorial } from './ModalHistorial'
 
 const etiqueta =
   'mb-1.5 flex items-center justify-between gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300'
@@ -40,7 +39,7 @@ export function NotaModal({
   const f = useNotaFormulario({ clienteId, notaId, onGuardada: onClose })
 
   return (
-    <ModalHistorial
+    <ModalDetalle
       onClose={onClose}
       bloqueado={f.guardando}
       gradient={
@@ -217,6 +216,6 @@ export function NotaModal({
           </p>
         </form>
       )}
-    </ModalHistorial>
+    </ModalDetalle>
   )
 }

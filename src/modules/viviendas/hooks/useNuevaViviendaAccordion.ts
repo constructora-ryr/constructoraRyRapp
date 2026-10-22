@@ -1,17 +1,13 @@
 /**
- * useNuevaViviendaAccordion — Hook que orquesta la creación de vivienda
- * con el patrón Accordion Wizard (5 pasos).
- *
- * ✅ Separación de responsabilidades
- * ✅ Validación por paso (sync + async)
- * ✅ Cálculos financieros en tiempo real
- * ✅ Estado de sección (completed/active/pending)
+ * useNuevaViviendaAccordion — orquesta la creación de vivienda en 5 pasos:
+ * estado de cada paso, validación por paso (incluidas las reglas cruzadas),
+ * resúmenes de los pasos cerrados y el guardado.
  */
 
 import { useCallback, useMemo, useState } from 'react'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
+import { useForm, type Resolver } from 'react-hook-form'
 import { toast } from 'sonner'
 
 import { useRouter } from 'next/navigation'
@@ -32,26 +28,32 @@ import {
 import type { ViviendaSchemaType } from '../schemas/vivienda.schemas'
 import { viviendasService } from '../services/viviendas.service'
 import type { ViviendaFormData } from '../types'
+import { formatCurrency } from '../utils'
 
+import { useNombresUbicacion } from './usePasoUbicacion'
 import { useViviendaFinanciero } from './useViviendaFinanciero'
 import { useCrearViviendaMutation } from './useViviendasQuery'
 
 export type { ViviendaFormValues } from '../schemas/nueva-vivienda-accordion.schema'
 export { PASOS_VIVIENDA }
 
+const TOTAL_PASOS = PASOS_VIVIENDA.length
+const CAMPOS_POR_PASO: Record<number, readonly (keyof ViviendaSchemaType)[]> = {
+  1: FIELDS_PASO_1,
+  2: FIELDS_PASO_2,
+  3: FIELDS_PASO_3,
+  4: FIELDS_PASO_4,
+}
+
 export function useNuevaViviendaAccordion() {
   const router = useRouter()
   const crearMutation = useCrearViviendaMutation({ showToast: false })
 
   const [pasoActual, setPasoActual] = useState(1)
-  const [pasosCompletados, setPasosCompletados] = useState<Set<number>>(
-    new Set()
-  )
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [completados, setCompletados] = useState<Set<number>>(new Set())
   const [isValidating, setIsValidating] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
 
-  // ── Formulario ──────────────────────────────────────
   const {
     register,
     watch,
@@ -63,8 +65,8 @@ export function useNuevaViviendaAccordion() {
   } = useForm<ViviendaSchemaType>({
     resolver: zodResolver(
       nuevaViviendaAccordionSchema
-    ) as unknown as import('react-hook-form').Resolver<ViviendaSchemaType>,
-    mode: 'onChange',
+    ) as unknown as Resolver<ViviendaSchemaType>,
+    mode: 'onTouched',
     defaultValues: {
       proyecto_id: '',
       manzana_id: '',
@@ -85,161 +87,129 @@ export function useNuevaViviendaAccordion() {
   })
 
   const formData = watch()
+  const nombres = useNombresUbicacion(formData.proyecto_id, formData.manzana_id)
+  const financiero = useViviendaFinanciero({
+    valor_base: formData.valor_base ?? 0,
+    es_esquinera: formData.es_esquinera ?? false,
+    recargo_esquinera: formData.recargo_esquinera ?? 0,
+  })
 
-  // ── Cálculos financieros (sub-hook) ────────────────
-  const { gastosNotariales, configuracionRecargos, resumenFinanciero } =
-    useViviendaFinanciero({
-      valor_base: formData.valor_base ?? 0,
-      es_esquinera: formData.es_esquinera ?? false,
-      recargo_esquinera: formData.recargo_esquinera ?? 0,
-    })
-
-  // ── Estado de cada sección ──────────────────────────
   const getEstadoPaso = useCallback(
-    (paso: number): SectionStatus => {
-      if (pasosCompletados.has(paso)) return 'completed'
-      if (paso === pasoActual) return 'active'
-      return 'pending'
-    },
-    [pasoActual, pasosCompletados]
+    (paso: number): SectionStatus =>
+      completados.has(paso)
+        ? 'completed'
+        : paso === pasoActual
+          ? 'active'
+          : 'pending',
+    [pasoActual, completados]
   )
 
-  // ── Resumen de cada sección completada ──────────────
-  const summaryPaso1: SummaryItem[] = useMemo(
-    () => [
-      {
-        label: 'Proyecto',
-        value: formData.proyecto_id ? 'Seleccionado' : undefined,
-      },
-      {
-        label: 'Manzana',
-        value: formData.manzana_id ? 'Seleccionada' : undefined,
-      },
-      { label: 'Número', value: formData.numero || undefined },
-    ],
-    [formData.proyecto_id, formData.manzana_id, formData.numero]
-  )
-
-  const summaryPaso2: SummaryItem[] = useMemo(() => {
-    const definidos = [
+  // ── Resúmenes de los pasos cerrados ─────────────────
+  const resumenes = useMemo((): Record<number, SummaryItem[]> => {
+    const linderos = [
       formData.lindero_norte,
       formData.lindero_sur,
       formData.lindero_oriente,
       formData.lindero_occidente,
     ].filter(Boolean).length
-    return [
-      {
-        label: 'Linderos',
-        value: definidos > 0 ? `${definidos} de 4 definidos` : undefined,
-      },
-    ]
-  }, [
-    formData.lindero_norte,
-    formData.lindero_sur,
-    formData.lindero_oriente,
-    formData.lindero_occidente,
-  ])
+    return {
+      1: [
+        { label: 'Proyecto', value: nombres.proyecto ?? undefined },
+        {
+          label: 'Manzana',
+          value: nombres.manzana ? `Mz. ${nombres.manzana}` : undefined,
+        },
+        {
+          label: 'Casa',
+          value: formData.numero ? `#${formData.numero}` : undefined,
+        },
+      ],
+      2: [{ label: 'Linderos', value: `${linderos} de 4 linderos` }],
+      3: [
+        {
+          label: 'Matrícula',
+          value: formData.matricula_inmobiliaria || undefined,
+        },
+        {
+          label: 'Áreas',
+          value: formData.area_lote
+            ? `${formData.area_lote} / ${formData.area_construida} m²`
+            : undefined,
+        },
+      ],
+      4: [
+        {
+          label: 'Valor total',
+          value: formatCurrency(financiero.resumenFinanciero.valor_total),
+        },
+      ],
+    }
+  }, [formData, nombres, financiero.resumenFinanciero.valor_total])
 
-  const summaryPaso3: SummaryItem[] = useMemo(
-    () => [
-      {
-        label: 'Matrícula',
-        value: formData.matricula_inmobiliaria || undefined,
-      },
-      {
-        label: 'Área',
-        value: formData.area_lote ? `${formData.area_lote} m²` : undefined,
-      },
-    ],
-    [formData.matricula_inmobiliaria, formData.area_lote]
-  )
-
-  const summaryPaso4: SummaryItem[] = useMemo(() => {
-    const val = resumenFinanciero.valor_total
-    return [
-      {
-        label: 'Valor Total',
-        value: val > 0 ? `$${val.toLocaleString('es-CO')}` : undefined,
-      },
-    ]
-  }, [resumenFinanciero.valor_total])
-
-  // ── Progreso global ─────────────────────────────────
-  const progress = useMemo(() => {
-    return Math.round((pasosCompletados.size / PASOS_VIVIENDA.length) * 100)
-  }, [pasosCompletados.size])
-
-  // ── Validación por paso ─────────────────────────────
-  const validarPasoActual = useCallback(async (): Promise<boolean> => {
-    setIsValidating(true)
-    try {
-      switch (pasoActual) {
-        case 1:
-          return await trigger([...FIELDS_PASO_1])
-        case 2:
-          return await trigger([...FIELDS_PASO_2])
-        case 3: {
-          const syncValid = await trigger([...FIELDS_PASO_3])
-          if (!syncValid) return false
-
-          const erroresEncontrados: Array<{ campo: string; mensaje: string }> =
-            []
-
-          const areaLote = Number(getValues('area_lote'))
-          const areaConstruida = Number(getValues('area_construida'))
-          if (areaConstruida > areaLote) {
-            erroresEncontrados.push({
-              campo: 'area_construida',
-              mensaje: 'El área construida no puede ser mayor al área del lote',
-            })
-          }
-
-          const matricula = getValues('matricula_inmobiliaria')
-          if (matricula && matricula.length >= 7) {
-            try {
-              const resultado =
-                await viviendasService.verificarMatriculaUnica(matricula)
-              if (!resultado.esUnica && resultado.viviendaDuplicada) {
-                erroresEncontrados.push({
-                  campo: 'matricula_inmobiliaria',
-                  mensaje: `Matrícula ya registrada en Mz. ${resultado.viviendaDuplicada.manzana} Casa #${resultado.viviendaDuplicada.numero}`,
-                })
-              }
-            } catch {
-              // No bloquear si falla la red
-            }
-          }
-
-          if (erroresEncontrados.length > 0) {
-            erroresEncontrados.forEach(e => {
-              setError(e.campo as keyof ViviendaSchemaType, {
-                type: 'manual',
-                message: e.mensaje,
-              })
+  // ── Reglas que cruzan campos o consultan la BD ──────
+  const validarReglasExtra = useCallback(
+    async (paso: number): Promise<boolean> => {
+      const valores = getValues()
+      if (paso === 3) {
+        if (Number(valores.area_construida) > Number(valores.area_lote)) {
+          setError('area_construida', {
+            type: 'manual',
+            message: 'No puede ser mayor que el área del lote',
+          })
+          return false
+        }
+        try {
+          const r = await viviendasService.verificarMatriculaUnica(
+            valores.matricula_inmobiliaria.trim()
+          )
+          if (!r.esUnica && r.viviendaDuplicada) {
+            setError('matricula_inmobiliaria', {
+              type: 'manual',
+              message: `Ya registrada en Mz. ${r.viviendaDuplicada.manzana} casa ${r.viviendaDuplicada.numero}`,
             })
             return false
           }
-          return true
+        } catch {
+          // Sin red no se bloquea: el índice único de la BD lo impide al guardar
         }
-        case 4:
-          return await trigger([...FIELDS_PASO_4])
-        case 5:
-          return true
-        default:
-          return true
       }
-    } finally {
-      setIsValidating(false)
-    }
-  }, [pasoActual, trigger, getValues, setError])
+      if (paso === 4 && valores.es_esquinera && !valores.recargo_esquinera) {
+        setError('recargo_esquinera', {
+          type: 'manual',
+          message: 'Elige el recargo de la esquinera',
+        })
+        return false
+      }
+      return true
+    },
+    [getValues, setError]
+  )
+
+  const validarPaso = useCallback(
+    async (paso: number): Promise<boolean> => {
+      const campos = CAMPOS_POR_PASO[paso]
+      if (!campos) return true
+      setIsValidating(true)
+      try {
+        return (await trigger([...campos])) && (await validarReglasExtra(paso))
+      } finally {
+        setIsValidating(false)
+      }
+    },
+    [trigger, validarReglasExtra]
+  )
 
   // ── Navegación ──────────────────────────────────────
+  const reabrirDesde = useCallback((paso: number) => {
+    setCompletados(prev => new Set([...prev].filter(p => p < paso)))
+    setPasoActual(paso)
+  }, [])
+
   const irSiguiente = useCallback(async () => {
-    const valido = await validarPasoActual()
-    if (!valido) return
-    setPasosCompletados(prev => new Set(prev).add(pasoActual))
-    setPasoActual(prev => Math.min(prev + 1, PASOS_VIVIENDA.length))
-  }, [pasoActual, validarPasoActual])
+    if (!(await validarPaso(pasoActual))) return
+    setCompletados(prev => new Set(prev).add(pasoActual))
+    setPasoActual(prev => Math.min(prev + 1, TOTAL_PASOS))
+  }, [pasoActual, validarPaso])
 
   const irAtras = useCallback(() => {
     setPasoActual(prev => Math.max(prev - 1, 1))
@@ -247,129 +217,63 @@ export function useNuevaViviendaAccordion() {
 
   const irAPaso = useCallback(
     (paso: number) => {
-      if (pasosCompletados.has(paso)) {
-        setPasosCompletados(prev => {
-          const next = new Set(prev)
-          for (let i = paso; i <= PASOS_VIVIENDA.length; i++) next.delete(i)
-          return next
-        })
-        setPasoActual(paso)
-      }
+      if (completados.has(paso)) reabrirDesde(paso)
     },
-    [pasosCompletados]
+    [completados, reabrirDesde]
   )
 
-  // ── Submit final ────────────────────────────────────
-  const handleSubmitFinal = useCallback(async () => {
-    const valido = await validarPasoActual()
-    if (!valido) return
+  // ── Guardar ─────────────────────────────────────────
+  const handleSubmit = useCallback(async () => {
+    const valores = getValues()
+    const datos = {
+      ...valores,
+      area_lote: Number(valores.area_lote),
+      area_construida: Number(valores.area_construida),
+      valor_base: Number(valores.valor_base),
+      recargo_esquinera: valores.es_esquinera
+        ? Number(valores.recargo_esquinera) || 0
+        : 0,
+    } as unknown as ViviendaFormData
 
-    setPasosCompletados(prev => new Set(prev).add(pasoActual))
-    setIsSubmitting(true)
     try {
-      const values = getValues()
-      const data = {
-        ...values,
-        area_lote: Number(values.area_lote),
-        area_construida: Number(values.area_construida),
-        valor_base: Number(values.valor_base),
-        recargo_esquinera: Number(values.recargo_esquinera) || 0,
-      } as unknown as ViviendaFormData
-
-      await crearMutation.mutateAsync(data)
-      toast.success('¡Vivienda creada exitosamente!')
+      await crearMutation.mutateAsync(datos)
       setShowSuccess(true)
-      setTimeout(() => router.push('/viviendas'), 1800)
+      setTimeout(() => router.push('/viviendas'), 1200)
     } catch (error) {
-      const msg =
-        error instanceof Error ? error.message : 'Error al crear vivienda'
-      toast.error(msg)
-      if (error instanceof Error && error.message.includes('matrícula')) {
-        setError('matricula_inmobiliaria', {
-          type: 'manual',
-          message: error.message,
-        })
-        setPasoActual(3)
-        setPasosCompletados(prev => {
-          const next = new Set(prev)
-          for (let i = 3; i <= PASOS_VIVIENDA.length; i++) next.delete(i)
-          return next
-        })
+      const mensaje =
+        error instanceof Error ? error.message : 'No se pudo crear la vivienda'
+      toast.error('No se pudo crear la vivienda', { description: mensaje })
+      // Llevar al paso del campo en conflicto, con el error en el campo
+      if (mensaje.includes('matrícula')) {
+        reabrirDesde(3)
+        setError('matricula_inmobiliaria', { type: 'manual', message: mensaje })
+      } else if (mensaje.includes('casa')) {
+        reabrirDesde(1)
+        setError('numero', { type: 'manual', message: mensaje })
       }
-    } finally {
-      setIsSubmitting(false)
     }
-  }, [
-    pasoActual,
-    validarPasoActual,
-    getValues,
-    crearMutation,
-    router,
-    setError,
-  ])
-
-  // ── Preview para paso 5 (resumen) ──────────────────
-  const previewData = useMemo(
-    () => ({
-      proyecto: formData.proyecto_id || null,
-      manzana: formData.manzana_id || null,
-      numero: formData.numero || null,
-      linderos: {
-        norte: formData.lindero_norte || null,
-        sur: formData.lindero_sur || null,
-        oriente: formData.lindero_oriente || null,
-        occidente: formData.lindero_occidente || null,
-      },
-      legal: {
-        matricula: formData.matricula_inmobiliaria || null,
-        nomenclatura: formData.nomenclatura || null,
-        areaLote: Number(formData.area_lote) || 0,
-        areaConstruida: Number(formData.area_construida) || 0,
-        tipoVivienda: formData.tipo_vivienda || 'Regular',
-      },
-      financiero: {
-        valorBase: Number(formData.valor_base) || 0,
-        esEsquinera: formData.es_esquinera || false,
-        recargoEsquinera: Number(formData.recargo_esquinera) || 0,
-      },
-    }),
-    [formData]
-  )
+  }, [getValues, crearMutation, router, reabrirDesde, setError])
 
   return {
-    // Pasos
     pasos: PASOS_VIVIENDA,
     pasoActual,
     getEstadoPaso,
-    progress,
-
-    // Navegación
     irSiguiente,
     irAtras,
     irAPaso,
+    resumenes,
+    nombres,
 
-    // Resúmenes
-    summaryPaso1,
-    summaryPaso2,
-    summaryPaso3,
-    summaryPaso4,
-
-    // Form
     register,
     errors,
     setValue,
     watch,
     formData,
-    previewData,
 
-    // Finanzas
-    resumenFinanciero,
-    gastosNotariales,
-    configuracionRecargos,
+    ...financiero,
 
-    // Submit
-    handleSubmit: handleSubmitFinal,
-    isSubmitting,
+    handleSubmit,
+    isSubmitting: crearMutation.isPending,
     isValidating,
     showSuccess,
   }

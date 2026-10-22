@@ -29,6 +29,10 @@ if (!supabaseServiceRoleKey) {
   throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY')
 }
 
+// Ya validadas arriba: aquí TypeScript las conoce como string
+const URL_SUPABASE: string = supabaseUrl
+const LLAVE_SERVICIO: string = supabaseServiceRoleKey
+
 /**
  * Cliente Admin de Supabase
  * ⚠️ Solo usar en server-side (API routes, server components, middleware)
@@ -43,6 +47,19 @@ export const supabaseAdmin = createClient<Database>(
     },
   }
 )
+
+/**
+ * Cliente admin que identifica al usuario que hizo la acción. La auditoría
+ * (trigger registrar_auditoria) lee la cabecera `x-auditoria-usuario`, y solo
+ * la acepta en peticiones con service role. Usar en las rutas que escriben
+ * datos en nombre de un usuario ya verificado.
+ */
+export function adminComo(usuarioId: string) {
+  return createClient<Database>(URL_SUPABASE, LLAVE_SERVICIO, {
+    auth: { autoRefreshToken: false, persistSession: false },
+    global: { headers: { 'x-auditoria-usuario': usuarioId } },
+  })
+}
 
 /**
  * Verificar que el cliente admin está configurado correctamente

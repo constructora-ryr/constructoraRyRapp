@@ -9,7 +9,6 @@ import {
   showEntitySuccessToast,
   showLoginSuccessToast,
   showLogoutErrorToast,
-  showLogoutToast,
 } from '@/components/toasts/custom-toasts'
 import { IconoToast } from '@/components/toasts/toast-estilos'
 
@@ -91,7 +90,6 @@ const GRUPOS: {
     titulo: 'Con ícono propio',
     ejemplos: [
       { label: 'Bienvenida (login)', run: showLoginSuccessToast },
-      { label: 'Sesión cerrada', run: showLogoutToast },
       { label: 'Error al cerrar sesión', run: showLogoutErrorToast },
       {
         label: 'Entidad creada',

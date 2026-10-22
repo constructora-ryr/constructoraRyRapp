@@ -164,6 +164,10 @@ export async function obtenerConfiguracionRecargos(): Promise<
   return (data || []) as ConfiguracionRecargo[]
 }
 
+/**
+ * Gastos notariales vigentes. Sin valor configurado se lanza error en vez de
+ * suponer uno: el total de la vivienda depende de este número.
+ */
 export async function obtenerGastosNotariales(): Promise<number> {
   const { data, error } = await supabase
     .from('configuracion_recargos')
@@ -174,10 +178,13 @@ export async function obtenerGastosNotariales(): Promise<number> {
 
   if (error) {
     errorLog('Error obteniendo gastos notariales', error)
-    return 5_000_000
+    throw error
   }
-
-  return data?.valor || 5_000_000
+  if (data?.valor == null)
+    throw new Error(
+      'No hay gastos notariales activos configurados. Revisa la configuración de recargos.'
+    )
+  return Number(data.valor)
 }
 
 export async function obtenerTodas(): Promise<Vivienda[]> {
@@ -214,18 +221,35 @@ export async function obtenerPorId(id: string): Promise<Vivienda | null> {
   return data as unknown as Vivienda
 }
 
+interface NegociacionDetalle {
+  valor_total_pagar: number | null
+  clientes: {
+    id: string
+    nombres: string
+    apellidos: string
+    telefono: string | null
+    email: string | null
+  } | null
+  abonos_historial: Array<{ monto: number; estado: string }>
+}
+
+/**
+ * Detalle de una vivienda en UNA consulta: manzana, proyecto y, si tiene
+ * negociación vigente, su cliente y abonos activos para calcular el saldo.
+ * Los abonos salen de la negociación actual (no de la vivienda): tras una
+ * renuncia y una nueva venta no se mezclan los pagos de dos clientes.
+ */
 export async function obtenerVivienda(id: string): Promise<Vivienda> {
   const { data, error } = await supabase
     .from('viviendas')
     .select(
       `
       *,
-      manzanas (
-        nombre,
-        proyecto_id,
-        proyectos (
-          nombre
-        )
+      manzanas (nombre, proyecto_id, proyectos (nombre)),
+      negociacion:negociaciones!viviendas_negociacion_id_fkey (
+        valor_total_pagar,
+        clientes (id, nombres, apellidos, telefono, email),
+        abonos_historial!abonos_historial_negociacion_id_fkey (monto, estado)
       )
     `
     )
@@ -235,73 +259,34 @@ export async function obtenerVivienda(id: string): Promise<Vivienda> {
   if (error) throw error
   if (!data) throw new Error('Vivienda no encontrada')
 
-  const vivienda = data as unknown as Vivienda
+  const { negociacion, ...fila } = data as unknown as Vivienda & {
+    negociacion: NegociacionDetalle | null
+  }
+  const vivienda = fila as Vivienda
 
-  if (vivienda.cliente_id) {
-    const { data: clienteData, error: clienteError } = await supabase
-      .from('clientes')
-      .select('id, nombres, apellidos, telefono, email')
-      .eq('id', vivienda.cliente_id)
-      .single()
-
-    if (!clienteError && clienteData) {
-      vivienda.clientes = {
-        id: clienteData.id,
-        nombre_completo: `${clienteData.nombres} ${clienteData.apellidos}`,
-        telefono: clienteData.telefono ?? undefined,
-        email: clienteData.email ?? undefined,
-      }
-    }
-
-    if (vivienda.negociacion_id) {
-      const [{ data: abonosData, error: abonosError }, { data: negData }] =
-        await Promise.all([
-          supabase
-            .from('abonos_historial' as unknown as 'abonos_historial')
-            .select('monto')
-            .eq('negociacion_id', vivienda.negociacion_id)
-            .eq('estado', 'Activo'),
-          supabase
-            .from('negociaciones')
-            .select('valor_total_pagar')
-            .eq('id', vivienda.negociacion_id)
-            .single(),
-        ])
-
-      const valorBase =
-        Number(
-          (negData as { valor_total_pagar?: number } | null)?.valor_total_pagar
-        ) || vivienda.valor_total
-      vivienda.valor_negociado =
-        Number(
-          (negData as { valor_total_pagar?: number } | null)?.valor_total_pagar
-        ) || undefined
-
-      if (!abonosError && abonosData) {
-        const totalAbonado = (abonosData as Array<{ monto: number }>).reduce(
-          (sum: number, abono) => sum + Number(abono.monto),
-          0
-        )
-        vivienda.total_abonado = totalAbonado
-        vivienda.saldo_pendiente = Math.max(0, valorBase - totalAbonado)
-        vivienda.porcentaje_pagado =
-          valorBase > 0
-            ? Math.round((totalAbonado / valorBase) * 100 * 100) / 100
-            : 0
-        vivienda.cantidad_abonos = abonosData.length
-      } else {
-        vivienda.total_abonado = 0
-        vivienda.saldo_pendiente = valorBase
-        vivienda.porcentaje_pagado = 0
-        vivienda.cantidad_abonos = 0
-      }
-    } else {
-      vivienda.total_abonado = 0
-      vivienda.saldo_pendiente = vivienda.valor_total
-      vivienda.porcentaje_pagado = 0
-      vivienda.cantidad_abonos = 0
+  const cliente = negociacion?.clientes
+  if (cliente) {
+    vivienda.clientes = {
+      id: cliente.id,
+      nombre_completo: `${cliente.nombres} ${cliente.apellidos}`.trim(),
+      telefono: cliente.telefono ?? undefined,
+      email: cliente.email ?? undefined,
     }
   }
+
+  const activos = (negociacion?.abonos_historial ?? []).filter(
+    a => a.estado === 'Activo'
+  )
+  const valorNegociado = Number(negociacion?.valor_total_pagar) || undefined
+  const base = valorNegociado ?? vivienda.valor_total
+  const abonado = activos.reduce((suma, a) => suma + Number(a.monto), 0)
+
+  vivienda.valor_negociado = valorNegociado
+  vivienda.total_abonado = abonado
+  vivienda.cantidad_abonos = activos.length
+  vivienda.saldo_pendiente = Math.max(0, base - abonado)
+  vivienda.porcentaje_pagado =
+    base > 0 ? Math.round((abonado / base) * 10000) / 100 : 0
 
   return vivienda
 }

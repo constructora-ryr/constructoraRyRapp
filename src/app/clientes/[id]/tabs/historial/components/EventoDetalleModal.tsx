@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * Detalle de un evento del historial: la carcasa común (ModalHistorial) con
+ * Detalle de un evento del historial: la carcasa común (ModalDetalle) con
  * el color del módulo del evento, el renderer de su tipo como contenido,
  * anterior/siguiente y un acceso a la pestaña donde vive ese dato.
  */
@@ -9,13 +9,12 @@
 import { ArrowRight, Clock } from 'lucide-react'
 
 import type { EventoHistorialHumanizado } from '@/modules/clientes/types/historial.types'
+import { ModalDetalle } from '@/shared/components/modals/ModalDetalle'
 import type { VisorNavegacion } from '@/shared/components/visor-archivo'
 
 import { getEventoRenderer } from '../renderers'
 import { MODULO_EVENTO, resumenCorto } from '../timeline/tono-evento'
 import { UsuarioEvento } from '../timeline/UsuarioEvento'
-
-import { ModalHistorial } from './ModalHistorial'
 
 export type TabCliente = 'general' | 'intereses' | 'negociacion' | 'documentos'
 
@@ -72,7 +71,7 @@ export function EventoDetalleModal({
   })
 
   return (
-    <ModalHistorial
+    <ModalDetalle
       onClose={onClose}
       navegacion={navegacion}
       gradient={colorEncabezado(evento)}
@@ -112,6 +111,6 @@ export function EventoDetalleModal({
     >
       {/* key: al navegar se monta de nuevo (vista previa, estado interno) */}
       <Renderer key={evento.id} evento={evento} />
-    </ModalHistorial>
+    </ModalDetalle>
   )
 }

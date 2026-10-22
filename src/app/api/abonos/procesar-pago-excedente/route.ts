@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { getServerPermissions } from '@/lib/auth/server'
-import { supabaseAdmin } from '@/lib/supabase/admin'
+import { adminComo } from '@/lib/supabase/admin'
 import { createRouteClient } from '@/lib/supabase/server-route'
 import { logger } from '@/lib/utils/logger'
 
@@ -21,6 +21,7 @@ export async function PATCH(request: NextRequest) {
     if (authError || !user) {
       return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
     }
+    const admin = adminComo(user.id)
 
     const permisos = await getServerPermissions()
     if (!permisos.isAdmin) {
@@ -39,7 +40,7 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    const { error } = await supabaseAdmin
+    const { error } = await admin
       .from('pagos_excedentes')
       .update({
         estado: 'procesado',

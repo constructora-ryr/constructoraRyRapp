@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { getServerPermissions } from '@/lib/auth/server'
-import { supabaseAdmin } from '@/lib/supabase/admin'
+import { adminComo } from '@/lib/supabase/admin'
 import type { Json } from '@/lib/supabase/database.types'
 import { createRouteClient } from '@/lib/supabase/server-route'
 import { formatDateForDB } from '@/lib/utils/date.utils'
@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
     if (authError || !user) {
       return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
     }
+    const admin = adminComo(user.id)
 
     // 0b. Verificar permiso de registrar abonos según permisos_rol
     const permisos = await getServerPermissions('abonos')
@@ -166,7 +167,7 @@ export async function POST(request: NextRequest) {
     const fechaAbonoDB = formatDateForDB(fecha_abono)
 
     // 4. Registrar el abono (numero_recibo se asigna automáticamente por secuencia BD)
-    const { data: nuevoAbono, error: abonoError } = await supabaseAdmin
+    const { data: nuevoAbono, error: abonoError } = await admin
       .from('abonos_historial')
       .insert({
         negociacion_id,
@@ -196,7 +197,7 @@ export async function POST(request: NextRequest) {
     // 4b. Si fue un overpayment confirmado por admin, registrar la devolución pendiente
     if (es_overpayment && montoSinMora > saldoDisponible) {
       const montoExcedente = montoSinMora - saldoDisponible
-      await supabaseAdmin
+      await admin
         .from('pagos_excedentes')
         .insert({
           negociacion_id,
@@ -233,12 +234,12 @@ export async function POST(request: NextRequest) {
 
       // Completar negociación + actualizar vivienda en paralelo
       await Promise.all([
-        supabaseAdmin
+        admin
           .from('negociaciones')
           .update({ estado: 'Completada', fecha_completada: hoy })
           .eq('id', negociacion_id),
         negActualizada.vivienda_id
-          ? supabaseAdmin
+          ? admin
               .from('viviendas')
               .update({ estado: 'Propietario' })
               .eq('id', negActualizada.vivienda_id)
@@ -247,7 +248,7 @@ export async function POST(request: NextRequest) {
 
       // Promover cliente a Propietario
       if (negActualizada.cliente_id) {
-        const { data: clienteRow } = await supabaseAdmin
+        const { data: clienteRow } = await admin
           .from('clientes')
           .update({ estado: 'Propietario' })
           .eq('id', negActualizada.cliente_id)
@@ -323,7 +324,7 @@ export async function POST(request: NextRequest) {
         proyecto_nombre: viviendaCtx?.manzanas?.proyectos?.nombre ?? null,
       }
 
-      await supabaseAdmin.from('audit_log').insert({
+      await admin.from('audit_log').insert({
         accion: 'CREATE',
         tabla: 'abonos_historial',
         registro_id: nuevoAbono.id,

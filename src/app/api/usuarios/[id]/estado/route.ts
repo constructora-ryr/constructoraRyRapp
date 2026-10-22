@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-import { supabaseAdmin } from '@/lib/supabase/admin'
+import { adminComo, supabaseAdmin } from '@/lib/supabase/admin'
 import { createRouteClient } from '@/lib/supabase/server-route'
 import { logger } from '@/lib/utils/logger'
 import type { EstadoUsuario } from '@/modules/usuarios/types'
@@ -28,6 +28,7 @@ export async function PATCH(
     if (!user) {
       return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
     }
+    const admin = adminComo(user.id)
 
     // 2. Verificar que el solicitante es Administrador activo
     const { data: caller } = await supabase
@@ -63,14 +64,14 @@ export async function PATCH(
 
     // 5. Protección: no inactivar al único Administrador activo
     if (nuevoEstado === 'Inactivo') {
-      const { data: target } = await supabaseAdmin
+      const { data: target } = await admin
         .from('usuarios')
         .select('rol')
         .eq('id', id)
         .single()
 
       if (target?.rol === 'Administrador') {
-        const { count } = await supabaseAdmin
+        const { count } = await admin
           .from('usuarios')
           .select('*', { count: 'exact', head: true })
           .eq('rol', 'Administrador')
@@ -89,7 +90,7 @@ export async function PATCH(
     }
 
     // 6. Actualizar estado con service role (bypasa RLS)
-    const { error: updateError } = await supabaseAdmin
+    const { error: updateError } = await admin
       .from('usuarios')
       .update({ estado: nuevoEstado })
       .eq('id', id)

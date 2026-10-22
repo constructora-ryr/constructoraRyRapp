@@ -27,6 +27,7 @@ import Link from 'next/link'
 import { formatearDocumentoCompleto } from '@/lib/utils/documento.utils'
 import { formatNombreCompleto } from '@/lib/utils/string.utils'
 import type { Cliente, Negociacion } from '@/modules/clientes/types'
+import { DatoHero } from '@/shared/components/detalle/DatoHero'
 import { formatCOP } from '@/shared/components/list-page'
 import { Tooltip } from '@/shared/components/ui/Tooltip'
 import { CLIENTE_ESTADO_BADGE } from '@/shared/config/estados.colors'
@@ -53,29 +54,6 @@ const iniciales = (c: Cliente) =>
 
 const btnIcono =
   'flex h-10 w-10 items-center justify-center rounded-xl border border-white/30 bg-white/15 text-white backdrop-blur-sm transition-all hover:bg-white/25 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white/15'
-
-/** Cifra en vidrio dentro del encabezado */
-function DatoHero({
-  icon: Icon,
-  label,
-  valor,
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  valor: string
-}) {
-  return (
-    <div className='flex items-center gap-2.5 rounded-xl bg-white/15 px-3 py-2 ring-1 ring-white/25 backdrop-blur-sm'>
-      <Icon className='h-4 w-4 shrink-0 text-white/80' />
-      <div className='leading-tight'>
-        <p className='text-[10px] font-medium uppercase tracking-wider text-white/70'>
-          {label}
-        </p>
-        <p className='text-sm font-bold tabular-nums text-white'>{valor}</p>
-      </div>
-    </div>
-  )
-}
 
 /** Cifras de la negociación (hook aparte: solo se monta si hay negociación) */
 function DatosNegociacion({ negociacion }: { negociacion: Negociacion }) {

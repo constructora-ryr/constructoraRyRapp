@@ -90,8 +90,9 @@ export const nuevaViviendaStyles = {
     required: 'text-red-500',
 
     inputWrapper: 'relative',
+    // z-10: el <select> de FormSelect va después en el DOM y su fondo lo tapaba
     inputIcon:
-      'absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500 pointer-events-none',
+      'absolute left-3 top-1/2 -translate-y-1/2 z-10 w-5 h-5 text-gray-400 dark:text-gray-500 pointer-events-none',
     input:
       'w-full pl-10 pr-3 py-2 bg-white dark:bg-gray-900 border-2 border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all outline-none text-sm', // ← py-2, rounded-lg, focus:ring-2 (más compacto)
     inputError: 'border-red-500 focus:border-red-500 focus:ring-red-500/20',

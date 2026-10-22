@@ -1,21 +1,14 @@
 /**
- * ============================================
- * PÁGINA: Auditorías
- * ============================================
- *
- * ✅ PROTEGIDA POR MIDDLEWARE
- * - Middleware ya validó autenticación
- * - Middleware ya validó permisos (solo Administrador)
- * - No necesita <RequireView> wrapper
+ * Auditoría: solo administradores (lo valida el middleware y, en la base de
+ * datos, la política de lectura de la tabla `auditoria`).
  */
 
-import { getServerPermissions } from '@/lib/auth/server'
 import { AuditoriasView } from '@/modules/auditorias'
 
-export default async function AuditoriasPage() {
-  // ✅ Obtener permisos desde el servidor
-  const permisos = await getServerPermissions('auditorias')
+export const metadata = {
+  title: 'Auditoría | Constructora RyR',
+}
 
-  // ✅ Pasar permisos como props
-  return <AuditoriasView {...permisos} />
+export default function AuditoriasPage() {
+  return <AuditoriasView />
 }

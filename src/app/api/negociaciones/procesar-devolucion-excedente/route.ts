@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { getServerPermissions } from '@/lib/auth/server'
-import { supabaseAdmin } from '@/lib/supabase/admin'
+import { adminComo } from '@/lib/supabase/admin'
 import type { Database } from '@/lib/supabase/database.types'
 import { createRouteClient } from '@/lib/supabase/server-route'
 import { logger } from '@/lib/utils/logger'
@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
     if (authError || !user) {
       return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
     }
+    const admin = adminComo(user.id)
 
     // Requiere permiso de editar negociaciones (o ser admin)
     const permisos = await getServerPermissions('negociaciones')
@@ -105,7 +106,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar que la negociación existe
-    const { data: negRaw, error: negError } = await supabaseAdmin
+    const { data: negRaw, error: negError } = await admin
       .from('negociaciones')
       .select('id, cliente_id, valor_total_pagar, valor_total')
       .eq('id', negociacion_id)
@@ -141,7 +142,7 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await comprobanteFile.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
 
-    const { error: uploadError } = await supabaseAdmin.storage
+    const { error: uploadError } = await admin.storage
       .from(DOCS_BUCKET)
       .upload(filePath, buffer, {
         contentType: comprobanteFile.type,
@@ -180,13 +181,13 @@ export async function POST(request: NextRequest) {
       estado: 'activo',
     }
 
-    const { error: docInsertError } = await supabaseAdmin
+    const { error: docInsertError } = await admin
       .from('documentos_cliente')
       .insert(docData)
 
     if (docInsertError) {
       // El archivo subió pero no se registró — limpiar y fallar
-      void supabaseAdmin.storage.from(DOCS_BUCKET).remove([filePath])
+      void admin.storage.from(DOCS_BUCKET).remove([filePath])
       logger.error(
         '❌ Error registrando documento de devolución:',
         docInsertError
@@ -213,14 +214,14 @@ export async function POST(request: NextRequest) {
       excedente_devolucion_procesado_en: new Date().toISOString(),
     }
 
-    const { error: updateError } = await supabaseAdmin
+    const { error: updateError } = await admin
       .from('negociaciones')
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .update(updatePayload as any)
       .eq('id', negociacion_id)
 
     if (updateError) {
-      void supabaseAdmin.storage.from(DOCS_BUCKET).remove([filePath])
+      void admin.storage.from(DOCS_BUCKET).remove([filePath])
       logger.error(
         '❌ Error actualizando negociación con devolución:',
         updateError
@@ -235,7 +236,7 @@ export async function POST(request: NextRequest) {
     void (async () => {
       try {
         // Obtener nombre del usuario para mostrar en historial
-        const { data: usuarioPerfil } = await supabaseAdmin
+        const { data: usuarioPerfil } = await admin
           .from('usuarios')
           .select('nombres, apellidos')
           .eq('id', user.id)
@@ -247,7 +248,7 @@ export async function POST(request: NextRequest) {
 
         // Obtener datos de vivienda y proyecto para el historial
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: contexto } = (await (supabaseAdmin as any)
+        const { data: contexto } = (await (admin as any)
           .from('negociaciones')
           .select(
             `id,
@@ -269,7 +270,7 @@ export async function POST(request: NextRequest) {
           ? String(proyectos.nombre)
           : null
 
-        await supabaseAdmin.from('audit_log').insert({
+        await admin.from('audit_log').insert({
           tabla: 'negociaciones',
           accion: 'UPDATE',
           registro_id: negociacion_id,

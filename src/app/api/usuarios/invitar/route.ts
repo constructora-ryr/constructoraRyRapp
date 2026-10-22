@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-import { supabaseAdmin } from '@/lib/supabase/admin'
+import { adminComo } from '@/lib/supabase/admin'
 import { createRouteClient } from '@/lib/supabase/server-route'
 import { logger } from '@/lib/utils/logger'
 import type { Rol } from '@/modules/usuarios/types'
@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
     if (!adminUser) {
       return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
     }
+    const admin = adminComo(adminUser.id)
 
     const { data: adminPerfil } = await supabase
       .from('usuarios')
@@ -73,7 +74,7 @@ export async function POST(request: NextRequest) {
 
     // Crear usuario vía invitación — el usuario recibirá un email para establecer su contraseña
     const { data: inviteData, error: inviteError } =
-      await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+      await admin.auth.admin.inviteUserByEmail(email, {
         redirectTo: `${origin}/bienvenida`,
         data: { nombres, apellidos, rol },
       })
@@ -99,7 +100,7 @@ export async function POST(request: NextRequest) {
     await new Promise(resolve => setTimeout(resolve, 600))
 
     // Actualizar perfil con datos adicionales
-    const { error: updateError } = await supabaseAdmin
+    const { error: updateError } = await admin
       .from('usuarios')
       .update({
         telefono: telefono ?? null,
@@ -117,7 +118,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Obtener perfil completo
-    const { data: usuarioCreado } = await supabaseAdmin
+    const { data: usuarioCreado } = await admin
       .from('usuarios')
       .select('*')
       .eq('id', inviteData.user.id)

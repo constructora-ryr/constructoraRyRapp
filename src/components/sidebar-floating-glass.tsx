@@ -1,7 +1,9 @@
 ﻿'use client'
 
 import { AnimatePresence, motion } from 'framer-motion'
+import { LogOut } from 'lucide-react'
 
+import { PantallaCarga } from '@/shared/components/carga'
 import { usePapeleraCount } from '@/shared/documentos/hooks'
 
 import { sidebarAnimationVariants } from './sidebar/sidebar.styles'
@@ -133,6 +135,17 @@ export function SidebarFloatingGlass() {
           />
         </motion.aside>
       </div>
+
+      {/* Al cerrar sesión se tapa la app: ya no hay sesión detrás */}
+      {vm.isLoggingOut ? (
+        <div className='fixed inset-0 z-[100]'>
+          <PantallaCarga
+            icon={LogOut}
+            label='Cerrando sesión'
+            className='min-h-dvh'
+          />
+        </div>
+      ) : null}
     </>
   )
 }

@@ -205,7 +205,7 @@ export function EditarViviendaAccordionView({
         title={pasos[1].title}
         description={pasos[1].description}
         icon={pasos[1].icon}
-        fieldCount={{ required: 0, optional: 4 }}
+        fieldCount={{ required: 4, optional: 0 }}
         currentStep={pasoActual}
         totalSteps={PASOS_VIVIENDA_EDICION.length}
         moduleName='viviendas'
@@ -233,7 +233,7 @@ export function EditarViviendaAccordionView({
         title={pasos[2].title}
         description={pasos[2].description}
         icon={pasos[2].icon}
-        fieldCount={{ required: 0, optional: 4 }}
+        fieldCount={{ required: 5, optional: 0 }}
         currentStep={pasoActual}
         totalSteps={PASOS_VIVIENDA_EDICION.length}
         moduleName='viviendas'
@@ -241,7 +241,12 @@ export function EditarViviendaAccordionView({
         onEdit={() => irAPaso(3)}
         changeCount={cambiosPorPaso.paso3}
       >
-        <PasoLegalNuevo register={register} errors={errors} />
+        <PasoLegalNuevo
+          register={register}
+          errors={errors}
+          watch={watch}
+          viviendaId={vivienda.id}
+        />
         <AccordionWizardNavigation
           currentStep={3}
           totalSteps={PASOS_VIVIENDA_EDICION.length}

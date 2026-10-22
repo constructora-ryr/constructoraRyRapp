@@ -29,13 +29,21 @@ import {
 
 import { useLogin } from '../useLogin'
 
+/** De dónde llega el usuario al login, para mostrarle un aviso */
+export type AvisoLogin = 'restablecida' | 'sesion-cerrada'
+
+const TEXTO_AVISO: Record<AvisoLogin, string> = {
+  restablecida:
+    'Tu contraseña se actualizó. Ya puedes iniciar sesión con la nueva.',
+  'sesion-cerrada': 'Cerraste sesión correctamente. ¡Hasta pronto!',
+}
+
 export function FormularioLogin({
   onOlvideContrasena,
-  restablecida = false,
+  aviso = null,
 }: {
   onOlvideContrasena: (email: string) => void
-  /** Viene de crear una nueva contraseña */
-  restablecida?: boolean
+  aviso?: AvisoLogin | null
 }) {
   const l = useLogin()
   const [verContrasena, setVerContrasena] = useState(false)
@@ -60,10 +68,10 @@ export function FormularioLogin({
         subtitulo='Ingresa con tu correo y contraseña de la empresa.'
       />
 
-      {restablecida && !l.error ? (
+      {aviso && !l.error ? (
         <div className='mb-5'>
           <AvisoAuth tono='exito' icon={CheckCircle2}>
-            Tu contraseña se actualizó. Ya puedes iniciar sesión con la nueva.
+            {TEXTO_AVISO[aviso]}
           </AvisoAuth>
         </div>
       ) : null}

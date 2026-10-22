@@ -1,124 +1,62 @@
 /**
- * PasoLinderosNuevo - Paso 2: Linderos de la vivienda
- * ✅ Diseño compacto estándar
- * ✅ 4 linderos (Norte, Sur, Oriente, Occidente)
+ * PasoLinderosNuevo — Paso 2: los cuatro linderos de la casa, cada uno con su
+ * punto cardinal en color. Se usa en crear y en editar.
  */
 
 'use client'
 
-import { motion } from 'framer-motion'
-import { AlertCircle, Compass, Lightbulb } from 'lucide-react'
-import type { FieldErrors, Path, UseFormRegister } from 'react-hook-form'
+import type { FieldErrors, UseFormRegister } from 'react-hook-form'
 
 import { cn } from '@/shared/utils/helpers'
 
+import { LINDEROS } from '../constants/linderos'
 import type { ViviendaSchemaType } from '../schemas/vivienda.schemas'
-import { nuevaViviendaStyles as styles } from '../styles/nueva-vivienda.styles'
 
-interface PasoLinderosProps {
+import { ErrorCampo } from './formulario/piezas'
+
+export function PasoLinderosNuevo({
+  register,
+  errors,
+}: {
   register: UseFormRegister<ViviendaSchemaType>
   errors: FieldErrors<ViviendaSchemaType>
-}
-
-export function PasoLinderosNuevo({ register, errors }: PasoLinderosProps) {
-  const linderos = [
-    {
-      id: 'lindero_norte',
-      label: 'Lindero Norte',
-      placeholder: 'Ej: Por el Norte con la Calle 123',
-      icon: '⬆️',
-    },
-    {
-      id: 'lindero_sur',
-      label: 'Lindero Sur',
-      placeholder: 'Ej: Por el Sur con el lote 45',
-      icon: '⬇️',
-    },
-    {
-      id: 'lindero_oriente',
-      label: 'Lindero Oriente',
-      placeholder: 'Ej: Por el Oriente con la Carrera 67',
-      icon: '➡️',
-    },
-    {
-      id: 'lindero_occidente',
-      label: 'Lindero Occidente',
-      placeholder: 'Ej: Por el Occidente con casa 89',
-      icon: '⬅️',
-    },
-  ]
-
+}) {
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
-      transition={{ duration: 0.2 }}
-      className='space-y-3'
-    >
-      {/* Título del paso */}
-      <div>
-        <h2 className='mb-1 text-xl font-bold text-gray-900 dark:text-white'>
-          Linderos de la Vivienda
-        </h2>
-        <p className='text-sm text-gray-600 dark:text-gray-400'>
-          Define los límites de la vivienda en cada dirección
-        </p>
-      </div>
-
-      {/* Consejo */}
-      <div className='flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-900/20'>
-        <Lightbulb className='mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600 dark:text-amber-400' />
-        <div>
-          <p className='mb-1 text-sm font-medium text-amber-900 dark:text-amber-100'>
-            Consejo
-          </p>
-          <p className='text-xs text-amber-700 dark:text-amber-300'>
-            Describe claramente cada límite de la vivienda. Por ejemplo:
-            &quot;Por el Norte con la Calle 123&quot;, &quot;Por el Sur con el
-            lote 45&quot;, etc.
-          </p>
-        </div>
-      </div>
-
-      {/* Grid de linderos */}
-      <div className={styles.linderos.grid}>
-        {linderos.map(lindero => (
-          <div key={lindero.id} className={styles.field.container}>
-            <label htmlFor={lindero.id} className={styles.field.label}>
-              {lindero.icon} {lindero.label}{' '}
-              <span className={styles.field.required}>*</span>
-            </label>
-            <div className={styles.field.inputWrapper}>
-              <Compass className='pointer-events-none absolute left-3 top-3 h-5 w-5 text-gray-400 dark:text-gray-500' />
-              <textarea
-                {...register(lindero.id as Path<ViviendaSchemaType>)}
-                id={lindero.id}
-                rows={3}
-                placeholder={lindero.placeholder}
+    <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
+      {LINDEROS.map(l => {
+        const error = errors[l.campo]?.message
+        return (
+          <div key={l.campo}>
+            <label
+              htmlFor={l.campo}
+              className='mb-1.5 flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300'
+            >
+              <span
                 className={cn(
-                  styles.field.textarea,
-                  errors[lindero.id as keyof ViviendaSchemaType] &&
-                    styles.field.inputError
+                  'flex h-6 min-w-6 items-center justify-center rounded-md bg-gradient-to-br px-1 text-[10px] font-bold text-white shadow-sm',
+                  l.color
                 )}
-              />
-            </div>
-            {errors[lindero.id as keyof ViviendaSchemaType] && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={styles.field.error}
               >
-                <AlertCircle className={styles.field.errorIcon} />
-                {
-                  errors[lindero.id as keyof ViviendaSchemaType]
-                    ?.message as string
-                }
-              </motion.div>
-            )}
+                {l.letra}
+              </span>
+              Lindero {l.nombre}
+              <span className='text-red-500'>*</span>
+            </label>
+            <textarea
+              {...register(l.campo)}
+              id={l.campo}
+              rows={2}
+              placeholder={`Ej: ${l.ejemplo}`}
+              className={cn(
+                'w-full resize-y rounded-lg border-2 border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-gray-600 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500',
+                error &&
+                  'border-red-500 focus:border-red-500 focus:ring-red-500/20'
+              )}
+            />
+            <ErrorCampo mensaje={error} />
           </div>
-        ))}
-      </div>
-    </motion.div>
+        )
+      })}
+    </div>
   )
 }

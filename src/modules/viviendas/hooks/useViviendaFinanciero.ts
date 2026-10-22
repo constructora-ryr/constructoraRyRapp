@@ -1,16 +1,20 @@
 /**
- * useViviendaFinanciero — Sub-hook para cálculos financieros de una vivienda.
+ * useViviendaFinanciero — gastos notariales y recargos configurados, y el
+ * resumen financiero según los valores del formulario.
  *
- * Responsabilidades:
- * - Cargar gastos notariales y configuración de recargos desde el service
- * - Calcular el resumen financiero reactivo según valores del formulario
+ * Si no se pueden cargar los gastos notariales no se inventa un valor:
+ * `errorConfiguracion` lo avisa y la creación falla en el servicio.
  */
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 
-import { viviendasService } from '../services/viviendas.service'
-import type { ConfiguracionRecargo, ResumenFinanciero } from '../types'
+import type { ResumenFinanciero } from '../types'
 import { calcularValorTotal } from '../utils'
+
+import {
+  useConfiguracionRecargosQuery,
+  useGastosNotarialesQuery,
+} from './useViviendasQuery'
 
 interface ViviendaFinancieroValues {
   valor_base: number
@@ -19,42 +23,24 @@ interface ViviendaFinancieroValues {
 }
 
 export function useViviendaFinanciero(formValues: ViviendaFinancieroValues) {
-  const [gastosNotariales, setGastosNotariales] = useState(5_000_000)
-  const [configuracionRecargos, setConfiguracionRecargos] = useState<
-    ConfiguracionRecargo[]
-  >([])
-
-  useEffect(() => {
-    async function cargar() {
-      try {
-        const [gastos, recargos] = await Promise.all([
-          viviendasService.obtenerGastosNotariales(),
-          viviendasService.obtenerConfiguracionRecargos(),
-        ])
-        setGastosNotariales(gastos)
-        setConfiguracionRecargos(recargos)
-      } catch {
-        // Mantener defaults si falla la carga
-      }
-    }
-    cargar()
-  }, [])
+  const gastos = useGastosNotarialesQuery()
+  const recargos = useConfiguracionRecargosQuery()
+  const gastosNotariales = gastos.data ?? 0
 
   const resumenFinanciero = useMemo((): ResumenFinanciero => {
     const valorBase = Number(formValues.valor_base) || 0
     const recargoEsquinera = formValues.es_esquinera
       ? Number(formValues.recargo_esquinera) || 0
       : 0
-    const valorTotal = calcularValorTotal(
-      valorBase,
-      gastosNotariales,
-      recargoEsquinera
-    )
     return {
       valor_base: valorBase,
       gastos_notariales: gastosNotariales,
       recargo_esquinera: recargoEsquinera,
-      valor_total: valorTotal,
+      valor_total: calcularValorTotal(
+        valorBase,
+        gastosNotariales,
+        recargoEsquinera
+      ),
     }
   }, [
     formValues.valor_base,
@@ -63,5 +49,10 @@ export function useViviendaFinanciero(formValues: ViviendaFinancieroValues) {
     gastosNotariales,
   ])
 
-  return { gastosNotariales, configuracionRecargos, resumenFinanciero }
+  return {
+    gastosNotariales,
+    configuracionRecargos: recargos.data ?? [],
+    resumenFinanciero,
+    errorConfiguracion: gastos.isError || recargos.isError,
+  }
 }

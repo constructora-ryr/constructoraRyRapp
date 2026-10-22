@@ -10,31 +10,29 @@ interface AccordionWizardSummaryProps {
 }
 
 /**
- * Resumen compacto de una sección completada.
- * Muestra "valor1 · valor2 · valor3" en una línea.
+ * Resumen de una sección completada: cada valor en un chip; la etiqueta
+ * queda como tooltip para no recargar la línea.
  */
 export function AccordionWizardSummary({ items }: AccordionWizardSummaryProps) {
-  const visibleItems = items.filter(
-    item => item.value != null && item.value !== ''
-  )
-
-  if (visibleItems.length === 0) return null
+  const visibles = items.filter(item => item.value != null && item.value !== '')
+  if (visibles.length === 0) return null
 
   return (
-    <motion.p
-      className='max-w-[85%] truncate text-sm text-gray-500 dark:text-gray-400'
+    <motion.div
+      className='mt-1 flex flex-wrap gap-1.5'
       initial={summaryAppearAnim.initial}
       animate={summaryAppearAnim.animate}
       transition={summaryAppearAnim.transition}
     >
-      {visibleItems.map((item, i) => (
-        <span key={item.label}>
-          {i > 0 ? (
-            <span className='mx-1.5 text-gray-300 dark:text-gray-600'>·</span>
-          ) : null}
+      {visibles.map(item => (
+        <span
+          key={item.label}
+          title={item.label}
+          className='inline-flex max-w-full items-center truncate rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+        >
           {String(item.value)}
         </span>
       ))}
-    </motion.p>
+    </motion.div>
   )
 }

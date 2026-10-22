@@ -12,8 +12,6 @@ import { toast } from 'sonner'
 import { viviendasService } from '../services/viviendas.service'
 import type { FiltrosViviendas, ViviendaFormData } from '../types'
 
-import { viviendaKeys } from './useViviendaQuery'
-
 // ============================================
 // QUERY KEYS (Cache keys centralizadas)
 // ============================================
@@ -50,19 +48,6 @@ export function useViviendasQuery(filtros?: FiltrosViviendas) {
     staleTime: 0, // ✅ SIEMPRE re-fetch al montar para evitar "0 resultados" al navegar
     gcTime: 1000 * 60 * 5, // 5 minutos en cache después de desmontar
     refetchOnMount: 'always', // ← CRÍTICO: Refetch siempre al montar (incluso con datos en cache)
-  })
-}
-
-// ============================================
-// 2. QUERY: Vivienda individual (detalle)
-// ============================================
-export function useViviendaQuery(id: string) {
-  return useQuery({
-    queryKey: viviendasKeys.detail(id),
-    queryFn: () => viviendasService.obtenerVivienda(id),
-    enabled: !!id,
-    staleTime: 0, // ✅ SIEMPRE re-fetch para tener datos actualizados
-    gcTime: 1000 * 60 * 5, // 5 minutos en cache
   })
 }
 
@@ -177,6 +162,10 @@ export function useCrearViviendaMutation(options?: { showToast?: boolean }) {
           refetchType: 'all',
         })
       }
+      // Conteo "por registrar" de las manzanas de todos los proyectos
+      await queryClient.invalidateQueries({
+        queryKey: ['viviendas', 'manzanas'],
+      })
 
       // Invalidar proyectos (por si se usa en selects/estadísticas)
       await queryClient.invalidateQueries({
@@ -217,12 +206,8 @@ export function useActualizarViviendaMutation() {
       data: Partial<ViviendaFormData>
     }) => viviendasService.actualizar(id, data),
     onSuccess: (viviendaActualizada, variables) => {
-      // Invalidar detalle específico (ambas query key factories)
       queryClient.invalidateQueries({
         queryKey: viviendasKeys.detail(variables.id),
-      })
-      queryClient.invalidateQueries({
-        queryKey: viviendaKeys.detail(variables.id),
       })
 
       // Invalidar listas (con filtros)

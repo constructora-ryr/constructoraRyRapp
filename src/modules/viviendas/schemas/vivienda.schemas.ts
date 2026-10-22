@@ -7,6 +7,8 @@
 
 import { z } from 'zod'
 
+import { lindero, matricula, nomenclatura } from './vivienda-campos'
+
 // ==================== PASO 1: UBICACIÓN ====================
 export const paso1Schema = z.object({
   proyecto_id: z.string().min(1, 'Selecciona un proyecto'),
@@ -16,50 +18,17 @@ export const paso1Schema = z.object({
 
 // ==================== PASO 2: LINDEROS ====================
 export const paso2Schema = z.object({
-  lindero_norte: z
-    .string()
-    .min(5, 'Describe el lindero Norte (mínimo 5 caracteres)')
-    .regex(
-      /^[a-zA-Z0-9\sáéíóúÁÉÍÓÚñÑ.,\-()#°/"']+$/,
-      'Solo letras, números, espacios, puntos, comas, guiones, paréntesis, # y °'
-    ),
-  lindero_sur: z
-    .string()
-    .min(5, 'Describe el lindero Sur (mínimo 5 caracteres)')
-    .regex(
-      /^[a-zA-Z0-9\sáéíóúÁÉÍÓÚñÑ.,\-()#°/"']+$/,
-      'Solo letras, números, espacios, puntos, comas, guiones, paréntesis, # y °'
-    ),
-  lindero_oriente: z
-    .string()
-    .min(5, 'Describe el lindero Oriente (mínimo 5 caracteres)')
-    .regex(
-      /^[a-zA-Z0-9\sáéíóúÁÉÍÓÚñÑ.,\-()#°/"']+$/,
-      'Solo letras, números, espacios, puntos, comas, guiones, paréntesis, # y °'
-    ),
-  lindero_occidente: z
-    .string()
-    .min(5, 'Describe el lindero Occidente (mínimo 5 caracteres)')
-    .regex(
-      /^[a-zA-Z0-9\sáéíóúÁÉÍÓÚñÑ.,\-()#°/"']+$/,
-      'Solo letras, números, espacios, puntos, comas, guiones, paréntesis, # y °'
-    ),
+  lindero_norte: lindero('Norte'),
+  lindero_sur: lindero('Sur'),
+  lindero_oriente: lindero('Oriente'),
+  lindero_occidente: lindero('Occidente'),
 })
 
 // ==================== PASO 3: INFORMACIÓN LEGAL ====================
 export const paso3SchemaBase = z
   .object({
-    matricula_inmobiliaria: z
-      .string()
-      .min(1, 'La matrícula inmobiliaria es obligatoria')
-      .regex(/^[0-9\-]+$/, 'Solo números y guiones (Ej: 050-123456)'),
-    nomenclatura: z
-      .string()
-      .min(5, 'Mínimo 5 caracteres')
-      .regex(
-        /^[a-zA-Z0-9\sáéíóúÁÉÍÓÚñÑ#.,\-()°]+$/,
-        'Solo letras, números, #, -, espacios, puntos, comas, paréntesis y grado (°)'
-      ),
+    matricula_inmobiliaria: matricula,
+    nomenclatura,
     area_lote: z.preprocess(
       val => (typeof val === 'number' ? String(val) : val),
       z

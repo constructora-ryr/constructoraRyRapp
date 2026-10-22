@@ -1,8 +1,9 @@
 /**
- * usePasoUbicacion - Hook para lógica del Paso 1 (Ubicación)
- * ✅ Separación de responsabilidades
- * ✅ React Query para carga de datos
- * ✅ Sin lógica en el componente
+ * usePasoUbicacion — datos del Paso 1: proyectos activos, manzanas con casas
+ * por registrar y la cuadrícula de números (libres y ya creados).
+ *
+ * Usa las claves de viviendasKeys para que crear una vivienda invalide estos
+ * datos (antes usaba claves sueltas y el número recién creado seguía libre).
  */
 
 import { useEffect, useMemo, useRef } from 'react'
@@ -10,15 +11,49 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import type { UseFormSetValue, UseFormWatch } from 'react-hook-form'
 
-import { proyectosService } from '@/modules/proyectos/services/proyectos.service'
-
 import type { ViviendaSchemaType } from '../schemas/vivienda.schemas'
 import { viviendasService } from '../services/viviendas.service'
+
+import { viviendasKeys } from './useViviendasQuery'
+
+export interface NumeroCasa {
+  numero: string
+  ocupado: boolean
+}
+
+function useProyectosActivos(enabled = true) {
+  return useQuery({
+    queryKey: viviendasKeys.proyectos,
+    queryFn: () => viviendasService.obtenerProyectos(),
+    enabled,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+function useManzanasProyecto(proyectoId: string, enabled = true) {
+  return useQuery({
+    queryKey: viviendasKeys.manzanas(proyectoId),
+    queryFn: () => viviendasService.obtenerManzanasDisponibles(proyectoId),
+    enabled: enabled && !!proyectoId,
+    staleTime: 60 * 1000,
+  })
+}
+
+/** Nombres legibles de la ubicación (para resúmenes); reutiliza la caché */
+export function useNombresUbicacion(proyectoId: string, manzanaId: string) {
+  const { data: proyectos = [] } = useProyectosActivos()
+  const { data: manzanas = [] } = useManzanasProyecto(proyectoId)
+  return {
+    proyecto: proyectos.find(p => p.id === proyectoId)?.nombre ?? null,
+    manzana: manzanas.find(m => m.id === manzanaId)?.nombre ?? null,
+  }
+}
 
 interface UsePasoUbicacionProps {
   setValue: UseFormSetValue<ViviendaSchemaType>
   watch: UseFormWatch<ViviendaSchemaType>
-  enabled?: boolean // ← Nuevo: permitir desactivar queries
+  /** false en edición: la ubicación no cambia y no hace falta consultar */
+  enabled?: boolean
 }
 
 export function usePasoUbicacion({
@@ -26,118 +61,59 @@ export function usePasoUbicacion({
   watch,
   enabled = true,
 }: UsePasoUbicacionProps) {
-  const proyectoSeleccionado = watch('proyecto_id')
-  const manzanaSeleccionada = watch('manzana_id')
+  const proyectoId = watch('proyecto_id')
+  const manzanaId = watch('manzana_id')
 
-  // ✅ React Query: Cargar proyectos (no depende de nada, pero respeta enabled)
-  const {
-    data: proyectos = [],
-    isLoading: cargandoProyectos,
-    error: errorProyectos,
-  } = useQuery({
-    queryKey: ['proyectos'],
-    queryFn: () => proyectosService.obtenerProyectos(),
-    enabled, // ← Respetar flag enabled
-    staleTime: 5 * 60 * 1000, // 5 minutos
-  })
-
-  // ✅ React Query: Cargar manzanas (solo si hay proyecto seleccionado Y enabled)
-  const {
-    data: manzanas = [],
-    isLoading: cargandoManzanas,
-    error: errorManzanas,
-  } = useQuery({
-    queryKey: ['manzanas', proyectoSeleccionado],
-    queryFn: () => {
-      if (!proyectoSeleccionado) {
-        throw new Error('Proyecto requerido')
-      }
-
-      return viviendasService.obtenerManzanasDisponibles(proyectoSeleccionado)
-    },
-    enabled: enabled && !!proyectoSeleccionado, // ← Solo ejecuta si enabled Y hay proyecto
-    staleTime: 2 * 60 * 1000, // 2 minutos
-  })
-
-  // ✅ React Query: Cargar viviendas de la manzana (para calcular números disponibles)
+  const { data: proyectos = [], isLoading: cargandoProyectos } =
+    useProyectosActivos(enabled)
+  const { data: manzanas = [], isLoading: cargandoManzanas } =
+    useManzanasProyecto(proyectoId, enabled)
   const { data: viviendasManzana = [], isLoading: cargandoNumeros } = useQuery({
-    queryKey: ['viviendas-manzana', manzanaSeleccionada],
-    queryFn: () => {
-      if (!manzanaSeleccionada) {
-        throw new Error('Manzana requerida')
-      }
-
-      return viviendasService.obtenerPorManzana(manzanaSeleccionada)
-    },
-    enabled: enabled && !!manzanaSeleccionada, // ← Solo ejecuta si enabled Y hay manzana
-    staleTime: 1 * 60 * 1000, // 1 minuto
+    queryKey: viviendasKeys.manzanaViviendas(manzanaId),
+    queryFn: () => viviendasService.obtenerPorManzana(manzanaId),
+    enabled: enabled && !!manzanaId,
+    staleTime: 30 * 1000,
   })
 
-  // ✅ Calcular números disponibles (useMemo para optimización)
-  const numerosDisponibles = useMemo(() => {
-    if (!manzanaSeleccionada || !manzanas.length) return []
+  const manzana = useMemo(
+    () => manzanas.find(m => m.id === manzanaId),
+    [manzanas, manzanaId]
+  )
 
-    const manzanaInfo = manzanas.find(m => m.id === manzanaSeleccionada)
-    if (!manzanaInfo) return []
+  const numeros = useMemo((): NumeroCasa[] => {
+    if (!manzana) return []
+    const usados = new Set(viviendasManzana.map(v => String(v.numero)))
+    return Array.from({ length: manzana.total_viviendas }, (_, i) => {
+      const numero = String(i + 1)
+      return { numero, ocupado: usados.has(numero) }
+    })
+  }, [manzana, viviendasManzana])
 
-    const numerosUsados = viviendasManzana.map(v => parseInt(v.numero))
-    const todosNumeros = Array.from(
-      { length: manzanaInfo.total_viviendas },
-      (_, i) => i + 1
-    )
-
-    return todosNumeros.filter(num => !numerosUsados.includes(num))
-  }, [manzanaSeleccionada, manzanas, viviendasManzana])
-
-  // ✅ Refs para rastrear cambios del USUARIO (no limpiar al re-montar con valor existente)
-  const prevProyecto = useRef(proyectoSeleccionado)
-  const prevManzana = useRef(manzanaSeleccionada)
-
-  // ✅ Limpiar manzana y número cuando el USUARIO cambia el proyecto
+  // Al cambiar proyecto o manzana se limpia lo que dependía de ellos
+  // (solo cuando cambia el usuario, no al montar con un valor existente)
+  const proyectoPrevio = useRef(proyectoId)
+  const manzanaPrevia = useRef(manzanaId)
   useEffect(() => {
-    if (
-      proyectoSeleccionado &&
-      prevProyecto.current &&
-      prevProyecto.current !== proyectoSeleccionado
-    ) {
+    if (proyectoPrevio.current && proyectoPrevio.current !== proyectoId) {
       setValue('manzana_id', '')
       setValue('numero', '')
     }
-    prevProyecto.current = proyectoSeleccionado
-  }, [proyectoSeleccionado, setValue])
-
-  // ✅ Limpiar número cuando el USUARIO cambia la manzana
+    proyectoPrevio.current = proyectoId
+  }, [proyectoId, setValue])
   useEffect(() => {
-    if (
-      manzanaSeleccionada &&
-      prevManzana.current &&
-      prevManzana.current !== manzanaSeleccionada
-    ) {
+    if (manzanaPrevia.current && manzanaPrevia.current !== manzanaId) {
       setValue('numero', '')
     }
-    prevManzana.current = manzanaSeleccionada
-  }, [manzanaSeleccionada, setValue])
-
-  // ✅ Información de la manzana seleccionada
-  const manzanaInfo = useMemo(
-    () => manzanas.find(m => m.id === manzanaSeleccionada),
-    [manzanas, manzanaSeleccionada]
-  )
+    manzanaPrevia.current = manzanaId
+  }, [manzanaId, setValue])
 
   return {
-    // Datos
     proyectos,
     manzanas,
-    numerosDisponibles,
-    manzanaInfo,
-
-    // Estados de carga
+    manzana,
+    numeros,
     cargandoProyectos,
     cargandoManzanas,
     cargandoNumeros,
-
-    // Errores (para mostrar en UI si es necesario)
-    errorProyectos,
-    errorManzanas,
   }
 }

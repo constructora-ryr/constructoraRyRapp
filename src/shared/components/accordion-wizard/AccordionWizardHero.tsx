@@ -1,7 +1,7 @@
 /**
- * AccordionWizardHero — Header atractivo para wizards de creación.
- * Muestra ícono del módulo, título, subtítulo, tiempo estimado
- * y un chip con la cantidad de pasos.
+ * AccordionWizardHero — Header de los wizards: ícono del módulo, título,
+ * subtítulo, chips (pasos, tiempo, obligatorio) y, si se pasa
+ * `currentStep`, una barra segmentada con el avance.
  */
 
 'use client'
@@ -45,6 +45,8 @@ interface AccordionWizardHeroProps {
   estimatedTime?: string
   /** Total de pasos */
   totalSteps?: number
+  /** Paso en curso: muestra la barra de avance (opcional) */
+  currentStep?: number
 }
 
 export function AccordionWizardHero({
@@ -54,6 +56,7 @@ export function AccordionWizardHero({
   moduleName,
   estimatedTime,
   totalSteps,
+  currentStep,
 }: AccordionWizardHeroProps) {
   const gradient = HERO_BG[moduleName] ?? HERO_BG.proyectos
   const shadow = HERO_SHADOW[moduleName] ?? HERO_SHADOW.proyectos
@@ -65,12 +68,15 @@ export function AccordionWizardHero({
       transition={{ duration: 0.4, ease: 'easeOut' }}
       className={`relative overflow-hidden rounded-2xl bg-gradient-to-r ${gradient} p-6 shadow-xl ${shadow}`}
     >
-      {/* Pattern decorativo */}
-      <div className='bg-grid-white/10 absolute inset-0 [mask-image:linear-gradient(0deg,transparent,black,transparent)]' />
-
-      {/* Círculos decorativos */}
-      <div className='absolute -right-6 -top-6 h-32 w-32 rounded-full bg-white/5' />
-      <div className='absolute -bottom-4 -left-4 h-20 w-20 rounded-full bg-white/5' />
+      {/* Retícula fina que se desvanece hacia la izquierda + brillo */}
+      <div
+        aria-hidden
+        className='absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:linear-gradient(to_left,black,transparent_70%)]'
+      />
+      <div
+        aria-hidden
+        className='absolute -right-10 -top-16 h-48 w-48 rounded-full bg-white/20 blur-3xl'
+      />
 
       <div className='relative z-10 flex items-start gap-4'>
         {/* Ícono */}
@@ -104,6 +110,26 @@ export function AccordionWizardHero({
               * = obligatorio
             </span>
           </div>
+
+          {currentStep && totalSteps ? (
+            <div
+              className='mt-4 flex gap-1.5'
+              role='progressbar'
+              aria-valuemin={1}
+              aria-valuemax={totalSteps}
+              aria-valuenow={currentStep}
+              aria-label={`Paso ${currentStep} de ${totalSteps}`}
+            >
+              {Array.from({ length: totalSteps }, (_, i) => (
+                <span
+                  key={i}
+                  className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${
+                    i < currentStep ? 'bg-white' : 'bg-white/25'
+                  }`}
+                />
+              ))}
+            </div>
+          ) : null}
         </div>
       </div>
     </motion.div>

@@ -1,5 +1,1 @@
-export { DataRow } from './DataRow'
-export { EstadoBadge } from './EstadoBadge'
-export { ProgressBar } from './ProgressBar'
 export * from './tabs'
-export { ViviendaHeader } from './ViviendaHeader'

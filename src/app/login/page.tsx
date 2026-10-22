@@ -14,10 +14,10 @@ import { useSearchParams } from 'next/navigation'
 import { PantallaAuth } from '@/components/auth/pantalla-auth'
 import { Cargador } from '@/shared/components/carga'
 
-import { FormularioLogin } from './components/FormularioLogin'
+import { FormularioLogin, type AvisoLogin } from './components/FormularioLogin'
 import { FormularioRecuperar } from './components/FormularioRecuperar'
 
-function Login({ restablecida }: { restablecida: boolean }) {
+function Login({ aviso }: { aviso: AvisoLogin | null }) {
   const [recuperar, setRecuperar] = useState<{ email: string } | null>(null)
 
   return (
@@ -37,7 +37,7 @@ function Login({ restablecida }: { restablecida: boolean }) {
             />
           ) : (
             <FormularioLogin
-              restablecida={restablecida}
+              aviso={aviso}
               onOlvideContrasena={email => setRecuperar({ email })}
             />
           )}
@@ -51,9 +51,13 @@ function Login({ restablecida }: { restablecida: boolean }) {
 function LoginConReinicio() {
   const params = useSearchParams()
   const marca = params?.get('_t') ?? 'inicial'
-  return (
-    <Login key={marca} restablecida={params?.get('restablecida') === '1'} />
-  )
+  const aviso: AvisoLogin | null =
+    params?.get('restablecida') === '1'
+      ? 'restablecida'
+      : params?.get('sesion') === 'cerrada'
+        ? 'sesion-cerrada'
+        : null
+  return <Login key={marca} aviso={aviso} />
 }
 
 export default function LoginPage() {

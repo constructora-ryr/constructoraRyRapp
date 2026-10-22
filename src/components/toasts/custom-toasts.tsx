@@ -1,11 +1,11 @@
 /**
- * Toasts con ícono propio (login, logout, entidades). Son toasts normales de
+ * Toasts con ícono propio (login, error de logout, entidades). Son toasts normales de
  * sonner con otro ícono, así comparten la misma tarjeta que el resto.
  */
 
 'use client'
 
-import { Building2, LogIn, LogOut } from 'lucide-react'
+import { Building2, LogIn } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { IconoToast } from './toast-estilos'
@@ -14,14 +14,6 @@ export function showLoginSuccessToast() {
   toast.success('¡Bienvenido de nuevo!', {
     description: 'Entrando al dashboard…',
     icon: <IconoToast tipo='success' icon={LogIn} />,
-    duration: 3000,
-  })
-}
-
-export function showLogoutToast() {
-  toast.info('Sesión cerrada', {
-    description: '¡Hasta pronto!',
-    icon: <IconoToast tipo='info' icon={LogOut} />,
     duration: 3000,
   })
 }

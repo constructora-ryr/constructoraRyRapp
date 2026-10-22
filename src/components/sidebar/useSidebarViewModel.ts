@@ -18,10 +18,7 @@ import { navigationGroups } from '@/shared/config/navigation.config'
  */
 export function useSidebarViewModel(pathname: string) {
   const { user, perfil } = useAuth()
-  const { logout, isLoggingOut } = useLogout({
-    showToast: true,
-    redirectTo: '/login',
-  })
+  const { logout, isLoggingOut } = useLogout()
   const { theme, systemTheme } = useTheme()
 
   // ── Hydration ─────────────────────────────────────────────────────

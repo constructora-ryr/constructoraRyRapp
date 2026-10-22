@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { getServerPermissions } from '@/lib/auth/server'
-import { supabaseAdmin } from '@/lib/supabase/admin'
+import { adminComo } from '@/lib/supabase/admin'
 import type { Json, TablesUpdate } from '@/lib/supabase/database.types'
 import { createRouteClient } from '@/lib/supabase/server-route'
 import { logger } from '@/lib/utils/logger'
@@ -41,6 +41,7 @@ export async function PATCH(request: NextRequest) {
     if (authError || !user) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
+    const admin = adminComo(user.id)
 
     // 2. Verificar permiso de editar abonos según permisos_rol
     const { data: usuarioPerfil } = await supabase
@@ -178,8 +179,8 @@ export async function PATCH(request: NextRequest) {
     let comprobanteActualizado: string | null | undefined = undefined // undefined = no se toca
 
     if (body.eliminar_comprobante === true) {
-      if (abono.comprobante_url && supabaseAdmin) {
-        await supabaseAdmin.storage
+      if (abono.comprobante_url && admin) {
+        await admin.storage
           .from('comprobantes-abonos')
           .remove([abono.comprobante_url as string])
           .catch(_e => {
@@ -192,8 +193,8 @@ export async function PATCH(request: NextRequest) {
       body.comprobante_url !== abono.comprobante_url
     ) {
       // Nuevo comprobante: eliminar el anterior (best-effort)
-      if (abono.comprobante_url && supabaseAdmin) {
-        await supabaseAdmin.storage
+      if (abono.comprobante_url && admin) {
+        await admin.storage
           .from('comprobantes-abonos')
           .remove([abono.comprobante_url as string])
           .catch(_e => {
@@ -228,7 +229,7 @@ export async function PATCH(request: NextRequest) {
     // 10. Ejecutar UPDATE via admin client para no depender del claim user_rol en JWT
     // (consistente con /api/abonos/anular). Las validaciones de auth/permisos ya se
     // hicieron arriba; el audit_log se escribe explícitamente en el paso 11.
-    const { data: abonoActualizado, error: updateError } = await supabaseAdmin
+    const { data: abonoActualizado, error: updateError } = await admin
       .from('abonos_historial')
       .update(actualizacion as unknown as TablesUpdate<'abonos_historial'>)
       .eq('id', abonoId)
@@ -275,7 +276,7 @@ export async function PATCH(request: NextRequest) {
       } | null = null
       let ctxFuenteTipo: string | null = null
 
-      const { data: ctx } = await supabaseAdmin
+      const { data: ctx } = await admin
         .from('abonos_historial')
         .select(
           `fuentes_pago ( tipo ),
@@ -300,48 +301,46 @@ export async function PATCH(request: NextRequest) {
           )?.viviendas ?? null
       }
 
-      const { error: auditError } = await supabaseAdmin
-        .from('audit_log')
-        .insert({
-          tabla: 'abonos_historial',
-          accion: 'UPDATE',
-          registro_id: abonoId,
-          usuario_id: user.id,
-          usuario_email: user.email ?? '',
-          usuario_rol: usuarioPerfil?.rol ?? null,
-          datos_anteriores: {
-            monto: abono.monto,
-            fecha_abono: abono.fecha_abono,
-            metodo_pago: abono.metodo_pago,
-            numero_referencia: abono.numero_referencia,
-            notas: abono.notas,
-            comprobante_url: abono.comprobante_url,
-            numero_recibo: abono.numero_recibo,
-          },
-          datos_nuevos: {
-            ...actualizacion,
-            numero_recibo: abono.numero_recibo,
-          },
-          cambios_especificos: cambiosEspecificos as unknown as Json,
-          metadata: {
-            // cliente_id GARANTIZADO — obtenido en la query de negociacion (paso 5)
-            cliente_id: negociacion.cliente_id,
-            abono_monto_anterior: abono.monto,
-            abono_numero_recibo: abono.numero_recibo,
-            abono_metodo_pago_anterior: abono.metodo_pago,
-            abono_fecha_abono_anterior: abono.fecha_abono,
-            fuente_tipo: ctxFuenteTipo,
-            negociacion_id: abono.negociacion_id,
-            vivienda_numero: ctxVivienda?.numero ?? null,
-            manzana_nombre: ctxVivienda?.manzanas?.nombre ?? null,
-            proyecto_nombre: ctxVivienda?.manzanas?.proyectos?.nombre ?? null,
-            motivo_edicion: String(motivo).trim(),
-            campos_editados: Object.keys(cambiosEspecificos).map(
-              c => ETIQUETAS_CAMPO[c] ?? c
-            ),
-          },
-          modulo: 'abonos',
-        })
+      const { error: auditError } = await admin.from('audit_log').insert({
+        tabla: 'abonos_historial',
+        accion: 'UPDATE',
+        registro_id: abonoId,
+        usuario_id: user.id,
+        usuario_email: user.email ?? '',
+        usuario_rol: usuarioPerfil?.rol ?? null,
+        datos_anteriores: {
+          monto: abono.monto,
+          fecha_abono: abono.fecha_abono,
+          metodo_pago: abono.metodo_pago,
+          numero_referencia: abono.numero_referencia,
+          notas: abono.notas,
+          comprobante_url: abono.comprobante_url,
+          numero_recibo: abono.numero_recibo,
+        },
+        datos_nuevos: {
+          ...actualizacion,
+          numero_recibo: abono.numero_recibo,
+        },
+        cambios_especificos: cambiosEspecificos as unknown as Json,
+        metadata: {
+          // cliente_id GARANTIZADO — obtenido en la query de negociacion (paso 5)
+          cliente_id: negociacion.cliente_id,
+          abono_monto_anterior: abono.monto,
+          abono_numero_recibo: abono.numero_recibo,
+          abono_metodo_pago_anterior: abono.metodo_pago,
+          abono_fecha_abono_anterior: abono.fecha_abono,
+          fuente_tipo: ctxFuenteTipo,
+          negociacion_id: abono.negociacion_id,
+          vivienda_numero: ctxVivienda?.numero ?? null,
+          manzana_nombre: ctxVivienda?.manzanas?.nombre ?? null,
+          proyecto_nombre: ctxVivienda?.manzanas?.proyectos?.nombre ?? null,
+          motivo_edicion: String(motivo).trim(),
+          campos_editados: Object.keys(cambiosEspecificos).map(
+            c => ETIQUETAS_CAMPO[c] ?? c
+          ),
+        },
+        modulo: 'abonos',
+      })
 
       if (auditError) {
         logger.error(

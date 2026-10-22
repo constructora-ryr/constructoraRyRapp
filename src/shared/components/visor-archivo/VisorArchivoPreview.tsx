@@ -192,7 +192,8 @@ export function VisorArchivoPreview({
       return estado === 'listo' ? (
         <iframe
           key={`${url}-${intento}`}
-          src={url}
+          // Sin el panel de miniaturas de Chrome y ajustado al ancho
+          src={`${url}#navpanes=0&view=FitH`}
           title={titulo}
           className='absolute inset-0 h-full w-full border-0 bg-white'
         />

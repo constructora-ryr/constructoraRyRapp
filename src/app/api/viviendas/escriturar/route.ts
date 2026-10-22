@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { getServerPermissions } from '@/lib/auth/server'
-import { supabaseAdmin } from '@/lib/supabase/admin'
+import { adminComo } from '@/lib/supabase/admin'
 import type { Json } from '@/lib/supabase/database.types'
 import { createRouteClient } from '@/lib/supabase/server-route'
 import { formatDateForDB } from '@/lib/utils/date.utils'
@@ -25,6 +25,7 @@ export async function PATCH(request: NextRequest) {
   if (authError || !user) {
     return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
   }
+  const admin = adminComo(user.id)
 
   const permisos = await getServerPermissions('viviendas')
   if (!permisos.canEdit) {
@@ -71,7 +72,7 @@ export async function PATCH(request: NextRequest) {
 
   const fechaDB = formatDateForDB(fecha_escritura)
 
-  const { data: viviendaActualizada, error: updateError } = await supabaseAdmin
+  const { data: viviendaActualizada, error: updateError } = await admin
     .from('viviendas')
     .update({ estado: 'Entregada', fecha_entrega: fechaDB })
     .eq('id', vivienda_id)
@@ -92,7 +93,7 @@ export async function PATCH(request: NextRequest) {
       nombre: string
       proyectos: { nombre: string }
     } | null
-    await supabaseAdmin.from('audit_log').insert({
+    await admin.from('audit_log').insert({
       accion: 'UPDATE',
       tabla: 'viviendas',
       registro_id: vivienda_id,
