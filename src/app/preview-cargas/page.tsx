@@ -20,6 +20,13 @@ import {
   PantallaCarga,
   type TemaCarga,
 } from '@/shared/components/carga'
+import { DocumentosListaEsqueleto } from '@/shared/documentos/components/lista/DocumentosListaEsqueleto'
+
+import {
+  HistorialEsqueleto,
+  InteresesEsqueleto,
+  NegociacionEsqueleto,
+} from '../clientes/[id]/components/TabsEsqueletos'
 
 /** Vista previa de los indicadores de carga. Solo desarrollo (404 en prod). */
 
@@ -136,6 +143,22 @@ export default function PreviewCargasPage() {
               className='min-h-[360px]'
             />
           </div>
+        </Bloque>
+
+        <Bloque titulo='Skeleton · pestaña Negociación'>
+          <NegociacionEsqueleto />
+        </Bloque>
+        <Bloque titulo='Skeleton · pestaña Intereses'>
+          <InteresesEsqueleto />
+        </Bloque>
+        <Bloque titulo='Skeleton · Documentos (Clientes / Proyectos / Viviendas)'>
+          <div className='space-y-8'>
+            <DocumentosListaEsqueleto moduleName='clientes' />
+            <DocumentosListaEsqueleto moduleName='viviendas' />
+          </div>
+        </Bloque>
+        <Bloque titulo='Skeleton · pestaña Historial'>
+          <HistorialEsqueleto />
         </Bloque>
       </div>
     </div>

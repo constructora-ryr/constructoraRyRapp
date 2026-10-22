@@ -106,6 +106,10 @@ module.exports = {
           '0%, 80%, 100%': { transform: 'scale(0.6)', opacity: '0.35' },
           '40%': { transform: 'scale(1)', opacity: '1' },
         },
+        // Brillo que barre los skeletons
+        'cargar-brillo': {
+          '100%': { transform: 'translateX(100%)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -114,6 +118,7 @@ module.exports = {
         glow: 'glow 2s ease-in-out infinite',
         'cargar-respirar': 'cargar-respirar 1.8s ease-in-out infinite',
         'cargar-punto': 'cargar-punto 1.2s ease-in-out infinite',
+        'cargar-brillo': 'cargar-brillo 1.6s ease-in-out infinite',
       },
     },
   },

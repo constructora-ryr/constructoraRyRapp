@@ -22,7 +22,6 @@ import { usePermisosQuery } from '@/modules/usuarios/hooks'
 import type { Modulo } from '@/modules/usuarios/types'
 import { ConfirmacionModal } from '@/shared/components/modals/ConfirmacionModal'
 import { EmptyState } from '@/shared/components/ui/EmptyState'
-import { SectionLoadingSpinner } from '@/shared/components/ui/SectionLoadingSpinner'
 import { type ModuleName } from '@/shared/config/module-themes'
 import type { CarpetaConConteo } from '@/shared/documentos/types/carpeta.types'
 import type { DocumentoProyecto } from '@/shared/documentos/types/documento.types'
@@ -43,6 +42,7 @@ import { DocumentoViewer } from '../viewer/documento-viewer'
 
 import { DocumentoCardHorizontal } from './documento-card-horizontal'
 import { DocumentosFiltros } from './documentos-filtros'
+import { DocumentosListaEsqueleto } from './DocumentosListaEsqueleto'
 
 interface DocumentosListaProps {
   entidadId: string // ✅ GENÉRICO (antes proyectoId)
@@ -177,13 +177,7 @@ export function DocumentosLista({
   }
 
   if (cargandoDocumentos) {
-    return (
-      <SectionLoadingSpinner
-        label='Cargando documentos...'
-        moduleName={moduleName as ModuleName}
-        icon={FileText}
-      />
-    )
+    return <DocumentosListaEsqueleto moduleName={themeModuleName} />
   }
 
   const tema = temaDocumentos(themeModuleName)

@@ -17,7 +17,8 @@ import {
   EstadoFiltroCards,
   type EstadoFiltroOpcion,
 } from '@/shared/components/list-page'
-import { SectionLoadingSpinner } from '@/shared/components/ui'
+
+import { InteresesEsqueleto } from '../components/TabsEsqueletos'
 
 import { INTERES_ESTADO_VISUAL } from './intereses/interes-visual'
 import { InteresCard } from './intereses/InteresCard'
@@ -53,13 +54,7 @@ export function InteresesTab({
   } = useInteresesTab({ clienteId: cliente.id })
 
   if (loading) {
-    return (
-      <SectionLoadingSpinner
-        label='Cargando intereses...'
-        moduleName='clientes'
-        icon={Heart}
-      />
-    )
+    return <InteresesEsqueleto />
   }
 
   // Regla de negocio: una vivienda por cliente. Con vivienda vigente no se

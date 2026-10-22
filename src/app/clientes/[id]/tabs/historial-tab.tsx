@@ -27,7 +27,8 @@ import { notasHistorialService } from '@/modules/clientes/services/notas-histori
 import { usePermisosQuery } from '@/modules/usuarios/hooks'
 import { EmptyState } from '@/shared/components/layout/EmptyState'
 import { useModal } from '@/shared/components/modals'
-import { SectionLoadingSpinner } from '@/shared/components/ui'
+
+import { HistorialEsqueleto } from '../components/TabsEsqueletos'
 
 import {
   HistorialFiltros,
@@ -143,15 +144,7 @@ export function HistorialTab({ clienteId, clienteNombre }: HistorialTabProps) {
   }
 
   // ========== ESTADOS ==========
-  if (permisosLoading) {
-    return (
-      <SectionLoadingSpinner
-        label='Verificando permisos...'
-        moduleName='clientes'
-        icon={Clock}
-      />
-    )
-  }
+  if (permisosLoading) return <HistorialEsqueleto />
 
   if (!tienePermiso) {
     return (
@@ -165,15 +158,7 @@ export function HistorialTab({ clienteId, clienteNombre }: HistorialTabProps) {
     )
   }
 
-  if (isLoading) {
-    return (
-      <SectionLoadingSpinner
-        label='Cargando historial...'
-        moduleName='clientes'
-        icon={Clock}
-      />
-    )
-  }
+  if (isLoading) return <HistorialEsqueleto />
 
   if (error) {
     return (

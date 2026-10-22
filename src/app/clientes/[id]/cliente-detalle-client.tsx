@@ -37,7 +37,8 @@ import { useEliminarClienteMutation } from '@/modules/clientes/hooks/useClientes
 import { useReactivarCliente } from '@/modules/clientes/hooks/useReactivarCliente'
 import type { Cliente } from '@/modules/clientes/types'
 import { useModal } from '@/shared/components/modals'
-import { SectionLoadingSpinner, Tooltip } from '@/shared/components/ui'
+import { Tooltip } from '@/shared/components/ui'
+import { DocumentosListaEsqueleto } from '@/shared/documentos/components/lista/DocumentosListaEsqueleto'
 
 import {
   ClienteDetalleCargando,
@@ -48,6 +49,11 @@ import {
   ClienteDetalleTabs,
   type TabDetalle,
 } from './components/ClienteDetalleTabs'
+import {
+  HistorialEsqueleto,
+  InteresesEsqueleto,
+  NegociacionEsqueleto,
+} from './components/TabsEsqueletos'
 import { useAccionCrearNegociacion } from './hooks/useAccionCrearNegociacion'
 import { useClienteDetallePermisos } from './hooks/useClienteDetallePermisos'
 import { GeneralTab } from './tabs/general-tab'
@@ -56,51 +62,27 @@ import { GeneralTab } from './tabs/general-tab'
 const InteresesTab = dynamic(
   () => import('./tabs/intereses-tab').then(m => ({ default: m.InteresesTab })),
   {
-    loading: () => (
-      <SectionLoadingSpinner
-        label='Cargando intereses...'
-        moduleName='clientes'
-        icon={Heart}
-      />
-    ),
+    loading: () => <InteresesEsqueleto />,
   }
 )
 const NegociacionTab = dynamic(
   () =>
     import('./tabs/negociacion-tab').then(m => ({ default: m.NegociacionTab })),
   {
-    loading: () => (
-      <SectionLoadingSpinner
-        label='Cargando negociación...'
-        moduleName='negociaciones'
-        icon={FileText}
-      />
-    ),
+    loading: () => <NegociacionEsqueleto />,
   }
 )
 const DocumentosTab = dynamic(
   () =>
     import('./tabs/documentos-tab').then(m => ({ default: m.DocumentosTab })),
   {
-    loading: () => (
-      <SectionLoadingSpinner
-        label='Cargando documentos...'
-        moduleName='clientes'
-        icon={FileText}
-      />
-    ),
+    loading: () => <DocumentosListaEsqueleto moduleName='clientes' />,
   }
 )
 const HistorialTab = dynamic(
   () => import('./tabs/historial-tab').then(m => ({ default: m.HistorialTab })),
   {
-    loading: () => (
-      <SectionLoadingSpinner
-        label='Cargando historial...'
-        moduleName='clientes'
-        icon={History}
-      />
-    ),
+    loading: () => <HistorialEsqueleto />,
   }
 )
 

@@ -24,6 +24,7 @@ import { InfoTab } from '@/modules/viviendas/components/detalle/tabs/InfoTab'
 import { useViviendaQuery } from '@/modules/viviendas/hooks/useViviendaQuery'
 import { Cargador } from '@/shared/components/carga'
 import { Button } from '@/shared/components/ui/button'
+import { DocumentosListaEsqueleto } from '@/shared/documentos/components/lista/DocumentosListaEsqueleto'
 
 const TabSpinner = () => (
   <Cargador modulo='viviendas' label='Cargando' className='py-12' />
@@ -34,7 +35,7 @@ const DocumentosTab = dynamic(
     import('@/modules/viviendas/components/detalle/tabs/DocumentosTab').then(
       m => ({ default: m.DocumentosTab })
     ),
-  { loading: TabSpinner }
+  { loading: () => <DocumentosListaEsqueleto moduleName='viviendas' /> }
 )
 
 const AbonosTab = dynamic(

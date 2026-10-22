@@ -26,8 +26,9 @@ import { calcularTotalesNegociacion } from '@/modules/clientes/utils/totales-neg
 import { CuotasCreditoTab } from '@/modules/fuentes-pago/components/CuotasCreditoTab'
 import { RegistrarRenunciaModal } from '@/modules/renuncias/components/modals/RegistrarRenunciaModal'
 import { usePermisosQuery } from '@/modules/usuarios/hooks/usePermisosQuery'
-import { SectionLoadingSpinner } from '@/shared/components/ui'
 import { esCreditoConstructora } from '@/shared/constants/fuentes-pago.constants'
+
+import { NegociacionEsqueleto } from '../components/TabsEsqueletos'
 
 import {
   AbonosRecibidosCard,
@@ -125,14 +126,7 @@ export function NegociacionTab({
 
   const { data: pagosExcedentes = [] } = usePagosExcedentes(negociacion?.id)
 
-  if (isLoading)
-    return (
-      <SectionLoadingSpinner
-        label='Cargando negociación...'
-        moduleName='negociaciones'
-        icon={FileText}
-      />
-    )
+  if (isLoading) return <NegociacionEsqueleto />
   if (!negociacion)
     return <SinNegociacion canAsignarVivienda={canAsignarVivienda} />
 
