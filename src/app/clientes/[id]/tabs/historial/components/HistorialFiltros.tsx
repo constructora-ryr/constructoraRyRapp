@@ -22,6 +22,7 @@ import {
   UserPen,
   X,
   type LucideIcon,
+  FlaskConical,
 } from 'lucide-react'
 
 import type { ResumenHistorial } from '@/modules/clientes/utils/historial-timeline.utils'
@@ -51,6 +52,9 @@ interface HistorialFiltrosProps {
   /** Solo admins */
   mostrarOcultos?: boolean
   onToggleOcultos?: () => void
+  /** Solo admins: vista previa del historial leído desde `auditoria` */
+  vistaNueva?: boolean
+  onToggleVistaNueva?: () => void
 }
 
 function Dato({
@@ -89,6 +93,8 @@ export function HistorialFiltros({
   onAgregarNota,
   mostrarOcultos,
   onToggleOcultos,
+  vistaNueva,
+  onToggleVistaNueva,
 }: HistorialFiltrosProps) {
   const categorias = CATEGORIAS.filter(
     c => c.id === 'todos' || (conteoPorCategoria[c.id] ?? 0) > 0
@@ -180,7 +186,32 @@ export function HistorialFiltros({
             </span>
           </button>
         ) : null}
+        {onToggleVistaNueva ? (
+          <button
+            type='button'
+            onClick={onToggleVistaNueva}
+            aria-pressed={vistaNueva}
+            title='Ver el historial leído desde la nueva auditoría, para compararlo'
+            className={cn(
+              'inline-flex h-10 flex-shrink-0 items-center gap-1.5 rounded-xl border px-3 text-sm font-medium transition-colors',
+              vistaNueva
+                ? 'border-violet-300 bg-violet-50 text-violet-800 dark:border-violet-500/50 dark:bg-violet-500/10 dark:text-violet-300'
+                : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300'
+            )}
+          >
+            <FlaskConical className='h-4 w-4' />
+            <span className='hidden sm:inline'>Historial nuevo</span>
+          </button>
+        ) : null}
       </div>
+
+      {vistaNueva ? (
+        <p className='flex items-start gap-2 rounded-xl bg-violet-50 px-3 py-2 text-xs text-violet-800 ring-1 ring-violet-200 dark:bg-violet-500/10 dark:text-violet-200 dark:ring-violet-500/30'>
+          <FlaskConical className='mt-0.5 h-3.5 w-3.5 flex-shrink-0' />
+          Vista de prueba: el historial se lee de la nueva auditoría. Compáralo
+          con la vista normal; aquí no se pueden ocultar eventos.
+        </p>
+      ) : null}
 
       {/* Categorías con contador (deslizable en móvil) */}
       <div className='-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none]'>

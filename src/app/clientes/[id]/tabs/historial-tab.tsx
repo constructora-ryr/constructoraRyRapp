@@ -95,6 +95,8 @@ export function HistorialTab({
     setMostrarOcultos,
     ocultarEvento,
     restaurarEvento,
+    vistaNueva,
+    alternarVistaNueva,
   } = useHistorialCliente({ clienteId, habilitado: tienePermiso })
 
   useScrollANotaPendiente(!isLoading)
@@ -143,8 +145,9 @@ export function HistorialTab({
     onEditarNota: editarNota,
     onEliminarNota: borrarNota,
     notasEditables,
-    onOcultarEvento: esAdmin ? ocultarEvento : undefined,
-    onRestaurarEvento: esAdmin ? restaurarEvento : undefined,
+    // En la vista de prueba no se oculta: los ids son de otra tabla
+    onOcultarEvento: esAdmin && !vistaNueva ? ocultarEvento : undefined,
+    onRestaurarEvento: esAdmin && !vistaNueva ? restaurarEvento : undefined,
   }
 
   if (permisosLoading) return <HistorialEsqueleto />
@@ -200,6 +203,8 @@ export function HistorialTab({
         }
         mostrarOcultos={mostrarOcultos}
         onToggleOcultos={esAdmin ? () => setMostrarOcultos(v => !v) : undefined}
+        vistaNueva={vistaNueva}
+        onToggleVistaNueva={esAdmin ? alternarVistaNueva : undefined}
       />
 
       {estadisticas.filtrados === 0 ? (

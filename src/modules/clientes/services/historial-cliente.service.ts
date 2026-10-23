@@ -1,7 +1,8 @@
 /**
  * Servicio de Historial de Cliente
- * Consulta eventos de audit_log relacionados con un cliente específico
- * a través de la RPC obtener_historial_cliente (SECURITY DEFINER).
+ * Consulta los eventos de un cliente con la RPC obtener_historial_cliente
+ * (audit_log) o, en vista previa, obtener_historial_cliente_v2 (tabla
+ * `auditoria`, misma forma de salida). Ambas SECURITY DEFINER.
  */
 
 import { supabase } from '@/lib/supabase/client'
@@ -25,6 +26,14 @@ const CAMPOS_TECNICOS_NEGOCIACIONES = new Set([
   'updated_at',
 ])
 
+/** De dónde se lee el historial: la tabla actual o la nueva (vista previa) */
+export type FuenteHistorial = 'audit_log' | 'auditoria'
+
+const RPC_POR_FUENTE: Record<FuenteHistorial, string> = {
+  audit_log: 'obtener_historial_cliente',
+  auditoria: 'obtener_historial_cliente_v2',
+}
+
 class HistorialClienteService {
   /**
    * Obtener historial completo de un cliente.
@@ -44,7 +53,8 @@ class HistorialClienteService {
   async obtenerHistorial(
     clienteId: string,
     limit = 200,
-    incluirOcultos = false
+    incluirOcultos = false,
+    fuente: FuenteHistorial = 'audit_log'
   ): Promise<EventoHistorialCliente[]> {
     try {
       // ── PASO 1: Obtener eventos via RPC (1 round-trip) ──────────────
@@ -53,7 +63,7 @@ class HistorialClienteService {
           fn: string,
           args?: Record<string, unknown>
         ) => ReturnType<typeof supabase.rpc>
-      )('obtener_historial_cliente', {
+      )(RPC_POR_FUENTE[fuente], {
         p_cliente_id: clienteId,
         p_limit: limit,
         p_incluir_ocultos: incluirOcultos,

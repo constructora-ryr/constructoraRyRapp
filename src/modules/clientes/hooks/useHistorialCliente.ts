@@ -11,7 +11,10 @@ import { useCallback, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
-import { historialClienteService } from '../services/historial-cliente.service'
+import {
+  historialClienteService,
+  type FuenteHistorial,
+} from '../services/historial-cliente.service'
 import { notasHistorialService } from '../services/notas-historial.service'
 import type { EventoHistorialCliente } from '../types/historial.types'
 import {
@@ -42,12 +45,15 @@ export function useHistorialCliente({
   const [categoria, setCategoria] = useState('todos')
   // Solo admins: incluir eventos ocultos
   const [mostrarOcultos, setMostrarOcultos] = useState(false)
+  // Solo admins: vista previa leyendo de la tabla `auditoria`
+  const [fuente, setFuente] = useState<FuenteHistorial>('audit_log')
 
   const queryKeyEventos = [
     'historial-cliente',
     clienteId,
     limit,
     mostrarOcultos,
+    fuente,
   ] as const
 
   const eventosQuery = useQuery({
@@ -56,7 +62,8 @@ export function useHistorialCliente({
       historialClienteService.obtenerHistorial(
         clienteId,
         limit,
-        mostrarOcultos
+        mostrarOcultos,
+        fuente
       ),
     enabled: habilitado && !!clienteId,
     refetchOnWindowFocus: false,
@@ -162,6 +169,9 @@ export function useHistorialCliente({
 
     mostrarOcultos,
     setMostrarOcultos,
+    vistaNueva: fuente === 'auditoria',
+    alternarVistaNueva: () =>
+      setFuente(f => (f === 'auditoria' ? 'audit_log' : 'auditoria')),
     ocultarEvento: (id: string) => cambiarOculto(id, true),
     restaurarEvento: (id: string) => cambiarOculto(id, false),
   }
