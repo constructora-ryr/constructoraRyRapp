@@ -20,7 +20,7 @@ interface ListPageHeaderProps {
   actions?: ReactNode
   /**
    * Degradado del banner con el color del módulo, p.ej.
-   * 'from-cyan-600 via-blue-600 to-indigo-600'. Sin él, encabezado plano.
+   * 'from-cyan-600 via-blue-600 to-indigo-600 dark:from-cyan-700 dark:via-blue-700 dark:to-indigo-800'. Sin él, encabezado plano.
    */
   heroGradient?: string
   /** Solo sin heroGradient: clases del cuadro del ícono, p.ej. 'bg-cyan-50 text-cyan-600' */

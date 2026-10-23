@@ -12,7 +12,7 @@ export const descuentoModalStyles = {
   // Header
   header: {
     container:
-      'bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 px-5 py-4',
+      'bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 dark:from-cyan-700 dark:via-blue-700 dark:to-indigo-800 px-5 py-4',
     title: 'text-lg font-bold text-white',
     subtitle: 'mt-0.5 text-xs text-cyan-100',
     closeButton:
@@ -54,7 +54,7 @@ export const descuentoModalStyles = {
     cancelButton:
       'rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800',
     submitButton:
-      'inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition-all hover:from-cyan-700 hover:via-blue-700 hover:to-indigo-700 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50',
+      'inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 dark:from-cyan-700 dark:via-blue-700 dark:to-indigo-800 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition-all hover:from-cyan-700 hover:via-blue-700 hover:to-indigo-700 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50',
     removeButton:
       'mr-auto inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-400 dark:hover:bg-amber-900/40',
   },

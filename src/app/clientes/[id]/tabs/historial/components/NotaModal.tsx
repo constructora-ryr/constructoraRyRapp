@@ -45,7 +45,7 @@ export function NotaModal({
       gradient={
         f.esImportante
           ? 'from-amber-500 via-orange-500 to-orange-600'
-          : 'from-violet-600 via-purple-600 to-fuchsia-600'
+          : 'from-violet-600 via-purple-600 to-fuchsia-600 dark:from-violet-700 dark:via-purple-800 dark:to-fuchsia-900'
       }
       icon={FileEdit}
       titulo={f.modoEdicion ? 'Editar nota' : 'Nueva nota'}

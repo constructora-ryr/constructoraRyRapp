@@ -31,4 +31,3 @@ export {
 
 // ── Formulario + Validación ──
 export { useRegistrarAbono } from './useRegistrarAbono'
-export { useValidacionBotonDesembolso } from './useValidacionBotonDesembolso'

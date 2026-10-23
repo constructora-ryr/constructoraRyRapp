@@ -99,7 +99,7 @@ export function HistorialFiltros({
       {/* Resumen + agregar nota */}
       <div className='flex flex-wrap items-center justify-between gap-3'>
         <div className='flex min-w-0 items-center gap-3'>
-          <span className='flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-600 via-blue-600 to-indigo-600 text-white shadow-md shadow-cyan-500/25'>
+          <span className='flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-600 via-blue-600 to-indigo-600 text-white shadow-md shadow-cyan-500/25 dark:from-cyan-700 dark:via-blue-700 dark:to-indigo-800'>
             <History className='h-5 w-5' />
           </span>
           <div className='min-w-0'>

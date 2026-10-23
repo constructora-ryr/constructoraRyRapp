@@ -60,7 +60,7 @@ export function ConfirmarCambiosModal({
             className='relative z-10 flex max-h-[85vh] w-full max-w-2xl flex-col rounded-2xl bg-white shadow-2xl dark:bg-gray-800'
           >
             {/* Header */}
-            <div className='relative overflow-hidden rounded-t-2xl bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 px-6 py-5'>
+            <div className='relative overflow-hidden rounded-t-2xl bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 px-6 py-5 dark:from-cyan-700 dark:via-blue-700 dark:to-indigo-800'>
               <div className='bg-grid-white/10 absolute inset-0' />
               <div className='relative z-10 flex items-center justify-between'>
                 <div className='flex items-center gap-3'>

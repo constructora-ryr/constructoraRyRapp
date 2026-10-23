@@ -62,7 +62,7 @@ interface DataTableProps<TData> {
   compact?: boolean
   /** 'gradient' (por defecto, estilo anterior) o 'clean' (neutro, moderno) */
   variant?: 'gradient' | 'clean'
-  /** Solo 'clean': encabezado con degradado del módulo, p.ej. 'from-cyan-600 via-indigo-600 to-violet-600' */
+  /** Solo 'clean': encabezado con degradado del módulo, p.ej. 'from-cyan-600 via-indigo-600 to-violet-600 dark:from-cyan-700 dark:via-indigo-700 dark:to-violet-800' */
   headerGradient?: string
   /**
    * Separadores entre filas de distinto grupo (p.ej. por mes). Solo se
@@ -79,19 +79,22 @@ interface RowGroups<TData> {
 
 const gradientClasses = {
   orange: {
-    header: 'from-orange-600 via-amber-600 to-yellow-600',
+    header:
+      'from-orange-600 via-amber-600 to-yellow-600 dark:from-orange-700 dark:via-amber-700 dark:to-amber-800',
     border: 'border-orange-400/50',
     hover: 'hover:bg-orange-50/80 dark:hover:bg-orange-900/20',
     shadow: 'shadow-orange-500/10',
   },
   green: {
-    header: 'from-green-600 via-emerald-600 to-teal-600',
+    header:
+      'from-green-600 via-emerald-600 to-teal-600 dark:from-green-700 dark:via-emerald-700 dark:to-teal-800',
     border: 'border-green-400/50',
     hover: 'hover:bg-green-50/80 dark:hover:bg-green-900/20',
     shadow: 'shadow-green-500/10',
   },
   cyan: {
-    header: 'from-cyan-600 via-blue-600 to-indigo-600',
+    header:
+      'from-cyan-600 via-blue-600 to-indigo-600 dark:from-cyan-700 dark:via-blue-700 dark:to-indigo-800',
     border: 'border-cyan-400/50',
     hover: 'hover:bg-cyan-50/80 dark:hover:bg-cyan-900/20',
     shadow: 'shadow-cyan-500/10',
@@ -103,7 +106,8 @@ const gradientClasses = {
     shadow: 'shadow-pink-500/10',
   },
   blue: {
-    header: 'from-blue-600 via-indigo-600 to-purple-600',
+    header:
+      'from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-700 dark:via-indigo-700 dark:to-purple-800',
     border: 'border-blue-400/50',
     hover: 'hover:bg-blue-50/80 dark:hover:bg-blue-900/20',
     shadow: 'shadow-blue-500/10',

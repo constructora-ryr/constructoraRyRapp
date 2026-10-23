@@ -45,7 +45,7 @@ export const clientesListaStyles = {
   fab: {
     container: 'fixed top-6 right-6 z-50',
     button:
-      'group relative overflow-hidden flex items-center gap-2 px-6 py-4 bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 hover:from-cyan-700 hover:via-blue-700 hover:to-indigo-700 text-white font-bold rounded-2xl shadow-2xl shadow-cyan-500/50 hover:shadow-cyan-600/60 hover:scale-110 transition-all duration-300',
+      'group relative overflow-hidden flex items-center gap-2 px-6 py-4 bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 dark:from-cyan-700 dark:via-blue-700 dark:to-indigo-800 hover:from-cyan-700 hover:via-blue-700 hover:to-indigo-700 text-white font-bold rounded-2xl shadow-2xl shadow-cyan-500/50 hover:shadow-cyan-600/60 hover:scale-110 transition-all duration-300',
     buttonGlow:
       'absolute inset-0 bg-gradient-to-r from-cyan-400 to-indigo-400 blur-xl opacity-50 group-hover:opacity-75 transition-opacity',
     buttonContent: 'relative z-10 flex items-center gap-2',
@@ -192,7 +192,8 @@ export const clientesListaStyles = {
 export const metricasClientesColors = {
   total: {
     gradient: 'from-cyan-500 to-blue-600',
-    textGradient: 'from-cyan-600 via-blue-600 to-indigo-600',
+    textGradient:
+      'from-cyan-600 via-blue-600 to-indigo-600 dark:from-cyan-700 dark:via-blue-700 dark:to-indigo-800',
     glowColor: 'from-cyan-500/20 to-blue-500/20',
   },
   interesados: {
@@ -202,7 +203,8 @@ export const metricasClientesColors = {
   },
   activos: {
     gradient: 'from-green-500 to-emerald-600',
-    textGradient: 'from-green-600 via-emerald-600 to-teal-600',
+    textGradient:
+      'from-green-600 via-emerald-600 to-teal-600 dark:from-green-700 dark:via-emerald-700 dark:to-teal-800',
     glowColor: 'from-green-500/20 to-emerald-500/20',
   },
   inactivos: {
@@ -212,7 +214,8 @@ export const metricasClientesColors = {
   },
   renunciaron: {
     gradient: 'from-red-500 to-rose-600',
-    textGradient: 'from-red-600 via-rose-600 to-pink-600',
+    textGradient:
+      'from-red-600 via-rose-600 to-pink-600 dark:from-red-700 dark:via-rose-700 dark:to-pink-800',
     glowColor: 'from-red-500/20 to-rose-500/20',
   },
   propietarios: {

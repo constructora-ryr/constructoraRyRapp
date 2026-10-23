@@ -20,13 +20,16 @@ export type TabCliente = 'general' | 'intereses' | 'negociacion' | 'documentos'
 
 /** Degradado del encabezado por módulo (tabla de origen del evento) */
 const COLOR_MODULO: Record<string, string> = {
-  clientes: 'from-cyan-600 via-blue-600 to-indigo-600',
+  clientes:
+    'from-cyan-600 via-blue-600 to-indigo-600 dark:from-cyan-700 dark:via-blue-700 dark:to-indigo-800',
   intereses: 'from-blue-600 via-indigo-600 to-violet-600',
   negociaciones: 'from-pink-600 via-fuchsia-600 to-purple-600',
-  abonos_historial: 'from-violet-600 via-purple-600 to-fuchsia-600',
+  abonos_historial:
+    'from-violet-600 via-purple-600 to-fuchsia-600 dark:from-violet-700 dark:via-purple-800 dark:to-fuchsia-900',
   documentos_cliente: 'from-sky-600 via-blue-600 to-indigo-600',
   renuncias: 'from-rose-600 via-red-600 to-orange-600',
-  notas: 'from-violet-600 via-purple-600 to-fuchsia-600',
+  notas:
+    'from-violet-600 via-purple-600 to-fuchsia-600 dark:from-violet-700 dark:via-purple-800 dark:to-fuchsia-900',
 }
 
 /** Pestaña del cliente donde está hoy el dato de cada módulo */

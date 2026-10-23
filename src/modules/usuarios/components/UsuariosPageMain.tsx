@@ -225,7 +225,7 @@ export function UsuariosPageMain({
       >
         <ListPageHeader
           icon={Users}
-          heroGradient='from-indigo-700 via-indigo-600 to-sky-500'
+          heroGradient='from-indigo-700 via-indigo-600 to-sky-500 dark:from-indigo-800 dark:via-indigo-700 dark:to-sky-700'
           title='Usuarios'
           subtitle='Accesos, roles y permisos del sistema'
           breadcrumbs={[

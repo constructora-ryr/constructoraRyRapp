@@ -23,6 +23,7 @@ import {
   fuenteVisual,
   metodoVisual,
 } from '@/modules/abonos/components/lista/fuente-visual'
+import { TEMA_ABONOS } from '@/modules/abonos/styles/tema-abonos'
 import type { AbonoHistorial, FuentePago } from '@/modules/abonos/types'
 import { formatearNumeroRecibo } from '@/modules/abonos/utils/formato-recibo'
 import { Hueso } from '@/shared/components/carga'
@@ -99,7 +100,9 @@ export function TimelineAbonos({
   return (
     <section className='overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-800/60'>
       <header className='flex flex-wrap items-center gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-700/60'>
-        <span className='flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 text-white shadow-md shadow-violet-500/25'>
+        <span
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white shadow-md ${TEMA_ABONOS.icono}`}
+        >
           <Receipt className='h-5 w-5' />
         </span>
         <div className='min-w-0 flex-1'>

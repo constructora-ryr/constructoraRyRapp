@@ -11,7 +11,6 @@
  * sin hacer una segunda llamada a la red.
  *
  * Consumidores actuales:
- *   - useValidacionBotonDesembolso (valida botón por fuente)
  *   - useAbonosDetalle (valida todas las fuentes de una negociación)
  *
  * Para filtrar por fuente específica, usar filtrarPendientesPorFuente()

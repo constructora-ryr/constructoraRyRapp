@@ -118,7 +118,7 @@ export function EditarUsuarioView({ id }: EditarUsuarioViewProps) {
         <div className={s.content}>
           <ListPageHeader
             icon={UserCog}
-            heroGradient='from-indigo-700 via-indigo-600 to-sky-500'
+            heroGradient='from-indigo-700 via-indigo-600 to-sky-500 dark:from-indigo-800 dark:via-indigo-700 dark:to-sky-700'
             title='Editar usuario'
             breadcrumbs={migas}
           />
@@ -156,7 +156,7 @@ export function EditarUsuarioView({ id }: EditarUsuarioViewProps) {
       <div className={s.content}>
         <ListPageHeader
           icon={UserCog}
-          heroGradient='from-indigo-700 via-indigo-600 to-sky-500'
+          heroGradient='from-indigo-700 via-indigo-600 to-sky-500 dark:from-indigo-800 dark:via-indigo-700 dark:to-sky-700'
           title='Editar usuario'
           subtitle={usuario.email}
           breadcrumbs={migas}

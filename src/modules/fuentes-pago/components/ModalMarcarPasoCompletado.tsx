@@ -144,7 +144,7 @@ export function ModalMarcarPasoCompletado({
     <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm'>
       <div className='relative flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-800'>
         {/* Header con gradiente */}
-        <div className='flex items-center justify-between bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 px-6 py-4'>
+        <div className='flex items-center justify-between bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 px-6 py-4 dark:from-cyan-700 dark:via-blue-700 dark:to-indigo-800'>
           <h2 className='text-lg font-bold text-white'>
             Marcar Paso como Completado
           </h2>

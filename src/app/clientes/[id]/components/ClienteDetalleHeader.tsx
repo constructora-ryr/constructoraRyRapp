@@ -115,7 +115,7 @@ export function ClienteDetalleHeader({
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
-      className='relative overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-600 via-blue-600 to-indigo-600 px-5 py-5 shadow-lg shadow-blue-900/10 sm:px-6'
+      className='relative overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-600 via-blue-600 to-indigo-600 px-5 py-5 shadow-lg shadow-blue-900/10 dark:from-cyan-700 dark:via-blue-700 dark:to-indigo-800 sm:px-6'
     >
       <span
         aria-hidden

@@ -37,7 +37,7 @@ export const sharedModalStyles = {
   // Header con gradiente
   header: {
     wrapper:
-      'sticky top-0 z-10 bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 px-8 py-6',
+      'sticky top-0 z-10 bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 dark:from-cyan-700 dark:via-blue-700 dark:to-indigo-800 px-8 py-6',
     content: 'flex items-center justify-between',
     titleSection: 'flex items-center gap-4',
     iconContainer:

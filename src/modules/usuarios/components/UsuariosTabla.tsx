@@ -485,7 +485,7 @@ export function UsuariosTabla({
           initialSorting={ORDEN_INICIAL}
           onRowClick={canEdit ? onEditar : undefined}
           variant='clean'
-          headerGradient='from-indigo-700 via-indigo-600 to-sky-500'
+          headerGradient='from-indigo-700 via-indigo-600 to-sky-500 dark:from-indigo-800 dark:via-indigo-700 dark:to-sky-700'
         />
       </div>
 

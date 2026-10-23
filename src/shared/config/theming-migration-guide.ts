@@ -14,7 +14,8 @@ export const colorMigrationMap = {
   // ===========================
   'from-green-500 to-emerald-600': 'theme.classes.gradient.primary',
   'from-green-600 to-emerald-600': 'theme.classes.gradient.primary',
-  'from-green-600 via-emerald-600 to-teal-600': 'theme.classes.gradient.triple',
+  'from-green-600 via-emerald-600 to-teal-600 dark:from-green-700 dark:via-emerald-700 dark:to-teal-800':
+    'theme.classes.gradient.triple',
   'from-green-50 to-emerald-50': 'theme.classes.gradient.background',
   'from-green-900/20 to-emerald-900/20':
     'theme.classes.gradient.backgroundDark',

@@ -29,6 +29,7 @@ import {
   type RangoFecha,
 } from '@/modules/abonos/hooks/useAbonosList'
 import type { AbonoConInfo } from '@/modules/abonos/hooks/useAbonosQuery'
+import { TEMA_ABONOS } from '@/modules/abonos/styles/tema-abonos'
 import type { AbonoParaEditar } from '@/modules/abonos/types/editar-abono.types'
 import {
   EstadoFiltroCards,
@@ -224,7 +225,7 @@ export function AbonosListPage({
         >
           <ListPageHeader
             icon={CreditCard}
-            heroGradient='from-violet-600 via-purple-600 to-fuchsia-600'
+            heroGradient={TEMA_ABONOS.degradado}
             title='Abonos'
             subtitle='Recibos de pago de los clientes'
             breadcrumbs={[

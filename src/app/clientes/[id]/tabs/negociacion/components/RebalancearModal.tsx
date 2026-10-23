@@ -164,7 +164,7 @@ export function AjusteCierreFinancieroModal({
           >
             <div className='relative flex max-h-[90dvh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl dark:bg-gray-900 sm:max-w-2xl sm:rounded-2xl'>
               {/* ── Header ─────────────────────────────────── */}
-              <div className='flex flex-shrink-0 items-center justify-between bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 px-5 py-4'>
+              <div className='flex flex-shrink-0 items-center justify-between bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 px-5 py-4 dark:from-cyan-700 dark:via-blue-700 dark:to-indigo-800'>
                 <div className='flex items-center gap-2.5'>
                   <div className='flex h-8 w-8 items-center justify-center rounded-lg bg-white/20'>
                     <Lock className='h-4 w-4 text-white' />

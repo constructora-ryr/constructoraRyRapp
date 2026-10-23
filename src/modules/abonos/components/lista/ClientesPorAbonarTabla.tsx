@@ -13,6 +13,7 @@ import { type ColumnDef } from '@tanstack/react-table'
 import { ArrowRight, Building2, Home } from 'lucide-react'
 
 import { formatNombreCompleto, toTitleCase } from '@/lib/utils/string.utils'
+import { TEMA_ABONOS } from '@/modules/abonos/styles/tema-abonos'
 import { formatCOP, PagoProgreso } from '@/shared/components/list-page'
 import { DataTable } from '@/shared/components/table/DataTable'
 import { cn } from '@/shared/utils/helpers'
@@ -34,8 +35,7 @@ const styles = {
     'block truncate text-xs tabular-nums text-slate-500 dark:text-slate-400',
   chipVivienda:
     'inline-flex items-center gap-1 rounded-lg bg-violet-50 px-2 py-0.5 text-xs font-bold text-violet-700 ring-1 ring-inset ring-violet-600/20 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-400/20',
-  botonAbonar:
-    'inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 py-2 text-xs font-semibold text-white shadow-md shadow-violet-500/25 transition-all hover:-translate-y-0.5 hover:shadow-violet-500/40',
+  botonAbonar: `inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-white shadow-md transition-all hover:-translate-y-0.5 ${TEMA_ABONOS.boton}`,
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -284,7 +284,7 @@ export function ClientesPorAbonarTabla({
           onRowClick={onAbrir}
           pageSize={25}
           variant='clean'
-          headerGradient='from-violet-600 via-purple-600 to-fuchsia-600'
+          headerGradient={TEMA_ABONOS.degradado}
         />
       </div>
     </>

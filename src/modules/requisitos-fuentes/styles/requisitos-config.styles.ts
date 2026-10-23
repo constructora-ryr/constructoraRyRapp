@@ -60,7 +60,7 @@ export const requisitosConfigStyles = {
     button:
       'px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105',
     buttonActive:
-      'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-lg shadow-blue-500/30',
+      'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-700 dark:via-indigo-700 dark:to-purple-800 text-white shadow-lg shadow-blue-500/30',
     buttonInactive:
       'bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600',
   },

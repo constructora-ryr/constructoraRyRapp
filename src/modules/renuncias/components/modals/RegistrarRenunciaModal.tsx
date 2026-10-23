@@ -55,7 +55,7 @@ const s = {
   container:
     'relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-700',
   header:
-    'sticky top-0 z-10 flex items-center justify-between px-5 py-4 bg-gradient-to-r from-red-600 via-rose-600 to-pink-600 text-white rounded-t-2xl',
+    'sticky top-0 z-10 flex items-center justify-between px-5 py-4 bg-gradient-to-r from-red-600 via-rose-600 to-pink-600 dark:from-red-700 dark:via-rose-700 dark:to-pink-800 text-white rounded-t-2xl',
   headerTitle: 'text-lg font-bold flex items-center gap-2',
   closeBtn: 'p-1.5 rounded-lg hover:bg-white/20 transition-colors',
   body: 'px-5 py-4 space-y-4',
@@ -77,7 +77,7 @@ const s = {
   infoLabel: 'text-xs text-gray-500 dark:text-gray-400 min-w-[80px]',
   infoValue: 'text-sm font-semibold text-gray-900 dark:text-white',
   btnPrimary:
-    'inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-red-600 via-rose-600 to-pink-600 text-white text-sm font-semibold hover:from-red-700 hover:via-rose-700 hover:to-pink-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg',
+    'inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-red-600 via-rose-600 to-pink-600 dark:from-red-700 dark:via-rose-700 dark:to-pink-800 text-white text-sm font-semibold hover:from-red-700 hover:via-rose-700 hover:to-pink-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg',
   btnSecondary:
     'inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-all',
   stepIndicator: 'flex items-center gap-2 text-xs text-white/80',

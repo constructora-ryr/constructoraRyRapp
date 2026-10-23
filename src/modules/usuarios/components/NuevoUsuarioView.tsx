@@ -195,7 +195,7 @@ export function NuevoUsuarioView() {
       <div className={s.content}>
         <ListPageHeader
           icon={UserPlus}
-          heroGradient='from-indigo-700 via-indigo-600 to-sky-500'
+          heroGradient='from-indigo-700 via-indigo-600 to-sky-500 dark:from-indigo-800 dark:via-indigo-700 dark:to-sky-700'
           title='Nuevo usuario'
           subtitle='Crea una cuenta de acceso al sistema'
           breadcrumbs={MIGAS}

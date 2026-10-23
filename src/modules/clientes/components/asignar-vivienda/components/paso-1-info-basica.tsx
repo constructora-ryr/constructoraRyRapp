@@ -105,7 +105,7 @@ export function Paso1InfoBasica({
         </div>
         <div className='h-1.5 overflow-hidden rounded-full bg-blue-200 dark:bg-blue-900/50'>
           <motion.div
-            className='h-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 shadow-lg'
+            className='h-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 shadow-lg dark:from-blue-700 dark:via-indigo-700 dark:to-purple-800'
             initial={{ width: 0 }}
             animate={{ width: `${porcentajeProgreso}%` }}
             transition={{ duration: 0.15, ease: 'easeOut' }}

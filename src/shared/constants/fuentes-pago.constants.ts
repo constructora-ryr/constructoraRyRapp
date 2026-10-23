@@ -82,7 +82,7 @@ export const esDesembolsoExacto = (nombreOCodigo?: string | null) =>
 // ─── Labels contextuales según código ───────────────────────────────────────
 
 interface LabelsContextuales {
-  montoLabel: string // "Pactado" vs "Aprobado"
+  montoLabel: string // "Pactado", "Asignado" (subsidios), "Aprobado" (créditos)
   recibidoLabel: string // "Pagado" vs "Desembolsado"
   pendienteLabel: string // "Por Pagar" vs "Pendiente"
   entidadFallback: string // Cuando no hay entidad: inferir texto
@@ -109,13 +109,13 @@ const LABELS_MAP: Partial<Record<FuenteCodigo, LabelsContextuales>> = {
     entidadFallback: 'Constructora',
   },
   [FUENTE_CODIGO.SUBSIDIO_MI_CASA_YA]: {
-    montoLabel: 'Aprobado',
+    montoLabel: 'Asignado',
     recibidoLabel: 'Desembolsado',
     pendienteLabel: 'Pendiente',
     entidadFallback: 'Mi Casa Ya',
   },
   [FUENTE_CODIGO.SUBSIDIO_CAJA_COMPENSACION]: {
-    montoLabel: 'Aprobado',
+    montoLabel: 'Asignado',
     recibidoLabel: 'Desembolsado',
     pendienteLabel: 'Pendiente',
     entidadFallback: 'Caja Compensación',
@@ -130,8 +130,8 @@ const LABELS_MAP: Partial<Record<FuenteCodigo, LabelsContextuales>> = {
 
 /**
  * Obtener labels contextuales según nombre o código de la fuente.
- * Sirve para mostrar "Pactado"/"Pagado" para Cuota Inicial
- * y "Aprobado"/"Desembolsado" para las demás.
+ * Cuota Inicial: "Pactado"/"Pagado"; subsidios: "Asignado"; créditos
+ * hipotecarios: "Aprobado"; crédito con la constructora: "Crédito total".
  */
 export const getLabelsContextuales = (
   nombreOCodigo?: string | null

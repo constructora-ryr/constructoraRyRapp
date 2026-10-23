@@ -112,7 +112,7 @@ export function ConfirmarCambiosDocumentoModal({
         onClick={e => e.stopPropagation()}
       >
         {/* Header - Compacto */}
-        <div className='relative bg-gradient-to-br from-green-600 via-emerald-600 to-teal-600 px-4 py-3'>
+        <div className='relative bg-gradient-to-br from-green-600 via-emerald-600 to-teal-600 px-4 py-3 dark:from-green-700 dark:via-emerald-700 dark:to-teal-800'>
           <div className='bg-grid-white/10 absolute inset-0 [mask-image:linear-gradient(0deg,transparent,black,transparent)]' />
           <div className='relative z-10 flex items-center justify-between'>
             <div className='flex items-center gap-2.5'>
@@ -238,7 +238,7 @@ export function ConfirmarCambiosDocumentoModal({
                 type='button'
                 onClick={onConfirm}
                 disabled={isLoading}
-                className='flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-green-500/30 transition-all hover:scale-[1.02] hover:shadow-xl disabled:opacity-90 disabled:hover:scale-100 sm:flex-none'
+                className='flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-green-500/30 transition-all hover:scale-[1.02] hover:shadow-xl disabled:opacity-90 disabled:hover:scale-100 dark:from-green-700 dark:via-emerald-700 dark:to-teal-800 sm:flex-none'
               >
                 {isLoading ? (
                   <>

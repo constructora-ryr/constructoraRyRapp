@@ -138,7 +138,8 @@ export const metricasIconColors = {
   total: {
     bg: 'bg-gradient-to-br from-red-500 to-rose-600',
     shadow: 'shadow-red-500/50',
-    value: 'from-red-600 via-rose-600 to-pink-600',
+    value:
+      'from-red-600 via-rose-600 to-pink-600 dark:from-red-700 dark:via-rose-700 dark:to-pink-800',
     glow: 'from-red-500/20 to-rose-500/20',
   },
   pendientes: {
@@ -150,13 +151,15 @@ export const metricasIconColors = {
   cerradas: {
     bg: 'bg-gradient-to-br from-green-500 to-emerald-600',
     shadow: 'shadow-green-500/50',
-    value: 'from-green-600 via-emerald-600 to-teal-600',
+    value:
+      'from-green-600 via-emerald-600 to-teal-600 dark:from-green-700 dark:via-emerald-700 dark:to-teal-800',
     glow: 'from-green-500/20 to-emerald-500/20',
   },
   devuelto: {
     bg: 'bg-gradient-to-br from-blue-500 to-indigo-600',
     shadow: 'shadow-blue-500/50',
-    value: 'from-blue-600 via-indigo-600 to-purple-600',
+    value:
+      'from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-700 dark:via-indigo-700 dark:to-purple-800',
     glow: 'from-blue-500/20 to-indigo-500/20',
   },
 }

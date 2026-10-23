@@ -84,7 +84,7 @@ const TEMAS: Record<'rosa' | 'azul', Tema> = {
     ctaTitle: 'text-blue-900 dark:text-blue-100',
     ctaText: 'text-blue-700 dark:text-blue-300',
     ctaButton:
-      'from-cyan-600 via-blue-600 to-indigo-600 shadow-blue-500/30 hover:shadow-blue-500/40',
+      'from-cyan-600 via-blue-600 to-indigo-600 dark:from-cyan-700 dark:via-blue-700 dark:to-indigo-800 shadow-blue-500/30 hover:shadow-blue-500/40',
     footerIcon: 'text-blue-600 dark:text-blue-400',
   },
 }

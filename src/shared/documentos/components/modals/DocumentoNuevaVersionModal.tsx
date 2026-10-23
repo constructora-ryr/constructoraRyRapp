@@ -217,7 +217,7 @@ export function DocumentoNuevaVersionModal({
           className='relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl dark:bg-gray-800'
         >
           {/* Header - Verde/Esmeralda (tema Proyectos) */}
-          <div className='sticky top-0 z-10 rounded-t-2xl bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 px-6 py-4'>
+          <div className='sticky top-0 z-10 rounded-t-2xl bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 px-6 py-4 dark:from-cyan-700 dark:via-blue-700 dark:to-indigo-800'>
             <div className='flex items-center justify-between'>
               <div className='flex items-center gap-3'>
                 <div className='flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm'>
@@ -457,7 +457,7 @@ export function DocumentoNuevaVersionModal({
                   subiendo ||
                   !!fechaVencimientoInvalida
                 }
-                className='flex-1 rounded-lg bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-cyan-500/20 transition-all hover:from-cyan-700 hover:via-blue-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-50'
+                className='flex-1 rounded-lg bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-cyan-500/20 transition-all hover:from-cyan-700 hover:via-blue-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 dark:from-cyan-700 dark:via-blue-700 dark:to-indigo-800'
               >
                 {subiendo ? (
                   <div className='flex items-center justify-center gap-2'>

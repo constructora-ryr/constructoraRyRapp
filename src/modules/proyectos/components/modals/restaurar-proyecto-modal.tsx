@@ -148,7 +148,7 @@ export function RestaurarProyectoModal({
                     type='button'
                     onClick={onConfirm}
                     disabled={restaurando}
-                    className='flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-green-500/30 transition-all hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 disabled:cursor-not-allowed disabled:opacity-50'
+                    className='flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-green-500/30 transition-all hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 disabled:cursor-not-allowed disabled:opacity-50 dark:from-green-700 dark:via-emerald-700 dark:to-teal-800'
                   >
                     {restaurando ? (
                       <>

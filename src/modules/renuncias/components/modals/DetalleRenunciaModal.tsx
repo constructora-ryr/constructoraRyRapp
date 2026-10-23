@@ -38,7 +38,7 @@ const s = {
   container:
     'relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-700',
   header:
-    'sticky top-0 z-10 flex items-center justify-between px-5 py-4 bg-gradient-to-r from-red-600 via-rose-600 to-pink-600 text-white rounded-t-2xl',
+    'sticky top-0 z-10 flex items-center justify-between px-5 py-4 bg-gradient-to-r from-red-600 via-rose-600 to-pink-600 dark:from-red-700 dark:via-rose-700 dark:to-pink-800 text-white rounded-t-2xl',
   headerTitle: 'text-lg font-bold flex items-center gap-2',
   closeBtn: 'p-1.5 rounded-lg hover:bg-white/20 transition-colors',
   tabs: 'flex gap-1 px-5 pt-3 pb-0 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50',

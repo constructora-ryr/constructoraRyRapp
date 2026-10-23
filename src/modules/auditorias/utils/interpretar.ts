@@ -32,12 +32,14 @@ const TONOS = {
     badge:
       'bg-violet-50 text-violet-700 ring-violet-200 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/30',
     punto: 'bg-violet-500',
-    degradado: 'from-violet-600 via-purple-600 to-fuchsia-600',
+    degradado:
+      'from-violet-600 via-purple-600 to-fuchsia-600 dark:from-violet-700 dark:via-purple-800 dark:to-fuchsia-900',
   },
   rojo: {
     badge: ACCIONES.ELIMINAR.badge,
     punto: ACCIONES.ELIMINAR.punto,
-    degradado: 'from-red-600 via-rose-600 to-pink-600',
+    degradado:
+      'from-red-600 via-rose-600 to-pink-600 dark:from-red-700 dark:via-rose-700 dark:to-pink-800',
   },
   verde: {
     badge: ACCIONES.CREAR.badge,

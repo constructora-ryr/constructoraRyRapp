@@ -660,7 +660,7 @@ export function PermisosView() {
             onDragEnd={handleDragEnd}
           >
             <table className='w-full text-sm'>
-              <thead className='bg-gradient-to-r from-indigo-700 via-indigo-600 to-sky-500'>
+              <thead className='bg-gradient-to-r from-indigo-700 via-indigo-600 to-sky-500 dark:from-indigo-800 dark:via-indigo-700 dark:to-sky-700'>
                 <tr>
                   <th className='px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-white'>
                     Módulo / acción

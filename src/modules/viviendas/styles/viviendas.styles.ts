@@ -143,17 +143,20 @@ export const viviendasStyles = {
 export const metricasIconColors = {
   total: {
     gradient: 'from-orange-500 to-amber-600',
-    textGradient: 'from-orange-600 via-amber-600 to-yellow-600',
+    textGradient:
+      'from-orange-600 via-amber-600 to-yellow-600 dark:from-orange-700 dark:via-amber-700 dark:to-amber-800',
     glowColor: 'from-orange-500/20 to-amber-500/20',
   },
   disponibles: {
     gradient: 'from-green-500 to-emerald-600',
-    textGradient: 'from-green-600 via-emerald-600 to-teal-600',
+    textGradient:
+      'from-green-600 via-emerald-600 to-teal-600 dark:from-green-700 dark:via-emerald-700 dark:to-teal-800',
     glowColor: 'from-green-500/20 to-emerald-500/20',
   },
   asignadas: {
     gradient: 'from-blue-500 to-indigo-600',
-    textGradient: 'from-blue-600 via-indigo-600 to-purple-600',
+    textGradient:
+      'from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-700 dark:via-indigo-700 dark:to-purple-800',
     glowColor: 'from-blue-500/20 to-indigo-500/20',
   },
   entregadas: {

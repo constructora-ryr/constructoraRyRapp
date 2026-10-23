@@ -2,7 +2,8 @@ import { type ModuleName } from '@/shared/config/module-themes'
 
 const THEME_COLORS = {
   proyectos: {
-    gradient: 'from-green-600 via-emerald-600 to-teal-600',
+    gradient:
+      'from-green-600 via-emerald-600 to-teal-600 dark:from-green-700 dark:via-emerald-700 dark:to-teal-800',
     bgLight: 'bg-green-50 dark:bg-green-900/20',
     border: 'border-green-200 dark:border-green-900/50',
     text: 'text-green-600 dark:text-green-400',
@@ -10,7 +11,8 @@ const THEME_COLORS = {
     hover: 'hover:from-green-700 hover:via-emerald-700 hover:to-teal-700',
   },
   viviendas: {
-    gradient: 'from-orange-600 via-amber-600 to-yellow-600',
+    gradient:
+      'from-orange-600 via-amber-600 to-yellow-600 dark:from-orange-700 dark:via-amber-700 dark:to-amber-800',
     bgLight: 'bg-orange-50 dark:bg-orange-900/20',
     border: 'border-orange-200 dark:border-orange-900/50',
     text: 'text-orange-600 dark:text-orange-400',
@@ -18,7 +20,8 @@ const THEME_COLORS = {
     hover: 'hover:from-orange-700 hover:via-amber-700 hover:to-yellow-700',
   },
   clientes: {
-    gradient: 'from-cyan-600 via-blue-600 to-indigo-600',
+    gradient:
+      'from-cyan-600 via-blue-600 to-indigo-600 dark:from-cyan-700 dark:via-blue-700 dark:to-indigo-800',
     bgLight: 'bg-cyan-50 dark:bg-cyan-900/20',
     border: 'border-cyan-200 dark:border-cyan-900/50',
     text: 'text-cyan-600 dark:text-cyan-400',
@@ -34,7 +37,8 @@ const THEME_COLORS = {
     hover: 'hover:from-pink-700 hover:via-purple-700 hover:to-indigo-700',
   },
   abonos: {
-    gradient: 'from-blue-600 via-indigo-600 to-purple-600',
+    gradient:
+      'from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-700 dark:via-indigo-700 dark:to-purple-800',
     bgLight: 'bg-blue-50 dark:bg-blue-900/20',
     border: 'border-blue-200 dark:border-blue-900/50',
     text: 'text-blue-600 dark:text-blue-400',
@@ -42,7 +46,8 @@ const THEME_COLORS = {
     hover: 'hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700',
   },
   documentos: {
-    gradient: 'from-red-600 via-rose-600 to-pink-600',
+    gradient:
+      'from-red-600 via-rose-600 to-pink-600 dark:from-red-700 dark:via-rose-700 dark:to-pink-800',
     bgLight: 'bg-red-50 dark:bg-red-900/20',
     border: 'border-red-200 dark:border-red-900/50',
     text: 'text-red-600 dark:text-red-400',
@@ -50,7 +55,8 @@ const THEME_COLORS = {
     hover: 'hover:from-red-700 hover:via-rose-700 hover:to-pink-700',
   },
   auditorias: {
-    gradient: 'from-blue-600 via-indigo-600 to-purple-600',
+    gradient:
+      'from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-700 dark:via-indigo-700 dark:to-purple-800',
     bgLight: 'bg-blue-50 dark:bg-blue-900/20',
     border: 'border-blue-200 dark:border-blue-900/50',
     text: 'text-blue-600 dark:text-blue-400',
@@ -58,7 +64,8 @@ const THEME_COLORS = {
     hover: 'hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700',
   },
   renuncias: {
-    gradient: 'from-red-600 via-rose-600 to-pink-600',
+    gradient:
+      'from-red-600 via-rose-600 to-pink-600 dark:from-red-700 dark:via-rose-700 dark:to-pink-800',
     bgLight: 'bg-red-50 dark:bg-red-900/20',
     border: 'border-red-200 dark:border-red-900/50',
     text: 'text-red-600 dark:text-red-400',

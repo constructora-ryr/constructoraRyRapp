@@ -30,6 +30,7 @@ import {
   avatarGradient,
   inicialesCliente,
 } from '@/modules/abonos/components/lista/fuente-visual'
+import { TEMA_ABONOS } from '@/modules/abonos/styles/tema-abonos'
 import type { NegociacionConAbonos } from '@/modules/abonos/types'
 import { formatCOP, HeroDato } from '@/shared/components/list-page'
 import { cn } from '@/shared/utils/helpers'
@@ -99,8 +100,8 @@ export function HeaderCliente({
       className={cn(
         'relative overflow-hidden rounded-2xl bg-gradient-to-br shadow-lg',
         propietario
-          ? 'from-amber-500 via-orange-500 to-amber-600 shadow-amber-900/15'
-          : 'from-violet-600 via-purple-600 to-fuchsia-600 shadow-violet-900/15'
+          ? cn(TEMA_ABONOS.degradadoPropietario, 'shadow-amber-900/15')
+          : cn(TEMA_ABONOS.degradado, 'shadow-violet-900/15')
       )}
     >
       <span

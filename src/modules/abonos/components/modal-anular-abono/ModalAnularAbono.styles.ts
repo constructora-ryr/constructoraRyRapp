@@ -15,7 +15,7 @@ export const modalAnularAbonoStyles = {
   // ─── Header ──────────────────────────────────────────────────────────────────
   header: {
     container:
-      'flex items-center justify-between gap-3 bg-gradient-to-r from-red-600 via-rose-600 to-pink-600 px-5 py-4',
+      'flex items-center justify-between gap-3 bg-gradient-to-r from-red-600 via-rose-600 to-pink-600 dark:from-red-700 dark:via-rose-700 dark:to-pink-800 px-5 py-4',
     left: 'flex items-center gap-3',
     iconWrap:
       'flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm',

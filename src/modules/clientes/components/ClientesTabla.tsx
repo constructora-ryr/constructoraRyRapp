@@ -388,7 +388,7 @@ export function ClientesTabla({
           initialSorting={initialSorting}
           onRowClick={onView}
           variant='clean'
-          headerGradient='from-cyan-600 via-indigo-600 to-violet-600'
+          headerGradient='from-cyan-600 via-indigo-600 to-violet-600 dark:from-cyan-700 dark:via-indigo-700 dark:to-violet-800'
         />
       </div>
     </>

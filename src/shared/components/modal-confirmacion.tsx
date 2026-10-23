@@ -57,7 +57,8 @@ export interface ModalConfirmacionProps {
 const variantConfig = {
   danger: {
     icon: Trash2,
-    gradient: 'from-red-600 via-rose-600 to-pink-600',
+    gradient:
+      'from-red-600 via-rose-600 to-pink-600 dark:from-red-700 dark:via-rose-700 dark:to-pink-800',
     buttonBg: 'bg-red-600 hover:bg-red-700',
     iconBg: 'bg-red-100 dark:bg-red-900/30',
     iconColor: 'text-red-600 dark:text-red-400',
@@ -81,7 +82,8 @@ const variantConfig = {
   },
   success: {
     icon: CheckCircle,
-    gradient: 'from-green-600 via-emerald-600 to-teal-600',
+    gradient:
+      'from-green-600 via-emerald-600 to-teal-600 dark:from-green-700 dark:via-emerald-700 dark:to-teal-800',
     buttonBg: 'bg-green-600 hover:bg-green-700',
     iconBg: 'bg-green-100 dark:bg-green-900/30',
     iconColor: 'text-green-600 dark:text-green-400',

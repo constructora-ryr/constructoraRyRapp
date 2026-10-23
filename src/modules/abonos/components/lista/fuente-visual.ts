@@ -56,8 +56,8 @@ export function fuenteVisual(tipo: string): FuenteVisual {
   const esquema = getColorScheme(tipo)
   const colores = OVERRIDES[tipo] ?? {
     gradient: esquema.gradient,
-    solid: esquema.metodoBg,
-    text: esquema.textAccent,
+    solid: esquema.solid,
+    text: esquema.text,
   }
   return { icon: ICONO_FUENTE[tipo] ?? Wallet, ...colores }
 }

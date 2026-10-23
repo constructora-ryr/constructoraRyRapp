@@ -300,15 +300,13 @@ export default function AbonosDetalleClient({
             open={modalAbonoOpen}
             onClose={handleCerrarModal}
             negociacionId={negociacion.id}
-            clienteId={clienteId}
             esAdmin={esAdmin}
             fechaMinima={
               negociacion.fecha_negociacion
                 ? formatDateForInput(negociacion.fecha_negociacion)
                 : undefined
             }
-            fuentesPago={[fuenteSeleccionada]}
-            fuenteInicial={fuenteSeleccionada}
+            fuente={fuenteSeleccionada}
             onSuccess={handleAbonoConRefresh}
             negociacionContext={
               negociacion

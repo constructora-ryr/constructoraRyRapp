@@ -3935,6 +3935,7 @@ export type Database = {
       }
       rebalancear_plan_financiero: { Args: { p_payload: Json }; Returns: Json }
       reestructurar_credito: { Args: { p_payload: Json }; Returns: Json }
+      registrar_abono: { Args: { p_payload: Json }; Returns: Json }
       regenerar_pendientes_fuente: {
         Args: { p_fuente_id: string }
         Returns: number

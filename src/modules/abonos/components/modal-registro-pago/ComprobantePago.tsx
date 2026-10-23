@@ -55,12 +55,12 @@ export function ComprobantePago({
   const label =
     modo === 'desembolso'
       ? {
-          title: 'Comprobante de desembolso bancario',
-          hint: 'Adjunta el comprobante emitido por la entidad (obligatorio)',
+          title: 'Soporte del desembolso',
+          hint: 'Comprobante o certificación del banco o la entidad.',
         }
       : {
-          title: 'Comprobante de pago',
-          hint: 'Adjunta el recibo o comprobante (obligatorio)',
+          title: 'Comprobante del pago',
+          hint: 'Foto o PDF del recibo, la consignación o la transferencia.',
         }
 
   function validarYSeleccionar(file: File) {
@@ -200,10 +200,10 @@ export function ComprobantePago({
 
   return (
     <div className='space-y-1.5'>
-      <p className='text-sm font-semibold text-gray-700 dark:text-gray-300'>
+      <p className='text-sm font-semibold text-gray-800 dark:text-gray-100'>
         {label.title} <span className='text-red-500'>*</span>
       </p>
-      <p className='-mt-1 text-xs text-gray-500 dark:text-gray-400'>
+      <p className='-mt-1 text-xs text-gray-600 dark:text-gray-300'>
         {label.hint}
       </p>
 
@@ -249,7 +249,9 @@ export function ComprobantePago({
       />
 
       {errorMsg ? (
-        <p className='text-xs text-red-600 dark:text-red-400'>{errorMsg}</p>
+        <p className='text-xs font-medium text-red-600 dark:text-red-400'>
+          {errorMsg}
+        </p>
       ) : null}
     </div>
   )

@@ -30,6 +30,7 @@ import {
   type AbonoConInfo,
   type EstadisticasAbonos,
 } from '@/modules/abonos/hooks/useAbonosList'
+import { TEMA_ABONOS } from '@/modules/abonos/styles/tema-abonos'
 import type { MetodoPago } from '@/modules/abonos/types'
 import type { AbonoParaEditar } from '@/modules/abonos/types/editar-abono.types'
 import { formatearNumeroRecibo } from '@/modules/abonos/utils/formato-recibo'
@@ -517,7 +518,7 @@ export function AbonosTabla({
           initialSorting={ORDEN_INICIAL}
           onRowClick={onAbonoClick}
           variant='clean'
-          headerGradient='from-violet-600 via-purple-600 to-fuchsia-600'
+          headerGradient={TEMA_ABONOS.degradado}
           rowGroups={{
             columnas: ['fecha'],
             clave: claveMes,

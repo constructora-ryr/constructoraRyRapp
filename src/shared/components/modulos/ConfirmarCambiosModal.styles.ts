@@ -7,13 +7,19 @@
 
 // ── Gradientes del header por módulo ─────────────────────────────
 export const MODAL_GRADIENT: Record<string, string> = {
-  proyectos: 'from-green-600 via-emerald-600 to-teal-600',
-  viviendas: 'from-orange-600 via-amber-600 to-yellow-600',
-  clientes: 'from-cyan-600 via-blue-600 to-indigo-600',
+  proyectos:
+    'from-green-600 via-emerald-600 to-teal-600 dark:from-green-700 dark:via-emerald-700 dark:to-teal-800',
+  viviendas:
+    'from-orange-600 via-amber-600 to-yellow-600 dark:from-orange-700 dark:via-amber-700 dark:to-amber-800',
+  clientes:
+    'from-cyan-600 via-blue-600 to-indigo-600 dark:from-cyan-700 dark:via-blue-700 dark:to-indigo-800',
   negociaciones: 'from-pink-600 via-purple-600 to-indigo-600',
-  abonos: 'from-blue-600 via-indigo-600 to-purple-600',
-  documentos: 'from-red-600 via-rose-600 to-pink-600',
-  auditorias: 'from-blue-600 via-indigo-600 to-purple-600',
+  abonos:
+    'from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-700 dark:via-indigo-700 dark:to-purple-800',
+  documentos:
+    'from-red-600 via-rose-600 to-pink-600 dark:from-red-700 dark:via-rose-700 dark:to-pink-800',
+  auditorias:
+    'from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-700 dark:via-indigo-700 dark:to-purple-800',
   renuncias: 'from-gray-600 via-slate-600 to-zinc-600',
 }
 

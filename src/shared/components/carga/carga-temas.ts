@@ -21,12 +21,14 @@ export const COLORES_CARGA: Record<TemaCarga, ColoresCarga> = {
     anillo: ['#6366F1', '#A855F7'],
   },
   clientes: {
-    gradient: 'from-cyan-600 via-blue-600 to-indigo-600',
+    gradient:
+      'from-cyan-600 via-blue-600 to-indigo-600 dark:from-cyan-700 dark:via-blue-700 dark:to-indigo-800',
     sombra: 'shadow-cyan-500/40',
     anillo: ['#06B6D4', '#6366F1'],
   },
   proyectos: {
-    gradient: 'from-green-600 via-emerald-600 to-teal-600',
+    gradient:
+      'from-green-600 via-emerald-600 to-teal-600 dark:from-green-700 dark:via-emerald-700 dark:to-teal-800',
     sombra: 'shadow-green-500/40',
     anillo: ['#22C55E', '#14B8A6'],
   },
@@ -36,7 +38,8 @@ export const COLORES_CARGA: Record<TemaCarga, ColoresCarga> = {
     anillo: ['#F97316', '#EAB308'],
   },
   abonos: {
-    gradient: 'from-violet-600 via-purple-600 to-fuchsia-600',
+    gradient:
+      'from-violet-600 via-purple-600 to-fuchsia-600 dark:from-violet-700 dark:via-purple-800 dark:to-fuchsia-900',
     sombra: 'shadow-violet-500/40',
     anillo: ['#8B5CF6', '#D946EF'],
   },
@@ -61,7 +64,8 @@ export const COLORES_CARGA: Record<TemaCarga, ColoresCarga> = {
     anillo: ['#6366F1', '#8B5CF6'],
   },
   renuncias: {
-    gradient: 'from-red-600 via-rose-600 to-pink-600',
+    gradient:
+      'from-red-600 via-rose-600 to-pink-600 dark:from-red-700 dark:via-rose-700 dark:to-pink-800',
     sombra: 'shadow-rose-500/40',
     anillo: ['#EF4444', '#EC4899'],
   },

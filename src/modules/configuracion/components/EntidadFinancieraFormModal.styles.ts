@@ -26,7 +26,7 @@ export const entidadFinancieraModalStyles = {
   // Header
   header: {
     container:
-      'relative overflow-hidden bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-6 py-4 rounded-t-2xl',
+      'relative overflow-hidden bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-700 dark:via-indigo-700 dark:to-purple-800 px-6 py-4 rounded-t-2xl',
     content: 'relative z-10 flex items-center justify-between',
     icon: 'w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center',
     iconSvg: 'w-6 h-6 text-white',

@@ -205,7 +205,7 @@ export function ClientesPageMain({
       >
         <ListPageHeader
           icon={Users}
-          heroGradient='from-cyan-600 via-blue-600 to-indigo-600'
+          heroGradient='from-cyan-600 via-blue-600 to-indigo-600 dark:from-cyan-700 dark:via-blue-700 dark:to-indigo-800'
           title='Clientes'
           subtitle='Compradores, interesados y propietarios'
           breadcrumbs={[

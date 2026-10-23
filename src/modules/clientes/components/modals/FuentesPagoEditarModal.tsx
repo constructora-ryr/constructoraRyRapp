@@ -145,7 +145,7 @@ export function FuentesPagoEditarModal({
           >
             <div className='w-full max-w-3xl overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-800'>
               {/* Header */}
-              <div className='bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-6 py-4'>
+              <div className='bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-6 py-4 dark:from-blue-700 dark:via-indigo-700 dark:to-purple-800'>
                 <div className='flex items-center justify-between'>
                   <div className='flex items-center gap-3'>
                     <div className='flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm'>

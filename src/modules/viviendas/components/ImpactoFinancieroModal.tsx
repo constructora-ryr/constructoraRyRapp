@@ -254,7 +254,7 @@ export function ImpactoFinancieroModal({
                   <button
                     onClick={onConfirmarConSync}
                     disabled={isBlocked}
-                    className='flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-orange-500/20 transition-all hover:from-orange-700 hover:via-amber-700 hover:to-yellow-700 disabled:opacity-50'
+                    className='flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-orange-500/20 transition-all hover:from-orange-700 hover:via-amber-700 hover:to-yellow-700 disabled:opacity-50 dark:from-orange-700 dark:via-amber-700 dark:to-amber-800'
                   >
                     <RefreshCw className='h-4 w-4' />
                     Guardar y sincronizar negociación

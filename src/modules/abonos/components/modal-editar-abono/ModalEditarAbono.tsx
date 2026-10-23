@@ -57,7 +57,7 @@ export function ModalEditarAbono({
   const colorScheme = getColorSchemeByToken(
     getTipoConfig(abono.fuente_tipo ?? '').color
   )
-  const styles = getModalStyles(colorScheme, 'abono')
+  const styles = getModalStyles(colorScheme)
 
   const {
     monto,
@@ -149,9 +149,7 @@ export function ModalEditarAbono({
                 <h2 className='text-base font-bold leading-tight text-white'>
                   {fase === 'confirmar' ? 'Confirmar cambios' : 'Editar Abono'}
                 </h2>
-                <span
-                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${colorScheme.headerBadgeAbono}`}
-                >
+                <span className={styles.header.chip}>
                   {fase === 'confirmar' ? 'Revision' : 'Edicion'}
                 </span>
               </div>
@@ -185,7 +183,7 @@ export function ModalEditarAbono({
                   Monto del abono <span className='ml-0.5 text-red-500'>*</span>
                 </label>
                 <div
-                  className={`relative flex items-center rounded-xl border-2 border-gray-200 bg-gray-50 transition-all ${colorScheme.inputFocusWithin} dark:border-gray-700 dark:bg-gray-800/80`}
+                  className={`relative flex items-center rounded-xl border-2 border-gray-200 bg-gray-50 transition-all ${colorScheme.focusWithin} dark:border-gray-700 dark:bg-gray-800/80`}
                 >
                   <span className='select-none pl-4 text-base font-semibold text-gray-500 dark:text-gray-400'>
                     $
@@ -209,7 +207,6 @@ export function ModalEditarAbono({
                 metodosDisponibles={metodosDisponibles}
                 metodoPago={metodoPago}
                 onMetodoChange={m => setMetodoPago(m)}
-                colorScheme={colorScheme}
               />
 
               {/* Fecha */}
@@ -458,7 +455,7 @@ export function ModalEditarAbono({
                 type='button'
                 onClick={irAConfirmar}
                 disabled={!puedeRevisar}
-                className={styles.footer.submitAbono}
+                className={styles.footer.submit}
               >
                 <CheckCircle2 className='h-4 w-4' />
                 Guardar cambios
@@ -479,7 +476,7 @@ export function ModalEditarAbono({
                 type='button'
                 onClick={handleSubmit}
                 disabled={!puedeConfirmar}
-                className={styles.footer.submitAbono}
+                className={styles.footer.submit}
               >
                 {isSubmitting ? (
                   <>

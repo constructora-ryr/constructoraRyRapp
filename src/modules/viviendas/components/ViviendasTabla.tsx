@@ -377,7 +377,7 @@ export function ViviendasTabla({
           initialSorting={[{ id: 'identificador', desc: false }]}
           onRowClick={onView}
           variant='clean'
-          headerGradient='from-orange-600 via-amber-600 to-yellow-600'
+          headerGradient='from-orange-600 via-amber-600 to-yellow-600 dark:from-orange-700 dark:via-amber-700 dark:to-amber-800'
         />
       </div>
     </>

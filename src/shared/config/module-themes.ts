@@ -145,7 +145,8 @@ export const moduleThemes: Record<ModuleName, ModuleTheme> = {
     classes: {
       gradient: {
         primary: 'from-green-600 to-emerald-600',
-        triple: 'from-green-600 via-emerald-600 to-teal-600',
+        triple:
+          'from-green-600 via-emerald-600 to-teal-600 dark:from-green-700 dark:via-emerald-700 dark:to-teal-800',
         background: 'from-green-500 via-emerald-500 to-teal-500',
         backgroundDark: 'from-green-600 via-emerald-600 to-teal-700',
         hover: 'hover:from-green-700 hover:via-emerald-700 hover:to-teal-700',
@@ -201,7 +202,8 @@ export const moduleThemes: Record<ModuleName, ModuleTheme> = {
     classes: {
       gradient: {
         primary: 'from-cyan-600 to-blue-600',
-        triple: 'from-cyan-600 via-blue-600 to-indigo-600',
+        triple:
+          'from-cyan-600 via-blue-600 to-indigo-600 dark:from-cyan-700 dark:via-blue-700 dark:to-indigo-800',
         background: 'from-cyan-500 via-blue-500 to-indigo-500',
         backgroundDark: 'from-cyan-600 via-blue-600 to-indigo-700',
         hover: 'hover:from-cyan-700 hover:via-blue-700 hover:to-indigo-700',
@@ -257,7 +259,8 @@ export const moduleThemes: Record<ModuleName, ModuleTheme> = {
     classes: {
       gradient: {
         primary: 'from-orange-600 to-amber-600',
-        triple: 'from-orange-600 via-amber-600 to-yellow-600',
+        triple:
+          'from-orange-600 via-amber-600 to-yellow-600 dark:from-orange-700 dark:via-amber-700 dark:to-amber-800',
         background: 'from-orange-500 via-amber-500 to-yellow-500',
         backgroundDark: 'from-orange-600 via-amber-600 to-yellow-700',
         hover: 'hover:from-orange-700 hover:via-amber-700 hover:to-yellow-700',
@@ -481,7 +484,8 @@ export const moduleThemes: Record<ModuleName, ModuleTheme> = {
     classes: {
       gradient: {
         primary: 'from-red-600 to-rose-600',
-        triple: 'from-red-600 via-rose-600 to-pink-600',
+        triple:
+          'from-red-600 via-rose-600 to-pink-600 dark:from-red-700 dark:via-rose-700 dark:to-pink-800',
         background: 'from-red-500 via-rose-500 to-pink-500',
         backgroundDark: 'from-red-600 via-rose-600 to-pink-700',
         hover: 'hover:from-red-700 hover:via-rose-700 hover:to-pink-700',
@@ -537,7 +541,8 @@ export const moduleThemes: Record<ModuleName, ModuleTheme> = {
     classes: {
       gradient: {
         primary: 'from-red-600 to-rose-600',
-        triple: 'from-red-600 via-rose-600 to-pink-600',
+        triple:
+          'from-red-600 via-rose-600 to-pink-600 dark:from-red-700 dark:via-rose-700 dark:to-pink-800',
         background: 'from-red-500 via-rose-500 to-pink-500',
         backgroundDark: 'from-red-600 via-rose-600 to-pink-700',
         hover: 'hover:from-red-700 hover:via-rose-700 hover:to-pink-700',

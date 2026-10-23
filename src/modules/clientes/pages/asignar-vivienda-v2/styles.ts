@@ -174,7 +174,7 @@ export const styles = {
     sectionTitleIcon: 'w-3.5 h-3.5',
     actionRow: 'flex items-center gap-3 mt-5',
     submitBtn:
-      'flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 hover:from-cyan-500 hover:via-blue-500 hover:to-indigo-500 active:scale-[0.98] text-white font-bold text-sm py-3 rounded-xl transition-all shadow-lg shadow-cyan-500/30',
+      'flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 dark:from-cyan-700 dark:via-blue-700 dark:to-indigo-800 hover:from-cyan-500 hover:via-blue-500 hover:to-indigo-500 active:scale-[0.98] text-white font-bold text-sm py-3 rounded-xl transition-all shadow-lg shadow-cyan-500/30',
     pdfBtn:
       'flex items-center justify-center gap-2 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 rounded-xl px-4 py-2.5 text-sm w-full mt-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors',
     errorBanner:

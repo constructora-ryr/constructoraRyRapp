@@ -4,6 +4,7 @@ import { Ban, Download, FileText, Loader2, Pencil } from 'lucide-react'
 
 import { formatDateForDisplay } from '@/lib/utils/date.utils'
 import { formatNombreCompleto } from '@/lib/utils/string.utils'
+import { TEMA_ABONOS } from '@/modules/abonos/styles/tema-abonos'
 import { formatCOP } from '@/shared/components/list-page'
 import {
   VisorArchivoModal,
@@ -228,7 +229,7 @@ export function AbonoDetalleModal({
         }
         marcaAgua={estaAnulado ? 'ANULADO' : undefined}
         onDescargar={handleDescargarComprobante}
-        acento='from-violet-600 via-purple-500 to-fuchsia-500'
+        acento={TEMA_ABONOS.degradado}
         navegacion={nav}
       />
       <AbonoDetalleSidebarPanel

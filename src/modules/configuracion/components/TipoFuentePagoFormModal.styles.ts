@@ -11,7 +11,7 @@ export const tipoFuentePagoFormModalStyles = {
 
   header: {
     container:
-      'flex-shrink-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-6 py-4 flex items-center justify-between rounded-t-2xl',
+      'flex-shrink-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-700 dark:via-indigo-700 dark:to-purple-800 px-6 py-4 flex items-center justify-between rounded-t-2xl',
     left: 'flex items-center gap-3',
     preview:
       'h-10 w-10 rounded-xl flex items-center justify-center shadow-lg ring-2 ring-white/30 flex-shrink-0',

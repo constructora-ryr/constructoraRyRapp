@@ -24,6 +24,7 @@ import {
 import { useRouter } from 'next/navigation'
 
 import { getShortId } from '@/lib/utils/slug.utils'
+import { TEMA_ABONOS } from '@/modules/abonos/styles/tema-abonos'
 import {
   EstadoFiltroCards,
   formatCOP,
@@ -147,7 +148,7 @@ export function AbonosPageMain() {
       >
         <ListPageHeader
           icon={Wallet}
-          heroGradient='from-violet-600 via-purple-600 to-fuchsia-600'
+          heroGradient={TEMA_ABONOS.degradado}
           title='Registrar abono'
           subtitle='Elige el cliente que va a pagar'
           breadcrumbs={[

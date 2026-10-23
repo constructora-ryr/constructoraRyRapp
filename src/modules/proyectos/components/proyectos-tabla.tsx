@@ -424,7 +424,7 @@ export function ProyectosTabla({
           pageSize={20}
           onRowClick={onView}
           variant='clean'
-          headerGradient='from-green-600 via-emerald-600 to-teal-600'
+          headerGradient='from-green-600 via-emerald-600 to-teal-600 dark:from-green-700 dark:via-emerald-700 dark:to-teal-800'
         />
       </div>
     </>

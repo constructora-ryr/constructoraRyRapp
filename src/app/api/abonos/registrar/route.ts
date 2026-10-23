@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { getServerPermissions } from '@/lib/auth/server'
 import { adminComo } from '@/lib/supabase/admin'
 import type { Json } from '@/lib/supabase/database.types'
 import { createRouteClient } from '@/lib/supabase/server-route'
-import { formatDateForDB } from '@/lib/utils/date.utils'
 import { logger } from '@/lib/utils/logger'
 
 /**
  * API Route: POST /api/abonos/registrar
- * Registra un nuevo abono para una fuente de pago específica
+ * Registra un abono o desembolso de una fuente de pago (RPC registrar_abono)
  */
 export async function POST(request: NextRequest) {
   try {
@@ -26,15 +24,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
     }
     const admin = adminComo(user.id)
-
-    // 0b. Verificar permiso de registrar abonos según permisos_rol
-    const permisos = await getServerPermissions('abonos')
-    if (!permisos.canCreate) {
-      return NextResponse.json(
-        { error: 'No tienes permisos para registrar abonos' },
-        { status: 403 }
-      )
-    }
 
     const body = await request.json()
     const {
@@ -54,234 +43,60 @@ export async function POST(request: NextRequest) {
     const moraIncluida =
       typeof mora_incluida === 'number' && mora_incluida > 0 ? mora_incluida : 0
 
-    // Validaciones
-    if (
-      !negociacion_id ||
-      !fuente_pago_id ||
-      !monto ||
-      !fecha_abono ||
-      !metodo_pago
-    ) {
-      return NextResponse.json(
-        { error: 'Faltan campos obligatorios' },
-        { status: 400 }
-      )
-    }
-
-    if (!comprobante_path || typeof comprobante_path !== 'string') {
-      return NextResponse.json(
-        { error: 'El comprobante de pago es obligatorio' },
-        { status: 400 }
-      )
-    }
-
-    if (monto <= 0) {
-      return NextResponse.json(
-        { error: 'El monto debe ser mayor a cero' },
-        { status: 400 }
-      )
-    }
-
-    // 1. Verificar que la fuente de pago existe y tiene saldo disponible
-    const { data: fuente, error: fuenteError } = await supabase
-      .from('fuentes_pago')
-      .select(
-        'id, tipo, monto_aprobado, monto_recibido, saldo_pendiente, negociacion_id, permite_multiples_abonos'
-      )
-      .eq('id', fuente_pago_id)
-      .single()
-
-    if (fuenteError || !fuente) {
-      return NextResponse.json(
-        { error: 'Fuente de pago no encontrada' },
-        { status: 404 }
-      )
-    }
-
-    if (fuente.negociacion_id !== negociacion_id) {
-      return NextResponse.json(
-        { error: 'La fuente de pago no pertenece a esta negociación' },
-        { status: 400 }
-      )
-    }
-
-    // Fuentes con desembolso único (permite_multiples_abonos = false):
-    // el monto debe ser exactamente el monto aprobado — ni más, ni menos.
-    if (
-      fuente.permite_multiples_abonos === false &&
-      monto !== fuente.monto_aprobado
-    ) {
-      return NextResponse.json(
-        {
-          error: `El desembolso de "${fuente.tipo}" debe ser exactamente $${fuente.monto_aprobado} (monto aprobado completo). No se permiten desembolsos parciales ni por montos diferentes.`,
-        },
-        { status: 400 }
-      )
-    }
-
-    const saldoDisponible = fuente.saldo_pendiente || 0
-    const montoSinMora = monto - moraIncluida
-    if (montoSinMora > saldoDisponible) {
-      // Solo admins pueden registrar overpayments y solo cuando lo confirman explícitamente
-      if (!permisos.isAdmin || !es_overpayment) {
-        return NextResponse.json(
-          {
-            error: `El monto principal ($${montoSinMora}) excede el saldo disponible ($${saldoDisponible})`,
-          },
-          { status: 400 }
-        )
-      }
-    }
-
-    // 1b. Validar estado y fecha de la negociación
-    const { data: negociacion, error: negError } = await supabase
-      .from('negociaciones')
-      .select('estado, fecha_negociacion')
-      .eq('id', negociacion_id)
-      .single()
-
-    if (!negError && negociacion) {
-      if (negociacion.estado !== 'Activa') {
-        return NextResponse.json(
-          {
-            error: `No se puede registrar un abono en una negociación en estado "${negociacion.estado}"`,
-          },
-          { status: 400 }
-        )
-      }
-
-      if (negociacion.fecha_negociacion) {
-        const fechaNeg = negociacion.fecha_negociacion.slice(0, 10)
-        if (fecha_abono < fechaNeg) {
-          return NextResponse.json(
-            {
-              error: `La fecha del abono no puede ser anterior al inicio de la negociación (${fechaNeg})`,
-            },
-            { status: 400 }
-          )
-        }
-      }
-    }
-
-    // 2. Convertir fecha usando utilidad centralizada
-    const fechaAbonoDB = formatDateForDB(fecha_abono)
-
-    // 4. Registrar el abono (numero_recibo se asigna automáticamente por secuencia BD)
-    const { data: nuevoAbono, error: abonoError } = await admin
-      .from('abonos_historial')
-      .insert({
+    // 1. Registro atómico (RPC registrar_abono): valida permiso, negociación,
+    //    fuente, fecha, método, saldo, cierre financiero y documentos
+    //    obligatorios; inserta el abono, el excedente si lo hay y cierra la
+    //    negociación cuando queda pagada. Ver
+    //    supabase/migrations/20261023_rpc_registrar_abono.sql
+    const { data, error: rpcError } = await supabase.rpc('registrar_abono', {
+      p_payload: {
         negociacion_id,
         fuente_pago_id,
         monto,
-        mora_incluida: moraIncluida > 0 ? moraIncluida : undefined,
-        fecha_abono: fechaAbonoDB,
+        mora_incluida: moraIncluida,
+        fecha_abono:
+          typeof fecha_abono === 'string' ? fecha_abono.slice(0, 10) : null,
         metodo_pago,
         numero_referencia: numero_referencia || null,
-        comprobante_url: comprobante_path,
         notas: notas || null,
-        usuario_registro: user?.id ?? null,
-        es_overpayment:
-          es_overpayment && montoSinMora > saldoDisponible ? true : undefined,
-      })
-      .select()
-      .single()
+        comprobante_path,
+        es_overpayment: es_overpayment === true,
+      },
+    })
 
-    if (abonoError) {
-      logger.error('Error insertando abono:', abonoError)
-      return NextResponse.json(
-        { error: 'Error al registrar el abono: ' + abonoError.message },
-        { status: 500 }
-      )
+    if (rpcError) {
+      const status = rpcError.code === '42501' ? 403 : 400
+      return NextResponse.json({ error: rpcError.message }, { status })
     }
 
-    // 4b. Si fue un overpayment confirmado por admin, registrar la devolución pendiente
-    if (es_overpayment && montoSinMora > saldoDisponible) {
-      const montoExcedente = montoSinMora - saldoDisponible
-      await admin
-        .from('pagos_excedentes')
-        .insert({
-          negociacion_id,
-          abono_id: nuevoAbono.id,
-          fuente_tipo: fuente.tipo,
-          monto_pagado: montoSinMora,
-          monto_esperado: saldoDisponible,
-          monto_excedente: montoExcedente,
-          created_by: user.id,
-        })
-        .throwOnError()
-      logger.info(
-        `💰 [ABONO] Overpayment de $${montoExcedente} registrado para negociación ${negociacion_id}`
-      )
+    const resultado = data as unknown as {
+      abono: Record<string, unknown> & { id: string }
+      negociacion_completada: boolean
+      cliente_nombre: string | null
+      fuente_antes: { monto_recibido: number; saldo_pendiente: number }
+      fuente_despues: { monto_recibido: number; saldo_pendiente: number }
     }
+    const nuevoAbono = resultado.abono
+    const fechaAbonoDB = String(nuevoAbono.fecha_abono ?? '')
 
-    // 5. Los triggers de la DB ya actualizaron saldo_pendiente y totales.
-    //    Re-consultamos la negociación para detectar si se completó el pago.
-    const { data: negActualizada } = await supabase
-      .from('negociaciones')
-      .select('id, estado, saldo_pendiente, cliente_id, vivienda_id')
-      .eq('id', negociacion_id)
-      .single()
-
-    let negociacionCompletada = false
-    let clienteNombre: string | null = null
-
-    if (
-      negActualizada &&
-      negActualizada.estado === 'Activa' &&
-      (negActualizada.saldo_pendiente ?? 1) <= 0
-    ) {
-      const hoy = formatDateForDB(new Date().toISOString().slice(0, 10))
-
-      // Completar negociación + actualizar vivienda en paralelo
-      await Promise.all([
-        admin
-          .from('negociaciones')
-          .update({ estado: 'Completada', fecha_completada: hoy })
-          .eq('id', negociacion_id),
-        negActualizada.vivienda_id
-          ? admin
-              .from('viviendas')
-              .update({ estado: 'Propietario' })
-              .eq('id', negActualizada.vivienda_id)
-          : Promise.resolve(),
-      ])
-
-      // Promover cliente a Propietario
-      if (negActualizada.cliente_id) {
-        const { data: clienteRow } = await admin
-          .from('clientes')
-          .update({ estado: 'Propietario' })
-          .eq('id', negActualizada.cliente_id)
-          .select('nombres, apellidos')
-          .single()
-
-        clienteNombre = clienteRow
-          ? `${clienteRow.nombres} ${clienteRow.apellidos}`.trim()
-          : null
-      }
-
-      negociacionCompletada = true
-    }
-
-    // 5. Registrar en audit_log con metadata enriquecida.
-    //    Sincrónico: Vercel no garantiza ejecución post-response sin waitUntil,
-    //    por lo que el log debe escribirse antes de retornar la respuesta.
+    // 2. Registrar en audit_log con metadata enriquecida (alimenta el
+    //    Historial del cliente). Sincrónico: Vercel no garantiza ejecución
+    //    post-response sin waitUntil.
     try {
-      const [{ data: fuenteActualizada }, { data: contexto }] =
-        await Promise.all([
-          supabase
-            .from('fuentes_pago')
-            .select('monto_recibido, saldo_pendiente')
-            .eq('id', fuente_pago_id)
-            .single(),
-          supabase
-            .from('negociaciones')
-            .select(
-              'id, cliente_id, saldo_pendiente, valor_total_pagar, clientes(id, nombres, apellidos), viviendas!negociaciones_vivienda_id_fkey(numero, manzanas(nombre, proyectos(nombre)))'
-            )
-            .eq('id', negociacion_id)
-            .single(),
-        ])
+      const [{ data: contexto }, { data: fuente }] = await Promise.all([
+        supabase
+          .from('negociaciones')
+          .select(
+            'id, cliente_id, saldo_pendiente, valor_total_pagar, clientes(id, nombres, apellidos), viviendas!negociaciones_vivienda_id_fkey(numero, manzanas(nombre, proyectos(nombre)))'
+          )
+          .eq('id', negociacion_id)
+          .single(),
+        supabase
+          .from('fuentes_pago')
+          .select('tipo, monto_aprobado')
+          .eq('id', fuente_pago_id)
+          .single(),
+      ])
 
       const cliente = contexto?.clientes as
         | { id: string; nombres: string; apellidos: string }
@@ -302,20 +117,19 @@ export async function POST(request: NextRequest) {
           ? `${String(cliente.nombres ?? '')} ${String(cliente.apellidos ?? '')}`.trim()
           : null,
         abono_monto: monto,
-        abono_numero_recibo: (nuevoAbono as Record<string, unknown>)
-          .numero_recibo,
+        abono_numero_recibo: nuevoAbono.numero_recibo,
         abono_metodo_pago: metodo_pago,
         abono_fecha_abono: fechaAbonoDB,
         abono_numero_referencia: numero_referencia ?? null,
         abono_notas: notas ?? null,
         abono_mora_incluida: moraIncluida > 0 ? moraIncluida : null,
         abono_comprobante_url: comprobante_path ?? null,
-        fuente_tipo: fuente.tipo ?? null,
-        fuente_monto_aprobado: fuente.monto_aprobado ?? null,
-        fuente_monto_antes: fuente.monto_recibido ?? null,
-        fuente_saldo_antes: fuente.saldo_pendiente ?? null,
-        fuente_monto_despues: fuenteActualizada?.monto_recibido ?? null,
-        fuente_saldo_despues: fuenteActualizada?.saldo_pendiente ?? null,
+        fuente_tipo: fuente?.tipo ?? null,
+        fuente_monto_aprobado: fuente?.monto_aprobado ?? null,
+        fuente_monto_antes: resultado.fuente_antes.monto_recibido ?? null,
+        fuente_saldo_antes: resultado.fuente_antes.saldo_pendiente ?? null,
+        fuente_monto_despues: resultado.fuente_despues.monto_recibido ?? null,
+        fuente_saldo_despues: resultado.fuente_despues.saldo_pendiente ?? null,
         negociacion_id,
         negociacion_valor_total_pagar: contexto?.valor_total_pagar ?? null,
         negociacion_saldo_despues: contexto?.saldo_pendiente ?? null,
@@ -342,8 +156,9 @@ export async function POST(request: NextRequest) {
       success: true,
       abono: nuevoAbono,
       message: 'Abono registrado exitosamente',
-      negociacion_completada: negociacionCompletada,
-      cliente_nombre: clienteNombre,
+      negociacion_completada: resultado.negociacion_completada,
+      cliente_nombre: resultado.cliente_nombre,
+      saldo_fuente: resultado.fuente_despues.saldo_pendiente,
     })
   } catch (error: unknown) {
     const message =

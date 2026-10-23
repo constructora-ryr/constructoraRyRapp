@@ -250,7 +250,7 @@ export function ProyectosPage({
       >
         <ListPageHeader
           icon={Building2}
-          heroGradient='from-green-600 via-emerald-600 to-teal-600'
+          heroGradient='from-green-600 via-emerald-600 to-teal-600 dark:from-green-700 dark:via-emerald-700 dark:to-teal-800'
           title='Proyectos'
           subtitle='Desarrollos inmobiliarios y obras en ejecución'
           breadcrumbs={[
