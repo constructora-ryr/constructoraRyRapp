@@ -93,17 +93,28 @@ export function useAbonosDetalle(clienteId: string) {
     const interesesTotales = tieneCreditoConstructora
       ? totalComprometido - valorVivienda
       : 0
-    const saldoPendienteReal =
-      totalComprometido -
-      fuentes.reduce((sum, f) => sum + (f.monto_recibido || 0), 0)
+    // Dinero que de verdad ha entrado (incluye intereses ya pagados): el
+    // mismo total del historial y de los recibos
+    const totalRecibido = fuentes.reduce(
+      (sum, f) => sum + (f.monto_recibido || 0),
+      0
+    )
+    const saldoPendienteReal = totalComprometido - totalRecibido
 
     return {
       valorVivienda,
       totalComprometido,
       interesesTotales: interesesTotales > 0 ? interesesTotales : 0,
+      /** Abonado al precio de la vivienda (créditos topados al capital): recibos y PDF */
       totalAbonado,
+      totalRecibido,
       saldoPendiente: saldoPendienteReal,
       porcentajePagado,
+      /** Avance sobre lo pactado en las fuentes: abonado + saldo = total */
+      porcentajeRecibido:
+        totalComprometido > 0
+          ? Math.min((totalRecibido / totalComprometido) * 100, 100)
+          : porcentajePagado,
     }
   }, [negociacion])
 

@@ -1,44 +1,43 @@
 'use client'
 
+/**
+ * Tarjeta de una fuente de pago en el detalle de abonos.
+ * - Con saldo: cuánto ha entrado de lo pactado y cuánto falta, con la acción
+ *   para registrar el abono o el desembolso. Si faltan documentos
+ *   obligatorios, la acción de la tarjeta es subirlos.
+ * - Completada: una fila compacta, para que destaque lo que falta.
+ * El crédito con la constructora muestra capital + intereses y su plan de
+ * cuotas desplegable.
+ */
+
 import { useState } from 'react'
 
-import { motion } from 'framer-motion'
-import type { LucideIcon } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
 import {
-  AlertTriangle,
-  BadgeDollarSign,
   BadgeCheck,
-  Banknote,
   Building2,
-  CheckCircle2,
+  CalendarDays,
   ChevronDown,
-  ChevronUp,
-  CreditCard,
-  DollarSign,
-  ExternalLink,
   FileWarning,
-  HandCoins,
   Hash,
-  Home,
   Landmark,
-  Lock,
-  Shield,
-  Wallet,
+  Plus,
+  Upload,
 } from 'lucide-react'
 
 import Link from 'next/link'
 
 import { formatDateForDisplay } from '@/lib/utils/date.utils'
+import { fuenteVisual } from '@/modules/abonos/components/lista/fuente-visual'
 import type { FuentePagoConAbonos } from '@/modules/abonos/types'
 import { CuotasCreditoTab } from '@/modules/fuentes-pago/components/CuotasCreditoTab'
-import { useTiposFuentePagoConfig } from '@/modules/fuentes-pago/hooks'
+import { formatCOP } from '@/shared/components/list-page'
 import {
   esCreditoConstructora as checkCreditoConstructora,
-  esCuotaInicial as checkCuotaInicial,
   esSubsidioCajaCompensacion as checkSubsidioCaja,
   esSubsidioMiCasaYa as checkSubsidioMCY,
-  getFuenteColorClasses,
 } from '@/shared/constants/fuentes-pago.constants'
+import { cn } from '@/shared/utils/helpers'
 
 interface FuentePagoCardProps {
   fuente: FuentePagoConAbonos
@@ -58,27 +57,8 @@ interface FuentePagoCardProps {
   }
 }
 
-const formatCurrency = (v: number) =>
-  new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(v)
-
-// Mapa de nombre de ícono (string BD) → componente Lucide
-const FUENTE_ICON_MAP: Record<string, LucideIcon> = {
-  Wallet,
-  Building2,
-  Home,
-  Shield,
-  CreditCard,
-  Landmark,
-  BadgeDollarSign,
-  DollarSign,
-  Banknote,
-  HandCoins,
-}
+const plural = (n: number, uno: string, varios: string) =>
+  `${n} ${n === 1 ? uno : varios}`
 
 export function FuentePagoCard({
   fuente,
@@ -91,24 +71,21 @@ export function FuentePagoCard({
   validacion,
   clienteSlug,
 }: FuentePagoCardProps) {
-  const { getTipoConfig } = useTiposFuentePagoConfig()
-  const tipoConfig = getTipoConfig(fuente.tipo)
-  const colors = getFuenteColorClasses(tipoConfig.color)
-  const FuenteIcon = FUENTE_ICON_MAP[tipoConfig.icono] ?? Banknote
+  const { icon: Icono, gradient, solid, text } = fuenteVisual(fuente.tipo)
+  const [cuotasAbiertas, setCuotasAbiertas] = useState(false)
 
   const completada = validacion?.estaCompletamentePagada ?? false
   const esDesembolsoUnico = fuente.permite_multiples_abonos === false
-  const esCuotaInicial = checkCuotaInicial(fuente.tipo)
   const esCreditoConstructora = checkCreditoConstructora(fuente.tipo)
   const esSubsidio =
     checkSubsidioMCY(fuente.tipo) || checkSubsidioCaja(fuente.tipo)
-  const yaDesembolsada = esDesembolsoUnico && fuente.monto_recibido > 0
-  const docsPendientesObligatorios =
-    validacion?.documentosObligatoriosPendientes ?? 0
-  const docsPendientesNombres = validacion?.documentosPendientesNombres ?? []
-  const bloqueadoPorDocs = docsPendientesObligatorios > 0
-  // Descuadre financiero tiene mayor prioridad que docs
-  const hayDescuadreFinanciero = !canCreate
+  const docsPendientes = validacion?.documentosObligatoriosPendientes ?? 0
+  const docsNombres = validacion?.documentosPendientesNombres ?? []
+  const bloqueadoPorDocs = docsPendientes > 0
+  // Sin permiso para registrar = cierre financiero descuadrado (lo avisa la página)
+  const hayDescuadre = !canCreate
+  const conSaldo = fuente.saldo_pendiente > 0
+
   const pct =
     fuente.monto_aprobado > 0
       ? Math.min((fuente.monto_recibido / fuente.monto_aprobado) * 100, 100)
@@ -117,337 +94,301 @@ export function FuentePagoCard({
     canCreate &&
     (validacion?.puedeRegistrarAbono ?? true) &&
     !completada &&
-    fuente.saldo_pendiente > 0 &&
+    conSaldo &&
     !bloqueadoPorDocs
 
-  const [cuotasExpandidas, setCuotasExpandidas] = useState(false)
+  const verboRecibido = esDesembolsoUnico ? 'desembolsado' : 'recibido'
 
-  // Textos semánticos por tipo de fuente
-  const labelAprobado = esCuotaInicial
-    ? 'Valor Pactado'
-    : esCreditoConstructora
-      ? 'Monto del Crédito'
-      : 'Aprobado'
-  const labelRecibido = esDesembolsoUnico ? 'Desembolsado' : 'Recibido'
-
-  // Desglose crédito: capital vs intereses
-  const capitalCredito = esCreditoConstructora
+  // Crédito con la constructora: capital vs intereses
+  const capital = esCreditoConstructora
     ? (fuente.capital_para_cierre ?? fuente.monto_aprobado)
     : null
-  const interesesCredito =
-    esCreditoConstructora && capitalCredito !== null
-      ? fuente.monto_aprobado - capitalCredito
-      : null
+  const intereses =
+    capital !== null ? Math.max(0, fuente.monto_aprobado - capital) : 0
+
+  const irADocumentos = clienteSlug
+    ? {
+        href: `/clientes/${clienteSlug}`,
+        onClick: () =>
+          sessionStorage.setItem('cliente-tab-intent', 'documentos'),
+      }
+    : null
+
+  const detalle = (
+    <>
+      {fuente.entidad ? (
+        <span
+          className={cn('inline-flex items-center gap-1 font-medium', text)}
+        >
+          <Building2 className='h-3 w-3' />
+          {fuente.entidad}
+        </span>
+      ) : null}
+      {fuente.numero_referencia ? (
+        <span className='inline-flex items-center gap-1'>
+          {esSubsidio ? (
+            <>
+              <CalendarDays className='h-3 w-3' />
+              Acta {fuente.numero_referencia}
+              {fuente.fecha_acta
+                ? ` del ${formatDateForDisplay(fuente.fecha_acta)}`
+                : ''}
+            </>
+          ) : (
+            <>
+              <Hash className='h-3 w-3' />
+              {fuente.numero_referencia}
+            </>
+          )}
+        </span>
+      ) : null}
+      {esCreditoConstructora && capital !== null && intereses > 0 ? (
+        <span className='inline-flex items-center gap-1'>
+          Capital{' '}
+          <strong className='tabular-nums text-slate-700 dark:text-slate-200'>
+            {formatCOP(capital)}
+          </strong>{' '}
+          + intereses{' '}
+          <strong className='tabular-nums text-violet-700 dark:text-violet-300'>
+            {formatCOP(intereses)}
+          </strong>
+        </span>
+      ) : null}
+    </>
+  )
+  const tieneDetalle =
+    !!fuente.entidad ||
+    !!fuente.numero_referencia ||
+    (esCreditoConstructora && intereses > 0)
+
+  const botonCuotas = esCreditoConstructora ? (
+    <button
+      type='button'
+      onClick={() => setCuotasAbiertas(v => !v)}
+      aria-expanded={cuotasAbiertas}
+      className='inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold text-violet-700 transition-colors hover:bg-violet-50 dark:text-violet-300 dark:hover:bg-violet-500/10'
+    >
+      <ChevronDown
+        className={cn(
+          'h-4 w-4 transition-transform',
+          cuotasAbiertas && 'rotate-180'
+        )}
+      />
+      {cuotasAbiertas ? 'Ocultar plan de cuotas' : 'Ver plan de cuotas'}
+    </button>
+  ) : null
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
+    <motion.article
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.07 }}
-      whileHover={{ y: -2, boxShadow: `0 16px 40px ${colors.glow}` }}
-      className='relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm backdrop-blur transition-all duration-300 dark:border-white/10 dark:bg-white/[0.07] dark:shadow-none'
+      transition={{ delay: index * 0.05 }}
+      className={cn(
+        'relative overflow-hidden rounded-2xl border bg-white shadow-sm dark:bg-slate-800/60',
+        completada
+          ? 'border-slate-200/70 dark:border-slate-700/50'
+          : 'border-slate-200/80 dark:border-slate-700/60'
+      )}
     >
-      {/* Franja de acento lateral */}
-      <div
-        className={`absolute bottom-0 left-0 top-0 w-1 bg-gradient-to-b ${colors.accent} rounded-l-2xl`}
-      />
-
-      {/* Glow hover */}
-      <div
-        className='duration-400 pointer-events-none absolute inset-0 opacity-0 transition-opacity hover:opacity-100'
-        style={{
-          background: `radial-gradient(ellipse 60% 80% at 0% 50%, ${colors.glow}, transparent 70%)`,
-        }}
-      />
-
-      <div className='relative z-10 py-4 pl-5 pr-4'>
-        {/* Encabezado */}
-        <div className='mb-3 flex items-start justify-between gap-3'>
-          <div className='flex items-center gap-2.5'>
-            <div
-              className={`h-9 w-9 rounded-xl ${colors.icon} flex flex-shrink-0 items-center justify-center shadow-lg`}
-            >
-              <FuenteIcon className='h-4 w-4 text-white' />
-            </div>
-            <div>
-              <p className='text-sm font-bold leading-tight text-gray-900 dark:text-white'>
-                {fuente.tipo}
+      {completada ? (
+        /* ── Completada: fila compacta ── */
+        <div className='flex flex-wrap items-center gap-3 px-4 py-3 sm:px-5'>
+          <span
+            className={cn(
+              'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-sm',
+              gradient
+            )}
+          >
+            <Icono className='h-4 w-4' />
+          </span>
+          <div className='min-w-0 flex-1'>
+            <h3 className='text-sm font-bold text-slate-900 dark:text-white'>
+              {fuente.tipo}
+            </h3>
+            {tieneDetalle ? (
+              <p className='flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400'>
+                {detalle}
               </p>
-              {(fuente.entidad || fuente.numero_referencia) && (
-                <div className='mt-0.5 flex items-center gap-1.5 text-[11px] text-gray-400 dark:text-white/45'>
-                  {fuente.entidad && (
-                    <span className='flex items-center gap-1'>
-                      <Building2 className='h-3 w-3' />
-                      {fuente.entidad}
-                    </span>
-                  )}
-                  {fuente.entidad && fuente.numero_referencia && <span>·</span>}
-                  {fuente.numero_referencia && (
-                    <span className='flex items-center gap-1'>
-                      {esSubsidio ? (
-                        <>
-                          No. Acta {fuente.numero_referencia}
-                          {fuente.fecha_acta &&
-                            ` del ${formatDateForDisplay(fuente.fecha_acta)}`}
-                        </>
-                      ) : (
-                        <>
-                          <Hash className='h-3 w-3' />
-                          {fuente.numero_referencia}
-                        </>
-                      )}
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Badge completada / botón */}
-          <div className='flex shrink-0 items-center gap-2'>
-            {/* Descuadre financiero — máxima prioridad, aplica a todas las fuentes */}
-            {hayDescuadreFinanciero &&
-            !completada &&
-            fuente.saldo_pendiente > 0 ? (
-              <button
-                disabled
-                title='El cierre financiero tiene un descuadre. Corrígelo antes de registrar abonos.'
-                className='inline-flex cursor-not-allowed select-none items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-400 opacity-90 dark:border-red-800/40 dark:bg-red-950/30 dark:text-red-500'
-              >
-                <Lock className='h-3.5 w-3.5' />
-                {esDesembolsoUnico ? 'Registrar Desembolso' : '+ Abono'}
-              </button>
-            ) : /* Crédito constructora: toggle plan + botón abono independiente */
-            esCreditoConstructora ? (
-              <>
-                {puedeAbonar ? (
-                  <motion.button
-                    whileHover={{
-                      scale: 1.05,
-                      boxShadow: `0 0 18px ${colors.glow}`,
-                    }}
-                    whileTap={{ scale: 0.96 }}
-                    onClick={() => onRegistrarAbono(fuente)}
-                    className={`inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r px-3 py-1.5 ${colors.accent} text-xs font-semibold text-white shadow-md`}
-                  >
-                    <CreditCard className='h-3.5 w-3.5' />+ Abono
-                  </motion.button>
-                ) : null}
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.96 }}
-                  onClick={() => setCuotasExpandidas(p => !p)}
-                  className='inline-flex items-center gap-1.5 rounded-xl border border-violet-500/40 bg-violet-500/15 px-3 py-1.5 text-xs font-semibold text-violet-300 transition-colors hover:bg-violet-500/25'
-                >
-                  {cuotasExpandidas ? (
-                    <ChevronUp className='h-3.5 w-3.5' />
-                  ) : (
-                    <ChevronDown className='h-3.5 w-3.5' />
-                  )}
-                  {cuotasExpandidas ? 'Ocultar cuotas' : 'Ver cuotas'}
-                </motion.button>
-              </>
-            ) : completada ? (
-              <span className='inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/15 px-2.5 py-1 text-xs font-semibold text-emerald-300'>
-                <BadgeCheck className='h-3.5 w-3.5' />
-                {esDesembolsoUnico ? 'Desembolsado ✓' : 'Completada'}
-              </span>
-            ) : esDesembolsoUnico && yaDesembolsada ? (
-              // Desembolso único ya registrado pero no marcado completada aún (edge case)
-              <span className='inline-flex items-center gap-1.5 rounded-lg border border-blue-500/30 bg-blue-500/15 px-2.5 py-1 text-xs font-semibold text-blue-300'>
-                <CheckCircle2 className='h-3.5 w-3.5' />
-                Desembolsado
-              </span>
-            ) : bloqueadoPorDocs && fuente.saldo_pendiente > 0 ? (
-              // Bloqueado por documentos obligatorios pendientes
-              <div className='flex flex-col items-end gap-1'>
-                <button
-                  disabled
-                  title={`Faltan ${docsPendientesObligatorios} documento${docsPendientesObligatorios > 1 ? 's' : ''} obligatorio${docsPendientesObligatorios > 1 ? 's' : ''} para habilitar`}
-                  className='inline-flex cursor-not-allowed select-none items-center gap-1.5 rounded-xl border border-gray-300 bg-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-400 opacity-80 dark:border-gray-600/50 dark:bg-gray-700/60 dark:text-gray-500'
-                >
-                  <Lock className='h-3.5 w-3.5' />
-                  {esDesembolsoUnico ? 'Registrar Desembolso' : '+ Abono'}
-                </button>
-                <span className='flex items-center gap-1 text-[10px] font-semibold text-amber-500 dark:text-amber-400'>
-                  <AlertTriangle className='h-3 w-3' />
-                  {docsPendientesObligatorios} doc. obligatorio
-                  {docsPendientesObligatorios > 1 ? 's' : ''} pendiente
-                  {docsPendientesObligatorios > 1 ? 's' : ''}
-                </span>
-              </div>
-            ) : esDesembolsoUnico && puedeAbonar ? (
-              <motion.button
-                whileHover={{
-                  scale: 1.05,
-                  boxShadow: `0 0 18px ${colors.glow}`,
-                }}
-                whileTap={{ scale: 0.96 }}
-                onClick={() => onRegistrarAbono(fuente)}
-                className={`inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r px-3 py-1.5 ${colors.accent} text-xs font-semibold text-white shadow-md`}
-              >
-                <Landmark className='h-3.5 w-3.5' />
-                Registrar Desembolso
-              </motion.button>
-            ) : puedeAbonar ? (
-              <motion.button
-                whileHover={{
-                  scale: 1.05,
-                  boxShadow: `0 0 18px ${colors.glow}`,
-                }}
-                whileTap={{ scale: 0.96 }}
-                onClick={() => onRegistrarAbono(fuente)}
-                className={`inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r px-3 py-1.5 ${colors.accent} text-xs font-semibold text-white shadow-md`}
-              >
-                <CreditCard className='h-3.5 w-3.5' />+ Abono
-              </motion.button>
             ) : null}
           </div>
-        </div>
-
-        {/* Desglose crédito: capital + intereses */}
-        {esCreditoConstructora &&
-        capitalCredito !== null &&
-        interesesCredito !== null &&
-        interesesCredito > 0 ? (
-          <div className='mb-2 flex items-center gap-2 rounded-lg border border-violet-200/60 bg-violet-50/50 px-3 py-1.5 text-[11px] dark:border-violet-800/30 dark:bg-violet-900/10'>
-            <span className='text-gray-500 dark:text-gray-400'>Capital:</span>
-            <span className='font-semibold text-gray-800 dark:text-white'>
-              {formatCurrency(capitalCredito)}
+          {botonCuotas}
+          <span className='inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'>
+            <BadgeCheck className='h-4 w-4' />
+            {esDesembolsoUnico ? 'Desembolsado' : 'Completada'} ·{' '}
+            <span className='tabular-nums'>
+              {formatCOP(fuente.monto_recibido)}
             </span>
-            <span className='text-gray-300 dark:text-gray-600'>+</span>
-            <span className='text-gray-500 dark:text-gray-400'>Intereses:</span>
-            <span className='font-semibold text-violet-600 dark:text-violet-400'>
-              {formatCurrency(interesesCredito)}
-            </span>
-          </div>
-        ) : null}
-
-        {/* Montos en 3 celdas */}
-        <div className='mb-3 grid grid-cols-3 gap-2'>
-          <div className='rounded-xl border border-gray-200 bg-gray-100 p-2.5 text-center dark:border-white/[0.07] dark:bg-white/[0.06]'>
-            <p className='mb-0.5 text-[10px] uppercase tracking-wider text-gray-400 dark:text-white/40'>
-              {labelAprobado}
-            </p>
-            <p className='text-xs font-bold leading-tight text-gray-900 dark:text-white'>
-              {formatCurrency(fuente.monto_aprobado)}
-            </p>
-          </div>
-          <div className='rounded-xl border border-emerald-200 bg-emerald-50 p-2.5 text-center dark:border-emerald-500/[0.15] dark:bg-emerald-500/[0.08]'>
-            <p className='mb-0.5 text-[10px] uppercase tracking-wider text-emerald-500 dark:text-emerald-400/60'>
-              {labelRecibido}
-            </p>
-            <p className='text-xs font-bold leading-tight text-emerald-700 dark:text-emerald-300'>
-              {formatCurrency(fuente.monto_recibido)}
-            </p>
-          </div>
-          <div className='rounded-xl border border-amber-200 bg-amber-50 p-2.5 text-center dark:border-amber-500/[0.12] dark:bg-amber-500/[0.07]'>
-            <p className='mb-0.5 text-[10px] uppercase tracking-wider text-amber-500 dark:text-amber-400/60'>
-              Pendiente
-            </p>
-            <p
-              className={`text-xs font-bold leading-tight ${fuente.saldo_pendiente > 0 ? 'text-amber-700 dark:text-amber-300' : 'text-gray-300 dark:text-white/30'}`}
-            >
-              {formatCurrency(fuente.saldo_pendiente)}
-            </p>
-          </div>
+          </span>
         </div>
-
-        {/* Barra de progreso */}
-        <div className='space-y-1'>
-          <div className='flex justify-end'>
-            {pct > 0 ? (
-              <span
-                className={`text-xs font-bold ${completada ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-white/60'}`}
-              >
-                {completada ? 100 : Math.floor(pct)}%
-              </span>
-            ) : (
-              <span className='text-xs font-medium italic text-gray-400 dark:text-white/40'>
-                Sin pagos
-              </span>
+      ) : (
+        /* ── Con saldo: tarjeta completa ── */
+        <>
+          <span
+            aria-hidden
+            className={cn(
+              'absolute inset-x-0 top-0 h-1 bg-gradient-to-r',
+              gradient
             )}
-          </div>
-          <div className='h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-white/10'>
-            <motion.div
-              className={`h-full rounded-full bg-gradient-to-r ${colors.bar}`}
-              initial={{ width: 0 }}
-              animate={{ width: `${pct}%` }}
-              transition={{
-                duration: 0.9,
-                ease: 'easeOut',
-                delay: 0.2 + index * 0.07,
-              }}
-              style={{ boxShadow: `0 0 8px ${colors.glow}` }}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Franja de advertencia: documentos obligatorios pendientes
-           Solo se muestra si NO hay descuadre financiero (que tiene prioridad) */}
-      {bloqueadoPorDocs &&
-        !hayDescuadreFinanciero &&
-        fuente.saldo_pendiente > 0 && (
-          <div className='space-y-2 border-t border-amber-200 bg-amber-50 px-5 py-3 dark:border-amber-500/[0.18] dark:bg-amber-500/[0.08]'>
-            <div className='flex items-start gap-2'>
-              <FileWarning className='mt-0.5 h-4 w-4 flex-shrink-0 text-amber-500 dark:text-amber-400' />
-              <p className='text-xs font-medium leading-tight text-amber-700 dark:text-amber-300'>
-                <span className='font-bold'>Acción bloqueada.</span> Debes
-                aportar{' '}
-                <span className='font-bold'>
-                  {docsPendientesObligatorios} documento
-                  {docsPendientesObligatorios > 1 ? 's' : ''} obligatorio
-                  {docsPendientesObligatorios > 1 ? 's' : ''}
-                </span>{' '}
-                antes de registrar este
-                {esDesembolsoUnico ? ' desembolso' : ' abono'}.
-              </p>
+          />
+          <div className='p-4 sm:p-5'>
+            <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
+              <div className='flex min-w-0 items-center gap-3'>
+                <span
+                  className={cn(
+                    'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-md',
+                    gradient
+                  )}
+                >
+                  <Icono className='h-5 w-5' />
+                </span>
+                <div className='min-w-0'>
+                  <h3 className='text-base font-bold leading-tight text-slate-900 dark:text-white'>
+                    {fuente.tipo}
+                  </h3>
+                  {tieneDetalle ? (
+                    <p className='mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400'>
+                      {detalle}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+              {puedeAbonar ? (
+                <button
+                  type='button'
+                  onClick={() => onRegistrarAbono(fuente)}
+                  className={cn(
+                    'inline-flex w-full shrink-0 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg sm:w-auto sm:py-2',
+                    gradient
+                  )}
+                >
+                  {esDesembolsoUnico ? (
+                    <Landmark className='h-4 w-4' />
+                  ) : (
+                    <Plus className='h-4 w-4' />
+                  )}
+                  {esDesembolsoUnico
+                    ? 'Registrar desembolso'
+                    : 'Registrar abono'}
+                </button>
+              ) : null}
             </div>
 
-            {/* Lista de documentos pendientes */}
-            {docsPendientesNombres.length > 0 && (
-              <ul className='ml-6 space-y-0.5'>
-                {docsPendientesNombres.map((nombre, i) => (
-                  <li
-                    key={i}
-                    className='flex items-center gap-1.5 text-[11px] text-amber-700 dark:text-amber-300'
-                  >
-                    <span className='h-1 w-1 flex-shrink-0 rounded-full bg-amber-500 dark:bg-amber-400' />
-                    {nombre}
-                  </li>
-                ))}
-              </ul>
-            )}
+            {/* Avance: una sola línea con lo que entró y lo que falta */}
+            <div className='mt-4'>
+              <div className='flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1'>
+                <p className='text-sm text-slate-500 dark:text-slate-400'>
+                  <span className='text-lg font-bold tabular-nums text-emerald-600 dark:text-emerald-400'>
+                    {formatCOP(fuente.monto_recibido)}
+                  </span>{' '}
+                  {verboRecibido} de{' '}
+                  <span className='font-semibold tabular-nums text-slate-700 dark:text-slate-200'>
+                    {formatCOP(fuente.monto_aprobado)}
+                  </span>
+                  <span className='mx-1.5 text-slate-300 dark:text-slate-600'>
+                    ·
+                  </span>
+                  falta{' '}
+                  <span className='font-bold tabular-nums text-amber-600 dark:text-amber-400'>
+                    {formatCOP(fuente.saldo_pendiente)}
+                  </span>
+                </p>
+                <span
+                  className={cn(
+                    'text-sm font-bold tabular-nums',
+                    pct > 0
+                      ? 'text-slate-700 dark:text-slate-200'
+                      : 'text-slate-400 dark:text-slate-500'
+                  )}
+                >
+                  {pct > 0 ? `${Math.floor(pct)}%` : 'Sin pagos'}
+                </span>
+              </div>
+              <div className='mt-2 h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700/60'>
+                <motion.div
+                  className={cn('h-full rounded-full', solid)}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${pct}%` }}
+                  transition={{
+                    duration: 0.8,
+                    ease: 'easeOut',
+                    delay: 0.1 + index * 0.05,
+                  }}
+                />
+              </div>
+            </div>
 
-            {/* Acceso directo a documentos del cliente */}
-            {clienteSlug && (
-              <Link
-                href={`/clientes/${clienteSlug}`}
-                onClick={() =>
-                  sessionStorage.setItem('cliente-tab-intent', 'documentos')
-                }
-                className='inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-700 underline underline-offset-2 transition-colors hover:text-amber-900 dark:text-amber-400 dark:hover:text-amber-200'
-              >
-                <ExternalLink className='h-3 w-3' />
-                Ir a Documentos del cliente
-              </Link>
-            )}
+            {botonCuotas ? <div className='mt-3'>{botonCuotas}</div> : null}
           </div>
-        )}
-      {/* Plan de cuotas expandible (solo Crédito con la Constructora) */}
-      {esCreditoConstructora && cuotasExpandidas ? (
-        <div className='border-t border-violet-200 bg-violet-50/50 px-4 py-4 dark:border-violet-800/30 dark:bg-violet-900/5'>
-          <CuotasCreditoTab
-            fuentePagoId={fuente.id}
-            negociacionId={negociacionId}
-            montoFuente={fuente.monto_aprobado}
-            onPagoCuotaRegistrado={onAbonoRegistrado}
-            refreshKey={cuotasRefreshKey}
-            readonly
-          />
-        </div>
-      ) : null}
-    </motion.div>
+
+          {/* Faltan documentos: subirlos es la acción de la tarjeta
+              (si el cierre está descuadrado, lo avisa la página) */}
+          {bloqueadoPorDocs && !hayDescuadre && conSaldo ? (
+            <div className='flex flex-col gap-3 border-t border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50/60 px-4 py-3 dark:border-amber-500/30 dark:from-amber-500/10 dark:to-orange-500/5 sm:flex-row sm:items-center sm:px-5'>
+              <div className='flex min-w-0 flex-1 items-start gap-3'>
+                <span className='flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/30'>
+                  <FileWarning className='h-4 w-4' />
+                </span>
+                <div className='min-w-0'>
+                  <p className='text-sm font-bold text-amber-950 dark:text-amber-100'>
+                    Para registrar este
+                    {esDesembolsoUnico ? ' desembolso' : ' abono'} faltan{' '}
+                    {plural(
+                      docsPendientes,
+                      'documento obligatorio',
+                      'documentos obligatorios'
+                    )}
+                  </p>
+                  {docsNombres.length > 0 ? (
+                    <ul className='mt-1.5 flex flex-wrap gap-1.5'>
+                      {docsNombres.map(nombre => (
+                        <li
+                          key={nombre}
+                          className='rounded-full bg-white/80 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800 ring-1 ring-amber-200 dark:bg-slate-900/50 dark:text-amber-200 dark:ring-amber-500/30'
+                        >
+                          {nombre}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </div>
+              </div>
+              {irADocumentos ? (
+                <Link
+                  href={irADocumentos.href}
+                  onClick={irADocumentos.onClick}
+                  className='inline-flex w-full shrink-0 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-amber-500/25 transition-all hover:-translate-y-0.5 sm:w-auto sm:py-2'
+                >
+                  <Upload className='h-4 w-4' />
+                  Subir documentos
+                </Link>
+              ) : null}
+            </div>
+          ) : null}
+        </>
+      )}
+
+      <AnimatePresence initial={false}>
+        {esCreditoConstructora && cuotasAbiertas ? (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className='overflow-hidden border-t border-violet-200 bg-violet-50/50 dark:border-violet-500/20 dark:bg-violet-500/5'
+          >
+            <div className='p-4'>
+              <CuotasCreditoTab
+                fuentePagoId={fuente.id}
+                negociacionId={negociacionId}
+                montoFuente={fuente.monto_aprobado}
+                onPagoCuotaRegistrado={onAbonoRegistrado}
+                refreshKey={cuotasRefreshKey}
+                readonly
+              />
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </motion.article>
   )
 }

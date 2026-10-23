@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { motion } from 'framer-motion'
 import {
@@ -21,13 +21,13 @@ import { ModalRegistroPago } from '@/modules/abonos/components/modal-registro-pa
 import type { AbonoHistorial } from '@/modules/abonos/types'
 import type { AbonoParaEditar } from '@/modules/abonos/types/editar-abono.types'
 import { usePermisosQuery } from '@/modules/usuarios/hooks/usePermisosQuery'
-import { SectionLoadingSpinner } from '@/shared/components/ui'
+import { PantallaCarga } from '@/shared/components/carga'
 import { formatCurrency } from '@/shared/utils/format'
 
 import {
+  AvisoAbonos,
   FuentePagoCard,
   HeaderCliente,
-  MetricasCards,
   TimelineAbonos,
 } from './components'
 import { useAbonosDetalle } from './hooks/useAbonosDetalle'
@@ -172,212 +172,128 @@ export default function AbonosDetalleClient({
     ? getShortId(negociacion.cliente.id)
     : getShortId(clienteId)
 
-  const handleVolver = () => router.push('/abonos')
+  // Sin negociación activa (p.ej. ya saldada): volver al listado
+  const sinNegociacion = !isLoading && !negociacion
+  useEffect(() => {
+    if (sinNegociacion) router.replace('/abonos/registrar')
+  }, [sinNegociacion, router])
 
   if (isLoading) {
     return (
-      <div className='flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950'>
-        <SectionLoadingSpinner
-          label='Cargando abonos...'
-          moduleName='abonos'
-          icon={Wallet}
-        />
-      </div>
+      <PantallaCarga
+        modulo='abonos'
+        icon={Wallet}
+        label='Cargando abonos del cliente'
+      />
     )
   }
 
-  if (!negociacion) {
-    router.replace('/abonos')
-    return null
-  }
+  if (!negociacion || !metricas) return null
+
+  const fuentes = negociacion.fuentes_pago ?? []
+  // Primero lo que falta por recibir; las completadas van al final
+  const fuentesOrdenadas = [...fuentes].sort(
+    (a, b) =>
+      Number((a.saldo_pendiente || 0) <= 0) -
+      Number((b.saldo_pendiente || 0) <= 0)
+  )
 
   return (
-    <motion.div
-      className='relative min-h-screen overflow-hidden bg-gray-50 dark:bg-gray-950'
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-    >
-      {/* Gradiente atmosférico solo en dark mode */}
-      <div
-        className='pointer-events-none absolute inset-0 hidden dark:block'
-        style={{
-          background:
-            'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(16,185,129,0.15), transparent), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(20,184,166,0.08), transparent)',
-        }}
-      />
-      {/* Orbs de ambiente - solo en dark */}
-      <div className='pointer-events-none absolute inset-0 hidden overflow-hidden dark:block'>
-        <div className='absolute -right-40 -top-40 h-96 w-96 rounded-full bg-emerald-500/10 blur-3xl' />
-        <div className='bg-teal-600/8 absolute -left-32 top-1/2 h-80 w-80 rounded-full blur-3xl' />
-        <div className='absolute bottom-0 right-1/4 h-64 w-64 rounded-full bg-emerald-400/5 blur-3xl' />
-      </div>
+    <div className='min-h-screen bg-gradient-to-br from-slate-50 via-violet-50/60 to-purple-50/60 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950'>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.15 }}
+        className='mx-auto max-w-6xl space-y-5 px-4 py-6 sm:px-6 lg:py-8'
+      >
+        <HeaderCliente
+          negociacion={negociacion}
+          metricas={metricas}
+          excedente={estaBalanceado ? excedente : 0}
+          canVerCliente={esAdmin || puede('clientes', 'ver')}
+        />
 
-      <div className='relative z-10 mx-auto max-w-5xl space-y-5 px-4 py-6'>
-        {/* Header (sticky al hacer scroll) */}
-        <div className='sticky top-0 z-20'>
-          <HeaderCliente
-            negociacion={negociacion}
-            onVolver={handleVolver}
-            onRegistrarAbono={() =>
-              negociacion.fuentes_pago?.[0] &&
-              handleRegistrarAbono(negociacion.fuentes_pago[0])
-            }
-            canCreate={canRegistrar}
-            canVerCliente={esAdmin || puede('clientes', 'ver')}
-          />
-        </div>
-
-        {/* Métricas */}
-        {metricas && <MetricasCards metricas={metricas} />}
-
-        {/* Banner de descuadre financiero */}
-        {!estaBalanceado &&
-        negociacion.fuentes_pago &&
-        negociacion.fuentes_pago.length > 0 ? (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className='relative overflow-hidden rounded-xl border border-red-300 bg-gradient-to-r from-red-50 via-red-50 to-orange-50 dark:border-red-800/60 dark:from-red-950/40 dark:via-red-950/30 dark:to-orange-950/20'
+        {/* Avisos del cierre financiero */}
+        {!estaBalanceado && fuentes.length > 0 ? (
+          <AvisoAbonos
+            tono='rojo'
+            icon={AlertTriangle}
+            titulo='Las fuentes de pago no cuadran con el total'
           >
-            <div className='absolute left-0 top-0 h-full w-1 bg-red-500' />
-            <div className='flex items-center gap-3 px-5 py-3'>
-              <div className='relative flex-shrink-0'>
-                <div className='flex h-9 w-9 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/40'>
-                  <AlertTriangle className='h-5 w-5 text-red-600 dark:text-red-400' />
-                </div>
-                <span className='absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-red-50 bg-red-500 dark:border-red-950'>
-                  <span className='absolute inset-0 animate-ping rounded-full bg-red-400 opacity-75' />
-                </span>
-              </div>
-              <div className='min-w-0 flex-1'>
-                <p className='text-sm font-bold text-red-800 dark:text-red-300'>
-                  Descuadre en Cierre Financiero — Registro Bloqueado
-                </p>
-                <p className='mt-0.5 text-xs text-red-700 dark:text-red-400'>
-                  Las fuentes de pago no coinciden con el valor total de la
-                  negociación. No es posible registrar abonos hasta corregir
-                  este descuadre desde el módulo de Negociación.
-                </p>
-              </div>
-            </div>
-          </motion.div>
+            No se pueden registrar pagos hasta corregir el cierre financiero en
+            la pestaña Negociación del cliente.
+          </AvisoAbonos>
+        ) : null}
+        {estaBalanceado && excedente > 0 ? (
+          estadoDevolucion === 'procesada' ? (
+            <AvisoAbonos
+              tono='verde'
+              icon={CheckCircle2}
+              titulo={`Excedente devuelto · ${formatCurrency(negociacion.excedente_devolucion_monto ?? excedente)}`}
+            >
+              Las fuentes de pago superaban el total y la diferencia ya se le
+              devolvió al cliente
+              {negociacion.excedente_devolucion_fecha
+                ? ` el ${negociacion.excedente_devolucion_fecha}`
+                : ''}
+              .
+            </AvisoAbonos>
+          ) : (
+            <AvisoAbonos
+              tono='ambar'
+              icon={ArrowDownToLine}
+              titulo={`Excedente por devolver · ${formatCurrency(excedente)}`}
+            >
+              Las fuentes de pago superan el total a pagar. Registra la
+              devolución al cliente desde la pestaña Negociación.
+            </AvisoAbonos>
+          )
         ) : null}
 
-        {/* Banner de excedente — devolución pendiente */}
-        {estaBalanceado &&
-          excedente > 0 &&
-          estadoDevolucion !== 'procesada' && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className='relative overflow-hidden rounded-xl border border-amber-300 bg-gradient-to-r from-amber-50 via-amber-50 to-orange-50 dark:border-amber-700/60 dark:from-amber-950/40 dark:via-amber-950/30 dark:to-orange-950/20'
-            >
-              <div className='absolute left-0 top-0 h-full w-1 bg-amber-500' />
-              <div className='flex items-center gap-3 px-5 py-3'>
-                <div className='flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/40'>
-                  <ArrowDownToLine className='h-5 w-5 text-amber-600 dark:text-amber-400' />
-                </div>
-                <div className='min-w-0 flex-1'>
-                  <p className='text-sm font-bold text-amber-800 dark:text-amber-300'>
-                    Devolución Pendiente — {formatCurrency(excedente)}
-                  </p>
-                  <p className='mt-0.5 text-xs text-amber-700 dark:text-amber-400'>
-                    Las fuentes de pago superan el valor de la negociación.
-                    Registra la devolución desde la pestaña de Negociación.
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-        {/* Banner de excedente — devolución ya procesada */}
-        {estaBalanceado &&
-          excedente > 0 &&
-          estadoDevolucion === 'procesada' && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className='relative overflow-hidden rounded-xl border border-emerald-300 bg-gradient-to-r from-emerald-50 to-teal-50 dark:border-emerald-700/60 dark:from-emerald-950/40 dark:to-teal-950/20'
-            >
-              <div className='absolute left-0 top-0 h-full w-1 bg-emerald-500' />
-              <div className='flex items-center gap-3 px-5 py-3'>
-                <div className='flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40'>
-                  <CheckCircle2 className='h-5 w-5 text-emerald-600 dark:text-emerald-400' />
-                </div>
-                <div className='min-w-0 flex-1'>
-                  <p className='text-sm font-bold text-emerald-800 dark:text-emerald-300'>
-                    Devolución Registrada —{' '}
-                    {formatCurrency(
-                      negociacion.excedente_devolucion_monto ?? excedente
-                    )}
-                  </p>
-                  <p className='mt-0.5 text-xs text-emerald-700 dark:text-emerald-400'>
-                    El excedente fue devuelto al cliente.{' '}
-                    {negociacion.excedente_devolucion_fecha
-                      ? `Fecha: ${negociacion.excedente_devolucion_fecha}.`
-                      : ''}
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
         {/* Fuentes de pago */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-        >
-          <div className='mb-3 flex items-center gap-2 px-1'>
-            <Wallet className='h-4 w-4 text-emerald-500 dark:text-emerald-400' />
-            <h2 className='text-sm font-bold uppercase tracking-widest text-gray-600 dark:text-white/90'>
-              Fuentes de Pago
+        <section className='space-y-3'>
+          <div className='flex items-center gap-2 px-1'>
+            <Wallet className='h-4 w-4 text-violet-600 dark:text-violet-400' />
+            <h2 className='text-sm font-bold text-slate-800 dark:text-slate-100'>
+              Fuentes de pago
             </h2>
-            {negociacion.fuentes_pago &&
-              negociacion.fuentes_pago.length > 0 && (
-                <span className='ml-auto text-xs font-medium text-emerald-600 dark:text-emerald-400/70'>
-                  {negociacion.fuentes_pago.length} fuente
-                  {negociacion.fuentes_pago.length !== 1 ? 's' : ''} activa
-                  {negociacion.fuentes_pago.length !== 1 ? 's' : ''}
-                </span>
-              )}
+            <span className='ml-auto text-xs text-slate-500 dark:text-slate-400'>
+              {fuentes.length} fuente{fuentes.length !== 1 ? 's' : ''}
+            </span>
           </div>
 
-          {negociacion.fuentes_pago && negociacion.fuentes_pago.length > 0 ? (
-            <div className='grid gap-3'>
-              {negociacion.fuentes_pago.map((fuente, index) => (
-                <FuentePagoCard
-                  key={fuente.id}
-                  fuente={fuente}
-                  negociacionId={negociacion.id}
-                  clienteSlug={clienteSlug}
-                  onRegistrarAbono={handleRegistrarAbono}
-                  onAbonoRegistrado={handleAbonoConRefresh}
-                  cuotasRefreshKey={cuotasRefreshKey}
-                  index={index}
-                  canCreate={canRegistrar}
-                  validacion={validarFuentePago[fuente.id]}
-                />
-              ))}
-            </div>
+          {fuentes.length > 0 ? (
+            fuentesOrdenadas.map((fuente, index) => (
+              <FuentePagoCard
+                key={fuente.id}
+                fuente={fuente}
+                negociacionId={negociacion.id}
+                clienteSlug={clienteSlug}
+                onRegistrarAbono={handleRegistrarAbono}
+                onAbonoRegistrado={handleAbonoConRefresh}
+                cuotasRefreshKey={cuotasRefreshKey}
+                index={index}
+                canCreate={canRegistrar}
+                validacion={validarFuentePago[fuente.id]}
+              />
+            ))
           ) : (
-            <div className='rounded-2xl border border-gray-200 bg-white px-6 py-12 text-center shadow-sm dark:border-white/10 dark:bg-white/5 dark:shadow-none'>
-              <Wallet className='mx-auto mb-3 h-8 w-8 text-gray-300 dark:text-white/20' />
-              <p className='text-sm text-gray-400 dark:text-white/40'>
-                No hay fuentes de pago configuradas
+            <div className='rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center dark:border-slate-700 dark:bg-slate-800/40'>
+              <Wallet className='mx-auto mb-3 h-8 w-8 text-slate-300 dark:text-slate-600' />
+              <p className='text-sm text-slate-500 dark:text-slate-400'>
+                Esta negociación no tiene fuentes de pago configuradas
               </p>
             </div>
           )}
-        </motion.div>
+        </section>
 
         {/* Historial */}
         <TimelineAbonos
           abonos={abonos}
-          fuentesPago={negociacion.fuentes_pago}
+          fuentesPago={fuentes}
           loading={loadingAbonos}
           onVerDetalle={handleVerDetalle}
         />
-
         {/* Modal de registro de abono */}
         {modalAbonoOpen && fuenteSeleccionada && (
           <ModalRegistroPago
@@ -442,7 +358,7 @@ export default function AbonosDetalleClient({
             onSuccess={handleEditarSuccess}
           />
         ) : null}
-      </div>
-    </motion.div>
+      </motion.div>
+    </div>
   )
 }

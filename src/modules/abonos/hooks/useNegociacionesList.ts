@@ -1,139 +1,128 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
+
+import type { NegociacionConAbonos } from '../types'
 
 import { useNegociacionesAbonos } from './index'
 
-export type OrdenClientes =
-  | 'urgente'
-  | 'mayor_pago'
-  | 'nombre_az'
-  | 'nombre_za'
-  | 'vivienda_asc'
-  | 'mayor_saldo'
+/** Etapa del pago, que es también el filtro de las tarjetas */
+export type EtapaPago = 'todos' | 'sin_abonos' | 'en_curso' | 'avanzados'
 
+/** A partir de este % se considera que al cliente le falta poco */
+export const UMBRAL_AVANZADO = 80
+
+export function etapaDePago(
+  n: NegociacionConAbonos
+): Exclude<EtapaPago, 'todos'> {
+  if ((n.total_abonado || 0) <= 0) return 'sin_abonos'
+  return (n.porcentaje_pagado || 0) >= UMBRAL_AVANZADO
+    ? 'avanzados'
+    : 'en_curso'
+}
+
+/** Texto en que se busca: nombre, cédula, proyecto y vivienda ("A1", "a 1") */
+function textoBusqueda(n: NegociacionConAbonos): string {
+  const manzana = n.vivienda.manzana?.nombre || ''
+  const numero = n.vivienda.numero || ''
+  return [
+    `${n.cliente.nombres} ${n.cliente.apellidos}`,
+    n.cliente.numero_documento,
+    n.proyecto?.nombre || '',
+    `${manzana}${numero}`,
+    `${manzana} ${numero}`,
+  ]
+    .join(' ')
+    .toLowerCase()
+}
+
+/**
+ * Lista de clientes con negociación activa para elegir a quién registrarle
+ * un abono: búsqueda, proyecto y etapa del pago. El orden y la paginación
+ * los maneja la tabla.
+ */
 export function useNegociacionesList() {
-  const { negociaciones, isLoading, estadisticas } = useNegociacionesAbonos()
+  const { negociaciones, isLoading, error, estadisticas } =
+    useNegociacionesAbonos()
 
   const [busqueda, setBusqueda] = useState('')
-  const [proyectoFiltro, setProyectoFiltro] = useState('')
-  const [ordenar, setOrdenar] = useState<OrdenClientes>('vivienda_asc')
-  const [paginaActual, setPaginaActual] = useState(1)
-  const [pageSize, setPageSize] = useState(25)
+  const [proyectoFiltro, setProyectoFiltro] = useState('todos')
+  const [etapa, setEtapa] = useState<EtapaPago>('todos')
 
-  // ─── Proyectos disponibles para el filtro ─────────────────────────────────
   const proyectosDisponibles = useMemo(() => {
     const nombres = negociaciones
       .map(n => n.proyecto?.nombre)
       .filter((n): n is string => Boolean(n))
-    return [...new Set(nombres)].sort()
+    return [...new Set(nombres)].sort((a, b) => a.localeCompare(b, 'es'))
   }, [negociaciones])
 
-  // ─── Promedio de avance del portafolio ────────────────────────────────────
-  const promedioAvance = useMemo(() => {
-    if (!negociaciones.length) return 0
-    const suma = negociaciones.reduce(
-      (acc, n) => acc + (n.porcentaje_pagado || 0),
-      0
-    )
-    return Math.round(suma / negociaciones.length)
-  }, [negociaciones])
-
-  // ─── Filtrar + ordenar ────────────────────────────────────────────────────
-  const negociacionesFiltradas = useMemo(() => {
-    let result = negociaciones
-
-    if (busqueda.trim()) {
-      const termino = busqueda.toLowerCase().trim().replace(/\s/g, '')
-      result = result.filter(neg => {
-        const nombre =
-          `${neg.cliente.nombres} ${neg.cliente.apellidos}`.toLowerCase()
-        const documento = neg.cliente.numero_documento.toLowerCase()
-        const proyectoNombre = neg.proyecto?.nombre?.toLowerCase() || ''
-        const viviendaNumero = (neg.vivienda.numero || '').toLowerCase()
-        const manzana = (neg.vivienda.manzana?.nombre || '').toLowerCase()
-        const codigoCombinado = `${manzana}${viviendaNumero}`.replace(/\s/g, '')
-        const codigoCompleto = `${manzana} ${viviendaNumero}`
-        return (
-          nombre.includes(termino) ||
-          documento.includes(termino) ||
-          proyectoNombre.includes(termino) ||
-          viviendaNumero.includes(termino) ||
-          codigoCombinado.includes(termino) ||
-          codigoCompleto.includes(termino)
-        )
-      })
-    }
-
-    if (proyectoFiltro) {
-      result = result.filter(n => n.proyecto?.nombre === proyectoFiltro)
-    }
-
-    return [...result].sort((a, b) => {
-      switch (ordenar) {
-        case 'mayor_pago':
-          return (b.porcentaje_pagado || 0) - (a.porcentaje_pagado || 0)
-        case 'nombre_az': {
-          const na = `${a.cliente.apellidos} ${a.cliente.nombres}`.toLowerCase()
-          const nb = `${b.cliente.apellidos} ${b.cliente.nombres}`.toLowerCase()
-          return na.localeCompare(nb, 'es')
-        }
-        case 'nombre_za': {
-          const na = `${a.cliente.apellidos} ${a.cliente.nombres}`.toLowerCase()
-          const nb = `${b.cliente.apellidos} ${b.cliente.nombres}`.toLowerCase()
-          return nb.localeCompare(na, 'es')
-        }
-        case 'vivienda_asc': {
-          const ka =
-            `${a.vivienda.manzana?.nombre || ''}${(a.vivienda.numero || '').padStart(5, '0')}`.toLowerCase()
-          const kb =
-            `${b.vivienda.manzana?.nombre || ''}${(b.vivienda.numero || '').padStart(5, '0')}`.toLowerCase()
-          return ka.localeCompare(kb, 'es')
-        }
-        case 'mayor_saldo': {
-          const sa = (a.valor_total || 0) - (a.total_abonado || 0)
-          const sb = (b.valor_total || 0) - (b.total_abonado || 0)
-          return sb - sa
-        }
-        case 'urgente':
-        default:
-          return (a.porcentaje_pagado || 0) - (b.porcentaje_pagado || 0)
-      }
+  // Búsqueda + proyecto (las tarjetas cuentan sobre esto)
+  const porBusqueda = useMemo(() => {
+    const termino = busqueda.toLowerCase().trim()
+    return negociaciones.filter(n => {
+      if (proyectoFiltro !== 'todos' && n.proyecto?.nombre !== proyectoFiltro)
+        return false
+      if (!termino) return true
+      const texto = textoBusqueda(n)
+      return (
+        texto.includes(termino) ||
+        texto.replace(/\s/g, '').includes(termino.replace(/\s/g, ''))
+      )
     })
-  }, [negociaciones, busqueda, proyectoFiltro, ordenar])
+  }, [negociaciones, busqueda, proyectoFiltro])
 
-  // Resetear a pagina 1 al cambiar filtros o pageSize
-  useEffect(() => {
-    setPaginaActual(1)
-  }, [busqueda, proyectoFiltro, ordenar, pageSize])
+  const conteos = useMemo(() => {
+    const c: Record<EtapaPago, number> = {
+      todos: porBusqueda.length,
+      sin_abonos: 0,
+      en_curso: 0,
+      avanzados: 0,
+    }
+    porBusqueda.forEach(n => c[etapaDePago(n)]++)
+    return c
+  }, [porBusqueda])
 
-  const totalFiltrado = negociacionesFiltradas.length
-  const totalPaginas = Math.max(1, Math.ceil(totalFiltrado / pageSize))
+  const negociacionesFiltradas = useMemo(
+    () =>
+      etapa === 'todos'
+        ? porBusqueda
+        : porBusqueda.filter(n => etapaDePago(n) === etapa),
+    [porBusqueda, etapa]
+  )
 
-  const negociacionesPaginadas = useMemo(() => {
-    const inicio = (paginaActual - 1) * pageSize
-    return negociacionesFiltradas.slice(inicio, inicio + pageSize)
-  }, [negociacionesFiltradas, paginaActual, pageSize])
+  // Avance de toda la cartera (recaudado / total a pagar)
+  const porcentajeCartera =
+    estadisticas.totalVentas > 0
+      ? Math.round((estadisticas.totalAbonado / estadisticas.totalVentas) * 100)
+      : 0
+
+  const hayFiltros =
+    busqueda.trim().length > 0 ||
+    proyectoFiltro !== 'todos' ||
+    etapa !== 'todos'
+
+  const limpiarFiltros = () => {
+    setBusqueda('')
+    setProyectoFiltro('todos')
+    setEtapa('todos')
+  }
 
   return {
     negociaciones,
     negociacionesFiltradas,
-    negociacionesPaginadas,
     proyectosDisponibles,
-    promedioAvance,
+    conteos,
+    porcentajeCartera,
     busqueda,
     setBusqueda,
     proyectoFiltro,
     setProyectoFiltro,
-    ordenar,
-    setOrdenar,
-    paginaActual,
-    totalPaginas,
-    totalFiltrado,
-    setPaginaActual,
-    pageSize,
-    setPageSize,
+    etapa,
+    setEtapa,
+    hayFiltros,
+    limpiarFiltros,
     isLoading,
+    error,
     estadisticas,
   }
 }

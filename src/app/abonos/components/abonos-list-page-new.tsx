@@ -10,7 +10,6 @@ import {
   Receipt,
   TrendingUp,
   Wallet,
-  type LucideIcon,
 } from 'lucide-react'
 
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -34,6 +33,7 @@ import type { AbonoParaEditar } from '@/modules/abonos/types/editar-abono.types'
 import {
   EstadoFiltroCards,
   formatCOP,
+  HeroDato,
   ListPageHeader,
   ListSearchToolbar,
   type EstadoFiltroOpcion,
@@ -65,29 +65,6 @@ const FILTRO_ACTIVO =
 
 const inputFecha =
   'h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200 dark:focus:ring-violet-900'
-
-/** Cifra en vidrio dentro del encabezado */
-function DatoHero({
-  icon: Icon,
-  label,
-  valor,
-}: {
-  icon: LucideIcon
-  label: string
-  valor: string
-}) {
-  return (
-    <div className='flex items-center gap-2.5 rounded-xl bg-white/15 px-3 py-2 ring-1 ring-white/25 backdrop-blur-sm'>
-      <Icon className='h-4 w-4 shrink-0 text-white/80' />
-      <div className='leading-tight'>
-        <p className='text-[10px] font-medium uppercase tracking-wider text-white/70'>
-          {label}
-        </p>
-        <p className='text-sm font-bold tabular-nums text-white'>{valor}</p>
-      </div>
-    </div>
-  )
-}
 
 export function AbonosListPage({
   canCreate = false,
@@ -258,18 +235,18 @@ export function AbonosListPage({
               <>
                 {!isLoading && (
                   <div className='flex flex-wrap gap-2'>
-                    <DatoHero
+                    <HeroDato
                       icon={Wallet}
                       label='Total recaudado'
                       valor={formatCOP(estadisticas.totalRecaudado)}
                     />
-                    <DatoHero
+                    <HeroDato
                       icon={TrendingUp}
                       label={`Recaudado ${new Date().getFullYear()}`}
                       valor={formatCOP(estadisticas.recaudadoEsteAnio)}
                     />
                     {estadisticas.ultimoAbono && (
-                      <DatoHero
+                      <HeroDato
                         icon={CalendarClock}
                         label='Último abono'
                         valor={formatDateCompact(estadisticas.ultimoAbono)}

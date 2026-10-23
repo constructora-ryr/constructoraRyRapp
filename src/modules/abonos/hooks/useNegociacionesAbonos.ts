@@ -69,8 +69,9 @@ export function useNegociacionesAbonos() {
         (sum, n) => sum + (n.total_abonado || 0),
         0
       ),
+      // Obligación real (con gastos y recargos): la misma base del saldo y del %
       totalVentas: negociaciones.reduce(
-        (sum, n) => sum + (n.valor_total || 0),
+        (sum, n) => sum + (n.valor_total_pagar || n.valor_total || 0),
         0
       ),
       saldoPendiente: negociaciones.reduce(

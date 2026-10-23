@@ -1,21 +1,37 @@
 'use client'
 
-import { useMemo } from 'react'
+/**
+ * Historial de pagos del cliente (abonos válidos, más reciente primero):
+ * cada fila con el color de su fuente, recibo, fecha, método y monto.
+ * Un clic abre el recibo con sus acciones. Muestra los más recientes y el
+ * resto al pedirlo, para que la lista no crezca sin fin.
+ */
+
+import { useMemo, useState } from 'react'
 
 import { motion } from 'framer-motion'
 import {
   ArrowRightLeft,
-  Calendar,
+  ChevronDown,
   ChevronRight,
-  CreditCard,
   Hash,
   Receipt,
 } from 'lucide-react'
 
 import { formatDateCompact } from '@/lib/utils/date.utils'
+import {
+  fuenteVisual,
+  metodoVisual,
+} from '@/modules/abonos/components/lista/fuente-visual'
 import type { AbonoHistorial, FuentePago } from '@/modules/abonos/types'
 import { formatearNumeroRecibo } from '@/modules/abonos/utils/formato-recibo'
+import { Hueso } from '@/shared/components/carga'
+import { formatCOP } from '@/shared/components/list-page'
 import { esCreditoConstructora } from '@/shared/constants/fuentes-pago.constants'
+import { cn } from '@/shared/utils/helpers'
+
+/** Pagos visibles antes de "Ver anteriores" */
+const VISIBLES = 6
 
 interface TimelineAbonosProps {
   abonos: AbonoHistorial[]
@@ -24,193 +40,269 @@ interface TimelineAbonosProps {
   onVerDetalle: (abono: AbonoHistorial) => void
 }
 
-const formatCurrency = (v: number) =>
-  new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(v)
-
 export function TimelineAbonos({
   abonos,
   fuentesPago = [],
   loading,
   onVerDetalle,
 }: TimelineAbonosProps) {
-  const resolveFuenteTipo = (fuente_pago_id: string): string | null =>
-    fuentesPago.find(f => f.id === fuente_pago_id)?.tipo ?? null
+  const tipoDe = useMemo(() => {
+    const mapa = new Map(fuentesPago.map(f => [f.id, f.tipo]))
+    return (a: AbonoHistorial) =>
+      mapa.get(a.fuente_pago_id) ?? a.fuente_tipo ?? null
+  }, [fuentesPago])
 
-  // Asigna número de cuota a cada abono de tipo "Crédito con la Constructora"
-  // agrupando por fuente y ordenando por fecha ascendente (el orden de pago = orden de cuota)
-  const cuotaNumeroMap = useMemo(() => {
-    const map = new Map<string, number>()
-    const byFuente = new Map<string, AbonoHistorial[]>()
-
+  // N° de cuota de los pagos del crédito con la constructora: por fuente y
+  // en orden de fecha (el orden de pago = orden de cuota)
+  const numeroCuota = useMemo(() => {
+    const mapa = new Map<string, number>()
+    const porFuente = new Map<string, AbonoHistorial[]>()
     for (const a of abonos) {
-      const tipo = resolveFuenteTipo(a.fuente_pago_id)
-      if (!esCreditoConstructora(tipo)) continue
-      if (!byFuente.has(a.fuente_pago_id)) byFuente.set(a.fuente_pago_id, [])
-      const grupo = byFuente.get(a.fuente_pago_id)
-      if (grupo) grupo.push(a)
+      if (!esCreditoConstructora(tipoDe(a))) continue
+      const grupo = porFuente.get(a.fuente_pago_id) ?? []
+      grupo.push(a)
+      porFuente.set(a.fuente_pago_id, grupo)
     }
-
-    for (const grupo of byFuente.values()) {
-      const sorted = [...grupo].sort(
-        (a, b) =>
-          new Date(a.fecha_abono).getTime() - new Date(b.fecha_abono).getTime()
-      )
-      sorted.forEach((a, i) => map.set(a.id, i + 1))
+    for (const grupo of porFuente.values()) {
+      ;[...grupo]
+        .sort(
+          (x, y) =>
+            new Date(x.fecha_abono).getTime() -
+            new Date(y.fecha_abono).getTime()
+        )
+        .forEach((a, i) => mapa.set(a.id, i + 1))
     }
+    return mapa
+  }, [abonos, tipoDe])
 
-    return map
-  }, [abonos, fuentesPago]) // eslint-disable-line react-hooks/exhaustive-deps
+  const total = abonos.reduce((s, a) => s + (a.monto || 0), 0)
 
-  if (loading) {
-    return (
-      <div className='space-y-3'>
-        {[1, 2, 3].map(i => (
-          <div key={i} className='flex items-start gap-3'>
-            <div className='h-10 w-10 flex-shrink-0 animate-pulse rounded-xl bg-gray-200 dark:bg-white/[0.06]' />
-            <div className='flex-1 animate-pulse rounded-2xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/[0.06]'>
-              <div className='mb-2 h-3 w-24 rounded bg-gray-200 dark:bg-white/10' />
-              <div className='h-4 w-32 rounded bg-gray-200 dark:bg-white/10' />
-            </div>
-          </div>
-        ))}
-      </div>
-    )
-  }
+  // Filtro por fuente (solo si los pagos vienen de más de una)
+  const [fuenteFiltro, setFuenteFiltro] = useState<string>('todas')
+  const chipsFuente = useMemo(() => {
+    const conteo = new Map<string, number>()
+    for (const a of abonos) {
+      const t = tipoDe(a) ?? 'Pago'
+      conteo.set(t, (conteo.get(t) ?? 0) + 1)
+    }
+    return [...conteo.entries()].map(([tipo, n]) => ({ tipo, n }))
+  }, [abonos, tipoDe])
+  const filtrados =
+    fuenteFiltro === 'todas'
+      ? abonos
+      : abonos.filter(a => (tipoDe(a) ?? 'Pago') === fuenteFiltro)
 
-  if (!abonos || abonos.length === 0) {
-    return (
-      <div className='rounded-2xl border border-gray-200 bg-white p-10 text-center shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none'>
-        <div className='mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gray-100 dark:bg-white/5'>
-          <Receipt className='h-6 w-6 text-gray-300 dark:text-white/20' />
-        </div>
-        <p className='text-sm font-medium text-gray-400 dark:text-white/40'>
-          No hay abonos activos registrados
-        </p>
-        <p className='mt-1 text-xs text-gray-300 dark:text-white/20'>
-          Los abonos aparecerán aquí una vez registrados
-        </p>
-      </div>
-    )
-  }
+  const [verTodos, setVerTodos] = useState(false)
+  const ocultos = Math.max(0, filtrados.length - VISIBLES)
+  const visibles = verTodos ? filtrados : filtrados.slice(0, VISIBLES)
 
   return (
-    <div className='relative'>
-      {/* Línea vertical de timeline: 2-stop gradient que permanece visible en todos los ítems */}
-      <div
-        className='absolute bottom-5 left-[19px] top-5 w-px'
-        style={{
-          background:
-            'linear-gradient(to bottom, rgba(16,185,129,0.45), rgba(16,185,129,0.1))',
-        }}
-      />
+    <section className='overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-800/60'>
+      <header className='flex flex-wrap items-center gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-700/60'>
+        <span className='flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 text-white shadow-md shadow-violet-500/25'>
+          <Receipt className='h-5 w-5' />
+        </span>
+        <div className='min-w-0 flex-1'>
+          <h2 className='text-sm font-bold text-slate-900 dark:text-white'>
+            Historial de pagos
+          </h2>
+          <p className='text-xs text-slate-500 dark:text-slate-400'>
+            {loading ? (
+              'Cargando…'
+            ) : abonos.length === 0 ? (
+              'Sin pagos todavía'
+            ) : (
+              <>
+                {abonos.length} recibo{abonos.length !== 1 ? 's' : ''} ·{' '}
+                <span className='font-bold tabular-nums text-emerald-600 dark:text-emerald-400'>
+                  {formatCOP(total)}
+                </span>
+              </>
+            )}
+          </p>
+        </div>
 
-      <div className='space-y-2.5'>
-        {abonos.map((abono, i) => {
-          const esTrasladado = Boolean(abono.trasladado_desde_negociacion_id)
-          const fuenteTipo = resolveFuenteTipo(abono.fuente_pago_id)
-          const numeroCuota = cuotaNumeroMap.get(abono.id)
-
-          return (
-            <motion.div
-              key={abono.id}
-              initial={{ opacity: 0, x: -12 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.04 }}
-              className='flex items-center gap-3'
-            >
-              {/* Nodo — diferenciado para trasladados */}
-              <div className='relative z-10 flex-shrink-0'>
-                <div
-                  className={`flex h-10 w-10 items-center justify-center rounded-xl shadow-lg ring-2 ring-white dark:ring-gray-950 ${
-                    esTrasladado
-                      ? 'bg-gradient-to-br from-amber-500 to-orange-600 shadow-amber-900/40'
-                      : 'bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-900/40'
-                  }`}
-                >
-                  {esTrasladado ? (
-                    <ArrowRightLeft className='h-4 w-4 text-white' />
-                  ) : (
-                    <Receipt className='h-4 w-4 text-white' />
+        {!loading && chipsFuente.length > 1 ? (
+          <div
+            role='radiogroup'
+            aria-label='Filtrar pagos por fuente'
+            className='flex w-full flex-wrap gap-1.5 sm:w-auto'
+          >
+            {[{ tipo: 'todas', n: abonos.length }, ...chipsFuente].map(c => {
+              const activo = fuenteFiltro === c.tipo
+              const visual = c.tipo === 'todas' ? null : fuenteVisual(c.tipo)
+              const IconoChip = visual?.icon
+              return (
+                <button
+                  key={c.tipo}
+                  type='button'
+                  role='radio'
+                  aria-checked={activo}
+                  onClick={() => {
+                    setFuenteFiltro(c.tipo)
+                    setVerTodos(false)
+                  }}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-inset transition-colors',
+                    activo
+                      ? 'bg-violet-600 text-white ring-violet-600 dark:bg-violet-500 dark:ring-violet-500'
+                      : 'bg-white text-slate-600 ring-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700 dark:hover:bg-slate-700'
                   )}
-                </div>
-              </div>
+                >
+                  {IconoChip ? <IconoChip className='h-3.5 w-3.5' /> : null}
+                  {c.tipo === 'todas' ? 'Todas' : c.tipo}
+                  <span
+                    className={cn(
+                      'tabular-nums',
+                      activo ? 'text-white/80' : 'text-slate-400'
+                    )}
+                  >
+                    {c.n}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        ) : null}
+      </header>
 
-              {/* Card — clickeable completa */}
-              <button
-                type='button'
-                onClick={() => onVerDetalle(abono)}
-                className='group min-w-0 flex-1 cursor-pointer overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all hover:border-emerald-200 hover:shadow-md dark:border-white/[0.08] dark:bg-white/[0.06] dark:shadow-none dark:hover:border-emerald-500/30'
+      {loading ? (
+        <div className='space-y-3 p-4'>
+          {[0, 1, 2].map(i => (
+            <div key={i} className='flex items-center gap-3'>
+              <Hueso className='h-10 w-10 rounded-xl' />
+              <div className='flex-1 space-y-1.5'>
+                <Hueso className='h-3 w-24' />
+                <Hueso className='h-3 w-40' />
+              </div>
+              <Hueso className='h-4 w-20' />
+            </div>
+          ))}
+        </div>
+      ) : abonos.length === 0 ? (
+        <div className='px-6 py-10 text-center'>
+          <span className='mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-400 dark:bg-violet-500/10 dark:text-violet-300'>
+            <Receipt className='h-6 w-6' />
+          </span>
+          <p className='text-sm font-semibold text-slate-600 dark:text-slate-300'>
+            Aún no hay pagos registrados
+          </p>
+          <p className='mt-1 text-xs text-slate-500 dark:text-slate-400'>
+            Aparecerán aquí al registrar el primer abono o desembolso.
+          </p>
+        </div>
+      ) : (
+        <ul className='divide-y divide-slate-100 dark:divide-slate-700/60'>
+          {visibles.map((abono, i) => {
+            const tipo = tipoDe(abono)
+            const { icon: Icono, gradient } = fuenteVisual(tipo ?? '')
+            const metodo = metodoVisual(abono.metodo_pago ?? '')
+            const IconoMetodo = metodo.icon
+            const trasladado = Boolean(abono.trasladado_desde_negociacion_id)
+            const cuota = numeroCuota.get(abono.id)
+
+            return (
+              <motion.li
+                key={abono.id}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: Math.min(i, 10) * 0.03 }}
               >
-                <div className='flex items-center justify-between gap-3 px-4 py-3'>
-                  {/* Left: consecutivo + fuente + metadata */}
-                  <div className='min-w-0 flex-1 text-left'>
-                    <div className='flex flex-wrap items-center gap-1.5'>
+                <button
+                  type='button'
+                  onClick={() => onVerDetalle(abono)}
+                  className='group flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-violet-50/60 focus-visible:bg-violet-50/60 focus-visible:outline-none dark:hover:bg-violet-500/5 dark:focus-visible:bg-violet-500/5'
+                >
+                  <span
+                    className={cn(
+                      'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-sm',
+                      trasladado ? 'from-amber-500 to-orange-600' : gradient
+                    )}
+                  >
+                    {trasladado ? (
+                      <ArrowRightLeft className='h-4 w-4' />
+                    ) : (
+                      <Icono className='h-4 w-4' />
+                    )}
+                  </span>
+
+                  <span className='min-w-0 flex-1 md:flex md:items-center md:gap-4'>
+                    <span className='flex flex-wrap items-center gap-1.5 md:min-w-0 md:flex-1'>
                       {abono.numero_recibo ? (
-                        <span className='inline-flex items-center rounded-md border border-emerald-300 bg-emerald-100 px-2 py-0.5 font-mono text-xs font-bold text-emerald-700 dark:border-emerald-500/25 dark:bg-emerald-500/15 dark:text-emerald-300'>
+                        <span className='font-mono text-xs font-bold text-violet-700 dark:text-violet-300'>
                           {formatearNumeroRecibo(abono.numero_recibo)}
                         </span>
                       ) : null}
-
-                      {fuenteTipo ? (
-                        <span className='inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700 dark:bg-white/[0.08] dark:text-white/70'>
-                          {fuenteTipo}
+                      <span className='text-sm font-semibold text-slate-900 dark:text-white'>
+                        {tipo ?? 'Pago'}
+                      </span>
+                      {cuota ? (
+                        <span className='rounded-full bg-violet-100 px-2 py-px text-[11px] font-semibold text-violet-700 dark:bg-violet-500/15 dark:text-violet-300'>
+                          Cuota {cuota}
                         </span>
                       ) : null}
-
-                      {numeroCuota ? (
-                        <span className='inline-flex items-center rounded-md bg-violet-100 px-2 py-0.5 text-xs font-semibold text-violet-700 dark:bg-violet-500/15 dark:text-violet-300'>
-                          Cuota #{numeroCuota}
-                        </span>
-                      ) : null}
-
-                      {esTrasladado ? (
-                        <span className='inline-flex items-center gap-1 rounded-md bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400'>
-                          <ArrowRightLeft className='h-2.5 w-2.5' />
+                      {trasladado ? (
+                        <span className='rounded-full bg-amber-100 px-2 py-px text-[11px] font-semibold text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'>
                           Trasladado
                         </span>
                       ) : null}
-                    </div>
-
-                    <div className='mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-gray-400 dark:text-white/35'>
-                      <span className='flex items-center gap-1'>
-                        <Calendar className='h-2.5 w-2.5 opacity-60' />
+                    </span>
+                    <span className='mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500 dark:text-slate-400 md:mt-0 md:shrink-0 md:justify-end'>
+                      <span className='tabular-nums'>
                         {formatDateCompact(abono.fecha_abono)}
                       </span>
-                      <span className='opacity-40'>·</span>
-                      <span className='flex items-center gap-1'>
-                        <CreditCard className='h-2.5 w-2.5 opacity-60' />
-                        {abono.metodo_pago}
-                      </span>
-                      {abono.numero_referencia ? (
-                        <>
-                          <span className='opacity-40'>·</span>
-                          <span className='flex items-center gap-1'>
-                            <Hash className='h-2.5 w-2.5' />
-                            {abono.numero_referencia}
-                          </span>
-                        </>
+                      {abono.metodo_pago ? (
+                        <span
+                          className={cn(
+                            'inline-flex items-center gap-1 rounded-full px-2 py-px text-[11px] font-medium ring-1 ring-inset',
+                            metodo.cls
+                          )}
+                        >
+                          <IconoMetodo className='h-3 w-3' />
+                          {abono.metodo_pago}
+                        </span>
                       ) : null}
-                    </div>
-                  </div>
-
-                  {/* Right: monto + hint de acción */}
-                  <div className='flex flex-shrink-0 items-center gap-2'>
-                    <span className='whitespace-nowrap text-base font-extrabold text-emerald-600 dark:text-emerald-300'>
-                      {formatCurrency(abono.monto)}
+                      {abono.numero_referencia ? (
+                        <span className='inline-flex items-center gap-0.5'>
+                          <Hash className='h-3 w-3' />
+                          {abono.numero_referencia}
+                        </span>
+                      ) : null}
                     </span>
-                    <ChevronRight className='h-4 w-4 text-gray-300 transition-transform group-hover:translate-x-0.5 group-hover:text-emerald-500 dark:text-white/20 dark:group-hover:text-emerald-400' />
-                  </div>
-                </div>
+                  </span>
+
+                  <span className='flex shrink-0 items-center gap-1 md:w-40 md:justify-end'>
+                    <span className='text-sm font-bold tabular-nums text-emerald-600 dark:text-emerald-400 sm:text-base'>
+                      {formatCOP(abono.monto)}
+                    </span>
+                    <ChevronRight className='h-4 w-4 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-violet-500 dark:text-slate-600' />
+                  </span>
+                </button>
+              </motion.li>
+            )
+          })}
+          {ocultos > 0 ? (
+            <li>
+              <button
+                type='button'
+                onClick={() => setVerTodos(v => !v)}
+                aria-expanded={verTodos}
+                className='flex w-full items-center justify-center gap-1.5 px-4 py-3 text-sm font-semibold text-violet-700 transition-colors hover:bg-violet-50/60 dark:text-violet-300 dark:hover:bg-violet-500/5'
+              >
+                <ChevronDown
+                  className={cn(
+                    'h-4 w-4 transition-transform',
+                    verTodos && 'rotate-180'
+                  )}
+                />
+                {verTodos
+                  ? 'Ver solo los más recientes'
+                  : `Ver los ${ocultos} anteriores`}
               </button>
-            </motion.div>
-          )
-        })}
-      </div>
-    </div>
+            </li>
+          ) : null}
+        </ul>
+      )}
+    </section>
   )
 }
