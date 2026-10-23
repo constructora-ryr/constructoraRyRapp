@@ -1,6 +1,6 @@
 import { createClient as createSupabaseAdmin } from '@supabase/supabase-js'
 
-import type { NextRequest } from 'next/server'
+import type { NextFetchEvent, NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 
 import { createMiddlewareClient } from '@/lib/supabase/middleware'
@@ -59,6 +59,125 @@ function createAdminClient() {
   return createSupabaseAdmin(url, key, {
     auth: { autoRefreshToken: false, persistSession: false },
   })
+}
+
+/** Como createAdminClient, pero sin lanzar: sin service_role no se rastrean sesiones */
+function crearAdminSeguro() {
+  try {
+    return createAdminClient()
+  } catch (err) {
+    errorLog('middleware-sesiones-activas', err as Error, {})
+    return null
+  }
+}
+
+type ClienteMiddleware = ReturnType<typeof createMiddlewareClient>
+type ClienteAdmin = ReturnType<typeof createAdminClient>
+
+/** Registra la sesión nueva o actualiza su última actividad */
+async function registrarSesion(
+  admin: ClienteAdmin,
+  req: NextRequest,
+  userId: string,
+  tokenHash: string,
+  existe: boolean
+) {
+  if (existe) {
+    await admin
+      .from('sesiones_activas')
+      .update({ last_seen_at: new Date().toISOString() })
+      .eq('session_token', tokenHash)
+    return
+  }
+  const ip =
+    req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+    req.headers.get('x-real-ip') ||
+    'desconocida'
+  const { dispositivo, navegador } = parsearUserAgent(
+    req.headers.get('user-agent') || ''
+  )
+  await admin
+    .from('sesiones_activas')
+    .upsert(
+      { user_id: userId, session_token: tokenHash, dispositivo, navegador, ip },
+      { onConflict: 'session_token' }
+    )
+  await admin.rpc('limpiar_sesiones_antiguas', { p_user_id: userId })
+}
+
+/** Permisos permitidos del rol como 'modulo.accion'; null si la consulta falla */
+async function consultarPermisos(
+  supabase: ClienteMiddleware,
+  rol: string
+): Promise<string[] | null> {
+  const { data, error } = await supabase
+    .from('permisos_rol')
+    .select('modulo, accion')
+    .eq('rol', rol)
+    .eq('permitido', true)
+  if (error) {
+    // Si falla la consulta BD, se usa lo que haya en el JWT como último recurso
+    debugLog('⚠️ Error consultando BD, usando JWT como fallback', {
+      rol,
+      error: error.message,
+    })
+    return null
+  }
+  return (data ?? []).map(p => `${p.modulo}.${p.accion}`)
+}
+
+/** Claims custom que escribe custom_access_token_hook (Edge: sin Buffer) */
+function leerClaimsJwt(
+  accessToken: string | undefined,
+  pathname: string
+): { rol: string; nombres: string; email: string; permisos: string[] } {
+  const vacio = { rol: '', nombres: '', email: '', permisos: [] }
+  const partes = accessToken?.split('.')
+  if (partes?.length !== 3) return vacio
+  try {
+    let base64 = partes[1].replace(/-/g, '+').replace(/_/g, '/')
+    while (base64.length % 4) base64 += '='
+    const json = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    )
+    const payload = JSON.parse(json)
+    return {
+      rol: payload.user_rol || '',
+      nombres: payload.user_nombres || '',
+      email: payload.user_email || '',
+      permisos: (payload.user_permisos as string[]) || [],
+    }
+  } catch (error) {
+    errorLog('middleware-jwt-decode', error as Error, { pathname })
+    return vacio
+  }
+}
+
+/** Precarga de <Link> (no es una visita real) */
+function esPrefetch(req: NextRequest): boolean {
+  return (
+    req.headers.get('next-router-prefetch') === '1' ||
+    req.headers.get('purpose') === 'prefetch'
+  )
+}
+
+/** Cierra la sesión y redirige a /login conservando las cookies del signOut */
+async function cerrarSesionYRedirigir(
+  req: NextRequest,
+  res: NextResponse,
+  supabase: ClienteMiddleware,
+  params: Record<string, string> = {}
+) {
+  await supabase.auth.signOut()
+  const redirectUrl = req.nextUrl.clone()
+  redirectUrl.pathname = '/login'
+  Object.entries(params).forEach(([k, v]) => redirectUrl.searchParams.set(k, v))
+  const redirectRes = NextResponse.redirect(redirectUrl)
+  res.cookies.getAll().forEach(c => redirectRes.cookies.set(c))
+  return redirectRes
 }
 
 /**
@@ -220,7 +339,7 @@ function canAccessRoute(
 // MIDDLEWARE PRINCIPAL
 // ============================================
 
-export async function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest, event: NextFetchEvent) {
   const { pathname } = req.nextUrl
 
   debugLog('🔍 Middleware request', {
@@ -320,215 +439,122 @@ export async function middleware(req: NextRequest) {
     debugLog('✅ Usuario autenticado', { email: user.email, pathname })
 
     // ============================================
-    // 4b. VERIFICAR ESTADO DE LA CUENTA (DB)
+    // 4b. CLAIMS DEL JWT (lectura local, sin red)
     // ============================================
-    // El JWT puede seguir siendo válido aunque el usuario esté Bloqueado/Inactivo.
-    // Consultamos la DB como fuente de verdad para el estado de la cuenta.
-    // Esto corre para todos los usuarios, incluyendo Administradores.
-    try {
-      const { data: cuentaData } = await supabase
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+    const claims = leerClaimsJwt(session?.access_token, pathname)
+    let rol = claims.rol // vacío si el hook no inyectó el claim
+    const nombres = claims.nombres
+    const email = claims.email || user.email || ''
+    let permisosCache = claims.permisos
+
+    // ============================================
+    // 5. VERIFICACIONES EN PARALELO (un solo viaje a Supabase)
+    // ============================================
+    // - Estado de la cuenta: el JWT puede seguir vigente aunque el usuario
+    //   esté Bloqueado/Inactivo; la BD es la fuente de verdad.
+    // - Sesión revocada remotamente (sesiones_activas, con service_role).
+    // - Permisos del rol: si no es Admin, la BD manda sobre el JWT para que
+    //   los cambios de permisos apliquen de inmediato.
+
+    const tokenHash = session?.refresh_token
+      ? await hashToken(session.refresh_token)
+      : null
+    const adminSesiones = tokenHash ? crearAdminSeguro() : null
+
+    const [cuentaRes, sesionRes, permisosRes] = await Promise.all([
+      supabase
         .from('usuarios')
         .select('estado')
         .eq('id', user.id)
-        .maybeSingle()
+        .maybeSingle(),
+      adminSesiones && tokenHash
+        ? adminSesiones
+            .from('sesiones_activas')
+            .select('id, revocada')
+            .eq('session_token', tokenHash)
+            .maybeSingle()
+        : null,
+      rol && rol !== 'Administrador' ? consultarPermisos(supabase, rol) : null,
+    ])
 
-      if (!cuentaData || cuentaData.estado !== 'Activo') {
-        debugLog('🚫 Cuenta bloqueada o inactiva', {
-          estado: cuentaData?.estado,
-          pathname,
-        })
-        await supabase.auth.signOut()
-        const redirectUrl = req.nextUrl.clone()
-        redirectUrl.pathname = '/login'
-        // Propagar las cookies del signOut (vinculadas a `res`) al redirect
-        const redirectRes = NextResponse.redirect(redirectUrl)
-        res.cookies.getAll().forEach(c => redirectRes.cookies.set(c))
-        return redirectRes
-      }
-    } catch {
-      // Si falla la consulta de estado, denegar acceso por seguridad
+    if (cuentaRes.error) {
+      // Si falla la consulta de estado, denegar acceso por seguridad (sin
+      // cerrar la sesión: un corte momentáneo de Supabase no debe desloguear)
       const redirectUrl = req.nextUrl.clone()
       redirectUrl.pathname = '/login'
       return NextResponse.redirect(redirectUrl)
     }
 
-    // ============================================
-    // 5. OBTENER ROL Y PERMISOS DEL JWT (EDGE RUNTIME COMPATIBLE)
-    // ============================================
-
-    let rol = '' // se llenará desde JWT o BD — sin default hardcodeado
-    let nombres = ''
-    let email = user.email || ''
-    let permisosCache: string[] = [] // ✅ Cache de permisos desde JWT
-
-    // Obtener sesión para acceder al JWT
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
-
-    // ============================================
-    // 4c. GESTIÓN DE SESIONES ACTIVAS
-    // ============================================
-    // Solo si hay un refresh_token (sesión persistida), registramos/verificamos
-    // la sesión en sesiones_activas. Se hace con service_role para bypasear RLS.
-
-    if (session?.refresh_token) {
-      try {
-        const tokenHash = await hashToken(session.refresh_token)
-        const adminSesiones = createAdminClient()
-
-        // Verificar si esta sesión fue revocada remotamente
-        const { data: sesionData } = await adminSesiones
-          .from('sesiones_activas')
-          .select('id, revocada')
-          .eq('session_token', tokenHash)
-          .maybeSingle()
-
-        if (sesionData?.revocada) {
-          debugLog('🚫 Sesión revocada remotamente', { pathname })
-          await supabase.auth.signOut()
-          const redirectUrl = req.nextUrl.clone()
-          redirectUrl.pathname = '/login'
-          redirectUrl.searchParams.set('revocada', '1')
-          // Propagar las cookies del signOut (vinculadas a `res`) al redirect
-          const redirectRes = NextResponse.redirect(redirectUrl)
-          res.cookies.getAll().forEach(c => redirectRes.cookies.set(c))
-          return redirectRes
-        }
-
-        // Registrar o actualizar sesión activa (fire-and-forget, no bloquea)
-        const ua = req.headers.get('user-agent') || ''
-        const ip =
-          req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
-          req.headers.get('x-real-ip') ||
-          'desconocida'
-        const { dispositivo, navegador } = parsearUserAgent(ua)
-
-        if (!sesionData) {
-          adminSesiones
-            .from('sesiones_activas')
-            .upsert(
-              {
-                user_id: user.id,
-                session_token: tokenHash,
-                dispositivo,
-                navegador,
-                ip,
-              },
-              { onConflict: 'session_token' }
-            )
-            .then(() => {
-              adminSesiones.rpc('limpiar_sesiones_antiguas', {
-                p_user_id: user.id,
-              })
-            })
-        } else {
-          adminSesiones
-            .from('sesiones_activas')
-            .update({ last_seen_at: new Date().toISOString() })
-            .eq('session_token', tokenHash)
-            // fire-and-forget
-            .then(void 0)
-        }
-      } catch (err) {
-        errorLog('middleware-sesiones-activas', err as Error, { pathname })
-      }
+    if (!cuentaRes.data || cuentaRes.data.estado !== 'Activo') {
+      debugLog('🚫 Cuenta bloqueada o inactiva', {
+        estado: cuentaRes.data?.estado,
+        pathname,
+      })
+      return cerrarSesionYRedirigir(req, res, supabase)
     }
 
-    // Decodificar JWT (compatible con Edge Runtime - sin Buffer)
-    if (session?.access_token) {
-      try {
-        const parts = session.access_token.split('.')
-        if (parts.length === 3) {
-          // Decodificar base64 sin Buffer (Edge Runtime compatible)
-          let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
-          // Agregar padding si es necesario
-          while (base64.length % 4) {
-            base64 += '='
-          }
-
-          const jsonPayload = decodeURIComponent(
-            atob(base64)
-              .split('')
-              .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-              .join('')
-          )
-          const payload = JSON.parse(jsonPayload)
-
-          // Leer claims custom del payload
-          rol = payload.user_rol || '' // vacío si el hook no inyectó el claim
-          nombres = payload.user_nombres || ''
-          email = payload.user_email || user.email || ''
-
-          // ✅ OPTIMIZACIÓN: Leer permisos del JWT claim user_permisos
-          // Escrito por custom_access_token_hook en cada login
-          // Fallback a [] si el token es previo al hook (se re-lee desde BD abajo)
-          permisosCache = (payload.user_permisos as string[]) || []
+    if (sesionRes?.error) {
+      errorLog(
+        'middleware-sesiones-activas',
+        new Error(sesionRes.error.message),
+        {
+          pathname,
         }
-      } catch (error) {
-        // Fallback a valores por defecto si falla decodificación
-        errorLog('middleware-jwt-decode', error as Error, { pathname })
+      )
+    }
+    const sesionData = sesionRes?.data ?? null
+
+    if (sesionData?.revocada) {
+      debugLog('🚫 Sesión revocada remotamente', { pathname })
+      return cerrarSesionYRedirigir(req, res, supabase, { revocada: '1' })
+    }
+
+    // ============================================
+    // 6. ESCRITURAS SECUNDARIAS (no bloquean la respuesta)
+    // ============================================
+    // Las precargas de enlaces (prefetch) no son visitas reales: no se anotan.
+
+    if (!esPrefetch(req)) {
+      if (adminSesiones && tokenHash) {
+        event.waitUntil(
+          registrarSesion(adminSesiones, req, user.id, tokenHash, !!sesionData)
+        )
       }
+      // Throttle en la BD: máx. 1 escritura por hora
+      event.waitUntil(
+        Promise.resolve(
+          supabase.rpc('actualizar_ultimo_acceso_si_necesario', {
+            p_user_id: user.id,
+          })
+        ).catch(() => undefined)
+      )
     }
 
     // ============================================
     // 7. VERIFICAR PERMISOS PARA LA RUTA (JWT CACHE o FALLBACK BD)
     // ============================================
 
+    if (permisosRes) permisosCache = permisosRes
+
     // Si el JWT no tiene el rol (hook no configurado en este entorno o JWT stale),
     // obtener el rol real desde la tabla usuarios como fuente de verdad.
-    // Esto garantiza que el sistema funcione aunque el hook no esté activo en dev.
     if (!rol) {
-      try {
-        const { data: userData } = await supabase
-          .from('usuarios')
-          .select('rol')
-          .eq('id', user.id)
-          .single()
+      const { data: userData } = await supabase
+        .from('usuarios')
+        .select('rol')
+        .eq('id', user.id)
+        .single()
 
-        rol = userData?.rol || 'Vendedor'
-        debugLog('⚠️ JWT sin user_rol, rol obtenido desde BD', {
-          rol,
-          pathname,
-        })
-      } catch {
-        rol = 'Vendedor'
-        debugLog('⚠️ Error obteniendo rol desde BD, fallback a Vendedor', {
-          pathname,
-        })
-      }
-    }
+      rol = userData?.rol || 'Vendedor'
+      debugLog('⚠️ JWT sin user_rol, rol obtenido desde BD', { rol, pathname })
 
-    // Si el usuario no es Admin, siempre consultar BD para permisos como fuente de verdad.
-    // El JWT es solo una optimización; cambios de permisos deben ser inmediatos.
-    if (rol !== 'Administrador') {
-      try {
-        const { data: permisosBD } = await supabase
-          .from('permisos_rol')
-          .select('modulo, accion')
-          .eq('rol', rol)
-          .eq('permitido', true)
-
-        if (permisosBD && permisosBD.length > 0) {
-          permisosCache = permisosBD.map(p => `${p.modulo}.${p.accion}`)
-          debugLog('✅ Permisos validados desde BD (fuente de verdad)', {
-            rol,
-            count: permisosCache.length,
-            pathname,
-          })
-        } else {
-          permisosCache = []
-          debugLog('⚠️ Usuario sin permisos registrados en BD', {
-            rol,
-            pathname,
-          })
-        }
-      } catch (error) {
-        // Si falla la consulta BD, usar lo que haya en el JWT como último recurso
-        debugLog('⚠️ Error consultando BD, usando JWT como fallback', {
-          rol,
-          error: (error as Error).message,
-        })
+      if (rol !== 'Administrador') {
+        permisosCache =
+          (await consultarPermisos(supabase, rol)) ?? permisosCache
       }
     }
 
@@ -537,20 +563,6 @@ export async function middleware(req: NextRequest) {
     if (!hasAccess) {
       // Sin permiso → rewrite a página 403 (URL del navegador no cambia)
       return NextResponse.rewrite(new URL('/acceso-denegado', req.url))
-    }
-
-    // ============================================
-    // 8. ACTUALIZAR ultimo_acceso (throttle: máx. 1 vez por hora)
-    // ============================================
-    // Solo actualiza si han pasado más de 60 minutos desde el último acceso.
-    // Evita escrituras en cada request sin perder precisión útil.
-
-    try {
-      await supabase.rpc('actualizar_ultimo_acceso_si_necesario', {
-        p_user_id: user.id,
-      })
-    } catch {
-      // No bloquear la request si falla — es un dato secundario
     }
 
     // ============================================

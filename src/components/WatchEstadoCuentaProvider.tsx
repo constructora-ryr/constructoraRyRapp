@@ -6,7 +6,9 @@ import { supabase } from '@/lib/supabase/client'
 
 import { CuentaDesactivadaOverlay } from './auth/CuentaDesactivadaOverlay'
 
-const POLL_INTERVAL_MS = 5_000 // verificar cada 5 segundos como fallback
+// Respaldo del canal Realtime; además el middleware revisa el estado en cada
+// navegación. Con la pestaña oculta no se consulta: se verifica al volver.
+const POLL_INTERVAL_MS = 60_000
 
 /**
  * Detecta en tiempo real cuando un admin desactiva la cuenta del usuario actual.
@@ -15,7 +17,8 @@ const POLL_INTERVAL_MS = 5_000 // verificar cada 5 segundos como fallback
  * 1. Supabase Realtime (postgres_changes) — instantáneo si la tabla está
  *    en supabase_realtime publication:
  *    `ALTER PUBLICATION supabase_realtime ADD TABLE public.usuarios;`
- * 2. Polling cada 20s + al recuperar foco de ventana — garantía de respaldo.
+ * 2. Polling cada 60s (solo con la pestaña visible) + al recuperar foco de
+ *    ventana — garantía de respaldo.
  */
 export function WatchEstadoCuentaProvider({
   children,
@@ -40,6 +43,7 @@ export function WatchEstadoCuentaProvider({
 
     const verificarEstado = async () => {
       if (!userId || desactivadoRef.current) return
+      if (document.visibilityState === 'hidden') return
       const { data, error } = await supabase
         .from('usuarios')
         .select('estado')
@@ -86,7 +90,7 @@ export function WatchEstadoCuentaProvider({
         )
         .subscribe()
 
-      // ── 2. Polling cada 5s (fallback final) ──
+      // ── 2. Polling (fallback final) ──
       pollTimer = setInterval(verificarEstado, POLL_INTERVAL_MS)
 
       // ── 3. Al recuperar foco de pestaña ──
