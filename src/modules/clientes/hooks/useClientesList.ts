@@ -28,12 +28,7 @@ export function useClientesList() {
   // ESTADO LOCAL (UI)
   // =====================================================
 
-  const [modalCrear, setModalCrear] = useState(false)
-  const [modalEditar, setModalEditar] = useState(false)
   const [modalEliminar, setModalEliminar] = useState(false)
-  const [clienteEditar, setClienteEditar] = useState<ClienteResumen | null>(
-    null
-  ) // ✅ Objeto completo
   const [clienteEliminar, setClienteEliminar] = useState<string | null>(null)
 
   const [filtros, setFiltros] = useState<FiltrosClientes>({
@@ -188,24 +183,6 @@ export function useClientesList() {
   // ACCIONES DE MODALES
   // =====================================================
 
-  const abrirModalCrear = useCallback(() => {
-    setModalCrear(true)
-    setModalEditar(false)
-    setClienteEditar(null)
-  }, [])
-
-  const abrirModalEditar = useCallback((cliente: ClienteResumen) => {
-    setClienteEditar(cliente)
-    setModalEditar(true)
-    setModalCrear(false)
-  }, [])
-
-  const cerrarModal = useCallback(() => {
-    setModalCrear(false)
-    setModalEditar(false)
-    setClienteEditar(null)
-  }, [])
-
   const abrirModalEliminar = useCallback((id: string) => {
     setClienteEliminar(id)
     setModalEliminar(true)
@@ -266,14 +243,8 @@ export function useClientesList() {
     estadisticas: estadisticasComputadas,
 
     // Modales
-    modalCrear,
-    modalEditar,
     modalEliminar,
-    clienteEditar,
     clienteEliminar,
-    abrirModalCrear,
-    abrirModalEditar,
-    cerrarModal,
     abrirModalEliminar,
     confirmarEliminar,
     cancelarEliminar,

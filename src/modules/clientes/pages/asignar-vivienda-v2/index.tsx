@@ -98,19 +98,20 @@ export function AsignarViviendaV2Page({
       breadcrumbs={[
         { label: 'Clientes', href: '/clientes' },
         { label: clienteNombre, href: `/clientes/${clienteSlug ?? clienteId}` },
-        { label: 'Asignar Vivienda' },
+        { label: 'Asignar vivienda' },
       ]}
       isSubmitting={creando}
-      submitLoadingLabel='Asignando Vivienda...'
+      submitLoadingLabel='Asignando vivienda…'
     >
       {/* Hero Header */}
       <AccordionWizardHero
         icon={KeyRound}
-        title='Asignar Vivienda'
-        subtitle={`Configura la vivienda y financiamiento para ${clienteNombre}. Completa cada sección en orden.`}
+        title='Asignar vivienda'
+        subtitle={`Elige la casa para ${clienteNombre}, define cómo la va a pagar y confirma la venta.`}
         moduleName='clientes'
         estimatedTime='~5 minutos'
         totalSteps={PASOS_ASIGNACION.length}
+        currentStep={pasoActual}
       />
 
       {/* ── Paso 1: Vivienda & Valores ────────────── */}
@@ -120,7 +121,7 @@ export function AsignarViviendaV2Page({
         title={pasos[0].title}
         description={pasos[0].description}
         icon={pasos[0].icon}
-        fieldCount={{ required: 2, optional: 3 }}
+        fieldCount={{ required: 3, optional: 2 }}
         currentStep={pasoActual}
         totalSteps={PASOS_ASIGNACION.length}
         moduleName='clientes'
@@ -128,7 +129,6 @@ export function AsignarViviendaV2Page({
         onEdit={() => irAPaso(1)}
       >
         <SeccionViviendaValores
-          clienteNombre={clienteNombre}
           register={register}
           errors={errors}
           setValue={setValue}
@@ -239,7 +239,7 @@ export function AsignarViviendaV2Page({
           isSubmitting={creando}
           isValidating={isValidating}
           moduleName='clientes'
-          submitLabel='Asignar Vivienda'
+          submitLabel='Confirmar y asignar'
           onBack={irAtras}
           onNext={irSiguiente}
           onSubmit={handleSubmitFinal}
@@ -251,7 +251,7 @@ export function AsignarViviendaV2Page({
         isVisible={showSuccess}
         moduleName='clientes'
         title='¡Vivienda asignada!'
-        subtitle='Redirigiendo al perfil del cliente...'
+        subtitle='Abriendo el detalle del cliente…'
       />
     </AccordionWizardLayout>
   )

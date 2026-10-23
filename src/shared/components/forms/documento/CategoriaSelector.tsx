@@ -72,10 +72,15 @@ export function CategoriaSelector({
   if (bloqueadaPor) {
     const hex = colorCategoria(seleccionada?.color)
     return (
-      <div className='flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-800/60'>
+      // Fija: borde punteado, apagada y sin cursor de clic, con candado visible
+      <div
+        aria-disabled='true'
+        title='Esta categoría no se puede cambiar'
+        className='flex cursor-not-allowed select-none items-center gap-3 rounded-xl border border-dashed border-slate-300 bg-slate-100/70 px-3 py-2.5 dark:border-slate-600 dark:bg-slate-800/40'
+      >
         {seleccionada ? (
           <span
-            className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg'
+            className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg opacity-70 grayscale-[30%]'
             style={{ backgroundColor: `${hex}1f` }}
           >
             <CategoriaIcon
@@ -86,14 +91,17 @@ export function CategoriaSelector({
           </span>
         ) : null}
         <div className='min-w-0 flex-1'>
-          <p className='truncate text-sm font-semibold text-slate-900 dark:text-white'>
+          <p className='truncate text-sm font-semibold text-slate-600 dark:text-slate-300'>
             {seleccionada?.nombre ?? 'Sin categoría'}
           </p>
-          <p className='flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400'>
-            <Lock className='h-3 w-3' />
+          <p className='text-xs text-slate-500 dark:text-slate-400'>
             {bloqueadaPor}
           </p>
         </div>
+        <span className='inline-flex flex-shrink-0 items-center gap-1 rounded-full bg-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:bg-slate-700 dark:text-slate-300'>
+          <Lock className='h-3 w-3' />
+          Fija
+        </span>
       </div>
     )
   }

@@ -1,14 +1,15 @@
 /**
- * PasoContacto — Paso 2: Contacto y ubicación del cliente
- * Campos: telefono, email, direccion, departamento, ciudad
- * Cascading: departamento → ciudad (datos locales)
+ * PasoContacto — Paso 2: cómo contactar al cliente y dónde vive.
+ * La regla "al menos teléfono o correo" se ve arriba y cambia a verde al
+ * cumplirse. Departamento → ciudad en cascada (datos locales).
+ * Se usa en crear y en editar.
  */
 
 'use client'
 
 import { useEffect, useMemo } from 'react'
 
-import { motion } from 'framer-motion'
+import { CheckCircle2, Info, Mail, MapPin, Phone } from 'lucide-react'
 import type {
   FieldErrors,
   Path,
@@ -21,137 +22,164 @@ import type {
 import {
   AccordionWizardField,
   AccordionWizardSelect,
-  fieldStaggerAnim,
 } from '@/shared/components/accordion-wizard'
 import {
   getCiudadesPorDepartamento,
   getDepartamentos,
 } from '@/shared/data/colombia-locations'
+import { cn } from '@/shared/utils/helpers'
 
 import type { ClienteAccordionFormValues } from './cliente-accordion-form.types'
 
-interface PasoContactoProps<TFormValues extends ClienteAccordionFormValues> {
-  register: UseFormRegister<TFormValues>
-  errors: FieldErrors<TFormValues>
-  watch: UseFormWatch<TFormValues>
-  setValue: UseFormSetValue<TFormValues>
+interface PasoContactoProps<T extends ClienteAccordionFormValues> {
+  register: UseFormRegister<T>
+  errors: FieldErrors<T>
+  watch: UseFormWatch<T>
+  setValue: UseFormSetValue<T>
 }
 
-export function PasoContacto<TFormValues extends ClienteAccordionFormValues>({
+function Bloque({
+  icon: Icon,
+  titulo,
+  children,
+}: {
+  icon: typeof Phone
+  titulo: string
+  children: React.ReactNode
+}) {
+  return (
+    <section className='space-y-3'>
+      <h4 className='flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400'>
+        <Icon className='h-3.5 w-3.5' />
+        {titulo}
+      </h4>
+      {children}
+    </section>
+  )
+}
+
+export function PasoContacto<T extends ClienteAccordionFormValues>({
   register,
   errors,
   watch,
   setValue,
-}: PasoContactoProps<TFormValues>) {
-  const telefonoField = 'telefono' as Path<TFormValues>
-  const emailField = 'email' as Path<TFormValues>
-  const telefonoAlternativoField = 'telefono_alternativo' as Path<TFormValues>
-  const direccionField = 'direccion' as Path<TFormValues>
-  const departamentoField = 'departamento' as Path<TFormValues>
-  const ciudadField = 'ciudad' as Path<TFormValues>
+}: PasoContactoProps<T>) {
+  const campo = (c: keyof ClienteAccordionFormValues) => c as Path<T>
+  const telefono = ((watch(campo('telefono')) as string) || '').trim()
+  const email = ((watch(campo('email')) as string) || '').trim()
+  const departamento = (watch(campo('departamento')) as string) || ''
+  const ciudad = (watch(campo('ciudad')) as string) || ''
+  const tieneContacto = !!telefono || !!email
+
   const departamentos = useMemo(() => getDepartamentos(), [])
-  const departamentoSeleccionado =
-    (watch(departamentoField) as string | undefined) ?? ''
+  const ciudades = useMemo(
+    () => (departamento ? getCiudadesPorDepartamento(departamento) : []),
+    [departamento]
+  )
 
-  const ciudades = useMemo(() => {
-    if (!departamentoSeleccionado) return []
-    return getCiudadesPorDepartamento(departamentoSeleccionado)
-  }, [departamentoSeleccionado])
-
+  // Si la ciudad no pertenece al nuevo departamento, se limpia
   useEffect(() => {
-    if (departamentoSeleccionado) {
-      const ciudadActual = (watch(ciudadField) as string | undefined) ?? ''
-      if (
-        ciudadActual &&
-        !getCiudadesPorDepartamento(departamentoSeleccionado).includes(
-          ciudadActual
-        )
-      ) {
-        setValue(ciudadField, '' as PathValue<TFormValues, typeof ciudadField>)
-      }
-    }
-  }, [ciudadField, departamentoSeleccionado, setValue, watch])
+    if (ciudad && departamento && !ciudades.includes(ciudad))
+      setValue(campo('ciudad'), '' as PathValue<T, Path<T>>)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [departamento])
 
   return (
-    <div className='space-y-4'>
-      <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-        <motion.div {...fieldStaggerAnim(0)}>
+    <div className='space-y-6'>
+      <Bloque icon={Phone} titulo='Medios de contacto'>
+        <p
+          className={cn(
+            'flex items-start gap-2 rounded-xl px-3 py-2 text-xs transition-colors',
+            tieneContacto
+              ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300'
+              : 'bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300'
+          )}
+        >
+          {tieneContacto ? (
+            <CheckCircle2 className='mt-0.5 h-3.5 w-3.5 flex-shrink-0' />
+          ) : (
+            <Info className='mt-0.5 h-3.5 w-3.5 flex-shrink-0' />
+          )}
+          {tieneContacto
+            ? 'Listo: el cliente tiene al menos un medio de contacto.'
+            : 'Obligatorio: escribe al menos un teléfono o un correo (pueden ser los dos).'}
+        </p>
+        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
           <AccordionWizardField
-            {...register(telefonoField)}
-            label='Teléfono'
+            {...register(campo('telefono'))}
+            label='Teléfono celular'
             type='tel'
+            inputMode='tel'
+            autoComplete='off'
             moduleName='clientes'
             error={errors.telefono?.message as string}
           />
-        </motion.div>
-        <motion.div {...fieldStaggerAnim(1)}>
           <AccordionWizardField
-            {...register(emailField)}
-            label='Correo Electrónico'
+            {...register(campo('email'))}
+            label='Correo electrónico'
             type='email'
+            inputMode='email'
+            autoComplete='off'
             moduleName='clientes'
             error={errors.email?.message as string}
           />
-        </motion.div>
-      </div>
+        </div>
+        <AccordionWizardField
+          {...register(campo('telefono_alternativo'))}
+          label='Otro teléfono (opcional)'
+          type='tel'
+          inputMode='tel'
+          autoComplete='off'
+          moduleName='clientes'
+          error={errors.telefono_alternativo?.message as string}
+        />
+      </Bloque>
 
-      <motion.div {...fieldStaggerAnim(2)}>
-        <p className='mb-3 text-xs text-gray-500 dark:text-gray-400'>
-          Al menos teléfono o correo es requerido
-        </p>
-      </motion.div>
-
-      <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-        <motion.div {...fieldStaggerAnim(2)}>
-          <AccordionWizardField
-            {...register(telefonoAlternativoField)}
-            label='Teléfono Alternativo'
-            type='tel'
-            moduleName='clientes'
-          />
-        </motion.div>
-        <motion.div {...fieldStaggerAnim(3)}>
-          <AccordionWizardField
-            {...register(direccionField)}
-            label='Dirección'
-            moduleName='clientes'
-          />
-        </motion.div>
-      </div>
-
-      <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-        <motion.div {...fieldStaggerAnim(4)}>
+      <Bloque icon={MapPin} titulo='Dónde vive'>
+        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
           <AccordionWizardSelect
-            {...register(departamentoField)}
+            {...register(campo('departamento'))}
             label='Departamento'
             required
             moduleName='clientes'
             error={errors.departamento?.message as string}
           >
-            {departamentos.map(departamento => (
-              <option key={departamento} value={departamento}>
-                {departamento}
+            {departamentos.map(d => (
+              <option key={d} value={d}>
+                {d}
               </option>
             ))}
           </AccordionWizardSelect>
-        </motion.div>
-        <motion.div {...fieldStaggerAnim(5)}>
           <AccordionWizardSelect
-            {...register(ciudadField)}
-            label='Ciudad / Municipio'
+            {...register(campo('ciudad'))}
+            label={
+              departamento ? 'Ciudad / municipio' : 'Primero el departamento'
+            }
             required
+            disabled={!departamento}
             moduleName='clientes'
             error={errors.ciudad?.message as string}
-            disabled={!departamentoSeleccionado}
           >
-            {ciudades.map(ciudad => (
-              <option key={ciudad} value={ciudad}>
-                {ciudad}
+            {ciudades.map(c => (
+              <option key={c} value={c}>
+                {c}
               </option>
             ))}
           </AccordionWizardSelect>
-        </motion.div>
-      </div>
+        </div>
+        <AccordionWizardField
+          {...register(campo('direccion'))}
+          label='Dirección (opcional)'
+          autoComplete='off'
+          moduleName='clientes'
+          error={errors.direccion?.message as string}
+        />
+      </Bloque>
+
+      <p className='flex items-center gap-1.5 text-[11px] text-gray-400'>
+        <Mail className='h-3 w-3' />
+        Los correos no llevan tildes ni ñ (ej: londono@gmail.com).
+      </p>
     </div>
   )
 }

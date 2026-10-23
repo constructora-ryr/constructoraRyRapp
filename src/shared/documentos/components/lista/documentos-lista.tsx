@@ -431,7 +431,7 @@ export function DocumentosLista({
               <span className={encabezado}>Subido por</span>
             </div>
             <div className='hidden w-[100px] flex-shrink-0 lg:block'>
-              {renderSortBtn('fecha_creacion', 'Fecha')}
+              {renderSortBtn('fecha_documento', 'Emisión')}
             </div>
             <div className='hidden w-[76px] flex-shrink-0 justify-end lg:flex'>
               {renderSortBtn('tamano_bytes', 'Tamaño')}

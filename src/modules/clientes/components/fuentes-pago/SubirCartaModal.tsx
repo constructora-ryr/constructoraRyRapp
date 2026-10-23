@@ -1,32 +1,26 @@
 'use client'
 
 /**
- * ============================================
- * MODAL: Subir Carta de Aprobación
- * ============================================
- *
- * ✅ MODAL PRE-CONFIGURADO COMPACTO
- * Upload especializado para cartas de aprobación de fuentes de pago
- *
- * Features:
- * - Título EDITABLE con sugerencia inteligente
- * - Categoría "Cartas de Aprobación" bloqueada
- * - Metadata para vinculación automática
- * - Diseño COMPACTO sin scroll
- * - Colores del módulo clientes (cyan/azul)
- *
- * @version 2.0.0 - 2025-12-01
+ * Modal para subir el documento que pide una fuente de pago (carta de
+ * aprobación del crédito, carta de asignación de la caja, carta de Mi Casa
+ * Ya…). Mismo lenguaje que el aviso de pendientes: ícono con el color de la
+ * fuente, resumen de la fuente, título editable y el selector de archivo
+ * compartido. La categoría "Cartas de Aprobación" va fija y el documento
+ * queda vinculado al requisito por metadata.
  */
 
+import { useEffect } from 'react'
+
 import { AnimatePresence, motion } from 'framer-motion'
-import { AlertCircle, FileText, Upload, X } from 'lucide-react'
+import { Link2, Loader2, Lock, RotateCcw, Upload, X } from 'lucide-react'
 import { createPortal } from 'react-dom'
 
-import { useSubirCartaModal } from './useSubirCartaModal'
+import { estiloDeFuente } from '@/modules/clientes/components/documentos-pendientes/estilo-fuente'
+import { ArchivoSelector } from '@/shared/components/forms/documento/ArchivoSelector'
+import type { FormatosArchivo } from '@/shared/documentos/config/tipos-archivo'
+import { cn } from '@/shared/utils/helpers'
 
-// ============================================
-// TYPES
-// ============================================
+import { useSubirCartaModal } from './useSubirCartaModal'
 
 export interface DatosFuente {
   id: string
@@ -53,9 +47,27 @@ interface SubirCartaModalProps {
   onSuccess?: () => void
 }
 
-// ============================================
-// COMPONENTE
-// ============================================
+/** Debe coincidir con la validación de useSubirCartaModal */
+const FORMATOS_CARTA: FormatosArchivo = {
+  accept: '.pdf,.jpg,.jpeg,.png',
+  etiquetas: ['PDF', 'JPG', 'PNG'],
+  tamanoMaximo: 10 * 1024 * 1024,
+}
+
+const formatMoney = (valor: number) => `$${valor.toLocaleString('es-CO')}`
+
+function Dato({ etiqueta, valor }: { etiqueta: string; valor: string }) {
+  return (
+    <div className='min-w-0 rounded-xl bg-white/80 px-3 py-2 ring-1 ring-slate-200/80 dark:bg-slate-900/50 dark:ring-slate-700/60'>
+      <p className='text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400'>
+        {etiqueta}
+      </p>
+      <p className='break-words text-sm font-semibold text-slate-900 dark:text-white'>
+        {valor}
+      </p>
+    </div>
+  )
+}
 
 export function SubirCartaModal({
   isOpen,
@@ -72,7 +84,6 @@ export function SubirCartaModal({
     titulo,
     setTitulo,
     tituloSugerido,
-    tituloHeader,
     fileInputRef,
     handleDragOver,
     handleDragLeave,
@@ -82,255 +93,213 @@ export function SubirCartaModal({
     limpiarArchivo,
   } = useSubirCartaModal({ fuente, clienteId, onClose, onSuccess })
 
-  const formatMoney = (valor: number) => `$${valor.toLocaleString('es-CO')}`
+  const cerrar = () => {
+    if (!isUploading) onClose()
+  }
+
+  // Escape cierra (salvo mientras sube)
+  useEffect(() => {
+    if (!isOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !isUploading) onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [isOpen, isUploading, onClose])
+
+  const { icon: IconoFuente, degradado } = estiloDeFuente(fuente.tipo)
+  const nombreDocumento = fuente.tipo_documento_sistema || 'Carta de Aprobación'
+  const puedeSubir = !!archivo && !isUploading && !!titulo.trim()
 
   const modalContent = (
-    <AnimatePresence mode='wait'>
+    <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop con z-index más alto */}
           <motion.div
             key='backdrop-subir-carta'
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
-            className='fixed inset-0 z-[9998] bg-black/50 backdrop-blur-sm'
+            onClick={cerrar}
+            className='fixed inset-0 z-[9998] bg-slate-950/60 backdrop-blur-sm'
           />
 
-          {/* Modal - COMPACTO con z-index superior al backdrop */}
-          <div
-            key='container-subir-carta'
-            className='pointer-events-none fixed inset-0 z-[9999] flex items-center justify-center p-4'
-          >
+          <div className='pointer-events-none fixed inset-0 z-[9999] flex items-end justify-center sm:items-center sm:p-4'>
             <motion.div
               key='modal-subir-carta'
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className='pointer-events-auto relative w-full max-w-2xl overflow-hidden rounded-xl bg-white shadow-2xl dark:bg-gray-800'
+              role='dialog'
+              aria-modal='true'
+              aria-labelledby='subir-carta-titulo'
+              initial={{ opacity: 0, y: 24, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 24, scale: 0.98 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 30 }}
+              className='pointer-events-auto flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700/60 sm:rounded-3xl'
             >
-              {/* Header - COMPACTO con colores del módulo clientes (cyan/azul) */}
-              <div className='bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 p-4'>
-                <div className='flex items-center justify-between'>
-                  <div className='flex items-center gap-2.5'>
-                    <div className='flex h-10 w-10 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm'>
-                      <FileText className='h-5 w-5 text-white' />
-                    </div>
-                    <div>
-                      <h2 className='text-lg font-bold text-white'>
-                        {tituloHeader}
-                      </h2>
-                      <p className='text-xs text-cyan-100'>
-                        {fuente.tipo}
-                        {fuente.entidad && ` • ${fuente.entidad}`}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={onClose}
-                    disabled={isUploading}
-                    className='flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 transition-colors hover:bg-white/30 disabled:opacity-50'
+              {/* Encabezado */}
+              <div className='relative flex items-start gap-3 border-b border-slate-100 px-5 pb-4 pt-5 dark:border-slate-800'>
+                <span
+                  className={cn(
+                    'flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-lg',
+                    degradado
+                  )}
+                >
+                  <IconoFuente className='h-6 w-6' />
+                </span>
+                <div className='min-w-0 flex-1 pr-8'>
+                  <p className='text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400'>
+                    Subir documento requerido
+                  </p>
+                  <h2
+                    id='subir-carta-titulo'
+                    className='text-base font-bold leading-snug text-slate-900 dark:text-white'
                   >
-                    <X className='h-4 w-4 text-white' />
-                  </button>
+                    {nombreDocumento}
+                  </h2>
+                  <p className='mt-0.5 text-xs text-slate-500 dark:text-slate-400'>
+                    {fuente.tipo}
+                    {fuente.entidad ? (
+                      <span className='font-medium text-slate-700 dark:text-slate-300'>
+                        {' '}
+                        · {fuente.entidad}
+                      </span>
+                    ) : null}
+                  </p>
                 </div>
+                <button
+                  type='button'
+                  onClick={cerrar}
+                  disabled={isUploading}
+                  aria-label='Cerrar'
+                  className='absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50 dark:hover:bg-slate-800 dark:hover:text-slate-200'
+                >
+                  <X className='h-5 w-5' />
+                </button>
+                <span
+                  aria-hidden
+                  className={cn(
+                    'absolute inset-x-0 top-0 h-1 bg-gradient-to-r',
+                    degradado
+                  )}
+                />
               </div>
 
-              {/* Content - COMPACTO sin scroll */}
-              <div className='space-y-3 p-4'>
-                {/* Metadata compacta */}
-                <div className='grid grid-cols-2 gap-2 rounded-lg border border-cyan-200 bg-cyan-50 p-3 dark:border-cyan-800 dark:bg-cyan-950/20'>
-                  <div>
-                    <p className='text-xs font-medium text-cyan-600 dark:text-cyan-400'>
-                      Tipo
-                    </p>
-                    <p className='text-sm font-semibold text-cyan-900 dark:text-cyan-100'>
-                      {fuente.tipo}
-                    </p>
-                  </div>
-                  {fuente.entidad && (
-                    <div>
-                      <p className='text-xs font-medium text-cyan-600 dark:text-cyan-400'>
-                        Entidad
-                      </p>
-                      <p className='text-sm font-semibold text-cyan-900 dark:text-cyan-100'>
-                        {fuente.entidad}
-                      </p>
-                    </div>
-                  )}
-                  <div>
-                    <p className='text-xs font-medium text-cyan-600 dark:text-cyan-400'>
-                      Monto
-                    </p>
-                    <p className='text-sm font-semibold text-cyan-900 dark:text-cyan-100'>
-                      {formatMoney(fuente.monto_aprobado)}
-                    </p>
-                  </div>
-                  {fuente.vivienda && (
-                    <div>
-                      <p className='text-xs font-medium text-cyan-600 dark:text-cyan-400'>
-                        Vivienda
-                      </p>
-                      <p className='text-sm font-semibold text-cyan-900 dark:text-cyan-100'>
-                        {fuente.vivienda.manzana}
-                        {fuente.vivienda.numero}
-                      </p>
-                    </div>
-                  )}
+              {/* Cuerpo */}
+              <div className='flex-1 space-y-4 overflow-y-auto px-5 py-4'>
+                {/* Resumen de la fuente */}
+                <div className='grid grid-cols-2 gap-2'>
+                  {fuente.monto_aprobado > 0 ? (
+                    <Dato
+                      etiqueta='Monto aprobado'
+                      valor={formatMoney(fuente.monto_aprobado)}
+                    />
+                  ) : null}
+                  {fuente.vivienda ? (
+                    <Dato
+                      etiqueta='Vivienda'
+                      valor={`${fuente.vivienda.manzana}${fuente.vivienda.numero}`}
+                    />
+                  ) : null}
+                  {fuente.entidad ? (
+                    <Dato etiqueta='Entidad' valor={fuente.entidad} />
+                  ) : null}
+                  <Dato etiqueta='Fuente' valor={fuente.tipo} />
                 </div>
 
-                {/* Categoría (solo lectura) */}
-                <div>
-                  <label className='mb-1 block text-xs font-semibold text-gray-700 dark:text-gray-300'>
-                    Categoría
-                  </label>
-                  <input
-                    type='text'
-                    value='Cartas de Aprobación'
-                    disabled
-                    className='w-full cursor-not-allowed rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400'
-                  />
+                {/* Vinculación automática */}
+                <div className='flex items-start gap-3 rounded-2xl border border-cyan-200 bg-gradient-to-r from-cyan-50 to-blue-50/60 p-3 dark:border-cyan-500/30 dark:from-cyan-500/10 dark:to-blue-500/5'>
+                  <span className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-500/30'>
+                    <Link2 className='h-4 w-4' />
+                  </span>
+                  <p className='text-xs leading-relaxed text-cyan-900 dark:text-cyan-100'>
+                    <strong>Se vinculará automáticamente.</strong> Al subirlo
+                    queda cumplido el requisito de esta fuente y desaparece de
+                    los pendientes.
+                  </p>
                 </div>
 
-                {/* Título (EDITABLE con sugerencia inteligente) */}
+                {/* Título */}
                 <div>
-                  <label className='mb-1 block text-xs font-semibold text-gray-700 dark:text-gray-300'>
-                    Título del documento
-                    <span className='ml-1 text-xs font-normal text-gray-500'>
-                      (editable)
-                    </span>
-                  </label>
+                  <div className='mb-1.5 flex items-center justify-between gap-2'>
+                    <label
+                      htmlFor='subir-carta-input-titulo'
+                      className='text-sm font-semibold text-slate-700 dark:text-slate-300'
+                    >
+                      Título del documento
+                    </label>
+                    {titulo !== tituloSugerido ? (
+                      <button
+                        type='button'
+                        onClick={() => setTitulo(tituloSugerido)}
+                        className='inline-flex items-center gap-1 text-xs font-semibold text-cyan-700 hover:underline dark:text-cyan-300'
+                      >
+                        <RotateCcw className='h-3 w-3' />
+                        Restaurar sugerido
+                      </button>
+                    ) : null}
+                  </div>
                   <input
+                    id='subir-carta-input-titulo'
                     type='text'
                     value={titulo}
                     onChange={e => setTitulo(e.target.value)}
                     placeholder={tituloSugerido}
                     disabled={isUploading}
-                    className='w-full rounded-lg border-2 border-cyan-200 bg-white px-3 py-2 text-sm transition-all focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-50 dark:border-cyan-800 dark:bg-gray-900'
+                    className='w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 transition-all focus:border-cyan-400 focus:outline-none focus:ring-4 focus:ring-cyan-200 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:focus:ring-cyan-900'
                   />
-                  {titulo !== tituloSugerido && (
-                    <button
-                      onClick={() => setTitulo(tituloSugerido)}
-                      className='mt-1 text-xs text-cyan-600 hover:underline dark:text-cyan-400'
-                    >
-                      ← Restaurar sugerencia
-                    </button>
-                  )}
+                  <p className='mt-1.5 inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400'>
+                    <Lock className='h-3 w-3' />
+                    Se guarda en la categoría{' '}
+                    <strong className='font-semibold text-slate-700 dark:text-slate-300'>
+                      Cartas de Aprobación
+                    </strong>
+                  </p>
                 </div>
 
-                {/* Zona de upload compacta */}
-                <div>
-                  <label className='mb-1 block text-xs font-semibold text-gray-700 dark:text-gray-300'>
-                    Archivo (PDF, JPG, PNG • Max 10MB)
-                  </label>
-                  <div
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                    onClick={() => fileInputRef.current?.click()}
-                    className={`relative cursor-pointer rounded-lg border-2 border-dashed transition-all ${
-                      isDragging
-                        ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-950/30'
-                        : 'border-gray-300 hover:border-cyan-400 dark:border-gray-700 dark:hover:border-cyan-600'
-                    } ${archivo ? 'border-green-400 bg-green-50 dark:bg-green-950/20' : ''}`}
-                  >
-                    <input
-                      ref={fileInputRef}
-                      type='file'
-                      accept='.pdf,.jpg,.jpeg,.png'
-                      onChange={handleFileChange}
-                      disabled={isUploading}
-                      className='hidden'
-                    />
-                    <div className='p-4 text-center'>
-                      {archivo ? (
-                        <div className='space-y-2'>
-                          <FileText className='mx-auto h-8 w-8 text-green-600 dark:text-green-400' />
-                          <div>
-                            <p className='text-sm font-medium text-green-900 dark:text-green-100'>
-                              {archivo.name}
-                            </p>
-                            <p className='text-xs text-green-600 dark:text-green-400'>
-                              {(archivo.size / 1024 / 1024).toFixed(2)} MB
-                            </p>
-                          </div>
-                          <div className='flex items-center justify-center gap-2'>
-                            <button
-                              onClick={e => {
-                                e.stopPropagation()
-                                window.open(
-                                  URL.createObjectURL(archivo),
-                                  '_blank'
-                                )
-                              }}
-                              disabled={isUploading}
-                              className='rounded-lg bg-cyan-50 px-3 py-1.5 text-xs font-medium text-cyan-600 transition-colors hover:bg-cyan-100 disabled:opacity-50 dark:bg-cyan-950/30 dark:text-cyan-400 dark:hover:bg-cyan-950/50'
-                            >
-                              Ver
-                            </button>
-                            <button
-                              onClick={e => {
-                                e.stopPropagation()
-                                limpiarArchivo()
-                              }}
-                              disabled={isUploading}
-                              className='rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50 dark:bg-red-950/30 dark:text-red-400 dark:hover:bg-red-950/50'
-                            >
-                              Cambiar
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <>
-                          <Upload className='mx-auto mb-2 h-8 w-8 text-gray-400' />
-                          <p className='text-sm text-gray-600 dark:text-gray-400'>
-                            Arrastra un archivo o haz clic
-                          </p>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  {errorArchivo && (
-                    <p className='mt-1 flex items-center gap-1 text-xs text-red-600 dark:text-red-400'>
-                      <AlertCircle className='h-3 w-3' />
-                      {errorArchivo}
-                    </p>
-                  )}
-                </div>
+                {/* Archivo */}
+                <ArchivoSelector
+                  moduleName='clientes'
+                  archivoSeleccionado={archivo}
+                  errorArchivo={errorArchivo}
+                  isDragging={isDragging}
+                  fileInputRef={fileInputRef}
+                  formatos={FORMATOS_CARTA}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onFileInputChange={handleFileChange}
+                  onLimpiarArchivo={limpiarArchivo}
+                />
+              </div>
 
-                {/* Botones */}
-                <div className='flex gap-2 pt-2'>
-                  <button
-                    onClick={onClose}
-                    disabled={isUploading}
-                    className='flex-1 rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 disabled:opacity-50 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={handleSubmit}
-                    disabled={!archivo || isUploading || !titulo.trim()}
-                    className='flex-1 rounded-lg bg-gradient-to-r from-cyan-600 to-blue-600 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-cyan-500/30 transition-all hover:from-cyan-700 hover:to-blue-700 disabled:cursor-not-allowed disabled:opacity-50'
-                  >
-                    {isUploading ? (
-                      <span className='flex items-center justify-center gap-2'>
-                        <motion.div
-                          animate={{ rotate: 360 }}
-                          transition={{
-                            duration: 1,
-                            repeat: Infinity,
-                            ease: 'linear',
-                          }}
-                          className='h-4 w-4 rounded-full border-2 border-white/30 border-t-white'
-                        />
-                        Subiendo...
-                      </span>
-                    ) : (
-                      'Subir Documento'
-                    )}
-                  </button>
-                </div>
+              {/* Acciones */}
+              <div className='flex flex-col-reverse gap-2 border-t border-slate-100 bg-slate-50/80 px-5 py-3 dark:border-slate-800 dark:bg-slate-900/80 sm:flex-row sm:justify-end'>
+                <button
+                  type='button'
+                  onClick={cerrar}
+                  disabled={isUploading}
+                  className='rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-200/70 disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-800'
+                >
+                  Cancelar
+                </button>
+                <button
+                  type='button'
+                  onClick={handleSubmit}
+                  disabled={!puedeSubir}
+                  className='inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-cyan-500/25 transition-all hover:-translate-y-0.5 hover:shadow-cyan-500/40 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none'
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 className='h-4 w-4 animate-spin' />
+                      Subiendo…
+                    </>
+                  ) : (
+                    <>
+                      <Upload className='h-4 w-4' />
+                      Subir documento
+                    </>
+                  )}
+                </button>
               </div>
             </motion.div>
           </div>
@@ -339,7 +308,7 @@ export function SubirCartaModal({
     </AnimatePresence>
   )
 
-  // Renderizar en portal para evitar problemas de z-index y positioning
+  // Portal para evitar problemas de z-index y posicionamiento
   return typeof window !== 'undefined'
     ? createPortal(modalContent, document.body)
     : null

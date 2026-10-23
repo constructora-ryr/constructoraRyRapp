@@ -158,6 +158,15 @@ export function DocumentoCardHorizontal({
   const extension = getFileExtension(documento.nombre_archivo)
   const colorTipo = getFileTypeColor(extension, documento.tipo_mime)
 
+  // Fecha de emisión del documento; si no se registró, la de subida
+  const fechaMostrada = formatDateCompact(
+    documento.fecha_documento || documento.fecha_creacion
+  )
+  const fechaSubida = formatDateCompact(documento.fecha_creacion)
+  const tituloFecha = documento.fecha_documento
+    ? `Emitido el ${fechaMostrada} · subido el ${fechaSubida}`
+    : `Sin fecha de emisión · subido el ${fechaSubida}`
+
   // Portal positioning para el menú
   const triggerRef = useRef<HTMLButtonElement>(null)
   const [menuPos, setMenuPos] = useState<{
@@ -304,8 +313,9 @@ export function DocumentoCardHorizontal({
         {/* Celular: categoría, fecha y tamaño debajo del nombre */}
         <div className='mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500 dark:text-slate-400 md:hidden'>
           {categoria && <ChipCategoria categoria={categoria} />}
-          <span className='tabular-nums'>
-            {formatDateCompact(documento.fecha_creacion)}
+          <span className='tabular-nums' title={tituloFecha}>
+            {fechaMostrada}
+            {documento.fecha_documento ? null : ' (subido)'}
           </span>
           <span className='tabular-nums'>
             · {formatFileSize(documento.tamano_bytes)}
@@ -354,11 +364,21 @@ export function DocumentoCardHorizontal({
         )}
       </div>
 
-      {/* FECHA SUBIDA — w-[96px] hidden below lg */}
-      <div className='hidden w-[100px] flex-shrink-0 lg:block'>
-        <span className='text-xs tabular-nums text-slate-600 dark:text-slate-300'>
-          {formatDateCompact(documento.fecha_creacion)}
-        </span>
+      {/* FECHA DE EMISIÓN (si no la tiene, la de subida en gris) */}
+      <div
+        className='hidden w-[100px] flex-shrink-0 lg:block'
+        title={tituloFecha}
+      >
+        {documento.fecha_documento ? (
+          <span className='text-xs tabular-nums text-slate-600 dark:text-slate-300'>
+            {fechaMostrada}
+          </span>
+        ) : (
+          <span className='flex flex-col text-xs tabular-nums text-slate-400 dark:text-slate-500'>
+            {fechaMostrada}
+            <span className='text-[10px] uppercase tracking-wide'>subido</span>
+          </span>
+        )}
       </div>
       {/* TAMAÑO — w-[72px] hidden below lg */}
       <div className='hidden w-[76px] flex-shrink-0 text-right lg:block'>

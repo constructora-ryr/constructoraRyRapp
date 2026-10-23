@@ -134,7 +134,7 @@ export function EditarClienteAccordionView({
         title={pasos[0].title}
         description={pasos[0].description}
         icon={pasos[0].icon}
-        fieldCount={{ required: 3, optional: 2 }}
+        fieldCount={{ required: 4, optional: 2 }}
         currentStep={pasoActual}
         totalSteps={PASOS_CLIENTE_EDICION.length}
         moduleName='clientes'
@@ -147,6 +147,7 @@ export function EditarClienteAccordionView({
           errors={errors}
           watch={watch}
           setValue={setValue}
+          clienteId={clienteId}
         />
         <AccordionWizardNavigation
           currentStep={1}
@@ -167,7 +168,7 @@ export function EditarClienteAccordionView({
         title={pasos[1].title}
         description={pasos[1].description}
         icon={pasos[1].icon}
-        fieldCount={{ required: 2, optional: 4 }}
+        fieldCount={{ required: 3, optional: 2 }}
         currentStep={pasoActual}
         totalSteps={PASOS_CLIENTE_EDICION.length}
         moduleName='clientes'
@@ -208,7 +209,7 @@ export function EditarClienteAccordionView({
         onEdit={() => irAPaso(3)}
         changeCount={cambiosPorPaso.paso3}
       >
-        <PasoNotas register={register} />
+        <PasoNotas register={register} watch={watch} />
         <AccordionWizardNavigation
           currentStep={3}
           totalSteps={PASOS_CLIENTE_EDICION.length}
@@ -242,7 +243,7 @@ export function EditarClienteAccordionView({
         isVisible={showSuccess}
         moduleName='clientes'
         title='¡Cliente actualizado!'
-        subtitle='Redirigiendo al listado de clientes...'
+        subtitle='Volviendo al listado de clientes…'
       />
     </AccordionWizardLayout>
   )

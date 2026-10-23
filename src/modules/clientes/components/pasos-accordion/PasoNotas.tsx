@@ -1,44 +1,38 @@
 /**
- * PasoNotas — Paso 4: Notas adicionales del cliente
- * Campo: notas (textarea, opcional)
+ * PasoNotas — Notas internas sobre el cliente (opcional), con contador.
+ * Se usa en crear y en editar.
  */
 
 'use client'
 
-import { motion } from 'framer-motion'
-import type { Path, UseFormRegister } from 'react-hook-form'
+import type { Path, UseFormRegister, UseFormWatch } from 'react-hook-form'
 
-import {
-  AccordionWizardTextarea,
-  fieldStaggerAnim,
-} from '@/shared/components/accordion-wizard'
+import { AccordionWizardTextarea } from '@/shared/components/accordion-wizard'
 
 import type { ClienteAccordionFormValues } from './cliente-accordion-form.types'
 
-interface PasoNotasProps<TFormValues extends ClienteAccordionFormValues> {
-  register: UseFormRegister<TFormValues>
-}
-
-export function PasoNotas<TFormValues extends ClienteAccordionFormValues>({
+export function PasoNotas<T extends ClienteAccordionFormValues>({
   register,
-}: PasoNotasProps<TFormValues>) {
-  const notasField = 'notas' as Path<TFormValues>
+  watch,
+}: {
+  register: UseFormRegister<T>
+  watch: UseFormWatch<T>
+}) {
+  const campo = 'notas' as Path<T>
+  const notas = (watch(campo) as string) || ''
 
   return (
-    <div className='space-y-4'>
-      <motion.div {...fieldStaggerAnim(0)}>
-        <p className='mb-2 text-sm text-gray-600 dark:text-gray-400'>
-          Agrega cualquier observación o nota relevante sobre el cliente.
-        </p>
-      </motion.div>
-
-      <motion.div {...fieldStaggerAnim(1)}>
-        <AccordionWizardTextarea
-          {...register(notasField)}
-          label='Notas y Observaciones'
-          moduleName='clientes'
-        />
-      </motion.div>
+    <div>
+      <AccordionWizardTextarea
+        {...register(campo)}
+        label='Notas sobre el cliente (opcional)'
+        rows={4}
+        maxLength={500}
+        moduleName='clientes'
+      />
+      <p className='mt-1 text-right text-[11px] text-gray-400'>
+        {notas.length}/500
+      </p>
     </div>
   )
 }

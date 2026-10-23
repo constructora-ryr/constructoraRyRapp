@@ -35,8 +35,6 @@ export * from './useClienteIntereses'
 export * from './useClientes'
 export * from './useConfigurarFuentesPago'
 export * from './useCrearNegociacion'
-export * from './useFormularioCliente'
-export * from './useFormularioClienteContainer' // 🆕 Lógica del container (Separación de Responsabilidades)
 export * from './useInteresFormulario'
 export * from './useListaIntereses'
 export * from './useNegociacion'

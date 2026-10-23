@@ -18,6 +18,8 @@ export type EstadoCivil =
   | 'Casado(a)'
   | 'Unión libre'
   | 'Viudo(a)'
+  | 'Divorciado(a)'
+  | 'Separado(a)'
 
 /**
  * ✅ VERIFICADO en: docs/DATABASE-SCHEMA-REFERENCE.md
@@ -634,6 +636,8 @@ export const ESTADOS_CIVILES: Record<EstadoCivil, string> = {
   'Casado(a)': 'Casado(a)',
   'Unión libre': 'Unión libre',
   'Viudo(a)': 'Viudo(a)',
+  'Divorciado(a)': 'Divorciado(a)',
+  'Separado(a)': 'Separado(a)',
 }
 
 export const ESTADOS_CLIENTE: Record<EstadoCliente, string> = {

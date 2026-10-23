@@ -5,7 +5,6 @@ export * from './clientes-skeleton'
 export { ClientesTabla } from './ClientesTabla'
 export * from './detalle-cliente'
 export * from './estado-badge'
-export { FormularioCliente } from './formulario-cliente-modern'
 
 // Componentes de asignar vivienda
 export * from './fuente-pago-card'

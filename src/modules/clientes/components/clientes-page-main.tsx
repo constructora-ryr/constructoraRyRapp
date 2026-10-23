@@ -33,7 +33,6 @@ import {
 import { NoResults } from '@/shared/components/ui/NoResults'
 import { CLIENTE_ESTADO_BADGE } from '@/shared/config/estados.colors'
 
-import { FormularioClienteContainer } from '../containers/formulario-cliente-container'
 import { useClientesList } from '../hooks'
 import { clientesListaStyles } from '../styles/clientes-lista.styles'
 import type { ClienteResumen, EstadoCliente } from '../types'
@@ -65,14 +64,8 @@ export function ClientesPageMain({
     isLoading,
     isFetching,
     estadisticas,
-    modalCrear,
-    modalEditar,
     modalEliminar,
-    clienteEditar,
     clienteEliminar,
-    abrirModalCrear: _abrirModalCrear,
-    abrirModalEditar: _abrirModalEditar,
-    cerrarModal,
     abrirModalEliminar,
     confirmarEliminar,
     cancelarEliminar,
@@ -276,15 +269,6 @@ export function ClientesPageMain({
           />
         )}
       </motion.div>
-
-      {modalCrear || modalEditar ? (
-        <FormularioClienteContainer
-          clienteId={clienteEditar?.id || null}
-          cliente={clienteEditar}
-          isOpen={modalCrear || modalEditar}
-          onClose={cerrarModal}
-        />
-      ) : null}
 
       <ModalConfirmacion
         isOpen={modalEliminar}

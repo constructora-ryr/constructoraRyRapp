@@ -5,7 +5,7 @@
  * La lógica vive en useDocumentoUpload; aquí solo se arma la UI.
  */
 
-import { CheckCircle2, Link2 } from 'lucide-react'
+import { Link2 } from 'lucide-react'
 
 import { DocumentoFormBase } from '@/shared/components/forms/documento'
 import { type ModuleName } from '@/shared/config/module-themes'
@@ -13,7 +13,7 @@ import { type ModuleName } from '@/shared/config/module-themes'
 import { useDocumentoUpload } from '../../hooks'
 import { type TipoEntidad, obtenerConfiguracionEntidad } from '../../types'
 
-import { CheckboxDocumentoIdentidad } from './CheckboxDocumentoIdentidad'
+import { ModoDocumentoIdentidad } from './ModoDocumentoIdentidad'
 
 interface DocumentoUploadProps {
   entidadId: string
@@ -26,6 +26,8 @@ interface DocumentoUploadProps {
   moduleName?: ModuleName
   /** Para vincular el documento a un requisito pendiente */
   metadata?: Record<string, unknown> | null
+  /** Cliente: cambiar de la subida general al trámite de la cédula */
+  onSubirCedula?: () => void
 }
 
 export function DocumentoUpload({
@@ -36,6 +38,7 @@ export function DocumentoUpload({
   onCancel,
   moduleName,
   metadata,
+  onSubirCedula,
 }: DocumentoUploadProps) {
   const themeModuleName =
     moduleName || obtenerConfiguracionEntidad(tipoEntidad).moduleName
@@ -49,7 +52,6 @@ export function DocumentoUpload({
     categorias,
     esDocumentoIdentidad,
     categoriaIdentidad,
-    checkboxDeshabilitado,
     yaExisteDocumentoIdentidad,
     tipoDocumento,
     infoTipoDocumento,
@@ -99,22 +101,11 @@ export function DocumentoUpload({
         </div>
       ) : null}
 
-      {tipoEntidad === 'cliente' &&
-      !yaExisteDocumentoIdentidad &&
-      !tipoDocumento ? (
-        <div>
-          <CheckboxDocumentoIdentidad
-            checked={esDocumentoIdentidad ?? false}
-            onChange={checked => setValue('es_documento_identidad', checked)}
-            disabled={checkboxDeshabilitado || autoIdentidad}
-          />
-          {autoIdentidad && esDocumentoIdentidad ? (
-            <p className='mt-2 flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400'>
-              <CheckCircle2 className='h-3.5 w-3.5' />
-              Marcado automáticamente como identificación oficial
-            </p>
-          ) : null}
-        </div>
+      {tipoEntidad === 'cliente' && !tipoDocumento ? (
+        <ModoDocumentoIdentidad
+          esCedula={autoIdentidad}
+          onSubirCedula={yaExisteDocumentoIdentidad ? undefined : onSubirCedula}
+        />
       ) : null}
 
       <DocumentoFormBase

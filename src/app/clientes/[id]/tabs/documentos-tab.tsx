@@ -17,7 +17,7 @@ import { IdCard, Tags, Upload } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import { SeccionDocumentosPendientes } from '@/modules/clientes/components/documentos-pendientes'
 import { SubirCartaModal } from '@/modules/clientes/components/fuentes-pago'
-import { BannerDocumentoRequerido } from '@/modules/clientes/documentos/components/BannerDocumentoRequerido'
+import { AvisoDocumentoIdentidad } from '@/modules/clientes/documentos/components/AvisoDocumentoIdentidad'
 import { useDocumentosTab } from '@/modules/clientes/hooks'
 import { useCategoriasSistemaClientes } from '@/modules/clientes/hooks/useCategoriasSistemaClientes'
 import type { Cliente } from '@/modules/clientes/types'
@@ -102,14 +102,19 @@ export function DocumentosTab({ cliente }: DocumentosTabProps) {
         }
         descripcion={
           uploadTipoCedula
-            ? 'Sube la cédula o pasaporte oficial del cliente'
-            : 'Selecciona el archivo y completa su información'
+            ? 'Habilita la asignación de vivienda'
+            : 'Documentos de la pareja, soportes, cartas y demás'
         }
         onVolver={volverADocumentos}
       >
         <DocumentoUpload
+          // Otro trámite = formulario nuevo (la cédula se marca al iniciar)
+          key={uploadTipoCedula ? 'cedula' : 'general'}
           entidadId={cliente.id}
           tipoEntidad='cliente'
+          onSubirCedula={
+            uploadTipoCedula ? undefined : () => mostrarUpload(true)
+          }
           moduleName='clientes'
           metadata={metadataPendiente}
           carpetaId={carpetaIdPendiente}
@@ -131,15 +136,17 @@ export function DocumentosTab({ cliente }: DocumentosTabProps) {
             const tieneNegociacion =
               (cliente.estadisticas?.negociaciones_activas ?? 0) > 0
             return (
-              <BannerDocumentoRequerido
-                variant='bloqueante'
-                mensaje={
-                  tieneNegociacion
-                    ? 'Se detectó que este cliente tiene una vivienda asignada y una negociación activa, pero aún no tiene su documento de identidad cargado. Es indispensable subirlo para completar el proceso correctamente.'
+              <AvisoDocumentoIdentidad
+                tieneDocumento={false}
+                ventaEnCurso={tieneNegociacion}
+                accion={
+                  canCreate
+                    ? {
+                        texto: 'Subir cédula',
+                        icon: IdCard,
+                        onClick: () => mostrarUpload(true),
+                      }
                     : undefined
-                }
-                onSubirDocumento={
-                  canCreate ? () => mostrarUpload(true) : undefined
                 }
               />
             )

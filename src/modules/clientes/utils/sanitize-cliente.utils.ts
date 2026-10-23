@@ -27,6 +27,8 @@ const VALID_ESTADOS_CIVILES: readonly EstadoCivil[] = [
   'Casado(a)',
   'Unión libre',
   'Viudo(a)',
+  'Divorciado(a)',
+  'Separado(a)',
 ] as const
 
 /**

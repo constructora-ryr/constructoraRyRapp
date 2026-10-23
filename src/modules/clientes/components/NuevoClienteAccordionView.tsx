@@ -1,9 +1,11 @@
 /**
- * NuevoClienteAccordionView — Orquestador del wizard accordion de 4 pasos
- * para crear cliente. Componente presentacional puro.
+ * NuevoClienteAccordionView — wizard de 5 pasos para crear un cliente.
+ * Solo presentación: la lógica vive en useNuevoClienteAccordion.
  */
 
 'use client'
+
+import type { ReactNode } from 'react'
 
 import { UserRoundPlus } from 'lucide-react'
 
@@ -26,34 +28,24 @@ import {
   PasoNotas,
   PasoPersonal,
 } from './pasos-accordion'
+import { PasoResumen } from './pasos-accordion/PasoResumen'
 
-interface NuevoClienteAccordionViewProps {
-  canCreate: boolean
+const TOTAL = PASOS_CLIENTE.length
+
+/** Obligatorios y opcionales de cada paso (el contacto cuenta como uno) */
+const CAMPOS: Record<number, { required: number; optional: number }> = {
+  1: { required: 4, optional: 2 },
+  2: { required: 3, optional: 2 },
+  3: { required: 0, optional: 3 },
+  4: { required: 0, optional: 1 },
 }
 
 export function NuevoClienteAccordionView({
   canCreate,
-}: NuevoClienteAccordionViewProps) {
-  const {
-    pasos,
-    pasoActual,
-    getEstadoPaso,
-    irSiguiente,
-    irAtras,
-    irAPaso,
-    summaryPaso1,
-    summaryPaso2,
-    summaryPaso3,
-    summaryPaso4,
-    register,
-    errors,
-    setValue,
-    watch,
-    handleSubmit,
-    isSubmitting,
-    isValidating,
-    showSuccess,
-  } = useNuevoClienteAccordion()
+}: {
+  canCreate: boolean
+}) {
+  const v = useNuevoClienteAccordion()
 
   if (!canCreate) {
     return (
@@ -65,153 +57,80 @@ export function NuevoClienteAccordionView({
     )
   }
 
+  const form = {
+    register: v.register,
+    errors: v.errors,
+    watch: v.watch,
+    setValue: v.setValue,
+  }
+
+  const seccion = (paso: number, contenido: ReactNode) => {
+    const info = PASOS_CLIENTE[paso - 1]
+    const ultimo = paso === TOTAL
+    return (
+      <AccordionWizardSection
+        key={paso}
+        status={v.getEstadoPaso(paso)}
+        stepNumber={paso}
+        title={info.title}
+        description={info.description}
+        icon={info.icon}
+        fieldCount={CAMPOS[paso]}
+        currentStep={v.pasoActual}
+        totalSteps={TOTAL}
+        moduleName='clientes'
+        summaryItems={v.resumenes[paso] ?? []}
+        onEdit={() => v.irAPaso(paso)}
+      >
+        {contenido}
+        <AccordionWizardNavigation
+          currentStep={paso}
+          totalSteps={TOTAL}
+          isFirst={paso === 1}
+          isLast={ultimo}
+          isSubmitting={ultimo && v.isSubmitting}
+          isValidating={v.pasoActual === paso && v.isValidating}
+          moduleName='clientes'
+          submitLabel={ultimo ? 'Crear cliente' : undefined}
+          onBack={v.irAtras}
+          onNext={v.irSiguiente}
+          onSubmit={ultimo ? v.handleSubmit : undefined}
+        />
+      </AccordionWizardSection>
+    )
+  }
+
   return (
     <AccordionWizardLayout
       moduleName='clientes'
       breadcrumbs={[
         { label: 'Clientes', href: '/clientes' },
-        { label: 'Nuevo Cliente' },
+        { label: 'Nuevo cliente' },
       ]}
-      isSubmitting={isSubmitting}
-      submitLoadingLabel='Creando Cliente...'
+      isSubmitting={v.isSubmitting}
+      submitLoadingLabel='Creando cliente…'
     >
-      {/* Hero Header */}
       <AccordionWizardHero
         icon={UserRoundPlus}
-        title='Nuevo Cliente'
-        subtitle='Registra la información del cliente paso a paso. Solo los campos marcados con * son obligatorios.'
+        title='Nuevo cliente'
+        subtitle='Registra a una persona interesada en comprar: sus datos, cómo contactarla y qué le interesa.'
         moduleName='clientes'
         estimatedTime='~2 minutos'
-        totalSteps={PASOS_CLIENTE.length}
+        totalSteps={TOTAL}
+        currentStep={v.pasoActual}
       />
 
-      {/* ── Paso 1: Datos Personales ──────────────── */}
-      <AccordionWizardSection
-        status={getEstadoPaso(1)}
-        stepNumber={1}
-        title={pasos[0].title}
-        description={pasos[0].description}
-        icon={pasos[0].icon}
-        fieldCount={{ required: 3, optional: 2 }}
-        currentStep={pasoActual}
-        totalSteps={PASOS_CLIENTE.length}
-        moduleName='clientes'
-        summaryItems={summaryPaso1}
-        onEdit={() => irAPaso(1)}
-      >
-        <PasoPersonal
-          register={register}
-          errors={errors}
-          watch={watch}
-          setValue={setValue}
-        />
-        <AccordionWizardNavigation
-          currentStep={1}
-          totalSteps={PASOS_CLIENTE.length}
-          isFirst
-          isLast={false}
-          isValidating={pasoActual === 1 && isValidating}
-          moduleName='clientes'
-          onBack={irAtras}
-          onNext={irSiguiente}
-        />
-      </AccordionWizardSection>
+      {seccion(1, <PasoPersonal {...form} />)}
+      {seccion(2, <PasoContacto {...form} />)}
+      {seccion(3, <PasoInteres {...form} />)}
+      {seccion(4, <PasoNotas register={v.register} watch={v.watch} />)}
+      {seccion(5, <PasoResumen datos={v.formData} onEditar={v.irAPaso} />)}
 
-      {/* ── Paso 2: Contacto y Ubicación ──────────── */}
-      <AccordionWizardSection
-        status={getEstadoPaso(2)}
-        stepNumber={2}
-        title={pasos[1].title}
-        description={pasos[1].description}
-        icon={pasos[1].icon}
-        fieldCount={{ required: 2, optional: 4 }}
-        currentStep={pasoActual}
-        totalSteps={PASOS_CLIENTE.length}
-        moduleName='clientes'
-        summaryItems={summaryPaso2}
-        onEdit={() => irAPaso(2)}
-      >
-        <PasoContacto
-          register={register}
-          errors={errors}
-          watch={watch}
-          setValue={setValue}
-        />
-        <AccordionWizardNavigation
-          currentStep={2}
-          totalSteps={PASOS_CLIENTE.length}
-          isFirst={false}
-          isLast={false}
-          isValidating={pasoActual === 2 && isValidating}
-          moduleName='clientes'
-          onBack={irAtras}
-          onNext={irSiguiente}
-        />
-      </AccordionWizardSection>
-
-      {/* ── Paso 3: Interés Inicial ───────────────── */}
-      <AccordionWizardSection
-        status={getEstadoPaso(3)}
-        stepNumber={3}
-        title={pasos[2].title}
-        description={pasos[2].description}
-        icon={pasos[2].icon}
-        fieldCount={{ required: 0, optional: 3 }}
-        currentStep={pasoActual}
-        totalSteps={PASOS_CLIENTE.length}
-        moduleName='clientes'
-        summaryItems={summaryPaso3}
-        onEdit={() => irAPaso(3)}
-      >
-        <PasoInteres register={register} errors={errors} watch={watch} />
-        <AccordionWizardNavigation
-          currentStep={3}
-          totalSteps={PASOS_CLIENTE.length}
-          isFirst={false}
-          isLast={false}
-          isValidating={pasoActual === 3 && isValidating}
-          moduleName='clientes'
-          onBack={irAtras}
-          onNext={irSiguiente}
-        />
-      </AccordionWizardSection>
-
-      {/* ── Paso 4: Notas ─────────────────────────── */}
-      <AccordionWizardSection
-        status={getEstadoPaso(4)}
-        stepNumber={4}
-        title={pasos[3].title}
-        description={pasos[3].description}
-        icon={pasos[3].icon}
-        fieldCount={{ required: 0, optional: 1 }}
-        currentStep={pasoActual}
-        totalSteps={PASOS_CLIENTE.length}
-        moduleName='clientes'
-        summaryItems={summaryPaso4}
-        onEdit={() => irAPaso(4)}
-      >
-        <PasoNotas register={register} />
-        <AccordionWizardNavigation
-          currentStep={4}
-          totalSteps={PASOS_CLIENTE.length}
-          isFirst={false}
-          isLast
-          isSubmitting={isSubmitting}
-          isValidating={isValidating}
-          moduleName='clientes'
-          submitLabel='Crear Cliente'
-          onBack={irAtras}
-          onNext={irSiguiente}
-          onSubmit={handleSubmit}
-        />
-      </AccordionWizardSection>
-
-      {/* Success celebration */}
       <AccordionWizardSuccess
-        isVisible={showSuccess}
+        isVisible={v.showSuccess}
         moduleName='clientes'
         title='¡Cliente creado!'
-        subtitle='Redirigiendo al listado de clientes...'
+        subtitle='Volviendo al listado de clientes…'
       />
     </AccordionWizardLayout>
   )

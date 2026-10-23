@@ -9,15 +9,7 @@
  * ✅ Sanitización antes de guardar
  * ✅ Guard de cambios no guardados (useUnsavedChanges)
  *
- * REGLAS DE NEGOCIO:
- * - Paso 1 (Datos Personales):
- *     • Formato de documento válido según tipo (Colombia).
- *     • Número de documento único en el sistema (verifica solo si cambió).
- *     • fecha_nacimiento (si se provee): no puede ser futura, no puede ser
- *       mayor a 120 años, y el cliente debe ser mayor de 18 años (capacidad
- *       legal para contratos inmobiliarios en Colombia).
- * - Paso 2 (Contacto): al menos teléfono ó email; departamento + ciudad requeridos.
- * - Paso 3 (Notas): opcional, máximo 500 caracteres.
+ * Reglas de negocio: utils/validacion-pasos-cliente (compartidas con crear).
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -44,11 +36,14 @@ import {
   PASOS_CLIENTE_EDICION,
   type EditarClienteFormValues,
 } from '../schemas/editar-cliente-accordion.schema'
-import { clientesService } from '../services/clientes.service'
 import type { ActualizarClienteDTO, EstadoCivil, TipoDocumento } from '../types'
 import { sanitizeActualizarClienteDTO } from '../utils/sanitize-cliente.utils'
-import type { TipoDocumentoColombia } from '../utils/validacion-documentos-colombia'
-import { validarDocumentoIdentidad } from '../utils/validacion-documentos-colombia'
+import {
+  validarOpcionales,
+  validarPasoContacto,
+  validarPasoPersonal,
+  type FormularioCliente,
+} from '../utils/validacion-pasos-cliente'
 
 import {
   useActualizarClienteMutation,
@@ -283,159 +278,20 @@ export function useEditarClienteAccordion(clienteId: string) {
     )
   }, [pasosCompletados.size])
 
-  // ── Validación por paso ─────────────────────────────
+  // ── Validación por paso (compartida con crear) ───────
   const validarPasoActual = useCallback(async (): Promise<boolean> => {
+    const f = { getValues, trigger, setError } as unknown as FormularioCliente
     setIsValidating(true)
     try {
-      switch (pasoActual) {
-        case 1: {
-          const syncValid = await trigger([...FIELDS_PASO_1])
-          if (!syncValid) return false
-
-          const erroresEncontrados: Array<{ campo: string; mensaje: string }> =
-            []
-
-          // Validar formato del documento según tipo
-          const tipoDoc = getValues('tipo_documento') as TipoDocumentoColombia
-          const numDoc = getValues('numero_documento').trim()
-
-          const resultado = validarDocumentoIdentidad(tipoDoc, numDoc)
-          if (!resultado.valido) {
-            erroresEncontrados.push({
-              campo: 'numero_documento',
-              mensaje: resultado.mensaje || 'Documento inválido',
-            })
-          }
-
-          // Validar fecha de nacimiento si se proporcionó
-          const fechaNac = getValues('fecha_nacimiento')
-          if (fechaNac) {
-            const hoy = new Date()
-            const fecha = new Date(fechaNac + 'T12:00:00')
-            if (fecha > hoy) {
-              erroresEncontrados.push({
-                campo: 'fecha_nacimiento',
-                mensaje: 'La fecha no puede ser futura',
-              })
-            }
-            const edadMaxima = new Date()
-            edadMaxima.setFullYear(edadMaxima.getFullYear() - 120)
-            if (fecha < edadMaxima) {
-              erroresEncontrados.push({
-                campo: 'fecha_nacimiento',
-                mensaje: 'Fecha fuera de rango válido',
-              })
-            }
-            // Regla de negocio: el cliente debe ser mayor de 18 años
-            // (capacidad legal para contratos inmobiliarios en Colombia)
-            const edadMinima = new Date()
-            edadMinima.setFullYear(edadMinima.getFullYear() - 18)
-            if (fecha > edadMinima) {
-              erroresEncontrados.push({
-                campo: 'fecha_nacimiento',
-                mensaje:
-                  'El cliente debe ser mayor de 18 años para celebrar contratos',
-              })
-            }
-          }
-
-          // Async: verificar duplicados solo si cambió el documento
-          const docCambio =
-            datosOriginales &&
-            (numDoc !== datosOriginales.numero_documento ||
-              tipoDoc !== datosOriginales.tipo_documento)
-
-          if (
-            erroresEncontrados.length === 0 &&
-            numDoc.length >= 5 &&
-            docCambio
-          ) {
-            try {
-              const existente = await clientesService.buscarPorDocumento(
-                tipoDoc,
-                numDoc
-              )
-              if (existente && existente.id !== clienteId) {
-                erroresEncontrados.push({
-                  campo: 'numero_documento',
-                  mensaje: `Ya existe: ${existente.nombres} ${existente.apellidos}`,
-                })
-              }
-            } catch {
-              // No bloquear si falla la red
-            }
-          }
-
-          if (erroresEncontrados.length > 0) {
-            erroresEncontrados.forEach(e => {
-              setError(e.campo as Parameters<typeof setError>[0], {
-                type: 'manual',
-                message: e.mensaje,
-              })
-            })
-            return false
-          }
-          return true
-        }
-        case 2: {
-          const syncValid = await trigger([...FIELDS_PASO_2])
-          if (!syncValid) return false
-
-          // Cross-field: al menos teléfono o email
-          const tel = getValues('telefono')?.trim()
-          const email = getValues('email')?.trim()
-
-          if (!tel && !email) {
-            setError('telefono', {
-              type: 'manual',
-              message: 'Requerido: teléfono o email',
-            })
-            setError('email', {
-              type: 'manual',
-              message: 'Requerido: teléfono o email',
-            })
-            return false
-          }
-
-          if (tel) {
-            const telValid = await trigger('telefono')
-            if (!telValid) return false
-          }
-
-          if (email) {
-            const emailValid = await trigger('email')
-            if (!emailValid) return false
-          }
-
-          const telAlt = getValues('telefono_alternativo')?.trim()
-          if (telAlt) {
-            const telAltValid = await trigger('telefono_alternativo')
-            if (!telAltValid) return false
-          }
-
-          const dir = getValues('direccion')?.trim()
-          if (dir) {
-            const dirValid = await trigger('direccion')
-            if (!dirValid) return false
-          }
-
-          return true
-        }
-        case 3: {
-          const notas = getValues('notas')?.trim()
-          if (notas) {
-            const notasValid = await trigger('notas')
-            if (!notasValid) return false
-          }
-          return true
-        }
-        default:
-          return true
-      }
+      if (pasoActual === 1)
+        return await validarPasoPersonal(f, FIELDS_PASO_1, clienteId)
+      if (pasoActual === 2) return await validarPasoContacto(f, FIELDS_PASO_2)
+      if (pasoActual === 3) return await validarOpcionales(f, ['notas'])
+      return true
     } finally {
       setIsValidating(false)
     }
-  }, [pasoActual, trigger, getValues, setError, datosOriginales, clienteId])
+  }, [pasoActual, trigger, getValues, setError, clienteId])
 
   // ── Navegación ──────────────────────────────────────
   const irSiguiente = useCallback(async () => {

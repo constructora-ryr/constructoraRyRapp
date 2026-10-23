@@ -16,7 +16,7 @@ import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 
 import { createClient } from '@/lib/supabase/client'
-import { formatDateForDB } from '@/lib/utils/date.utils'
+import { formatDateForDB, formatDateShort } from '@/lib/utils/date.utils'
 import { formatCurrency } from '@/lib/utils/format.utils'
 import { getShortId } from '@/lib/utils/slug.utils'
 import { useAsignarViviendaForm } from '@/modules/clientes/components/asignar-vivienda/hooks/useAsignarViviendaForm'
@@ -46,22 +46,23 @@ import type {
 export const PASOS_ASIGNACION: WizardStepConfig[] = [
   {
     id: 1,
-    title: 'Vivienda y Valores',
+    title: 'Vivienda y valores',
     description:
-      'Selecciona el proyecto, la vivienda y configura descuentos si aplica.',
+      'Elige el proyecto y la casa: verás su valor y el total que el cliente debe cubrir.\nSi hay un descuento autorizado, actívalo e indica el monto, el tipo y el motivo (queda registrado).\nEl valor en escritura pública arranca con el total de la casa; cámbialo solo si en la escritura figura otro.\nSi ya se firmó la promesa de compraventa, registra su fecha como fecha de la negociación.',
     icon: Home,
   },
   {
     id: 2,
-    title: 'Fuentes de Pago',
+    title: 'Fuentes de pago',
     description:
-      'Configura cómo se financiará la vivienda. Las fuentes deben cubrir al menos el valor total.',
+      'Indica cómo se pagará: cuota inicial, crédito hipotecario, subsidios, crédito con la constructora…\nActiva cada fuente y escribe su monto; la barra muestra cuánto falta por cubrir.\nPara continuar, la suma debe cubrir el total. Si sobra, el excedente se devolverá al cliente.',
     icon: Banknote,
   },
   {
     id: 3,
-    title: 'Revisión y Confirmación',
-    description: 'Verifica todos los datos antes de crear la negociación.',
+    title: 'Revisión y confirmación',
+    description:
+      'Revisa la casa, los valores y las fuentes antes de confirmar.\nAl confirmar, la casa queda asignada al cliente y empieza la negociación: desde ahí se registran sus abonos.\nPuedes descargar el resumen en PDF para compartirlo.',
     icon: ClipboardCheck,
   },
 ]
@@ -142,6 +143,16 @@ export function useAsignarViviendaV2({
   useEffect(() => {
     setValue('valor_negociado', valorBase)
   }, [valorBase, setValue])
+
+  // Valor en escritura: arranca con el total de la casa elegida (sin
+  // descuento). Solo al cambiar de casa: si la lista se recarga no se pisa
+  // lo que el usuario escribió.
+  const totalCasa = valorBase + gastosNotariales + recargoEsquinera
+  const totalCasaRef = useRef(totalCasa)
+  totalCasaRef.current = totalCasa
+  useEffect(() => {
+    if (viviendaId) setValue('valor_escritura_publica', totalCasaRef.current)
+  }, [viviendaId, setValue])
 
   // Fix 3: warning al recargar/salir si el formulario tiene datos sin guardar
   useEffect(() => {
@@ -270,8 +281,18 @@ export function useAsignarViviendaV2({
       },
       { label: 'Proyecto', value: proyecto?.nombre },
       { label: 'Total', value: formatCurrency(valorTotal) },
+      {
+        label: 'Fecha',
+        value: fechaNegociacion ? formatDateShort(fechaNegociacion) : 'Hoy',
+      },
     ]
-  }, [viviendaSeleccionada, proyectos, proyectoSeleccionado, valorTotal])
+  }, [
+    viviendaSeleccionada,
+    proyectos,
+    proyectoSeleccionado,
+    valorTotal,
+    fechaNegociacion,
+  ])
 
   const summaryPaso2: SummaryItem[] = useMemo(() => {
     const fuentesOn = fuentes.filter(f => f.enabled).map(f => f.tipo)
@@ -314,6 +335,7 @@ export function useAsignarViviendaV2({
           'descuento_aplicado',
           'tipo_descuento',
           'motivo_descuento',
+          'valor_escritura_publica',
         ])
         if (!valido || !paso1Valido) return
         setPasosCompletados(prev => new Set(prev).add(1))

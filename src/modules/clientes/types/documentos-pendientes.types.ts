@@ -26,6 +26,8 @@ export const DocumentoPendienteMetadataSchema = z.object({
     'Subsidio Caja Compensación',
     'Subsidio Mi Casa Ya',
     'Cuota Inicial',
+    // Requisitos compartidos del cliente (boleta de registro)
+    'Compartido',
   ]),
   descripcion: z.string().min(1, 'Descripción requerida'),
   origen: z.enum(['asignacion_vivienda', 'manual']),

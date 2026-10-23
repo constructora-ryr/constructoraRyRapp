@@ -1,4 +1,3 @@
-export { BannerDocumentacion } from './BannerDocumentacion'
 export { ContactoUbicacionCard } from './ContactoUbicacionCard'
 export { InfoPersonalCard } from './InfoPersonalCard'
 export { NotasCard } from './NotasCard'

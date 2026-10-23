@@ -52,8 +52,8 @@ export function useAsignarViviendaForm({
       descuento_aplicado: initialData?.descuento_aplicado || 0,
       tipo_descuento: initialData?.tipo_descuento || '',
       motivo_descuento: initialData?.motivo_descuento || '',
-      valor_escritura_publica:
-        initialData?.valor_escritura_publica || 128000000,
+      // Se llena con el total de la casa al elegirla (ver useAsignarViviendaV2)
+      valor_escritura_publica: initialData?.valor_escritura_publica || 0,
       notas: initialData?.notas || '',
       fuentes: initialData?.fuentes || [],
       valor_total: initialData?.valor_total || 0,

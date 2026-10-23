@@ -150,8 +150,6 @@ export function useDocumentoUpload({
   }, [infoTipoDocumento, categorias, setValue])
 
   // ✅ Deshabilitar checkbox si ya existe documento de identidad (solo clientes)
-  const checkboxDeshabilitado =
-    tipoEntidad === 'cliente' && yaExisteDocumentoIdentidad
 
   // Validación de archivo
   const validarArchivo = useCallback(
@@ -318,7 +316,6 @@ export function useDocumentoUpload({
     // Documento de identidad (solo clientes)
     esDocumentoIdentidad,
     categoriaIdentidad,
-    checkboxDeshabilitado,
     yaExisteDocumentoIdentidad,
 
     // Refs

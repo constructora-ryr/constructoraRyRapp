@@ -42,15 +42,6 @@ VALUES
     '',
     'DOCUMENTO_OBLIGATORIO', 'Carta de Asignación Subsidio Caja de Compensación', 'subsidios',
     1, true, 1, NOW(), NOW(), NULL, NULL, 'ESPECIFICO_FUENTE', '{}'
-  ),
-  (
-    'd88bd609-1006-487d-b40e-849fb0c516a0',
-    '["Subsidio Caja Compensación"]', 'carta_aprobacion_subsidio',
-    'Carta de Aprobación Subsidio Caja de Compensación',
-    'Carta emitida por la Caja de Compensación aprobando el subsidio de vivienda del cliente',
-    'Solicita al cliente la carta de aprobación del subsidio emitida por la Caja de Compensación.',
-    'DOCUMENTO_OBLIGATORIO', 'Carta Aprobación', 'Subsidios',
-    3, true, 1, NOW(), NOW(), NULL, NULL, 'ESPECIFICO_FUENTE', '{}'
   )
 ON CONFLICT (id) DO NOTHING;
 

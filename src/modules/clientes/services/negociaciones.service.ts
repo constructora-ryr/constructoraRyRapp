@@ -14,7 +14,7 @@
  */
 
 import { supabase } from '@/lib/supabase/client'
-import type { TablesInsert } from '@/lib/supabase/database.types'
+import type { Json, TablesInsert } from '@/lib/supabase/database.types'
 import { formatDateForDB, getTodayDateString } from '@/lib/utils/date.utils'
 import { logger } from '@/lib/utils/logger'
 import type { Negociacion } from '@/modules/clientes/types'
@@ -24,10 +24,9 @@ import {
   sanitizeCrearNegociacionDTO,
   type ActualizarFuentePagoDTO,
   type ActualizarNegociacionDTO,
+  type CrearFuentePagoDTO,
   type CrearNegociacionDTO,
 } from '@/modules/clientes/utils/sanitize-negociacion.utils'
-import { crearCredito } from '@/modules/fuentes-pago/services/creditos-constructora.service'
-import { crearCuotasCredito } from '@/modules/fuentes-pago/services/cuotas-credito.service'
 import {
   calcularTablaAmortizacion,
   fechaCuotaParaBD,
@@ -44,312 +43,96 @@ export type {
 } from '@/modules/clientes/utils/sanitize-negociacion.utils'
 export type { Negociacion }
 
+/**
+ * Fuente de pago en el formato de crear_negociacion_completa. El plan del
+ * crédito con la constructora se calcula aquí, con la misma función que lo
+ * muestra en pantalla, y la BD solo lo guarda.
+ */
+function fuenteParaRpc(fuente: CrearFuentePagoDTO) {
+  const base = {
+    tipo: fuente.tipo,
+    monto_aprobado: fuente.monto_aprobado,
+    capital_para_cierre: fuente.capital_para_cierre ?? null,
+    entidad: fuente.entidad || null,
+    entidad_financiera_id: fuente.entidad_financiera_id || null,
+    numero_referencia: fuente.numero_referencia || null,
+    fecha_acta: fuente.fecha_acta || null,
+    carta_asignacion_url: fuente.carta_asignacion_url || null,
+    permite_multiples_abonos:
+      fuente.permite_multiples_abonos ?? esCuotaInicial(fuente.tipo),
+  }
+  const p = fuente.parametrosCredito
+  if (!p) return base
+
+  const fechaInicio =
+    typeof p.fechaInicio === 'string'
+      ? new Date(p.fechaInicio + 'T12:00:00')
+      : p.fechaInicio
+  const calculo = calcularTablaAmortizacion({
+    capital: p.capital,
+    tasaMensual: p.tasaMensual,
+    numCuotas: p.numCuotas,
+    fechaInicio,
+  })
+
+  return {
+    ...base,
+    credito: {
+      capital: p.capital,
+      tasa_mensual: p.tasaMensual,
+      num_cuotas: p.numCuotas,
+      fecha_inicio: fechaCuotaParaBD(fechaInicio),
+      valor_cuota: calculo.valorCuotaMensual,
+      interes_total: calculo.interesTotal,
+      monto_total: calculo.montoTotal,
+      tasa_mora_diaria: p.tasaMoraDiaria ?? 0.001,
+      cuotas: calculo.cuotas.map(c => ({
+        numero_cuota: c.numero,
+        fecha_vencimiento: fechaCuotaParaBD(c.fechaVencimiento),
+        valor_cuota: c.valorCuota,
+      })),
+    },
+  }
+}
+
 class NegociacionesService {
   /**
-   * Crear nueva negociación CON o SIN fuentes de pago (transaccional)
+   * Asigna la vivienda al cliente: negociación 'Activa', fuentes de pago
+   * (con crédito y cuotas si aplica), vivienda 'Asignada' y cliente 'Activo'.
    *
-   * ? FLUJO SIMPLIFICADO (2025-10-22):
-   * - Negociación se crea DIRECTO en estado 'Activa'
-   * - Fuentes de pago son OPCIONALES (se pueden agregar después)
-   * - Cliente pasa a 'Activo'
-   * - Vivienda pasa a 'Asignada'
-   *
-   * Pasos:
-   * 1. Crear negociación en estado 'Activa'
-   * 2. [Opcional] Crear fuentes de pago si se proporcionan
-   * 3. Actualizar vivienda ? 'Asignada'
-   * 4. Actualizar cliente ? 'Activo'
-   * 5. Si algún paso falla, se hace rollback
+   * Todo ocurre en una sola transacción (RPC crear_negociacion_completa), que
+   * además valida permiso, renuncia pendiente y disponibilidad de la vivienda.
+   * Si algo falla no queda nada a medias.
    */
   async crearNegociacion(datos: CrearNegociacionDTO): Promise<Negociacion> {
     try {
       const datosSanitizados = sanitizeCrearNegociacionDTO(datos)
-      const tieneFuentesPago = Boolean(datosSanitizados.fuentes_pago?.length)
 
-      // ==========================================
-      // VALIDACIÓN: No crear negociación si hay renuncia pendiente
-      // ==========================================
-      const { data: renunciaPendiente } = await supabase
-        .from('renuncias')
-        .select('id, consecutivo')
-        .eq('cliente_id', datosSanitizados.cliente_id)
-        .eq('estado', 'Pendiente Devolución')
-        .limit(1)
-        .maybeSingle()
-
-      if (renunciaPendiente) {
-        throw new Error(
-          `No se puede crear negociación: el cliente tiene la renuncia ${renunciaPendiente.consecutivo} con devolución pendiente.`
-        )
-      }
-
-      // ==========================================
-      // PASO 1: Crear negociación en estado 'Activa'
-      // ==========================================
-
-      type NegociacionInsertData = {
-        cliente_id: string
-        vivienda_id: string
-        valor_negociado: number
-        descuento_aplicado: number
-        notas?: string | null
-        estado: 'Activa'
-        fecha_negociacion?: string
-        tipo_descuento?: string
-        motivo_descuento?: string
-        valor_escritura_publica?: number
-      }
-
-      // Construir objeto con campos condicionales
-      const datosNegociacion: NegociacionInsertData = {
-        cliente_id: datosSanitizados.cliente_id,
-        vivienda_id: datosSanitizados.vivienda_id,
-        valor_negociado: datosSanitizados.valor_negociado,
-        descuento_aplicado: datosSanitizados.descuento_aplicado || 0,
-        notas: datosSanitizados.notas,
-        estado: 'Activa', // ? SIEMPRE 'Activa' (simplificado)
-      }
-
-      // Fecha de negociación personalizada (migración de datos históricos)
-      if (datosSanitizados.fecha_negociacion) {
-        datosNegociacion.fecha_negociacion = datosSanitizados.fecha_negociacion
-      }
-
-      // Solo incluir campos de descuento si hay descuento aplicado
-      if (
-        datosSanitizados.descuento_aplicado &&
-        datosSanitizados.descuento_aplicado > 0
-      ) {
-        // Solo agregar campos si tienen valor (no undefined)
-        if (datosSanitizados.tipo_descuento !== undefined) {
-          datosNegociacion.tipo_descuento = datosSanitizados.tipo_descuento
-        }
-        if (datosSanitizados.motivo_descuento !== undefined) {
-          datosNegociacion.motivo_descuento = datosSanitizados.motivo_descuento
-        }
-      }
-
-      // valor_escritura_publica es independiente del descuento
-      if (datosSanitizados.valor_escritura_publica !== undefined) {
-        datosNegociacion.valor_escritura_publica =
-          datosSanitizados.valor_escritura_publica
-      }
-
-      const { data: negociacion, error: errorNegociacion } = await supabase
-        .from('negociaciones')
-        .insert(datosNegociacion)
-        .select(
-          'id, cliente_id, vivienda_id, valor_negociado, descuento_aplicado, tipo_descuento, motivo_descuento, valor_escritura_publica, valor_total_pagar, notas, estado, fecha_negociacion, fecha_completada, fecha_creacion, fecha_actualizacion'
-        )
-        .single()
-
-      if (errorNegociacion) {
-        logger.error('? Error creando negociación:', errorNegociacion)
-        throw errorNegociacion
-      }
-
-      // ==========================================
-      // PASO 2: Crear fuentes de pago (OPCIONAL)
-      // ==========================================
-      if (
-        datosSanitizados.fuentes_pago &&
-        datosSanitizados.fuentes_pago.length > 0
-      ) {
-        // Resolver tipo_fuente_id en batch
-        const tipoNombres = datosSanitizados.fuentes_pago.map(f => f.tipo)
-        const { data: tiposFuentes, error: errorTipos } = await supabase
-          .from('tipos_fuentes_pago')
-          .select('id, nombre')
-          .in('nombre', tipoNombres)
-
-        if (errorTipos) {
-          await supabase.from('negociaciones').delete().eq('id', negociacion.id)
-          throw new Error(
-            `Error resolviendo tipos de fuente: ${errorTipos.message}`
-          )
-        }
-
-        const tipoIdMap = Object.fromEntries(
-          (tiposFuentes || []).map(t => [t.nombre, t.id])
-        )
-
-        const fuentesParaInsertar = datosSanitizados.fuentes_pago.map(
-          fuente => ({
-            negociacion_id: negociacion.id,
-            tipo: fuente.tipo,
-            tipo_fuente_id: tipoIdMap[fuente.tipo] || null,
-            monto_aprobado: fuente.monto_aprobado,
-            capital_para_cierre: fuente.capital_para_cierre ?? null,
-            entidad: fuente.entidad || null,
-            entidad_financiera_id: fuente.entidad_financiera_id || null,
-            numero_referencia: fuente.numero_referencia || null,
-            fecha_acta: fuente.fecha_acta || null,
-            carta_asignacion_url: fuente.carta_asignacion_url || null,
-            permite_multiples_abonos:
-              fuente.permite_multiples_abonos ?? esCuotaInicial(fuente.tipo),
-            estado: 'Activa',
-            estado_fuente: 'activa',
-          })
-        )
-
-        const { data: fuentesCreadas, error: errorFuentes } = await supabase
-          .from('fuentes_pago')
-
-          .insert(
-            fuentesParaInsertar as unknown as TablesInsert<'fuentes_pago'>[]
-          )
-          .select('id, tipo, negociacion_id')
-
-        if (errorFuentes) {
-          logger.error('❌ Error creando fuentes de pago:', errorFuentes)
-          // ROLLBACK
-          await supabase.from('negociaciones').delete().eq('id', negociacion.id)
-          throw new Error(
-            `Error creando fuentes de pago: ${errorFuentes.message}`
-          )
-        }
-
-        // ==========================================
-        // PASO 2b: Crear crédito + cuotas para fuentes con parametrosCredito
-        // ==========================================
-        const fuentesConCredito: string[] = [] // acumular IDs para rollback
-        try {
-          for (const fuente of datosSanitizados.fuentes_pago) {
-            if (!fuente.parametrosCredito) continue
-
-            const fuenteCreada = (fuentesCreadas ?? []).find(
-              fc => fc.tipo === fuente.tipo
-            )
-            if (!fuenteCreada) continue
-
-            const p = fuente.parametrosCredito
-            const fechaDate =
-              typeof p.fechaInicio === 'string'
-                ? new Date(p.fechaInicio + 'T12:00:00')
-                : p.fechaInicio
-
-            const calculo = calcularTablaAmortizacion({
-              capital: p.capital,
-              tasaMensual: p.tasaMensual,
-              numCuotas: p.numCuotas,
-              fechaInicio: fechaDate,
-            })
-
-            const { error: errorCredito } = await crearCredito({
-              fuente_pago_id: fuenteCreada.id,
-              capital: p.capital,
-              tasa_mensual: p.tasaMensual,
-              num_cuotas: p.numCuotas,
-              fecha_inicio: fechaCuotaParaBD(fechaDate),
-              valor_cuota: calculo.valorCuotaMensual,
-              interes_total: calculo.interesTotal,
-              monto_total: calculo.montoTotal,
-              tasa_mora_diaria: p.tasaMoraDiaria ?? 0.001,
-            })
-
-            if (errorCredito) {
-              throw new Error(`Error creando crédito: ${errorCredito.message}`)
-            }
-
-            fuentesConCredito.push(fuenteCreada.id)
-
-            const { error: errorCuotas } = await crearCuotasCredito(
-              fuenteCreada.id,
-              calculo.cuotas,
-              1
-            )
-
-            if (errorCuotas) {
-              throw new Error(`Error creando cuotas: ${errorCuotas.message}`)
-            }
-          }
-        } catch (errorPaso2b) {
-          logger.error('❌ Error en Paso 2b (crédito/cuotas):', errorPaso2b)
-          // ROLLBACK: eliminar créditos y cuotas creados en esta operación
-          for (const fid of fuentesConCredito) {
-            await supabase
-              .from('cuotas_credito')
-              .delete()
-              .eq('fuente_pago_id', fid)
-            await supabase
-              .from('creditos_constructora')
-              .delete()
-              .eq('fuente_pago_id', fid)
-          }
-          // Continuar con rollback estándar
-          await supabase
-            .from('fuentes_pago')
-            .delete()
-            .eq('negociacion_id', negociacion.id)
-          await supabase.from('negociaciones').delete().eq('id', negociacion.id)
-          throw errorPaso2b
-        }
-      } // end if (datosSanitizados.fuentes_pago)
-
-      // ==========================================
-      // PASO 3: Actualizar vivienda → 'Asignada'
-      // ==========================================
-      const { error: errorVivienda } = await supabase
-        .from('viviendas')
-        .update({
-          estado: 'Asignada',
+      const { data, error } = await supabase.rpc('crear_negociacion_completa', {
+        p_payload: {
           cliente_id: datosSanitizados.cliente_id,
-          negociacion_id: negociacion.id, // ? NUEVO campo
-          fecha_asignacion: formatDateForDB(getTodayDateString()),
-        })
-        .eq('id', datosSanitizados.vivienda_id)
+          vivienda_id: datosSanitizados.vivienda_id,
+          valor_negociado: datosSanitizados.valor_negociado,
+          descuento_aplicado: datosSanitizados.descuento_aplicado || 0,
+          tipo_descuento: datosSanitizados.tipo_descuento ?? null,
+          motivo_descuento: datosSanitizados.motivo_descuento ?? null,
+          valor_escritura_publica:
+            datosSanitizados.valor_escritura_publica ?? null,
+          notas: datosSanitizados.notas ?? null,
+          fecha_negociacion: datosSanitizados.fecha_negociacion ?? null,
+          fuentes: (datosSanitizados.fuentes_pago ?? []).map(fuenteParaRpc),
+        } as unknown as Json,
+      })
 
-      if (errorVivienda) {
-        logger.error('? Error actualizando vivienda:', errorVivienda)
-        // ROLLBACK
-        if (tieneFuentesPago) {
-          await supabase
-            .from('fuentes_pago')
-            .delete()
-            .eq('negociacion_id', negociacion.id)
-        }
-        await supabase.from('negociaciones').delete().eq('id', negociacion.id)
-        throw new Error(`Error actualizando vivienda: ${errorVivienda.message}`)
+      if (error) {
+        logger.error('❌ Error creando negociación:', error)
+        throw new Error(error.message)
       }
 
-      // ==========================================
-      // PASO 4: Actualizar cliente ? 'Activo'
-      // ==========================================
-      const { error: errorCliente } = await supabase
-        .from('clientes')
-        .update({ estado: 'Activo' })
-        .eq('id', datosSanitizados.cliente_id)
-
-      if (errorCliente) {
-        logger.error('? Error actualizando cliente:', errorCliente)
-        // ROLLBACK completo
-        if (tieneFuentesPago) {
-          await supabase
-            .from('fuentes_pago')
-            .delete()
-            .eq('negociacion_id', negociacion.id)
-        }
-        await supabase.from('negociaciones').delete().eq('id', negociacion.id)
-        await supabase
-          .from('viviendas')
-          .update({
-            estado: 'Disponible',
-            cliente_id: null,
-            negociacion_id: null,
-            fecha_asignacion: null,
-          })
-          .eq('id', datosSanitizados.vivienda_id)
-        throw new Error(`Error actualizando cliente: ${errorCliente.message}`)
-      }
+      const negociacion = data as unknown as Negociacion
 
       // ==========================================
-      // PASO 5: Sistema de procesos eliminado
-      // ==========================================
-      // ?? NOTA: El sistema de plantillas de proceso fue eliminado.
-      // Se reemplazará con sistema de checklist en Fuentes de Pago.
-
-      // ==========================================
-      // PASO 6: Auditoría enriquecida (no crítica)
+      // Auditoría enriquecida para el historial del cliente (no crítica)
       // ==========================================
       try {
         const [{ data: viviendaAudit }, { data: clienteAudit }] =

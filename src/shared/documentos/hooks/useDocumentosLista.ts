@@ -465,10 +465,11 @@ export function useDocumentosLista({
             new Date(b.fecha_creacion).getTime()) *
           mult
         )
+      // Emisión; sin ella, la de subida (igual que muestra la tabla)
       if (sortCol === 'fecha_documento')
         return (
-          ((a.fecha_documento ? new Date(a.fecha_documento).getTime() : 0) -
-            (b.fecha_documento ? new Date(b.fecha_documento).getTime() : 0)) *
+          (new Date(a.fecha_documento || a.fecha_creacion).getTime() -
+            new Date(b.fecha_documento || b.fecha_creacion).getTime()) *
           mult
         )
       if (sortCol === 'tamano_bytes')

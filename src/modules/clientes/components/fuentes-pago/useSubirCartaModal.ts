@@ -85,21 +85,6 @@ export function useSubirCartaModal({
     return extras.length > 0 ? `${base} - ${extras.join(' ')}` : base
   }, [fuente])
 
-  // Título para el header del modal (más corto)
-  const tituloHeader = useMemo(() => {
-    const base = fuente.tipo_documento_sistema || 'Carta de Aprobación'
-
-    const extras: string[] = []
-    if (fuente.vivienda) {
-      extras.push(`${fuente.vivienda.manzana}${fuente.vivienda.numero}`)
-    }
-    if (fuente.cliente) {
-      extras.push(formatNombreCompleto(fuente.cliente.nombre_completo))
-    }
-
-    return extras.length > 0 ? `${base} - ${extras.join(' ')}` : base
-  }, [fuente])
-
   // Inicializar título cuando se abre el modal o cambia la fuente
   useEffect(() => {
     setTitulo(tituloSugerido)
@@ -263,7 +248,6 @@ export function useSubirCartaModal({
     titulo,
     setTitulo,
     tituloSugerido,
-    tituloHeader,
 
     // Refs
     fileInputRef,

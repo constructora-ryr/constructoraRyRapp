@@ -20,7 +20,6 @@ export * from './clientes-lista.styles'
 export * from '../components/styles/shared.styles'
 
 // ⭐ NUEVOS: Estilos de formularios
-export * from '../components/styles/formulario-cliente.styles'
 
 // ⭐ NUEVOS: Estilos de documentos
 export * from '../documentos/styles/documentos.styles'

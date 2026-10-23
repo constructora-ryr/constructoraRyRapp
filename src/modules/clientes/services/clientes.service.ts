@@ -22,6 +22,13 @@ import {
   sanitizeCrearClienteDTO,
 } from '../utils/sanitize-cliente.utils'
 
+/** Documento repetido (índice único) en palabras del usuario */
+function traducirErrorCliente(error: { code?: string; message?: string }) {
+  if (error.code === '23505' && error.message?.includes('documento'))
+    return new Error('Ya existe un cliente con ese tipo y número de documento')
+  return error
+}
+
 class ClientesService {
   /**
    * Obtener todos los clientes con estadísticas, negociaciones e intereses
@@ -379,7 +386,7 @@ class ClientesService {
 
     if (error) {
       logger.error('❌ Error insertando en DB:', error)
-      throw error
+      throw traducirErrorCliente(error)
     }
 
     // 🔍 Auditar creación de cliente
@@ -423,7 +430,7 @@ class ClientesService {
       .select()
       .single()
 
-    if (error) throw error
+    if (error) throw traducirErrorCliente(error)
 
     // 3. 🔍 Auditar actualización
     if (datosAnteriores) {

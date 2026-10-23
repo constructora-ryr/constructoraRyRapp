@@ -32,6 +32,7 @@ import type {
 import { CreditoConstructoraForm } from '@/modules/fuentes-pago/components/CreditoConstructoraForm'
 import type { ParametrosCredito } from '@/modules/fuentes-pago/types'
 import { Cargador } from '@/shared/components/carga'
+import { cn } from '@/shared/utils/helpers'
 
 import { styles as s } from '../../styles'
 
@@ -92,27 +93,38 @@ export function SeccionFuentesPago({
     )
   }
 
+  const falta = diferencia > 0
+  const sobra = diferencia < 0
+  const activas = fuentes.filter(f => f.enabled).length
+
   return (
     <div className='space-y-3'>
-      {/* Barra de progreso de cobertura */}
-      <div className={s.fuentes.progressWrapper}>
-        <div className='mb-1 flex items-center justify-between'>
-          <span className={s.fuentes.progressLabel}>
-            Por cubrir: {formatCurrency(valorTotal)}
-          </span>
-          <span
-            className={
-              sumaCierra
-                ? 'font-[family-name:var(--font-jakarta)] text-[11px] font-semibold tabular-nums text-emerald-500'
-                : s.fuentes.progressLabelRight
+      {/* Cobertura: cuánto hay que cubrir, cuánto va y cuánto falta */}
+      <div
+        className={cn(
+          'rounded-2xl border p-4 transition-colors',
+          sumaCierra && !sobra
+            ? 'border-emerald-200 bg-emerald-50/60 dark:border-emerald-500/30 dark:bg-emerald-500/10'
+            : sobra
+              ? 'border-amber-200 bg-amber-50/60 dark:border-amber-500/30 dark:bg-amber-500/10'
+              : 'border-cyan-200 bg-cyan-50/50 dark:border-cyan-500/30 dark:bg-cyan-500/10'
+        )}
+      >
+        <div className='grid grid-cols-3 gap-2 text-center'>
+          <Cifra etiqueta='Total a cubrir' valor={formatCurrency(valorTotal)} />
+          <Cifra
+            etiqueta={`Asignado · ${pct.toFixed(0)} %`}
+            valor={formatCurrency(totalFuentes)}
+          />
+          <Cifra
+            etiqueta={sobra ? 'Sobra' : 'Falta'}
+            valor={
+              diferencia !== 0 ? formatCurrency(Math.abs(diferencia)) : '$ 0'
             }
-          >
-            {sumaCierra
-              ? '✓ Cubierto exactamente'
-              : `${formatCurrency(totalFuentes)} (${pct.toFixed(0)}%)`}
-          </span>
+            tono={falta ? 'falta' : sobra ? 'sobra' : 'ok'}
+          />
         </div>
-        <div className={s.fuentes.progressTrack}>
+        <div className='mt-3 h-2.5 overflow-hidden rounded-full bg-white/80 ring-1 ring-black/5 dark:bg-gray-800'>
           <motion.div
             className={
               sumaCierra ? s.fuentes.progressFull : s.fuentes.progressPartial
@@ -121,10 +133,43 @@ export function SeccionFuentesPago({
             transition={{ duration: 0.35, ease: 'easeOut' }}
           />
         </div>
+        <p
+          className={cn(
+            'mt-2 flex items-center gap-1.5 text-xs font-semibold',
+            sumaCierra && !sobra
+              ? 'text-emerald-700 dark:text-emerald-300'
+              : sobra
+                ? 'text-amber-700 dark:text-amber-300'
+                : 'text-gray-700 dark:text-gray-200'
+          )}
+        >
+          {sumaCierra && !sobra ? (
+            <>
+              <Check className='h-3.5 w-3.5' />
+              Cubierto: ya puedes continuar.
+            </>
+          ) : sobra ? (
+            <>
+              <AlertTriangle className='h-3.5 w-3.5' />
+              Hay un excedente de {formatCurrency(Math.abs(diferencia))}: se
+              devolverá al cliente.
+            </>
+          ) : activas === 0 ? (
+            <>
+              <AlertCircle className='h-3.5 w-3.5' />
+              Activa al menos una fuente de pago y escribe su monto.
+            </>
+          ) : (
+            <>
+              <AlertCircle className='h-3.5 w-3.5' />
+              Falta cubrir {formatCurrency(diferencia)} para continuar.
+            </>
+          )}
+        </p>
       </div>
 
-      {/* Lista de fuentes */}
-      <div>
+      {/* Fuentes */}
+      <div className='space-y-2'>
         {fuentes.map(fuente => {
           const tipoConCampos = tiposConCampos.find(
             t => t.nombre === fuente.tipo
@@ -132,77 +177,79 @@ export function SeccionFuentesPago({
           const camposConfig = tipoConCampos?.configuracion_campos?.campos ?? []
           const generaCuotas =
             tipoConCampos?.logica_negocio?.genera_cuotas ?? false
-          // Para crédito constructora: muestra capital (sin intereses) para que
-          // el badge sea coherente con la barra de progreso
+          // Crédito constructora: capital (sin intereses), igual que la barra
           const monto = fuente.config
             ? obtenerMontoParaCierre(fuente.config, tipoConCampos, camposConfig)
             : 0
           const esError = mostrarErroresFuentes && erroresFuentes[fuente.tipo]
+          const Icon = iconForFuente(fuente.tipo)
 
           return (
-            <div key={fuente.tipo}>
-              {/* Fila de toggle */}
-              <div className={s.fuentes.fuenteRow}>
-                {/* Icono */}
-                <div className={s.fuentes.fuenteIconWrapper(fuente.enabled)}>
-                  {(() => {
-                    const Icon = iconForFuente(fuente.tipo)
-                    return (
-                      <Icon className={s.fuentes.fuenteIcon(fuente.enabled)} />
-                    )
-                  })()}
-                </div>
-
-                {/* Switch + nombre */}
-                <span
-                  className={
-                    fuente.enabled
-                      ? s.fuentes.fuenteNombreOn
-                      : s.fuentes.fuenteNombreOff
-                  }
-                >
-                  {fuente.tipo}
+            <div
+              key={fuente.tipo}
+              className={cn(
+                'rounded-2xl border transition-colors',
+                fuente.enabled
+                  ? 'border-cyan-200 bg-white shadow-sm dark:border-cyan-500/30 dark:bg-gray-900'
+                  : 'border-gray-200 bg-gray-50/60 dark:border-gray-700 dark:bg-gray-900/40',
+                esError && 'border-red-300 dark:border-red-500/50'
+              )}
+            >
+              <button
+                type='button'
+                role='switch'
+                aria-checked={fuente.enabled}
+                onClick={() =>
+                  handleFuenteEnabledChange(
+                    fuente.tipo as TipoFuentePago,
+                    !fuente.enabled
+                  )
+                }
+                className='flex w-full items-center gap-3 px-3 py-3 text-left'
+              >
+                <span className={s.fuentes.fuenteIconWrapper(fuente.enabled)}>
+                  <Icon className={s.fuentes.fuenteIcon(fuente.enabled)} />
                 </span>
-
-                {fuente.enabled && monto > 0 && (
+                <span className='min-w-0 flex-1'>
+                  <span
+                    className={
+                      fuente.enabled
+                        ? s.fuentes.fuenteNombreOn
+                        : s.fuentes.fuenteNombreOff
+                    }
+                  >
+                    {fuente.tipo}
+                  </span>
+                  {!fuente.enabled ? (
+                    <span className='block text-xs text-gray-500 dark:text-gray-400'>
+                      Toca para usarla
+                    </span>
+                  ) : null}
+                </span>
+                {fuente.enabled && monto > 0 ? (
                   <span className={s.fuentes.fuenteMontoOn}>
                     {formatCurrency(monto)}
                   </span>
-                )}
-
-                <button
-                  type='button'
-                  role='switch'
-                  aria-checked={fuente.enabled}
-                  className='ml-auto shrink-0'
-                  onClick={() =>
-                    handleFuenteEnabledChange(
-                      fuente.tipo as TipoFuentePago,
-                      !fuente.enabled
-                    )
-                  }
-                >
-                  <div className={s.switch.track(fuente.enabled)}>
-                    <div className={s.switch.thumb(fuente.enabled)} />
-                  </div>
-                </button>
-              </div>
+                ) : null}
+                <span className={s.switch.track(fuente.enabled)}>
+                  <span className={s.switch.thumb(fuente.enabled)} />
+                </span>
+              </button>
 
               {/* Mínimo requerido (traslado) */}
               {minAmounts?.[fuente.tipo] ? (
-                <div className='mx-2 mb-1 flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 dark:border-amber-800 dark:bg-amber-950/30'>
+                <div className='mx-3 mb-2 flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 dark:border-amber-800 dark:bg-amber-950/30'>
                   <AlertTriangle className='h-3.5 w-3.5 shrink-0 text-amber-500' />
-                  <p className='text-xs text-amber-700 dark:text-amber-300'>
+                  <p className='text-xs text-amber-800 dark:text-amber-200'>
                     Mínimo requerido:{' '}
                     <strong>{formatCurrency(minAmounts[fuente.tipo])}</strong>{' '}
-                    (ya abonado en negociación actual)
+                    (ya abonado en la negociación actual)
                   </p>
                 </div>
               ) : null}
 
-              {/* Contenido expandible */}
               <AnimatePresence>
-                {fuente.enabled && (
+                {fuente.enabled ? (
                   <motion.div
                     key={`content-${fuente.tipo}`}
                     initial={{ height: 0, opacity: 0, overflow: 'hidden' }}
@@ -213,6 +260,7 @@ export function SeccionFuentesPago({
                     }}
                     exit={{ overflow: 'hidden', height: 0, opacity: 0 }}
                     transition={{ duration: 0.25, ease: 'easeInOut' }}
+                    className='border-t border-gray-100 px-3 pb-3 pt-3 dark:border-gray-800'
                   >
                     <FuenteExpandida
                       fuente={fuente}
@@ -231,62 +279,44 @@ export function SeccionFuentesPago({
                       }}
                     />
                   </motion.div>
-                )}
+                ) : null}
               </AnimatePresence>
             </div>
           )
         })}
       </div>
+    </div>
+  )
+}
 
-      {/* Panel totales */}
-      <div className={s.fuentes.totalesBox}>
-        <div className={s.fuentes.totalesRow}>
-          <span className={s.fuentes.totalesLabel}>
-            <Banknote className={s.fuentes.totalesLabelIcon} />
-            Total fuentes
-          </span>
-          <span className={s.fuentes.totalesValue}>
-            {formatCurrency(totalFuentes)}
-          </span>
-        </div>
-        <div className={s.fuentes.totalesRow}>
-          <span className={s.fuentes.totalesLabel}>
-            <AlertCircle className={s.fuentes.totalesLabelIcon} />
-            Diferencia
-          </span>
-          <span
-            className={`${s.fuentes.totalesValue} ${
-              diferencia > 0
-                ? 'text-rose-500'
-                : diferencia < 0
-                  ? 'text-amber-500'
-                  : 'text-emerald-500'
-            }`}
-          >
-            {diferencia !== 0 ? formatCurrency(Math.abs(diferencia)) : '—'}
-          </span>
-        </div>
-
-        <div className={s.fuentes.totalesDivider} />
-
-        {sumaCierra && diferencia === 0 ? (
-          <p className={s.fuentes.okMsg}>
-            <Check className={s.fuentes.okIcon} />
-            Puedes continuar
-          </p>
-        ) : sumaCierra && diferencia < 0 ? (
-          <p className='flex items-center gap-1.5 text-sm text-amber-600 dark:text-amber-400'>
-            <AlertTriangle className='h-4 w-4 shrink-0' />
-            Excedente de {formatCurrency(Math.abs(diferencia))} — el cliente
-            recibirá devolución
-          </p>
-        ) : (
-          <p className={s.fuentes.errMsg}>
-            <AlertCircle className={s.fuentes.errIcon} />
-            Falta cubrir {formatCurrency(diferencia)}
-          </p>
+function Cifra({
+  etiqueta,
+  valor,
+  tono,
+}: {
+  etiqueta: string
+  valor: string
+  tono?: 'falta' | 'sobra' | 'ok'
+}) {
+  return (
+    <div className='min-w-0 rounded-xl bg-white/80 px-2 py-2 dark:bg-gray-900/60'>
+      <p className='truncate text-[11px] font-medium text-gray-600 dark:text-gray-300'>
+        {etiqueta}
+      </p>
+      <p
+        className={cn(
+          'truncate text-sm font-bold tabular-nums sm:text-base',
+          tono === 'falta'
+            ? 'text-rose-600 dark:text-rose-400'
+            : tono === 'sobra'
+              ? 'text-amber-600 dark:text-amber-400'
+              : tono === 'ok'
+                ? 'text-emerald-600 dark:text-emerald-400'
+                : 'text-gray-900 dark:text-white'
         )}
-      </div>
+      >
+        {valor}
+      </p>
     </div>
   )
 }

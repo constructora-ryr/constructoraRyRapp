@@ -52,13 +52,6 @@ VALUES
     'Carta de Asignación de Subsidio de Caja de compensación',
     '',
     'DOCUMENTO_OBLIGATORIO', 'Carta de Asignación Subsidio Caja de Compensación', 'Carta de Aprobación', 1, true, 1, 'ESPECIFICO_FUENTE', NULL
-  ),
-  (
-    'Subsidio Caja Compensación', 'carta_aprobacion_subsidio',
-    'Carta de Aprobación Subsidio Caja de Compensación',
-    'Carta emitida por la Caja de Compensación aprobando el subsidio de vivienda del cliente',
-    'Solicita al cliente la carta de aprobación del subsidio emitida por la Caja de Compensación. Debe incluir monto aprobado y condiciones del subsidio.',
-    'DOCUMENTO_OBLIGATORIO', 'Carta Aprobación', 'Carta de Aprobación', 3, true, 1, 'ESPECIFICO_FUENTE', NULL
   )
 ON CONFLICT (tipo_fuente, paso_identificador, version) DO NOTHING;
 

@@ -3706,6 +3706,7 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: undefined
       }
+      crear_negociacion_completa: { Args: { p_payload: Json }; Returns: Json }
       crear_nueva_version_negociacion: {
         Args: {
           p_descuento_aplicado: number
@@ -4008,7 +4009,7 @@ export type Database = {
       }
     }
     Enums: {
-      estado_civil_enum: "Soltero(a)" | "Casado(a)" | "Unión libre" | "Viudo(a)"
+      estado_civil_enum: "Soltero(a)" | "Casado(a)" | "Unión libre" | "Viudo(a)" | "Divorciado(a)" | "Separado(a)"
       estado_usuario: "Activo" | "Inactivo" | "Bloqueado"
       rol_usuario:
         | "Administrador"
@@ -4142,7 +4143,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      estado_civil_enum: ["Soltero(a)", "Casado(a)", "Unión libre", "Viudo(a)"],
+      estado_civil_enum: ["Soltero(a)", "Casado(a)", "Unión libre", "Viudo(a)", "Divorciado(a)", "Separado(a)"],
       estado_usuario: ["Activo", "Inactivo", "Bloqueado"],
       rol_usuario: [
         "Administrador",

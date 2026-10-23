@@ -2,21 +2,21 @@
 
 /**
  * Pestaña Información General — solo orquesta sus tarjetas:
- * - BannerDocumentacion: aviso si falta la cédula
+ * - AvisoDocumentoIdentidad: estado de la cédula (compartido con Documentos)
  * - ResumenNegociacion: valor, abonado, saldo, avance y fuentes de pago
  * - InfoPersonalCard / ContactoUbicacionCard
  * - NotasCard (si hay notas)
  */
 
-import { Clock } from 'lucide-react'
+import { Clock, FolderOpen } from 'lucide-react'
 
 import { formatDateCompact } from '@/lib/utils/date.utils'
+import { AvisoDocumentoIdentidad } from '@/modules/clientes/documentos/components/AvisoDocumentoIdentidad'
 import { useDocumentoIdentidad } from '@/modules/clientes/documentos/hooks/useDocumentoIdentidad'
 import type { Cliente, Negociacion } from '@/modules/clientes/types'
 import { usePermisosQuery } from '@/modules/usuarios/hooks/usePermisosQuery'
 
 import {
-  BannerDocumentacion,
   ContactoUbicacionCard,
   InfoPersonalCard,
   NotasCard,
@@ -55,14 +55,23 @@ export function GeneralTab({
 
   return (
     <div className='space-y-4'>
-      {canMostrarBannerDocumentos && cliente.estado !== 'Renunció' && (
-        <BannerDocumentacion
-          tieneDocumento={tieneCedula}
-          cargandoValidacion={cargandoValidacion}
-          tieneNegociacionActiva={tieneNegociacion}
-          onIrADocumentos={onIrADocumentos}
-        />
-      )}
+      {canMostrarBannerDocumentos &&
+        cliente.estado !== 'Renunció' &&
+        (!cargandoValidacion ? (
+          <AvisoDocumentoIdentidad
+            tieneDocumento={tieneCedula}
+            ventaEnCurso={tieneNegociacion}
+            accion={
+              onIrADocumentos
+                ? {
+                    texto: 'Ir a Documentos',
+                    icon: FolderOpen,
+                    onClick: onIrADocumentos,
+                  }
+                : undefined
+            }
+          />
+        ) : null)}
 
       {mostrarResumen && (
         <ResumenNegociacion

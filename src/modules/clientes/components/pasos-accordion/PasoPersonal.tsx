@@ -1,14 +1,15 @@
 /**
- * PasoPersonal — Paso 1: Datos personales del cliente
- * Campos: nombres, apellidos, tipo_documento, numero_documento,
- *         fecha_nacimiento (opcional), estado_civil (opcional)
+ * PasoPersonal — Paso 1: nombres (con mayúscula inicial automática), tipo de
+ * documento en chips, número con verificación de duplicado mientras se
+ * escribe, fecha de nacimiento con la edad calculada y estado civil.
+ * Se usa en crear y en editar.
  */
 
 'use client'
 
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, type KeyboardEvent } from 'react'
 
-import { motion } from 'framer-motion'
+import { Cake } from 'lucide-react'
 import type {
   FieldErrors,
   Path,
@@ -18,192 +19,187 @@ import type {
   UseFormWatch,
 } from 'react-hook-form'
 
+import { AccordionWizardField } from '@/shared/components/accordion-wizard'
+
+import { useVerificacionDocumento } from '../../hooks/useVerificacionDocumento'
+import { ESTADOS_CIVILES } from '../../types'
+import { capitalizarNombre } from '../../utils/capitalizar-nombre'
+import { EDAD_MINIMA, edad } from '../../utils/fecha-nacimiento'
 import {
   REGLAS_DOCUMENTO,
   type TipoDocumentoColombia,
-} from '@/modules/clientes/utils/validacion-documentos-colombia'
-import {
-  AccordionWizardField,
-  AccordionWizardSelect,
-  fieldStaggerAnim,
-} from '@/shared/components/accordion-wizard'
+} from '../../utils/validacion-documentos-colombia'
 
 import type { ClienteAccordionFormValues } from './cliente-accordion-form.types'
+import { IndicadorDocumento, OpcionesChip, TituloGrupo } from './piezas'
 
 const TIPOS_DOCUMENTO = [
-  { value: 'CC', label: 'Cédula de Ciudadanía' },
-  { value: 'CE', label: 'Cédula de Extranjería' },
-  { value: 'TI', label: 'Tarjeta de Identidad' },
-  { value: 'NIT', label: 'NIT' },
-  { value: 'PP', label: 'Pasaporte' },
-  { value: 'PEP', label: 'PEP' },
+  { valor: 'CC', label: 'Cédula', detalle: 'Cédula de Ciudadanía' },
+  {
+    valor: 'CE',
+    label: 'Cédula extranjería',
+    detalle: 'Cédula de Extranjería',
+  },
+  { valor: 'PP', label: 'Pasaporte', detalle: 'Pasaporte' },
+  { valor: 'PEP', label: 'PEP', detalle: 'Permiso Especial de Permanencia' },
+  {
+    valor: 'NIT',
+    label: 'NIT',
+    detalle: 'Número de Identificación Tributaria',
+  },
+  { valor: 'TI', label: 'Tarjeta identidad', detalle: 'Tarjeta de Identidad' },
 ]
 
-const ESTADOS_CIVILES = [
-  { value: 'Soltero(a)', label: 'Soltero(a)' },
-  { value: 'Casado(a)', label: 'Casado(a)' },
-  { value: 'Unión libre', label: 'Unión libre' },
-  { value: 'Viudo(a)', label: 'Viudo(a)' },
-]
+const OPCIONES_ESTADO_CIVIL = Object.values(ESTADOS_CIVILES).map(v => ({
+  valor: v,
+  label: v,
+}))
 
-interface PasoPersonalProps<TFormValues extends ClienteAccordionFormValues> {
-  register: UseFormRegister<TFormValues>
-  errors: FieldErrors<TFormValues>
-  watch: UseFormWatch<TFormValues>
-  setValue: UseFormSetValue<TFormValues>
+/** Fecha máxima del calendario: hoy hace 18 años (yyyy-mm-dd) */
+function fechaMaxima() {
+  const d = new Date()
+  d.setFullYear(d.getFullYear() - EDAD_MINIMA)
+  return d.toISOString().slice(0, 10)
 }
 
-export function PasoPersonal<TFormValues extends ClienteAccordionFormValues>({
+interface PasoPersonalProps<T extends ClienteAccordionFormValues> {
+  register: UseFormRegister<T>
+  errors: FieldErrors<T>
+  watch: UseFormWatch<T>
+  setValue: UseFormSetValue<T>
+  /** Al editar: el propio cliente no cuenta como documento repetido */
+  clienteId?: string
+}
+
+export function PasoPersonal<T extends ClienteAccordionFormValues>({
   register,
   errors,
   watch,
   setValue,
-}: PasoPersonalProps<TFormValues>) {
-  const nombresField = 'nombres' as Path<TFormValues>
-  const apellidosField = 'apellidos' as Path<TFormValues>
-  const tipoDocumentoField = 'tipo_documento' as Path<TFormValues>
-  const numeroDocumentoField = 'numero_documento' as Path<TFormValues>
-  const fechaNacimientoField = 'fecha_nacimiento' as Path<TFormValues>
-  const estadoCivilField = 'estado_civil' as Path<TFormValues>
-  const tipoDocumento =
-    (watch(tipoDocumentoField) as TipoDocumentoColombia | undefined) ?? 'CC'
-  const reglas = REGLAS_DOCUMENTO[tipoDocumento] ?? REGLAS_DOCUMENTO.CC
-  const prevTipoRef = useRef(tipoDocumento)
-
-  useEffect(() => {
-    if (prevTipoRef.current !== tipoDocumento) {
-      setValue(
-        numeroDocumentoField,
-        '' as PathValue<TFormValues, typeof numeroDocumentoField>,
-        {
-          shouldValidate: false,
-        }
-      )
-      prevTipoRef.current = tipoDocumento
-    }
-  }, [numeroDocumentoField, setValue, tipoDocumento])
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      const controlKeys = [
-        'Backspace',
-        'Delete',
-        'Tab',
-        'ArrowLeft',
-        'ArrowRight',
-        'Enter',
-        'Home',
-        'End',
-      ]
-      if (controlKeys.includes(e.key)) return
-      if (e.ctrlKey || e.metaKey) return
-
-      if (reglas.soloDigitos) {
-        if (!/^\d$/.test(e.key)) e.preventDefault()
-      } else if (tipoDocumento === 'NIT') {
-        if (!/^[\d-]$/.test(e.key)) e.preventDefault()
-      } else if (tipoDocumento === 'PP') {
-        if (!/^[a-zA-Z0-9]$/.test(e.key)) e.preventDefault()
-      }
-    },
-    [reglas.soloDigitos, tipoDocumento]
+  clienteId,
+}: PasoPersonalProps<T>) {
+  const campo = (c: keyof ClienteAccordionFormValues) => c as Path<T>
+  const poner = useCallback(
+    (c: keyof ClienteAccordionFormValues, v: string, validar = true) =>
+      setValue(c as Path<T>, v as PathValue<T, Path<T>>, {
+        shouldValidate: validar,
+        shouldDirty: true,
+      }),
+    [setValue]
   )
 
-  const handleInput = useCallback(
-    (e: React.FormEvent<HTMLInputElement>) => {
-      if (tipoDocumento === 'PP') {
-        const input = e.currentTarget
-        const upper = input.value.toUpperCase()
-        if (input.value !== upper) {
-          input.value = upper
-        }
-      }
-    },
-    [tipoDocumento]
-  )
+  const tipo = (watch(campo('tipo_documento')) as string) || 'CC'
+  const numero = watch(campo('numero_documento')) as string | undefined
+  const fecha = (watch(campo('fecha_nacimiento')) as string) || ''
+  const estadoCivil = (watch(campo('estado_civil')) as string) || ''
+  const reglas =
+    REGLAS_DOCUMENTO[tipo as TipoDocumentoColombia] ?? REGLAS_DOCUMENTO.CC
+  const documento = useVerificacionDocumento(tipo, numero, clienteId)
+  const anos = edad(fecha)
+
+  // Al cambiar el tipo (solo cuando lo cambia el usuario, no al cargar un
+  // cliente para editar), el número anterior ya no aplica
+  const cambiarTipo = (nuevo: string) => {
+    if (nuevo === tipo) return
+    poner('tipo_documento', nuevo)
+    poner('numero_documento', '', false)
+  }
+
+  const filtrarTeclas = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.ctrlKey || e.metaKey || e.key.length !== 1) return
+    const permitido = reglas.soloDigitos
+      ? /^\d$/
+      : tipo === 'NIT'
+        ? /^[\d-]$/
+        : /^[a-zA-Z0-9]$/
+    if (!permitido.test(e.key)) e.preventDefault()
+  }
+
+  const nombre = (c: 'nombres' | 'apellidos') =>
+    register(campo(c), {
+      onBlur: e => poner(c, capitalizarNombre(e.target.value)),
+    })
 
   return (
-    <div className='space-y-4'>
+    <div className='space-y-5'>
       <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-        <motion.div {...fieldStaggerAnim(0)}>
-          <AccordionWizardField
-            {...register(nombresField)}
-            label='Nombres'
-            required
-            moduleName='clientes'
-            error={errors.nombres?.message as string}
-          />
-        </motion.div>
-        <motion.div {...fieldStaggerAnim(1)}>
-          <AccordionWizardField
-            {...register(apellidosField)}
-            label='Apellidos'
-            required
-            moduleName='clientes'
-            error={errors.apellidos?.message as string}
-          />
-        </motion.div>
+        <AccordionWizardField
+          {...nombre('nombres')}
+          label='Nombres'
+          required
+          autoComplete='off'
+          moduleName='clientes'
+          error={errors.nombres?.message as string}
+        />
+        <AccordionWizardField
+          {...nombre('apellidos')}
+          label='Apellidos'
+          required
+          autoComplete='off'
+          moduleName='clientes'
+          error={errors.apellidos?.message as string}
+        />
       </div>
 
-      <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-        <motion.div {...fieldStaggerAnim(2)}>
-          <AccordionWizardSelect
-            {...register(tipoDocumentoField)}
-            label='Tipo de Documento'
-            required
-            moduleName='clientes'
-            error={errors.tipo_documento?.message as string}
-          >
-            {TIPOS_DOCUMENTO.map(tipo => (
-              <option key={tipo.value} value={tipo.value}>
-                {tipo.label}
-              </option>
-            ))}
-          </AccordionWizardSelect>
-        </motion.div>
-        <motion.div {...fieldStaggerAnim(3)}>
-          <AccordionWizardField
-            {...register(numeroDocumentoField)}
-            label='Número de Documento'
-            required
-            moduleName='clientes'
-            error={errors.numero_documento?.message as string}
-            inputMode={reglas.inputMode}
-            maxLength={reglas.maxLength}
-            onKeyDown={handleKeyDown}
-            onInput={handleInput}
-          />
-          <p className='mt-1 text-[11px] text-gray-400 dark:text-gray-500'>
-            {reglas.descripcion}
-          </p>
-        </motion.div>
+      <div>
+        <TituloGrupo requerido>Tipo de documento</TituloGrupo>
+        <OpcionesChip
+          etiqueta='Tipo de documento'
+          opciones={TIPOS_DOCUMENTO}
+          valor={tipo}
+          onCambiar={cambiarTipo}
+        />
       </div>
 
-      <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-        <motion.div {...fieldStaggerAnim(4)}>
-          <AccordionWizardField
-            {...register(fechaNacimientoField)}
-            label='Fecha de Nacimiento'
-            type='date'
-            moduleName='clientes'
-            error={errors.fecha_nacimiento?.message as string}
-          />
-        </motion.div>
-        <motion.div {...fieldStaggerAnim(5)}>
-          <AccordionWizardSelect
-            {...register(estadoCivilField)}
-            label='Estado Civil'
-            moduleName='clientes'
-            error={errors.estado_civil?.message as string}
-          >
-            <option value=''>Sin especificar</option>
-            {ESTADOS_CIVILES.map(estado => (
-              <option key={estado.value} value={estado.value}>
-                {estado.label}
-              </option>
-            ))}
-          </AccordionWizardSelect>
-        </motion.div>
+      <div>
+        <AccordionWizardField
+          {...register(campo('numero_documento'), {
+            setValueAs: (v: string) =>
+              tipo === 'PP' ? String(v ?? '').toUpperCase() : v,
+          })}
+          label={`Número de ${reglas.label.toLowerCase()}`}
+          required
+          autoComplete='off'
+          moduleName='clientes'
+          inputMode={reglas.inputMode}
+          maxLength={reglas.maxLength}
+          onKeyDown={filtrarTeclas}
+          error={errors.numero_documento?.message as string}
+        />
+        <div className='mt-1.5 flex flex-wrap items-center justify-between gap-2'>
+          <p className='text-[11px] text-gray-400'>{reglas.descripcion}</p>
+          <IndicadorDocumento estado={documento} />
+        </div>
+      </div>
+
+      <div className='grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto] sm:items-start'>
+        <AccordionWizardField
+          {...register(campo('fecha_nacimiento'))}
+          label='Fecha de nacimiento'
+          type='date'
+          max={fechaMaxima()}
+          moduleName='clientes'
+          error={errors.fecha_nacimiento?.message as string}
+        />
+        {anos !== null ? (
+          <span className='inline-flex h-[52px] items-center gap-2 rounded-xl bg-cyan-50 px-4 text-sm font-semibold text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-300'>
+            <Cake className='h-4 w-4' />
+            {anos} años
+          </span>
+        ) : null}
+      </div>
+
+      <div>
+        <TituloGrupo ayuda='Toca de nuevo para quitarlo'>
+          Estado civil
+        </TituloGrupo>
+        <OpcionesChip
+          etiqueta='Estado civil'
+          opciones={OPCIONES_ESTADO_CIVIL}
+          valor={estadoCivil}
+          onCambiar={v => poner('estado_civil', v)}
+          permitirVacio
+        />
       </div>
     </div>
   )
