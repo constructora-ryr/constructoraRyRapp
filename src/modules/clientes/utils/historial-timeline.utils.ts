@@ -13,6 +13,18 @@ import type {
 /** Campos de documento que solo afectan la UI (anclar): no son historial */
 const CAMPOS_UI_DOCUMENTO = new Set(['es_importante', 'anclado_at'])
 
+/**
+ * Ediciones que se explican solo por sus campos. Si todos los campos son
+ * internos (p. ej. el enlace a la cédula que se guarda al subirla) no queda
+ * nada que mostrar. Las de negociación quedan fuera: algunas se muestran
+ * por su motivo (rebalanceo, cierre) aunque no traigan campos.
+ */
+const EDICIONES_SOLO_CAMPOS = new Set([
+  'cliente_actualizado',
+  'interes_actualizado',
+  'evento_generico',
+])
+
 /** Descarta eventos técnicos que no aportan al historial visible */
 export function esEventoVisible(ev: EventoHistorialHumanizado): boolean {
   const operacion = ev.metadata?.tipo_operacion as string | undefined
@@ -29,6 +41,14 @@ export function esEventoVisible(ev: EventoHistorialHumanizado): boolean {
       if (campos.length > 0 && campos.every(c => CAMPOS_UI_DOCUMENTO.has(c)))
         return false
     }
+  }
+
+  if (
+    ev.accion === 'UPDATE' &&
+    EDICIONES_SOLO_CAMPOS.has(ev.tipo) &&
+    !ev.detalles?.length
+  ) {
+    return false
   }
 
   // La negociación destino de un traslado ya está en el evento 'traslado_vivienda'

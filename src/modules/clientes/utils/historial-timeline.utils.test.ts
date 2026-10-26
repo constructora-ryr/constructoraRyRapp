@@ -171,3 +171,34 @@ describe('contarPorCategoria', () => {
     ).toEqual({ todos: 3, clientes: 1, notas: 2 })
   })
 })
+
+describe('esEventoVisible: ediciones sin nada que mostrar', () => {
+  const detalle = {
+    campo: 'telefono',
+    etiqueta: 'Teléfono',
+    valorAnterior: null,
+    valorNuevo: '300',
+    tipo: 'texto' as const,
+  }
+
+  it('oculta la edición del cliente que solo tocó campos internos', () => {
+    // p. ej. documento_identidad_url al subir la cédula: sin detalles visibles
+    expect(esEventoVisible(evento({ detalles: undefined }))).toBe(false)
+  })
+
+  it('muestra la edición del cliente con campos visibles', () => {
+    expect(esEventoVisible(evento({ detalles: [detalle] }))).toBe(true)
+  })
+
+  it('no oculta ediciones de negociación sin campos (se muestran por su motivo)', () => {
+    expect(
+      esEventoVisible(
+        evento({
+          tipo: 'negociacion_actualizada',
+          tabla: 'negociaciones',
+          detalles: undefined,
+        })
+      )
+    ).toBe(true)
+  })
+})
