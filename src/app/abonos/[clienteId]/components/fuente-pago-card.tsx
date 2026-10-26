@@ -37,6 +37,7 @@ import {
   esSubsidioCajaCompensacion as checkSubsidioCaja,
   esSubsidioMiCasaYa as checkSubsidioMCY,
 } from '@/shared/constants/fuentes-pago.constants'
+import { conPestana } from '@/shared/hooks/usePestanaUrl'
 import { cn } from '@/shared/utils/helpers'
 
 interface FuentePagoCardProps {
@@ -107,11 +108,7 @@ export function FuentePagoCard({
     capital !== null ? Math.max(0, fuente.monto_aprobado - capital) : 0
 
   const irADocumentos = clienteSlug
-    ? {
-        href: `/clientes/${clienteSlug}`,
-        onClick: () =>
-          sessionStorage.setItem('cliente-tab-intent', 'documentos'),
-      }
+    ? { href: conPestana(`/clientes/${clienteSlug}`, 'documentos') }
     : null
 
   const detalle = (
@@ -355,7 +352,6 @@ export function FuentePagoCard({
               {irADocumentos ? (
                 <Link
                   href={irADocumentos.href}
-                  onClick={irADocumentos.onClick}
                   className='inline-flex w-full shrink-0 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-amber-500/25 transition-all hover:-translate-y-0.5 sm:w-auto sm:py-2'
                 >
                   <Upload className='h-4 w-4' />

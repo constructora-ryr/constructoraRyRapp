@@ -26,6 +26,7 @@ import { useClienteQuery } from '@/modules/clientes/hooks'
 import { useDocumentosQuery } from '@/shared/documentos/hooks/useDocumentosQuery'
 import { CategoriasService } from '@/shared/documentos/services'
 import { useDocumentosStore } from '@/shared/documentos/store/documentos.store'
+import { usePestanaUrl } from '@/shared/hooks/usePestanaUrl'
 
 interface UseClienteDetalleProps {
   clienteId: string // UUID del cliente (resuelto en el Server Component)
@@ -41,6 +42,14 @@ export type TabType =
   | 'vivienda-asignada'
   | 'fuentes-pago'
 
+const PESTANAS = [
+  'general',
+  'intereses',
+  'negociacion',
+  'documentos',
+  'historial',
+] as const
+
 export function useClienteDetalle({ clienteId }: UseClienteDetalleProps) {
   const { user } = useAuth()
 
@@ -50,26 +59,10 @@ export function useClienteDetalle({ clienteId }: UseClienteDetalleProps) {
 
   // clienteId ya es un UUID resuelto por el Server Component
   const clienteUUID = clienteId
-  const [activeTab, setActiveTab] = useState<TabType>('general')
+  // Pestaña en la URL (?tab=historial): sobrevive a recargar y otros
+  // módulos enlazan directo a una pestaña con conPestana()
+  const [activeTab, setPestana] = usePestanaUrl(PESTANAS, 'general')
   const [modalInteresAbierto, setModalInteresAbierto] = useState(false)
-
-  // Activar tab desde intent guardado en sessionStorage (p.ej. desde módulo Abonos)
-  useEffect(() => {
-    const intent = sessionStorage.getItem('cliente-tab-intent')
-    if (
-      intent &&
-      [
-        'general',
-        'intereses',
-        'negociacion',
-        'documentos',
-        'historial',
-      ].includes(intent)
-    ) {
-      setActiveTab(intent as TabType)
-      sessionStorage.removeItem('cliente-tab-intent')
-    }
-  }, [])
 
   // =====================================================
   // STORES Y QUERIES
@@ -141,9 +134,13 @@ export function useClienteDetalle({ clienteId }: UseClienteDetalleProps) {
   /**
    * Cambiar tab activo programáticamente
    */
-  const cambiarTab = useCallback((tab: TabType) => {
-    setActiveTab(tab)
-  }, [])
+  const cambiarTab = useCallback(
+    (tab: TabType) => {
+      if ((PESTANAS as readonly string[]).includes(tab))
+        setPestana(tab as (typeof PESTANAS)[number])
+    },
+    [setPestana]
+  )
 
   /**
    * Abrir modal de registrar interés
@@ -163,8 +160,8 @@ export function useClienteDetalle({ clienteId }: UseClienteDetalleProps) {
    * Cambiar a tab de documentos (usado desde otros tabs)
    */
   const irATabDocumentos = useCallback(() => {
-    setActiveTab('documentos')
-  }, [])
+    setPestana('documentos')
+  }, [setPestana])
 
   // =====================================================
   // COMPUTED

@@ -24,6 +24,7 @@ import {
   type TabDetalle,
 } from '@/shared/components/detalle/DetalleTabs'
 import { DocumentosListaEsqueleto } from '@/shared/documentos/components/lista/DocumentosListaEsqueleto'
+import { usePestanaUrl } from '@/shared/hooks/usePestanaUrl'
 
 import {
   FONDO_DETALLE,
@@ -48,7 +49,8 @@ const AbonosTab = dynamic(
   { loading: () => <AbonosEsqueleto /> }
 )
 
-type TabVivienda = 'info' | 'documentos' | 'abonos'
+const PESTANAS = ['info', 'documentos', 'abonos'] as const
+type TabVivienda = (typeof PESTANAS)[number]
 
 export default function ViviendaDetalleClient({
   viviendaId,
@@ -61,16 +63,19 @@ export default function ViviendaDetalleClient({
   const puedeVerAbonos = esAdmin || puede('abonos', 'ver')
 
   const { vivienda, loading, error } = useViviendaQuery(viviendaId)
-  const [activa, setActiva] = useState<TabVivienda>('info')
+  // Pestaña en la URL (?tab=documentos): sobrevive a recargar
+  const [pestanaUrl, setPestana] = usePestanaUrl(PESTANAS, 'info')
+  const activa: TabVivienda =
+    pestanaUrl === 'abonos' && !puedeVerAbonos ? 'info' : pestanaUrl
   const [visitadas, setVisitadas] = useState<Set<TabVivienda>>(
-    () => new Set(['info'])
+    () => new Set<TabVivienda>(['info', activa])
   )
 
   if (error) return <ViviendaNoEncontrada mensaje={error.message} />
   if (loading || !vivienda) return <ViviendaDetalleCargando />
 
   const cambiar = (tab: TabVivienda) => {
-    setActiva(tab)
+    setPestana(tab)
     setVisitadas(prev => (prev.has(tab) ? prev : new Set(prev).add(tab)))
   }
 
@@ -89,8 +94,10 @@ export default function ViviendaDetalleClient({
       : []),
   ]
 
+  // La activa se monta siempre: con ?tab=abonos el permiso llega después del
+  // primer render y la pestaña aún no está en `visitadas`
   const panel = (tab: TabVivienda, contenido: React.ReactNode) =>
-    visitadas.has(tab) ? (
+    visitadas.has(tab) || activa === tab ? (
       <div
         role='tabpanel'
         id={`panel-${tab}`}

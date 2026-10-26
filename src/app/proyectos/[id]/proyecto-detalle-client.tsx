@@ -23,6 +23,7 @@ import { formatearEstadoProyecto } from '@/modules/proyectos/utils/estado.utils'
 import { usePermisosQuery } from '@/modules/usuarios/hooks'
 import { Button } from '@/shared/components/ui/button'
 import { Modal } from '@/shared/components/ui/Modal'
+import { usePestanaUrl } from '@/shared/hooks/usePestanaUrl'
 
 import * as styles from './proyecto-detalle.styles'
 import { DocumentosTab, GeneralTab } from './tabs'
@@ -31,7 +32,7 @@ interface ProyectoDetalleClientProps {
   proyectoId: string
 }
 
-type TabType = 'info' | 'documentos' | 'manzanas'
+const PESTANAS = ['info', 'documentos', 'manzanas'] as const
 
 const estadoColors = {
   en_planificacion:
@@ -57,7 +58,8 @@ export default function ProyectoDetalleClient({
   const { eliminarProyecto } = useProyectosQuery()
 
   // Estados para modales
-  const [activeTab, setActiveTab] = useState<TabType>('info')
+  // Pestaña en la URL (?tab=manzanas): sobrevive a recargar
+  const [activeTab, setActiveTab] = usePestanaUrl(PESTANAS, 'info')
   const [modalEliminar, setModalEliminar] = useState(false)
 
   const handleEdit = () => {

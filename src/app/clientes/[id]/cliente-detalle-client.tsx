@@ -134,7 +134,7 @@ export default function ClienteDetalleClient({
     clienteUUID,
     cliente,
     loading,
-    activeTab,
+    activeTab: pestanaUrl,
     modalInteresAbierto,
     tieneCedula,
     totalDocumentos,
@@ -143,6 +143,19 @@ export default function ClienteDetalleClient({
     cerrarModalInteres,
     recargarCliente,
   } = useClienteDetalle({ clienteId })
+
+  // La pestaña llega en la URL (?tab=…): si el usuario no tiene permiso para
+  // ella, se abre Información general (la barra ni siquiera la muestra)
+  const permitida: Record<TabId, boolean> = {
+    general: true,
+    intereses: true,
+    negociacion: permisos.canVerNegociacion,
+    documentos: permisos.canVerDocumentos,
+    historial: permisos.canVerHistorial,
+  }
+  const activeTab: TabId = permitida[pestanaUrl as TabId]
+    ? (pestanaUrl as TabId)
+    : 'general'
 
   // Mount-once: mantiene tabs visitados en el DOM (ocultos con `hidden`) para evitar re-fetches
   const [visitedTabs, setVisitedTabs] = useState<Set<string>>(

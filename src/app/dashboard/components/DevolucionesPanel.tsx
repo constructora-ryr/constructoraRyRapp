@@ -8,6 +8,7 @@ import { ChevronRight, FileX, HandCoins, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 
 import { construirURLCliente } from '@/lib/utils/slug.utils'
+import { conPestana } from '@/shared/hooks/usePestanaUrl'
 
 import type { DashboardStatsData } from '../hooks/useDashboardStats'
 
@@ -33,15 +34,6 @@ function iniciales(nombre: string | null): string {
   if (!nombre) return '?'
   const partes = nombre.trim().split(/\s+/)
   return ((partes[0]?.[0] ?? '') + (partes[1]?.[0] ?? '')).toUpperCase()
-}
-
-/** La ficha del cliente abre en la pestaña Negociación, donde se registra la devolución */
-function abrirEnNegociacion() {
-  try {
-    sessionStorage.setItem('cliente-tab-intent', 'negociacion')
-  } catch {
-    // sessionStorage no disponible: la ficha abre en su pestaña por defecto
-  }
 }
 
 export interface DevolucionesPermisos {
@@ -118,11 +110,15 @@ function DevolucionesPanelComponent({
       ) : (
         <ul className='-mx-2 flex flex-col gap-0.5'>
           {devoluciones.items.map(d => {
+            // La ficha abre en Negociación, donde se registra la devolución
             const href = permisos.clientes
-              ? construirURLCliente({
-                  id: d.clienteId,
-                  nombre_completo: d.cliente ?? undefined,
-                })
+              ? conPestana(
+                  construirURLCliente({
+                    id: d.clienteId,
+                    nombre_completo: d.cliente ?? undefined,
+                  }),
+                  'negociacion'
+                )
               : undefined
             const subtitulo = [
               d.vivienda && `Casa ${d.vivienda}`,
@@ -161,7 +157,6 @@ function DevolucionesPanelComponent({
                 {href ? (
                   <Link
                     href={href}
-                    onClick={abrirEnNegociacion}
                     className={`${cls} hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 dark:hover:bg-slate-700/40`}
                   >
                     {body}
