@@ -11,6 +11,8 @@ import { ArrowRight, DollarSign, Layers, Settings, Shield } from 'lucide-react'
 
 import Link from 'next/link'
 
+import { TarjetaInactividad } from '@/modules/configuracion/components/TarjetaInactividad'
+
 interface AdminContentProps {
   canView: boolean
   canCreate: boolean
@@ -168,6 +170,11 @@ export default function AdminContent({
                 </div>
               </Link>
             </motion.div>
+          </div>
+
+          {/* Seguridad de sesión */}
+          <div className='mt-6'>
+            <TarjetaInactividad />
           </div>
         </motion.div>
       </div>

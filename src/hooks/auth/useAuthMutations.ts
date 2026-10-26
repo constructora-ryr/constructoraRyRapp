@@ -146,7 +146,10 @@ export function useLogoutMutation() {
   return useMutation({
     mutationFn: async () => {
       debugLog('Ejecutando supabase.auth.signOut()...')
-      const { error } = await supabase.auth.signOut()
+      // Solo este dispositivo: cerrar en todos es una acción aparte
+      // (Perfil → Sesiones activas). El 'global' por defecto de Supabase
+      // sacaría al usuario también del celular u otras pestañas.
+      const { error } = await supabase.auth.signOut({ scope: 'local' })
       if (error) {
         errorLog('logout-mutation', error)
         throw error
