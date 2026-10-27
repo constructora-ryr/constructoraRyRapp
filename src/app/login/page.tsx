@@ -56,7 +56,9 @@ function LoginConReinicio() {
       ? 'restablecida'
       : params?.get('sesion') === 'cerrada'
         ? 'sesion-cerrada'
-        : null
+        : params?.get('sesion') === 'expirada'
+          ? 'sesion-expirada'
+          : null
   return <Login key={marca} aviso={aviso} />
 }
 

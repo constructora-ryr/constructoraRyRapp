@@ -81,10 +81,14 @@ export function useInactividad({
   const cerrar = useCallback((avisadoPorOtraPestana: boolean) => {
     if (cerrandoRef.current) return
     cerrandoRef.current = true
+    // Solo si la cuenta regresiva estaba en pantalla se muestra "Sesión
+    // cerrada por inactividad"; si no, volvió tras un rato largo
+    const vioElAviso = faseRef.current === 'aviso'
     faseRef.current = 'expirada'
     setEstado({ fase: 'expirada', restanteMs: 0 })
     void cerrarSesion({
       porInactividad: true,
+      vioElAviso,
       avisadoPorOtraPestana,
       minutos: Math.round(limiteRef.current / 60_000),
       email: sesionRef.current.email,

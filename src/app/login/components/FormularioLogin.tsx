@@ -12,6 +12,7 @@ import {
   AlertCircle,
   ArrowRight,
   CheckCircle2,
+  Clock,
   Eye,
   EyeOff,
   Loader2,
@@ -30,12 +31,29 @@ import {
 import { useLogin } from '../useLogin'
 
 /** De dónde llega el usuario al login, para mostrarle un aviso */
-export type AvisoLogin = 'restablecida' | 'sesion-cerrada'
+export type AvisoLogin = 'restablecida' | 'sesion-cerrada' | 'sesion-expirada'
 
-const TEXTO_AVISO: Record<AvisoLogin, string> = {
-  restablecida:
-    'Tu contraseña se actualizó. Ya puedes iniciar sesión con la nueva.',
-  'sesion-cerrada': 'Cerraste sesión correctamente. ¡Hasta pronto!',
+const AVISOS: Record<
+  AvisoLogin,
+  { texto: string; tono: 'exito' | 'aviso'; icon: typeof CheckCircle2 }
+> = {
+  restablecida: {
+    texto: 'Tu contraseña se actualizó. Ya puedes iniciar sesión con la nueva.',
+    tono: 'exito',
+    icon: CheckCircle2,
+  },
+  'sesion-cerrada': {
+    texto: 'Cerraste sesión correctamente. ¡Hasta pronto!',
+    tono: 'exito',
+    icon: CheckCircle2,
+  },
+  // Volvió tras un tiempo largo sin usar la app (otro día, equipo suspendido)
+  'sesion-expirada': {
+    texto:
+      'Tu sesión anterior se cerró por seguridad tras un tiempo sin uso. Inicia sesión para continuar.',
+    tono: 'aviso',
+    icon: Clock,
+  },
 }
 
 export function FormularioLogin({
@@ -70,8 +88,8 @@ export function FormularioLogin({
 
       {aviso && !l.error ? (
         <div className='mb-5'>
-          <AvisoAuth tono='exito' icon={CheckCircle2}>
-            {TEXTO_AVISO[aviso]}
+          <AvisoAuth tono={AVISOS[aviso].tono} icon={AVISOS[aviso].icon}>
+            {AVISOS[aviso].texto}
           </AvisoAuth>
         </div>
       ) : null}
