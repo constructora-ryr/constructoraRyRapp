@@ -20,28 +20,94 @@ import type {
 // OBTENER NEGOCIACIONES ACTIVAS
 // =====================================================
 
+const SELECT_NEGOCIACION_ABONOS = `
+  *,
+  clientes!negociaciones_cliente_id_fkey(id, nombres, apellidos, numero_documento, telefono, email, ciudad),
+  viviendas!negociaciones_vivienda_id_fkey(id, numero, manzana_id, valor_base, area, tipo_vivienda),
+  fuentes_pago!fuentes_pago_negociacion_id_fkey(*, tipos_fuentes_pago!fk_fuentes_pago_tipo_fuente(orden))
+`
+
+type FilaNegociacionAbonos = Record<string, unknown> & {
+  viviendas: unknown
+  clientes: unknown
+  fuentes_pago: unknown
+}
+
 /**
- * Obtiene todas las negociaciones en estado activo
- * ✅ ACTUALIZADO (2025-10-23): Estados según migración 003
- * Estados considerados: 'Activa' (negociaciones activas que permiten abonos)
- * Consultar: docs/DATABASE-SCHEMA-REFERENCE-ACTUALIZADO.md
+ * Completa las filas con manzana y proyecto (viviendas → manzanas →
+ * proyectos, en dos consultas) y deja las fuentes activas ordenadas.
+ */
+async function completarNegociaciones(
+  filas: FilaNegociacionAbonos[]
+): Promise<NegociacionConAbonos[]> {
+  const viviendaDe = (n: FilaNegociacionAbonos) =>
+    (Array.isArray(n.viviendas) ? n.viviendas[0] : n.viviendas) as
+      | { manzana_id?: string }
+      | null
+      | undefined
+
+  const manzanaIds = [
+    ...new Set(filas.map(n => viviendaDe(n)?.manzana_id).filter(Boolean)),
+  ] as string[]
+  const { data: manzanas } = manzanaIds.length
+    ? await supabase
+        .from('manzanas')
+        .select('id, nombre, proyecto_id')
+        .in('id', manzanaIds)
+    : { data: [] }
+
+  const proyectoIds = [
+    ...new Set((manzanas ?? []).map(m => m.proyecto_id).filter(Boolean)),
+  ] as string[]
+  const { data: proyectos } = proyectoIds.length
+    ? await supabase
+        .from('proyectos')
+        .select('id, nombre, ubicacion')
+        .in('id', proyectoIds)
+    : { data: [] }
+
+  const manzanaMap = new Map((manzanas ?? []).map(m => [m.id, m]))
+  const proyectoMap = new Map((proyectos ?? []).map(p => [p.id, p]))
+
+  return filas.map(item => {
+    const vivienda = viviendaDe(item)
+    const manzana = manzanaMap.get(vivienda?.manzana_id ?? '')
+    const proyecto = proyectoMap.get(manzana?.proyecto_id ?? '')
+    const fuentes = Array.isArray(item.fuentes_pago)
+      ? (item.fuentes_pago as Array<Record<string, unknown>>)
+      : []
+
+    return {
+      ...item,
+      cliente: Array.isArray(item.clientes) ? item.clientes[0] : item.clientes,
+      vivienda: { ...(vivienda ?? {}), manzana: manzana || undefined },
+      proyecto: proyecto || { id: '', nombre: 'Sin proyecto', ubicacion: '' },
+      fuentes_pago: fuentes
+        // Excluir fuentes inactivas (soporta ambas variantes de nombre de columna)
+        .filter(
+          fp =>
+            String(fp.estado || fp.estado_fuente || '').toLowerCase() !==
+            'inactiva'
+        )
+        .sort((a, b) => {
+          const orden = (f: Record<string, unknown>) =>
+            (f.tipos_fuentes_pago as { orden?: number } | null)?.orden ?? 999
+          return orden(a) - orden(b)
+        })
+        .map(fp => ({ ...fp, abonos: [] })),
+    }
+  }) as unknown as NegociacionConAbonos[]
+}
+
+/**
+ * Clientes por abonar: negociaciones 'Activa' con saldo pendiente.
  */
 export async function obtenerNegociacionesActivas(): Promise<
   NegociacionConAbonos[]
 > {
-  // Query con campos REALES verificados en DB
-  // Solo negociaciones 'Activa' permiten registrar abonos
-  // Especificamos la relación exacta para evitar ambigüedad
   const { data, error } = await supabase
     .from('negociaciones')
-    .select(
-      `
-      *,
-      clientes!negociaciones_cliente_id_fkey(id, nombres, apellidos, numero_documento, telefono, email, ciudad),
-      viviendas!negociaciones_vivienda_id_fkey(id, numero, manzana_id, valor_base, area, tipo_vivienda),
-      fuentes_pago!fuentes_pago_negociacion_id_fkey(*, tipos_fuentes_pago!fk_fuentes_pago_tipo_fuente(orden))
-    `
-    )
+    .select(SELECT_NEGOCIACION_ABONOS)
     .eq('estado', 'Activa')
     .or('saldo_pendiente.gt.0,saldo_pendiente.is.null')
     .order('fecha_creacion', { ascending: false })
@@ -50,73 +116,35 @@ export async function obtenerNegociacionesActivas(): Promise<
     logger.error('❌ Error obteniendo negociaciones activas:', error)
     throw new Error(`Error al obtener negociaciones: ${error.message}`)
   }
+  return completarNegociaciones((data ?? []) as FilaNegociacionAbonos[])
+}
 
-  // Obtener manzanas y proyectos por separado (viviendas → manzanas → proyectos)
-  const manzanaIds = [
-    ...new Set(
-      data
-        ?.map(n => {
-          const vivienda = Array.isArray(n.viviendas)
-            ? n.viviendas[0]
-            : n.viviendas
-          return vivienda?.manzana_id
-        })
-        .filter(Boolean)
-    ),
-  ]
+/**
+ * Negociación de un cliente para el detalle de abonos, aunque ya esté
+ * pagada: primero la activa o suspendida; si no, la completada más reciente.
+ */
+export async function obtenerNegociacionAbonosCliente(
+  clienteId: string
+): Promise<NegociacionConAbonos | null> {
+  const { data, error } = await supabase
+    .from('negociaciones')
+    .select(SELECT_NEGOCIACION_ABONOS)
+    .eq('cliente_id', clienteId)
+    .in('estado', ['Activa', 'Suspendida', 'Completada'])
+    .order('fecha_creacion', { ascending: false })
 
-  const { data: manzanas } = await supabase
-    .from('manzanas')
-    .select('id, nombre, proyecto_id')
-    .in('id', manzanaIds)
+  if (error) {
+    logger.error('❌ Error obteniendo la negociación del cliente:', error)
+    throw new Error(`Error al obtener la negociación: ${error.message}`)
+  }
 
-  const proyectoIds = [
-    ...new Set(manzanas?.map(m => m.proyecto_id).filter(Boolean)),
-  ]
-
-  const { data: proyectos } = await supabase
-    .from('proyectos')
-    .select('id, nombre, ubicacion')
-    .in('id', proyectoIds)
-
-  // Crear maps
-  const manzanaMap = new Map(manzanas?.map(m => [m.id, m]) || [])
-  const proyectoMap = new Map(proyectos?.map(p => [p.id, p]) || [])
-
-  return (data ?? []).map(item => {
-    const vivienda = Array.isArray(item.viviendas)
-      ? item.viviendas[0]
-      : item.viviendas
-    const manzana = manzanaMap.get(vivienda?.manzana_id ?? '')
-    const proyecto = proyectoMap.get(manzana?.proyecto_id ?? '')
-
-    return {
-      ...item,
-      cliente: Array.isArray(item.clientes) ? item.clientes[0] : item.clientes,
-      vivienda: {
-        ...(vivienda ?? {}),
-        manzana: manzana || undefined,
-      },
-      proyecto: proyecto || { id: '', nombre: 'Sin proyecto', ubicacion: '' },
-      fuentes_pago: Array.isArray(item.fuentes_pago)
-        ? item.fuentes_pago
-            .filter(fp => {
-              // Excluir fuentes inactivas (soporta ambas variantes de nombre de columna)
-              const estado = (fp.estado || fp.estado_fuente || '').toLowerCase()
-              return estado !== 'inactiva'
-            })
-            .sort((a, b) => {
-              const ordenA = a.tipos_fuentes_pago?.orden ?? 999
-              const ordenB = b.tipos_fuentes_pago?.orden ?? 999
-              return ordenA - ordenB
-            })
-            .map(fp => ({
-              ...fp,
-              abonos: [],
-            }))
-        : [],
-    }
-  }) as unknown as NegociacionConAbonos[]
+  const filas = (data ?? []) as FilaNegociacionAbonos[]
+  const vigente =
+    filas.find(n => n.estado === 'Activa' || n.estado === 'Suspendida') ??
+    filas[0]
+  if (!vigente) return null
+  const [completa] = await completarNegociaciones([vigente])
+  return completa ?? null
 }
 
 /**

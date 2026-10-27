@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react'
 import {
   useHistorialAbonosQuery,
   useInvalidateNegociacionDetalle,
-  useNegociacionesAbonos,
+  useNegociacionAbonosCliente,
 } from '@/modules/abonos/hooks'
 import type { FuentePagoConAbonos } from '@/modules/abonos/types'
 import { useDocumentosPendientesObligatorios } from '@/modules/clientes/hooks/useDocumentosPendientesObligatorios'
@@ -16,7 +16,8 @@ import { calcularCierreFinanciero } from '@/shared/hooks/useCierreFinanciero'
  * Maneja: carga de datos, estado del modal, recargas, selección de fuente
  */
 export function useAbonosDetalle(clienteId: string) {
-  const { negociaciones, isLoading } = useNegociacionesAbonos()
+  // Solo la negociación de este cliente, aunque ya esté pagada
+  const { negociacion, isLoading } = useNegociacionAbonosCliente(clienteId)
   const invalidateDetalle = useInvalidateNegociacionDetalle()
 
   // Estado local (UI)
@@ -27,12 +28,6 @@ export function useAbonosDetalle(clienteId: string) {
   // Documentos obligatorios pendientes — cache compartido vía React Query
   const { data: pendientesObligatorios = [] } =
     useDocumentosPendientesObligatorios(clienteId)
-
-  // Buscar la negociación del cliente
-  const negociacion = useMemo(
-    () => negociaciones.find(n => n.cliente.id === clienteId),
-    [negociaciones, clienteId]
-  )
 
   // Historial de abonos con React Query (reemplaza useEffect manual)
   const { data: todosLosAbonos = [], isLoading: loadingAbonos } =

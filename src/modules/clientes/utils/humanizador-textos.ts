@@ -2,6 +2,7 @@
  * Genera el título y descripción legibles para cada tipo de evento.
  */
 
+import { formatearDiaGuardado } from '@/lib/utils/date.utils'
 import { formatearNumeroRecibo } from '@/modules/abonos/utils/formato-recibo'
 import { LABELS_TIPO_DESCUENTO } from '@/modules/clientes/constants/descuento.constants'
 
@@ -260,7 +261,7 @@ export function generarTextos(
         ? String(metadata.abono_fecha_abono)
         : (datos_nuevos?.fecha_abono as string | undefined)
       const fechaStr = fechaRaw
-        ? new Date(fechaRaw).toLocaleDateString('es-CO', {
+        ? formatearDiaGuardado(fechaRaw, {
             day: '2-digit',
             month: 'short',
             year: 'numeric',

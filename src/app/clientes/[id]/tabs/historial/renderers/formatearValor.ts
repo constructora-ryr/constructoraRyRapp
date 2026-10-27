@@ -2,6 +2,8 @@
  * Utilidades compartidas por todos los renderers del historial
  */
 
+import { formatearDiaGuardado } from '@/lib/utils/date.utils'
+
 export function formatearValor(valor: unknown): string {
   if (valor === null || valor === undefined || valor === '') return '—'
   if (typeof valor === 'boolean') return valor ? 'Sí' : 'No'
@@ -12,18 +14,7 @@ export function formatearValor(valor: unknown): string {
     return String(valor)
   }
   if (typeof valor === 'string') {
-    if (/^\d{4}-\d{2}-\d{2}/.test(valor)) {
-      try {
-        const d = new Date(valor.includes('T') ? valor : `${valor}T12:00:00`)
-        return d.toLocaleDateString('es-CO', {
-          day: '2-digit',
-          month: 'long',
-          year: 'numeric',
-        })
-      } catch {
-        return valor
-      }
-    }
+    if (/^\d{4}-\d{2}-\d{2}/.test(valor)) return formatearDiaGuardado(valor)
     return valor
   }
   if (typeof valor === 'object') {

@@ -413,3 +413,35 @@ export function calculateAge(birthDateString: string): number {
 
   return age
 }
+
+/**
+ * ¿Es una fecha de calendario? Solo el día, o el día a la medianoche o al
+ * mediodía, como se guardan las fechas de documentos y abonos. Si tiene otra
+ * hora es un momento real (p. ej. cuándo se registró algo).
+ */
+export function esFechaCalendario(valor: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}(?:[T ](?:00|12):00(?::00(?:\.0+)?)?(?:Z|[+-]00(?::?00)?)?)?$/.test(
+    valor
+  )
+}
+
+/**
+ * Formatea como día una fecha guardada. Las de calendario se leen sin
+ * convertir de zona horaria: la medianoche UTC del 31 es el 30 a las 7 p. m.
+ * en Colombia, y así se mostraría un día menos.
+ */
+export function formatearDiaGuardado(
+  valor: string,
+  opciones: Intl.DateTimeFormatOptions = {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  }
+): string {
+  const fecha = esFechaCalendario(valor)
+    ? new Date(`${valor.slice(0, 10)}T12:00:00`)
+    : new Date(valor)
+  return Number.isNaN(fecha.getTime())
+    ? valor
+    : fecha.toLocaleDateString('es-CO', opciones)
+}

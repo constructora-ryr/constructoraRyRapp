@@ -268,7 +268,7 @@ async function invalidarQuerysAbono(queryClient: QueryClient) {
       refetchType: 'all',
     }),
     queryClient.invalidateQueries({
-      queryKey: negociacionesAbonosKeys.lists(),
+      queryKey: negociacionesAbonosKeys.all,
       refetchType: 'all',
     }),
     queryClient.invalidateQueries({

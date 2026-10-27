@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  esFechaCalendario,
   formatDateCompact,
   formatDateForDB,
   formatDateForInput,
   formatDateShort,
   formatDateToISO,
+  formatearDiaGuardado,
   getTodayDateString,
 } from './date.utils'
 
@@ -152,5 +154,26 @@ describe('formatDateToISO', () => {
     const date = new Date('2025-11-05T12:00:00')
     const result = formatDateToISO(date)
     expect(result).toMatch(/^2025-11-05T12:00:00$/)
+  })
+})
+
+describe('fechas de calendario (sin correrse un día)', () => {
+  it('reconoce día solo, medianoche y mediodía como calendario', () => {
+    expect(esFechaCalendario('2026-07-31')).toBe(true)
+    expect(esFechaCalendario('2026-07-31T00:00:00+00:00')).toBe(true)
+    expect(esFechaCalendario('2026-07-31T12:00:00')).toBe(true)
+    expect(esFechaCalendario('2026-07-31 12:00:00+00')).toBe(true)
+    expect(esFechaCalendario('2026-10-27T13:09:42.123+00:00')).toBe(false)
+  })
+
+  it('la medianoche UTC del 31 se muestra como 31, no 30', () => {
+    expect(formatearDiaGuardado('2026-07-31T00:00:00+00:00')).toBe(
+      formatearDiaGuardado('2026-07-31')
+    )
+    expect(formatearDiaGuardado('2026-07-31T00:00:00+00:00')).toContain('31')
+  })
+
+  it('un texto que no es fecha se devuelve tal cual', () => {
+    expect(formatearDiaGuardado('2026-99-99')).toBe('2026-99-99')
   })
 })

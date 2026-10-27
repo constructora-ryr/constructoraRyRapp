@@ -17,6 +17,7 @@ export type { AbonoCompletoRow, AbonoConInfo } from './useAbonosQuery'
 export {
   negociacionesAbonosKeys,
   useInvalidateNegociacionesAbonos,
+  useNegociacionAbonosCliente,
   useNegociacionesAbonos,
 } from './useNegociacionesAbonos'
 

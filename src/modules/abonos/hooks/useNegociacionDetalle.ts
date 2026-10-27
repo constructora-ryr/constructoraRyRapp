@@ -121,7 +121,7 @@ export function useInvalidateNegociacionDetalle() {
     }
     // También invalidar la lista de negociaciones (porcentajes cambian)
     queryClient.invalidateQueries({
-      queryKey: negociacionesAbonosKeys.lists(),
+      queryKey: negociacionesAbonosKeys.all,
       refetchType: 'all',
     })
   }

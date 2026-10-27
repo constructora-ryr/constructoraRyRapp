@@ -15,7 +15,10 @@ import { useMemo } from 'react'
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { obtenerNegociacionesActivas } from '../services/abonos.service'
+import {
+  obtenerNegociacionAbonosCliente,
+  obtenerNegociacionesActivas,
+} from '../services/abonos.service'
 import type { NegociacionConAbonos } from '../types'
 
 // ============================================
@@ -89,6 +92,20 @@ export function useNegociacionesAbonos() {
     estadisticas,
     refrescar,
   }
+}
+
+/**
+ * Negociación de un cliente para el detalle de abonos (/abonos/[cliente]).
+ * Consulta solo ese cliente e incluye negociaciones ya pagadas.
+ */
+export function useNegociacionAbonosCliente(clienteId: string) {
+  const { data, isLoading } = useQuery<NegociacionConAbonos | null>({
+    queryKey: negociacionesAbonosKeys.detail(clienteId),
+    queryFn: () => obtenerNegociacionAbonosCliente(clienteId),
+    enabled: !!clienteId,
+    staleTime: 60 * 1000,
+  })
+  return { negociacion: data ?? undefined, isLoading }
 }
 
 // ============================================
