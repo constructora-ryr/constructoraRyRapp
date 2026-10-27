@@ -11,7 +11,7 @@
 
 import { forwardRef } from 'react'
 
-import { AlertCircle, HelpCircle } from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
 
 import {
   useBancos,
@@ -298,14 +298,6 @@ export const CampoFormularioDinamico = forwardRef<
           <label className={labelClasses}>
             {config.label}
             {config.requerido && <span className='ml-1 text-red-500'>*</span>}
-            {config.ayuda && (
-              <span
-                className='ml-1.5 inline-flex h-3.5 w-3.5 cursor-help items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700'
-                title={config.ayuda}
-              >
-                <HelpCircle className='h-2.5 w-2.5 text-gray-600 dark:text-gray-400' />
-              </span>
-            )}
           </label>
         )}
 
@@ -322,7 +314,7 @@ export const CampoFormularioDinamico = forwardRef<
           </div>
         )}
 
-        {/* Ayuda (si no hay error) */}
+        {/* Ayuda visible bajo el campo (una sola vez, sin ícono repetido) */}
         {!error && config.ayuda && config.tipo !== 'checkbox' && (
           <p className='text-xs leading-relaxed text-gray-500 dark:text-gray-400'>
             {config.ayuda}

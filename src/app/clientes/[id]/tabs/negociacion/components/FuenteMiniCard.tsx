@@ -12,18 +12,13 @@ import {
   CheckCircle2,
   ChevronDown,
   DollarSign,
-  Gift,
-  HandCoins,
-  Home,
-  KeyRound,
-  Landmark,
   Pencil,
-  Wallet,
   type LucideIcon,
 } from 'lucide-react'
 
 import type { FuentePago } from '@/modules/clientes/services/fuentes-pago.service'
 import { formatCOP } from '@/shared/components/list-page'
+import { iconoFuente } from '@/shared/constants/fuente-iconos'
 import {
   esCreditoConstructora,
   esCreditoHipotecario,
@@ -51,18 +46,6 @@ const MESES = [
 function formatFechaActa(fecha: string): string {
   const [year, month, day] = fecha.split('-').map(Number)
   return `${day} ${MESES[month - 1]} ${year}`
-}
-
-/** Íconos de tipos_fuentes_pago.icono (nombre de lucide) */
-const ICONOS: Record<string, LucideIcon> = {
-  DollarSign,
-  Building2,
-  Home,
-  HandCoins,
-  Landmark,
-  Wallet,
-  Gift,
-  KeyRound,
 }
 
 interface DocsPendientesInfo {
@@ -97,7 +80,7 @@ export function FuenteMiniCard({
   onEditarReferencia,
 }: FuenteMiniCardProps) {
   const color = getFuenteColorClasses(colorToken)
-  const Icono = (iconoNombre && ICONOS[iconoNombre]) || Wallet
+  const Icono = iconoFuente(iconoNombre)
   const esCredito = esCreditoConstructora(fuente.tipo)
   const esHipotecario = esCreditoHipotecario(fuente.tipo)
   const esSubsidioConActa =

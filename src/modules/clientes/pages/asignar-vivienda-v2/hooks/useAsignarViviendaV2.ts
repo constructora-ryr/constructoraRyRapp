@@ -55,14 +55,14 @@ export const PASOS_ASIGNACION: WizardStepConfig[] = [
     id: 2,
     title: 'Fuentes de pago',
     description:
-      'Indica cómo se pagará: cuota inicial, crédito hipotecario, subsidios, crédito con la constructora…\nActiva cada fuente y escribe su monto; la barra muestra cuánto falta por cubrir.\nPara continuar, la suma debe cubrir el total. Si sobra, el excedente se devolverá al cliente.',
+      'Agrega las fuentes con las que el cliente pagará hasta cubrir el total.\nCada fuente muestra qué parte del total cubre; la barra suma todas.\nSi sobra dinero, el excedente se devolverá al cliente.',
     icon: Banknote,
   },
   {
     id: 3,
     title: 'Revisión y confirmación',
     description:
-      'Revisa la casa, los valores y las fuentes antes de confirmar.\nAl confirmar, la casa queda asignada al cliente y empieza la negociación: desde ahí se registran sus abonos.\nPuedes descargar el resumen en PDF para compartirlo.',
+      'Revisa que todo esté bien: al confirmar, la casa queda asignada y empieza la negociación.',
     icon: ClipboardCheck,
   },
 ]
