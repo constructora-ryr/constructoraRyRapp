@@ -3,6 +3,8 @@
  * Convierte datos_nuevos / cambios_especificos en DetalleEvento[] para la UI.
  */
 
+import { mismoDiaCalendario } from '@/lib/utils/date.utils'
+
 import type {
   DetalleEvento,
   EventoHistorialCliente,
@@ -217,11 +219,14 @@ export function extraerDetalles(
     const detalles: DetalleEvento[] = []
     for (const [campo, cambio] of Object.entries(cambios_especificos)) {
       if (CAMPOS_EXCLUIDOS.has(campo)) continue
+      const { antes, despues } = cambio as { antes: unknown; despues: unknown }
+      // Misma fecha con otra hora guardada (medianoche → mediodía): no cambió
+      if (mismoDiaCalendario(antes, despues)) continue
       detalles.push({
         campo,
         etiqueta: ETIQUETAS[campo] ?? campo,
-        valorAnterior: (cambio as { antes: unknown }).antes,
-        valorNuevo: (cambio as { despues: unknown }).despues,
+        valorAnterior: antes,
+        valorNuevo: despues,
         tipo: detectarTipoCampo(campo),
       })
     }
@@ -241,6 +246,7 @@ export function extraerDetalles(
     const detalles: DetalleEvento[] = []
     for (const [campo, diff] of Object.entries(cambiosMeta)) {
       if (CAMPOS_EXCLUIDOS.has(campo)) continue
+      if (mismoDiaCalendario(diff.anterior, diff.nuevo)) continue
       detalles.push({
         campo,
         etiqueta: ETIQUETAS[campo] ?? campo,

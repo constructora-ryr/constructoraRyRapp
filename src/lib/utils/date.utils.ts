@@ -445,3 +445,17 @@ export function formatearDiaGuardado(
     ? valor
     : fecha.toLocaleDateString('es-CO', opciones)
 }
+
+/**
+ * Dos valores que son la misma fecha de calendario aunque difiera la hora
+ * guardada (p. ej. medianoche y mediodía del mismo día): no es un cambio.
+ */
+export function mismoDiaCalendario(a: unknown, b: unknown): boolean {
+  return (
+    typeof a === 'string' &&
+    typeof b === 'string' &&
+    esFechaCalendario(a) &&
+    esFechaCalendario(b) &&
+    a.slice(0, 10) === b.slice(0, 10)
+  )
+}

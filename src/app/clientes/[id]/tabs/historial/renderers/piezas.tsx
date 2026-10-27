@@ -9,11 +9,9 @@
 import { createContext, useContext, useState, type ReactNode } from 'react'
 
 import {
-  ArrowDown,
   ArrowRight,
   Check,
   Copy,
-  CreditCard,
   ExternalLink,
   type LucideIcon,
 } from 'lucide-react'
@@ -22,7 +20,10 @@ import { toast } from 'sonner'
 import Link from 'next/link'
 
 import type { DetalleEvento } from '@/modules/clientes/types/historial.types'
+import { useTiposFuentePagoConfig } from '@/modules/fuentes-pago/hooks'
 import { usePermisosQuery } from '@/modules/usuarios/hooks/usePermisosQuery'
+import { iconoFuente } from '@/shared/constants/fuente-iconos'
+import { getFuenteColorClasses } from '@/shared/constants/fuentes-pago.constants'
 import { cn } from '@/shared/utils/helpers'
 
 import {
@@ -61,7 +62,16 @@ const TONO_BANNER: Record<Tono, string> = {
   info: 'from-blue-500 to-indigo-600 shadow-blue-500/20',
 }
 
-/** Bloque con título en versalitas y el contenido en una tarjeta */
+/** Título de sección: texto normal (no versalitas), con el tono del grupo */
+function TituloSeccion({ texto, tono }: { texto: string; tono: Tono }) {
+  return (
+    <h4 className={cn('mb-2 text-sm font-semibold', TONO_SECCION[tono])}>
+      {texto}
+    </h4>
+  )
+}
+
+/** Bloque con título y el contenido en una tarjeta */
 export function Seccion({
   titulo,
   tono = 'neutro',
@@ -76,14 +86,7 @@ export function Seccion({
 }) {
   return (
     <section>
-      <h4
-        className={cn(
-          'mb-1.5 text-[11px] font-bold uppercase tracking-widest',
-          TONO_SECCION[tono]
-        )}
-      >
-        {titulo}
-      </h4>
+      <TituloSeccion texto={titulo} tono={tono} />
       {sinCaja ? (
         children
       ) : (
@@ -102,27 +105,20 @@ export function Seccion({
 
 export type Formato = 'texto' | 'moneda'
 
-const TONO_FICHA: Record<Tono, string> = {
-  neutro:
-    'border-slate-200/80 bg-slate-50/80 dark:border-slate-700/60 dark:bg-slate-800/60',
-  exito:
-    'border-emerald-200/80 bg-emerald-50/70 dark:border-emerald-500/30 dark:bg-emerald-500/10',
-  peligro:
-    'border-rose-200/80 bg-rose-50/70 dark:border-rose-500/30 dark:bg-rose-500/10',
-  aviso:
-    'border-amber-200/80 bg-amber-50/70 dark:border-amber-500/30 dark:bg-amber-500/10',
-  info: 'border-blue-200/80 bg-blue-50/70 dark:border-blue-500/30 dark:bg-blue-500/10',
-}
-
-/** Tono del grupo: lo heredan sus fichas */
+/** Tono del grupo: lo heredan sus filas destacadas */
 const TonoDatos = createContext<Tono>('neutro')
 
-/** Textos más largos que esto ocupan todo el ancho de la cuadrícula */
-const LARGO_ANCHO_COMPLETO = 32
+const TONO_VALOR: Record<Tono, string> = {
+  neutro: 'text-slate-900 dark:text-white',
+  exito: 'text-emerald-700 dark:text-emerald-300',
+  peligro: 'text-rose-700 dark:text-rose-300',
+  aviso: 'text-amber-700 dark:text-amber-300',
+  info: 'text-blue-700 dark:text-blue-300',
+}
 
 /**
- * Grupo de datos en fichas: 2 columnas en celular, 3 en escritorio. Las
- * fichas vacías no se muestran, así que la cuadrícula nunca deja huecos.
+ * Grupo de datos: una tarjeta con filas etiqueta / valor. Las filas vacías
+ * no se muestran.
  */
 export function Datos({
   titulo,
@@ -135,22 +131,15 @@ export function Datos({
 }) {
   return (
     <section>
-      <h4
-        className={cn(
-          'mb-1.5 text-[11px] font-bold uppercase tracking-widest',
-          TONO_SECCION[tono]
-        )}
-      >
-        {titulo}
-      </h4>
-      <div className='grid grid-cols-2 gap-2 sm:grid-cols-3'>
+      <TituloSeccion texto={titulo} tono={tono} />
+      <div className='divide-y divide-slate-100 rounded-xl border border-slate-200/80 bg-white px-3 dark:divide-slate-700/50 dark:border-slate-700/60 dark:bg-slate-800/60'>
         <TonoDatos.Provider value={tono}>{children}</TonoDatos.Provider>
       </div>
     </section>
   )
 }
 
-/** Ficha etiqueta + valor. No se muestra si el valor está vacío */
+/** Fila etiqueta + valor. No se muestra si el valor está vacío */
 export function Dato({
   icon: Icon,
   label,
@@ -167,7 +156,7 @@ export function Dato({
   destacado?: boolean
   /** Botón para copiar el valor (recibos, referencias, documentos) */
   copiable?: boolean
-  /** Por defecto, el del grupo (Datos) */
+  /** Color del valor; por defecto neutro (el del grupo si es destacado) */
   tono?: Tono
 }) {
   const tonoGrupo = useContext(TonoDatos)
@@ -176,36 +165,25 @@ export function Dato({
   const texto =
     formato === 'moneda' ? formatearMoneda(valor) : formatearValor(valor)
   if (texto === '—') return null
+  const tonoValor = tono ?? (destacado ? tonoGrupo : 'neutro')
   return (
-    <div
-      className={cn(
-        'relative min-w-0 rounded-xl border px-3 py-2.5',
-        TONO_FICHA[tono ?? tonoGrupo],
-        texto.length > LARGO_ANCHO_COMPLETO && 'col-span-full'
-      )}
-    >
-      <p
-        className={cn(
-          'flex items-start gap-1.5 text-[11px] font-semibold uppercase leading-tight tracking-wide text-slate-500 dark:text-slate-400',
-          copiable && 'pr-6'
-        )}
-      >
-        <Icon className='h-3.5 w-3.5 flex-shrink-0' />
-        <span>{label}</span>
-      </p>
-      <p
-        className={cn(
-          'mt-1 break-words text-sm text-slate-900 dark:text-white',
-          destacado ? 'font-bold' : 'font-semibold'
-        )}
-      >
-        {texto}
-      </p>
-      {copiable ? (
-        <span className='absolute right-1 top-1'>
-          <BotonCopiar texto={texto} label={label} />
+    <div className='flex flex-wrap items-center justify-between gap-x-4 gap-y-0.5 py-2.5'>
+      <span className='flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400'>
+        <Icon className='h-4 w-4 flex-shrink-0' />
+        {label}
+      </span>
+      <span className='flex min-w-0 items-center gap-1'>
+        <span
+          className={cn(
+            'break-words text-right text-sm tabular-nums',
+            destacado ? 'font-bold' : 'font-semibold',
+            TONO_VALOR[tonoValor]
+          )}
+        >
+          {texto}
         </span>
-      ) : null}
+        {copiable ? <BotonCopiar texto={texto} label={label} /> : null}
+      </span>
     </div>
   )
 }
@@ -297,7 +275,7 @@ export function Banner({
 const formatearCambio = (campo: string, valor: unknown) =>
   esCampoMoneda(campo) ? formatearMoneda(valor) : formatearValor(valor)
 
-/** Un cambio: antes → ahora. Apilado en móvil, lado a lado en escritorio */
+/** Un cambio en una línea: lo anterior tachado, lo nuevo resaltado */
 export function FilaCambio({
   etiqueta,
   antes,
@@ -307,32 +285,27 @@ export function FilaCambio({
   antes: string
   ahora: string
 }) {
+  const sinAntes = antes === '—'
   return (
-    <div className='overflow-hidden rounded-xl border border-slate-200/80 bg-white dark:border-slate-700/60 dark:bg-slate-800/60'>
-      <p className='border-b border-slate-100 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:border-slate-700/50 dark:text-slate-400'>
+    <div className='rounded-xl border border-slate-200/80 bg-white px-3 py-2.5 dark:border-slate-700/60 dark:bg-slate-800/60'>
+      <p className='text-xs font-medium text-slate-500 dark:text-slate-400'>
         {etiqueta}
       </p>
-      <div className='flex flex-col sm:flex-row sm:items-stretch'>
-        <div className='flex-1 bg-rose-50/70 px-3 py-2 dark:bg-rose-500/10'>
-          <p className='text-[10px] font-semibold uppercase text-rose-600 dark:text-rose-400'>
-            Antes
-          </p>
-          <p className='break-words text-sm text-rose-900 line-through decoration-rose-400 dark:text-rose-200'>
-            {antes}
-          </p>
-        </div>
-        <div className='flex items-center justify-center py-1 text-slate-400 sm:px-2 sm:py-0'>
-          <ArrowDown className='h-4 w-4 sm:hidden' />
-          <ArrowRight className='hidden h-4 w-4 sm:block' />
-        </div>
-        <div className='flex-1 bg-emerald-50/70 px-3 py-2 dark:bg-emerald-500/10'>
-          <p className='text-[10px] font-semibold uppercase text-emerald-700 dark:text-emerald-400'>
-            Ahora
-          </p>
-          <p className='break-words text-sm font-semibold text-emerald-900 dark:text-emerald-100'>
-            {ahora}
-          </p>
-        </div>
+      <div className='mt-1 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-sm'>
+        <span
+          className={cn(
+            'break-words rounded-md bg-slate-100 px-2 py-0.5 dark:bg-slate-900/60',
+            sinAntes
+              ? 'italic text-slate-400 dark:text-slate-500'
+              : 'text-slate-500 line-through decoration-slate-400 dark:text-slate-400'
+          )}
+        >
+          {sinAntes ? 'Sin valor' : antes}
+        </span>
+        <ArrowRight className='h-4 w-4 flex-shrink-0 text-slate-400' />
+        <span className='break-words rounded-md bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-800 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-200 dark:ring-emerald-500/30'>
+          {ahora === '—' ? 'Sin valor' : ahora}
+        </span>
       </div>
     </div>
   )
@@ -353,13 +326,12 @@ export function ListaCambios({
   const nombre = (d: DetalleEvento) =>
     etiquetas[d.campo] ?? d.etiqueta ?? d.campo
   return (
-    <div className='space-y-3'>
-      <Banner
-        compacto
-        tono='aviso'
-        etiqueta='Cambios'
-        valor={`${detalles.length} ${detalles.length === 1 ? 'campo modificado' : 'campos modificados'}`}
-        nota={detalles.map(nombre).join(' · ')}
+    <section>
+      <TituloSeccion
+        texto={
+          detalles.length === 1 ? '1 cambio' : `${detalles.length} cambios`
+        }
+        tono='neutro'
       />
       <div className='space-y-2'>
         {detalles.map(d => (
@@ -371,7 +343,7 @@ export function ListaCambios({
           />
         ))}
       </div>
-    </div>
+    </section>
   )
 }
 
@@ -392,11 +364,11 @@ export function TextoLibre({
     <section>
       <h4
         className={cn(
-          'mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest',
+          'mb-2 flex items-center gap-1.5 text-sm font-semibold',
           TONO_SECCION[tono]
         )}
       >
-        <Icon className='h-3.5 w-3.5' />
+        <Icon className='h-4 w-4' />
         {titulo}
       </h4>
       <blockquote
@@ -549,7 +521,7 @@ export interface FuenteSnapshot {
   numero_referencia?: string | null
 }
 
-/** Fuentes de pago guardadas en el evento (tipo, monto, entidad, ref.) */
+/** Fuentes de pago guardadas en el evento, con el color e ícono de su tipo */
 export function ListaFuentes({
   titulo,
   fuentes,
@@ -557,30 +529,46 @@ export function ListaFuentes({
   titulo: string
   fuentes: FuenteSnapshot[]
 }) {
+  const { getTipoConfig } = useTiposFuentePagoConfig()
   if (fuentes.length === 0) return null
   return (
     <Seccion titulo={`${titulo} (${fuentes.length})`}>
-      {fuentes.map((f, i) => (
-        <div key={i} className='flex items-start gap-2.5 py-2.5'>
-          <CreditCard className='mt-0.5 h-4 w-4 flex-shrink-0 text-slate-400' />
-          <div className='min-w-0 flex-1'>
-            <div className='flex flex-wrap items-baseline justify-between gap-x-3'>
+      {fuentes.map((f, i) => {
+        const config = getTipoConfig(f.tipo)
+        const color = getFuenteColorClasses(config.color)
+        const Icono = iconoFuente(config.icono)
+        const detalle = [
+          f.entidad,
+          f.numero_referencia ? `Ref. ${f.numero_referencia}` : null,
+        ]
+          .filter(Boolean)
+          .join(' · ')
+        return (
+          <div key={i} className='flex items-center gap-3 py-2.5'>
+            <span
+              className={cn(
+                'flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl text-white shadow-sm',
+                color.icon
+              )}
+            >
+              <Icono className='h-4 w-4' />
+            </span>
+            <div className='min-w-0 flex-1'>
               <p className='text-sm font-semibold text-slate-900 dark:text-white'>
                 {f.tipo}
               </p>
-              <p className='text-sm font-bold tabular-nums text-emerald-700 dark:text-emerald-400'>
-                {formatearMoneda(f.monto_aprobado)}
-              </p>
+              {detalle ? (
+                <p className='truncate text-xs text-slate-500 dark:text-slate-400'>
+                  {detalle}
+                </p>
+              ) : null}
             </div>
-            {f.entidad ? (
-              <p className='text-xs text-slate-500 dark:text-slate-400'>
-                {f.entidad}
-                {f.numero_referencia ? ` · Ref. ${f.numero_referencia}` : ''}
-              </p>
-            ) : null}
+            <p className={cn('text-sm font-bold tabular-nums', color.texto)}>
+              {formatearMoneda(f.monto_aprobado)}
+            </p>
           </div>
-        </div>
-      ))}
+        )
+      })}
     </Seccion>
   )
 }

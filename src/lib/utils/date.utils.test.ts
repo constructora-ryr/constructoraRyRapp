@@ -8,6 +8,7 @@ import {
   formatDateShort,
   formatDateToISO,
   formatearDiaGuardado,
+  mismoDiaCalendario,
   getTodayDateString,
 } from './date.utils'
 
@@ -175,5 +176,20 @@ describe('fechas de calendario (sin correrse un día)', () => {
 
   it('un texto que no es fecha se devuelve tal cual', () => {
     expect(formatearDiaGuardado('2026-99-99')).toBe('2026-99-99')
+  })
+})
+
+describe('mismoDiaCalendario', () => {
+  it('medianoche y mediodía del mismo día no son un cambio', () => {
+    expect(
+      mismoDiaCalendario(
+        '2026-07-31T00:00:00+00:00',
+        '2026-07-31T12:00:00+00:00'
+      )
+    ).toBe(true)
+  })
+  it('días distintos o valores que no son fecha sí lo son', () => {
+    expect(mismoDiaCalendario('2026-07-30', '2026-07-31')).toBe(false)
+    expect(mismoDiaCalendario('A', 'A')).toBe(false)
   })
 })
