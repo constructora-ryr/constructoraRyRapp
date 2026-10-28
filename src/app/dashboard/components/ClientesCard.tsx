@@ -51,24 +51,21 @@ function ClientesCardComponent({
   return (
     <motion.div
       variants={itemVariants}
-      className='group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-colors hover:border-cyan-300 dark:border-slate-700/60 dark:bg-slate-800/60 dark:shadow-none dark:hover:border-cyan-500/30'
+      className='group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/60 dark:shadow-none'
     >
-      {/* Subtle top glow - no mouse tracking */}
-      <div className='absolute inset-x-0 top-0 z-10 h-[1px] w-full bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:via-cyan-500/50' />
-
       <div className='relative z-10 mb-6 flex items-start justify-between'>
         <div>
           <h2 className='text-lg font-medium text-slate-900 dark:text-white'>
             Seguimiento Comercial
           </h2>
-          <p className='mt-1 text-sm text-slate-500 dark:text-white/50'>
+          <p className='mt-1 text-sm text-slate-500 dark:text-slate-400'>
             {clientes.total.toLocaleString('es-CO')} clientes registrados
           </p>
         </div>
         {canNavigate && (
           <Link
             href='/clientes'
-            className='flex items-center gap-1.5 text-sm font-medium text-cyan-600 transition-colors hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300'
+            className='flex items-center gap-1.5 text-sm font-medium text-red-600 transition-colors hover:text-red-700 dark:text-red-400 dark:hover:text-red-300'
           >
             Ir a Comercial <ArrowRight className='h-4 w-4' />
           </Link>
@@ -77,21 +74,21 @@ function ClientesCardComponent({
 
       {loading ? (
         <div className='relative z-10 space-y-4'>
-          <div className='h-2 w-full animate-pulse rounded-full bg-slate-200 dark:bg-white/10' />
+          <div className='h-3 w-full animate-pulse rounded-full bg-slate-200 dark:bg-slate-700' />
           <div className='flex gap-4'>
-            <div className='h-3 w-16 rounded bg-slate-200 dark:bg-white/10' />
-            <div className='h-3 w-16 rounded bg-slate-200 dark:bg-white/10' />
+            <div className='h-3 w-16 animate-pulse rounded bg-slate-200 dark:bg-slate-700' />
+            <div className='h-3 w-16 animate-pulse rounded bg-slate-200 dark:bg-slate-700' />
           </div>
         </div>
       ) : (
         <div className='relative z-10 mt-auto pt-4'>
-          <div className='flex h-3 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-white/5'>
+          <div className='flex h-3 w-full gap-[2px] overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700/60'>
             {segments
               .filter(seg => seg.count > 0)
               .map(seg => (
                 <motion.div
                   key={seg.key}
-                  className={`h-full ${seg.color} border-r-2 border-white last:border-r-0 dark:border-slate-800`}
+                  className={`h-full ${seg.color}`}
                   initial={{ width: '0%' }}
                   animate={{ width: `${seg.pct}%` }}
                   transition={{

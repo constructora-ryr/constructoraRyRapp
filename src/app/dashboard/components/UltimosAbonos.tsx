@@ -75,7 +75,7 @@ function UltimosAbonosComponent({
         {canNavigate && (
           <Link
             href='/abonos'
-            className='flex items-center gap-1 text-sm font-medium text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300'
+            className='flex items-center gap-1 text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300'
           >
             Abonos <ArrowRight className='h-4 w-4' />
           </Link>
@@ -93,7 +93,7 @@ function UltimosAbonosComponent({
         </div>
       ) : abonos.length === 0 ? (
         <div className='flex flex-1 flex-col items-center justify-center py-10 text-center'>
-          <span className='mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-500 dark:bg-violet-500/10 dark:text-violet-400'>
+          <span className='mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-red-50 text-red-500 dark:bg-red-500/10 dark:text-red-400'>
             <Wallet className='h-6 w-6' />
           </span>
           <p className='text-sm font-medium text-slate-700 dark:text-slate-200'>
@@ -133,17 +133,17 @@ function UltimosAbonosComponent({
                         className='h-3.5 w-3.5 text-emerald-500'
                         aria-hidden
                       />
-                      <span className='text-slate-400 dark:text-slate-500'>
+                      <span className='text-slate-500 dark:text-slate-400'>
                         Pago
                       </span>
                       {formatFechaCorta(a.fechaPago)}
                     </span>
                     <span className='inline-flex items-center gap-1'>
                       <Clock
-                        className='h-3.5 w-3.5 text-slate-400'
+                        className='h-3.5 w-3.5 text-slate-500 dark:text-slate-400'
                         aria-hidden
                       />
-                      <span className='text-slate-400 dark:text-slate-500'>
+                      <span className='text-slate-500 dark:text-slate-400'>
                         Registro
                       </span>
                       {formatFechaHora(a.fechaRegistro)}
@@ -159,13 +159,13 @@ function UltimosAbonosComponent({
                   </div>
 
                   {detalle && (
-                    <p className='mt-0.5 truncate text-[11px] text-slate-400 dark:text-slate-500'>
+                    <p className='mt-0.5 truncate text-[11px] text-slate-500 dark:text-slate-400'>
                       {detalle}
                     </p>
                   )}
                 </div>
                 {canNavigate && (
-                  <ChevronRight className='h-4 w-4 shrink-0 self-center text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-500 dark:text-slate-600' />
+                  <ChevronRight className='h-4 w-4 shrink-0 self-center text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-600 dark:text-slate-500 dark:group-hover:text-slate-300' />
                 )}
               </>
             )

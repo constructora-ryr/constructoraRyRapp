@@ -1,13 +1,7 @@
 'use client'
 
 import { MotionConfig, motion } from 'framer-motion'
-import {
-  AlertTriangle,
-  DollarSign,
-  Handshake,
-  Home,
-  Landmark,
-} from 'lucide-react'
+import { AlertTriangle, Handshake, Home, Landmark } from 'lucide-react'
 
 import { useAuth } from '@/hooks/auth/useAuthQuery'
 import { usePermisosQuery } from '@/modules/usuarios/hooks/usePermisosQuery'
@@ -17,7 +11,10 @@ import {
   DashboardHero,
   type HeroAction,
 } from './dashboard/components/DashboardHero'
-import { DevolucionesPanel } from './dashboard/components/DevolucionesPanel'
+import {
+  contarDevoluciones,
+  DevolucionesPanel,
+} from './dashboard/components/DevolucionesPanel'
 import { KpiCard, type KpiDelta } from './dashboard/components/KpiCard'
 import { ProyectosCard } from './dashboard/components/ProyectosCard'
 import { RecaudoChart } from './dashboard/components/RecaudoChart'
@@ -65,12 +62,25 @@ const itemVariants = {
   },
 }
 
-// Clases completas para que Tailwind las detecte
+// Clases completas para que Tailwind las detecte. La primera tarjeta
+// (cartera) es más ancha; con 3 en tableta ocupa toda la fila
 const KPI_COLS: Record<number, string> = {
-  1: 'lg:grid-cols-1',
-  2: 'lg:grid-cols-2',
-  3: 'lg:grid-cols-3',
-  4: 'lg:grid-cols-4',
+  1: 'sm:grid-cols-1',
+  2: 'lg:grid-cols-[1.4fr_1fr]',
+  3: 'lg:grid-cols-[1.4fr_1fr_1fr] sm:[&>*:first-child]:col-span-2 lg:[&>*:first-child]:col-span-1',
+}
+
+// Acentos de las tarjetas: rojo de la marca para el dinero, carbón para el
+// inventario
+const ACENTO_MARCA = {
+  accentText: 'text-white',
+  accentBg:
+    'bg-gradient-to-br from-red-500 to-red-700 shadow-sm shadow-red-600/30',
+}
+const ACENTO_CARBON = {
+  accentText: 'text-white dark:text-slate-900',
+  accentBg:
+    'bg-gradient-to-br from-slate-700 to-slate-900 dark:from-white dark:to-slate-200',
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -161,18 +171,6 @@ export default function DashboardContent(_props: DashboardContentProps) {
   // Cada KPI se muestra solo si el usuario puede ver su módulo: RLS devolvería
   // ceros y un "$0" engaña más que no mostrar la tarjeta.
   const kpis = [
-    permisos.abonos && {
-      label: `Recaudo de ${mesActual}`,
-      value: f.recaudoMes,
-      format: formatCOPCompact,
-      montoCompleto: true,
-      delta: deltaPct(f.recaudoMes, f.recaudoMesAnterior, mesAnterior),
-      sub: `${f.abonosMes} ${f.abonosMes === 1 ? 'abono registrado' : 'abonos registrados'}`,
-      icon: DollarSign,
-      accentText: 'text-violet-600 dark:text-violet-400',
-      accentBg: 'bg-violet-50 dark:bg-violet-500/10',
-      href: '/abonos',
-    },
     permisos.negociaciones && {
       label: 'Cartera por cobrar',
       value: f.carteraPendiente,
@@ -180,8 +178,7 @@ export default function DashboardContent(_props: DashboardContentProps) {
       montoCompleto: true,
       sub: `en ${f.negociacionesActivas} ${f.negociacionesActivas === 1 ? 'negociación activa' : 'negociaciones activas'}`,
       icon: Landmark,
-      accentText: 'text-pink-600 dark:text-pink-400',
-      accentBg: 'bg-pink-50 dark:bg-pink-500/10',
+      ...ACENTO_MARCA,
       href: permisos.clientes ? '/clientes' : undefined,
     },
     permisos.negociaciones && {
@@ -192,8 +189,7 @@ export default function DashboardContent(_props: DashboardContentProps) {
       delta: deltaAbs(f.ventasMes, f.ventasMesAnterior, mesAnterior),
       sub: `${f.saldadasMes ?? 0} ${(f.saldadasMes ?? 0) === 1 ? 'saldada' : 'saldadas'} este mes`,
       icon: Handshake,
-      accentText: 'text-pink-600 dark:text-pink-400',
-      accentBg: 'bg-pink-50 dark:bg-pink-500/10',
+      ...ACENTO_CARBON,
       href: permisos.clientes ? '/clientes' : undefined,
     },
     permisos.viviendas && {
@@ -201,13 +197,15 @@ export default function DashboardContent(_props: DashboardContentProps) {
       value: s.viviendas.disponibles,
       sub: `de ${s.viviendas.total} creadas · ${pctVendidas}% vendido`,
       icon: Home,
-      accentText: 'text-orange-600 dark:text-orange-400',
-      accentBg: 'bg-orange-50 dark:bg-orange-500/10',
+      progreso: pctVendidas,
+      ...ACENTO_CARBON,
       href: '/viviendas',
     },
   ].filter((k): k is Exclude<typeof k, false> => Boolean(k))
 
   const mostrarAbonos = permisos.abonos
+  // Sin devoluciones el panel es una franja y el gráfico toma todo el ancho
+  const devolucionesComoTarjeta = loading || contarDevoluciones(s.alertas) > 0
 
   return (
     <MotionConfig reducedMotion='user'>
@@ -225,6 +223,27 @@ export default function DashboardContent(_props: DashboardContentProps) {
               rol={rol}
               fechaHoy={fechaHoy}
               actions={heroActions}
+              loading={loading}
+              recaudo={
+                permisos.abonos
+                  ? {
+                      mes: mesActual,
+                      valor: f.recaudoMes,
+                      abonos: f.abonosMes,
+                      delta: deltaPct(
+                        f.recaudoMes,
+                        f.recaudoMesAnterior,
+                        mesAnterior
+                      ),
+                      anterior: {
+                        mes: mesAnterior,
+                        valor: f.recaudoMesAnterior,
+                      },
+                      serie: s.recaudoMensual,
+                      href: '/abonos',
+                    }
+                  : undefined
+              }
             />
 
             {statsError && (
@@ -258,7 +277,11 @@ export default function DashboardContent(_props: DashboardContentProps) {
             {/* Recaudo + Devoluciones a clientes */}
             <div className='grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6 [&>*]:min-w-0'>
               {permisos.abonos && (
-                <div className='lg:col-span-2'>
+                <div
+                  className={
+                    devolucionesComoTarjeta ? 'lg:col-span-2' : 'lg:col-span-3'
+                  }
+                >
                   <RecaudoChart
                     loading={loading}
                     data={s.recaudoMensual}
@@ -266,7 +289,13 @@ export default function DashboardContent(_props: DashboardContentProps) {
                   />
                 </div>
               )}
-              <div className={permisos.abonos ? '' : 'lg:col-span-3'}>
+              <div
+                className={
+                  permisos.abonos && devolucionesComoTarjeta
+                    ? ''
+                    : 'lg:col-span-3'
+                }
+              >
                 <DevolucionesPanel
                   loading={loading}
                   alertas={s.alertas}

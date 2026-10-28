@@ -51,6 +51,8 @@ function RecaudoChartComponent({
   const scale = niceScale(maxVal)
   const ticks = Array.from({ length: 5 }, (_, i) => scale.step * i)
   const ultimo = data.length - 1
+  // El mejor mes lleva su valor a la vista, aunque el actual esté en cero
+  const iMax = maxVal > 0 ? data.findIndex(d => d.total === maxVal) : -1
 
   return (
     <motion.section
@@ -100,7 +102,7 @@ function RecaudoChartComponent({
                 className={`rounded-md p-1.5 transition-colors ${
                   vista === opt.id
                     ? 'bg-slate-100 text-slate-900 dark:bg-slate-700 dark:text-white'
-                    : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'
+                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
                 }`}
               >
                 <opt.icon className='h-4 w-4' />
@@ -110,7 +112,7 @@ function RecaudoChartComponent({
           {canNavigate && (
             <Link
               href='/abonos'
-              className='flex items-center gap-1 text-sm font-medium text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300'
+              className='flex items-center gap-1 text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300'
             >
               Abonos <ArrowRight className='h-4 w-4' />
             </Link>
@@ -148,7 +150,7 @@ function RecaudoChartComponent({
                   <td className='py-2 capitalize text-slate-700 dark:text-slate-200'>
                     {formatMesLargo(d.mes)}
                     {i === 0 && (
-                      <span className='ml-2 text-xs text-slate-400'>
+                      <span className='ml-2 text-xs text-slate-500 dark:text-slate-400'>
                         en curso
                       </span>
                     )}
@@ -172,7 +174,7 @@ function RecaudoChartComponent({
               {ticks.map(t => (
                 <span
                   key={t}
-                  className='absolute right-2 translate-y-1/2 whitespace-nowrap text-[11px] tabular-nums text-slate-400 dark:text-slate-500'
+                  className='absolute right-2 translate-y-1/2 whitespace-nowrap text-[11px] tabular-nums text-slate-500 dark:text-slate-400'
                   style={{ bottom: `${(t / scale.max) * 100}%` }}
                 >
                   {t === 0 ? '0' : formatCOPCompact(t)}
@@ -202,7 +204,8 @@ function RecaudoChartComponent({
                 const pct = (d.total / scale.max) * 100
                 const esActual = i === ultimo
                 const activo = hovered === i
-                const mostrarLabel = esActual && hovered === null && d.total > 0
+                const mostrarLabel =
+                  hovered === null && d.total > 0 && (esActual || i === iMax)
                 return (
                   <div
                     key={d.mes}
@@ -217,10 +220,12 @@ function RecaudoChartComponent({
                     <motion.div
                       className={`relative w-[70%] max-w-[24px] rounded-t-[4px] transition-colors ${
                         esActual
-                          ? 'bg-violet-500 dark:bg-violet-400'
+                          ? 'bg-gradient-to-t from-red-600 to-rose-500 shadow-[0_-4px_16px_-4px_rgba(220,38,38,0.45)]'
                           : activo
-                            ? 'bg-violet-400 dark:bg-violet-400/80'
-                            : 'bg-violet-200 dark:bg-violet-400/35'
+                            ? 'bg-slate-800 dark:bg-slate-200'
+                            : i === iMax
+                              ? 'bg-slate-700 dark:bg-slate-300'
+                              : 'bg-slate-500 dark:bg-slate-500'
                       }`}
                       initial={{ height: 0 }}
                       animate={{ height: `${pct}%` }}
@@ -271,7 +276,7 @@ function RecaudoChartComponent({
                   className={`flex-1 whitespace-nowrap text-center text-[11px] ${
                     i === ultimo
                       ? 'font-semibold text-slate-700 dark:text-slate-200'
-                      : 'text-slate-400 dark:text-slate-500'
+                      : 'text-slate-500 dark:text-slate-400'
                   }`}
                 >
                   {(() => {

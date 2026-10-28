@@ -111,7 +111,7 @@ function ProyectosCardComponent({
         {canNavigate && (
           <Link
             href='/proyectos'
-            className='flex items-center gap-1 text-sm font-medium text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300'
+            className='flex items-center gap-1 text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300'
           >
             Proyectos <ArrowRight className='h-4 w-4' />
           </Link>
@@ -156,7 +156,7 @@ function ProyectosCardComponent({
           ))}
         </div>
       ) : lista.length === 0 ? (
-        <div className='flex flex-col items-center justify-center py-8 text-slate-400 dark:text-slate-500'>
+        <div className='flex flex-col items-center justify-center py-8 text-slate-500 dark:text-slate-400'>
           <Building2 className='mb-3 h-8 w-8' />
           <p className='text-sm'>No hay proyectos registrados</p>
         </div>

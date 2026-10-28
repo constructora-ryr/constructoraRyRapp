@@ -2,6 +2,7 @@
 
 import { memo, type ElementType } from 'react'
 
+import { motion } from 'framer-motion'
 import { ArrowUpRight, Minus, TrendingDown, TrendingUp } from 'lucide-react'
 
 import Link from 'next/link'
@@ -35,6 +36,8 @@ interface KpiCardProps {
   format?: (value: number) => string
   /** Muestra el valor exacto en un tooltip (KPIs de dinero abreviados) */
   montoCompleto?: boolean
+  /** Barra de avance 0-100 bajo la cifra (p.ej. % vendido) */
+  progreso?: number
   /** Si se define, toda la tarjeta es clicable */
   href?: string
   loading: boolean
@@ -61,6 +64,7 @@ function KpiCardComponent({
   accentBg,
   format,
   montoCompleto,
+  progreso,
   href,
   loading,
 }: KpiCardProps) {
@@ -68,9 +72,11 @@ function KpiCardComponent({
 
   const content = (
     <>
-      <div className='mb-5 flex items-center justify-between'>
+      <div className='mb-5 flex items-center justify-between gap-2'>
         <div className='flex items-center gap-2.5'>
-          <span className={`rounded-lg p-1.5 ${accentBg} ${accentText}`}>
+          <span
+            className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl ${accentBg} ${accentText}`}
+          >
             <Icon className='h-4 w-4' />
           </span>
           <span className='text-sm font-medium text-slate-600 dark:text-slate-300'>
@@ -78,7 +84,7 @@ function KpiCardComponent({
           </span>
         </div>
         {href && (
-          <ArrowUpRight className='h-4 w-4 text-slate-300 transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-slate-600 dark:text-slate-600 dark:group-hover:text-slate-300' />
+          <ArrowUpRight className='h-4 w-4 text-slate-400 transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-slate-600 dark:text-slate-500 dark:group-hover:text-slate-300' />
         )}
       </div>
 
@@ -90,7 +96,7 @@ function KpiCardComponent({
             <AnimatedCounter
               value={value}
               format={format}
-              className='text-3xl font-semibold tracking-tight text-slate-900 dark:text-white'
+              className='text-3xl font-bold tabular-nums tracking-tight text-slate-900 dark:text-white'
             />
           )
           return montoCompleto ? (
@@ -102,6 +108,17 @@ function KpiCardComponent({
             contador
           )
         })()
+      )}
+
+      {progreso !== undefined && !loading && (
+        <div className='mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700/70'>
+          <motion.div
+            className='h-full origin-left rounded-full bg-gradient-to-r from-red-500 to-rose-600'
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: Math.min(100, Math.max(0, progreso)) / 100 }}
+            transition={{ type: 'spring', stiffness: 60, damping: 20 }}
+          />
+        </div>
       )}
 
       <div className='mt-2 flex flex-wrap items-center gap-x-3 gap-y-1'>
@@ -134,13 +151,13 @@ function KpiCardComponent({
   )
 
   const className =
-    'group relative flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all dark:border-slate-700/60 dark:bg-slate-800/60 dark:shadow-none'
+    'group relative flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_12px_32px_-18px_rgba(15,23,42,0.25)] transition-all dark:border-slate-700/60 dark:bg-slate-800/60 dark:shadow-none'
 
   if (href) {
     return (
       <Link
         href={href}
-        className={`${className} hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 dark:hover:border-slate-600`}
+        className={`${className} hover:-translate-y-0.5 hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 active:translate-y-0 dark:hover:border-slate-600`}
       >
         {content}
       </Link>

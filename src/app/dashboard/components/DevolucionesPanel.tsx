@@ -3,7 +3,7 @@
 import { memo } from 'react'
 
 import { motion } from 'framer-motion'
-import { ChevronRight, FileX, HandCoins, ShieldCheck } from 'lucide-react'
+import { ChevronRight, FileX, ShieldCheck } from 'lucide-react'
 
 import Link from 'next/link'
 
@@ -62,6 +62,8 @@ function DevolucionesPanelComponent({
   const totalMonto = devoluciones.monto + renuncias.monto
   const ocultos = devoluciones.total - devoluciones.items.length
 
+  if (!loading && totalCasos === 0) return <FranjaAlDia />
+
   return (
     <motion.section
       variants={itemVariants}
@@ -79,9 +81,7 @@ function DevolucionesPanelComponent({
           <p className='mt-1 text-sm text-slate-500 dark:text-slate-400'>
             {loading
               ? 'Revisando…'
-              : totalCasos === 0
-                ? 'Dinero a favor de clientes por devolver'
-                : `${totalCasos} ${plural(totalCasos, 'pendiente')} por devolver`}
+              : `${totalCasos} ${plural(totalCasos, 'pendiente')} por devolver`}
           </p>
         </div>
         {!loading && totalCasos > 0 && (
@@ -105,8 +105,6 @@ function DevolucionesPanelComponent({
             />
           ))}
         </div>
-      ) : totalCasos === 0 ? (
-        <EstadoVacio />
       ) : (
         <ul className='-mx-2 flex flex-col gap-0.5'>
           {devoluciones.items.map(d => {
@@ -146,7 +144,7 @@ function DevolucionesPanelComponent({
                   <Monto value={d.monto} focusable={!href} />
                 </span>
                 {href && (
-                  <ChevronRight className='h-4 w-4 shrink-0 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-500 dark:text-slate-600' />
+                  <ChevronRight className='h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-600 dark:text-slate-500 dark:group-hover:text-slate-300' />
                 )}
               </>
             )
@@ -197,7 +195,7 @@ function DevolucionesPanelComponent({
                       </span>
                     )}
                     {permisos.renuncias && (
-                      <ChevronRight className='h-4 w-4 shrink-0 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-500 dark:text-slate-600' />
+                      <ChevronRight className='h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-600 dark:text-slate-500 dark:group-hover:text-slate-300' />
                     )}
                   </>
                 )
@@ -228,34 +226,44 @@ function DevolucionesPanelComponent({
   )
 }
 
-function EstadoVacio() {
+/**
+ * Sin devoluciones: franja delgada en lugar de tarjeta, para que "todo bien"
+ * no ocupe el espacio de un problema
+ */
+function FranjaAlDia() {
   return (
-    <div className='relative flex flex-1 flex-col items-center justify-center overflow-hidden rounded-xl border border-emerald-100 bg-gradient-to-b from-emerald-50/80 to-white px-6 py-10 text-center dark:border-emerald-500/10 dark:from-emerald-500/[0.07] dark:to-transparent'>
-      {/* Halo suave detrás del ícono */}
-      <span
-        aria-hidden
-        className='absolute top-6 h-24 w-24 rounded-full bg-emerald-200/40 blur-2xl dark:bg-emerald-500/10'
-      />
-      <motion.span
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-        className='relative flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-emerald-600 shadow-sm ring-1 ring-emerald-100 dark:bg-slate-800 dark:text-emerald-400 dark:ring-emerald-500/20'
-      >
-        <ShieldCheck className='h-7 w-7' />
-      </motion.span>
-      <p className='relative mt-4 text-base font-semibold text-slate-900 dark:text-white'>
-        Sin devoluciones pendientes
-      </p>
-      <p className='relative mt-1.5 max-w-xs text-sm text-slate-500 dark:text-slate-400'>
-        No le debemos dinero a ningún cliente. Si alguien paga de más o una
-        renuncia requiere devolución, aparecerá aquí.
-      </p>
-      <span className='relative mt-4 inline-flex items-center gap-1.5 rounded-full bg-emerald-100/70 px-3 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'>
-        <HandCoins className='h-3.5 w-3.5' />
-        Todo al día con los clientes
+    // Aparece después de cargar, cuando la cascada del padre ya terminó:
+    // necesita su propia animación de entrada o se queda invisible
+    <motion.section
+      variants={itemVariants}
+      initial='hidden'
+      animate='visible'
+      aria-label='Devoluciones a clientes'
+      className='flex items-center gap-3 rounded-2xl border border-emerald-200/70 bg-gradient-to-r from-emerald-50 to-white px-4 py-3 dark:border-emerald-500/20 dark:from-emerald-500/10 dark:to-transparent'
+    >
+      <span className='flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-sm shadow-emerald-600/30'>
+        <ShieldCheck className='h-4 w-4' />
       </span>
-    </div>
+      <p className='min-w-0 text-sm'>
+        <span className='font-semibold text-slate-900 dark:text-white'>
+          Sin devoluciones pendientes
+        </span>
+        <span className='block text-slate-500 dark:text-slate-400 sm:inline'>
+          <span className='hidden sm:inline'> · </span>
+          No le debemos dinero a ningún cliente
+        </span>
+      </p>
+    </motion.section>
+  )
+}
+
+/** Casos pendientes (excedentes + renuncias): decide si va tarjeta o franja */
+export function contarDevoluciones(
+  alertas: DashboardStatsData['alertas']
+): number {
+  return (
+    (alertas.devolucionesPendientes?.total ?? 0) +
+    alertas.renunciasPendientes.total
   )
 }
 
