@@ -28,10 +28,12 @@ function validar<T extends string>(
 
 export function usePestanaUrl<T extends string>(
   validas: readonly T[],
-  porDefecto: T
+  porDefecto: T,
+  /** Otro parámetro para una segunda selección en la misma página */
+  param: string = PARAM
 ): [T, (pestana: T) => void] {
   const params = useSearchParams()
-  const enUrl = validar(params?.get(PARAM), validas, porDefecto)
+  const enUrl = validar(params?.get(param), validas, porDefecto)
   const [activa, setActiva] = useState<T>(enUrl)
 
   // La URL cambió por fuera (atrás/adelante, un enlace a otra pestaña)
@@ -43,13 +45,13 @@ export function usePestanaUrl<T extends string>(
     (pestana: T) => {
       setActiva(pestana)
       const url = new URL(window.location.href)
-      if (pestana === porDefecto) url.searchParams.delete(PARAM)
-      else url.searchParams.set(PARAM, pestana)
+      if (pestana === porDefecto) url.searchParams.delete(param)
+      else url.searchParams.set(param, pestana)
       // Estado null: con el estado interno de Next, el router asume que la
       // llamada es suya y no sincroniza useSearchParams
       window.history.replaceState(null, '', url)
     },
-    [porDefecto]
+    [porDefecto, param]
   )
 
   return [activa, cambiar]

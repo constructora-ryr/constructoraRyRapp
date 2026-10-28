@@ -39,6 +39,13 @@ const TEMA = {
     contador:
       'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300',
   },
+  reportes: {
+    activa:
+      'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/25',
+    inactiva:
+      'text-slate-500 hover:bg-sky-50 hover:text-sky-700 dark:text-slate-400 dark:hover:bg-sky-500/10 dark:hover:text-sky-300',
+    contador: 'bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300',
+  },
 } as const
 
 interface DetalleTabsProps<T extends string> {

@@ -2,246 +2,152 @@
 
 import { useState } from 'react'
 
-import { motion } from 'framer-motion'
+import { AlertCircle, BarChart3, HandCoins, Landmark } from 'lucide-react'
+
 import {
-  AlertCircle,
-  BarChart3,
-  Building2,
-  DollarSign,
-  Info,
-  Landmark,
-  ListChecks,
-  RefreshCw,
-  TrendingUp,
-  Users,
-} from 'lucide-react'
+  DetalleTabs,
+  type TabDetalle,
+} from '@/shared/components/detalle/DetalleTabs'
+import { usePestanaUrl } from '@/shared/hooks/usePestanaUrl'
 
-import { useReporteFinanciacion } from '../hooks/useReporteFinanciacion'
+import type { CategoriaFinanciacion, ReporteFinanciacionData } from '../types'
 
-import { ClientesEntidadTabla } from './ClientesEntidadTabla'
-import { EntidadesResumenGrid } from './EntidadesResumenGrid'
+import { DetalleEntidad } from './DetalleEntidad'
+import { ListaEntidades } from './ListaEntidades'
+import { ResumenFinanciacion } from './ResumenFinanciacion'
 
-export function ReporteFinanciacion() {
-  const { data, isLoading, isError, error, refetch, isFetching } =
-    useReporteFinanciacion()
-  const [entidadSeleccionadaId, setEntidadSeleccionadaId] = useState<
-    string | null
-  >(null)
+const CATEGORIAS = ['creditos', 'subsidios'] as const
 
-  const entidadSeleccionada = data?.entidades.find(
-    e => e.id === entidadSeleccionadaId
+interface ReporteFinanciacionProps {
+  data: ReporteFinanciacionData | undefined
+  isLoading: boolean
+  error: Error | null
+  onReintentar: () => void
+}
+
+/**
+ * Financiación por entidad: resumen general, pestañas Créditos / Subsidios,
+ * lista de entidades y el detalle de la elegida. La pestaña y la entidad
+ * quedan en la URL (?tab=subsidios&entidad=…).
+ */
+export function ReporteFinanciacion({
+  data,
+  isLoading,
+  error,
+  onReintentar,
+}: ReporteFinanciacionProps) {
+  const entidades = data?.entidades ?? []
+  const porCategoria = (c: CategoriaFinanciacion) =>
+    entidades.filter(e => e.categoria === c)
+
+  const [categoria, setCategoria] = usePestanaUrl<CategoriaFinanciacion>(
+    CATEGORIAS,
+    'creditos'
   )
-
-  const handleSeleccionar = (id: string) => {
-    setEntidadSeleccionadaId(prev => (prev === id ? null : id))
-  }
+  const visibles = porCategoria(categoria)
+  const ids = visibles.map(e => e.id)
+  const [entidadId, setEntidadId] = usePestanaUrl<string>(
+    ids,
+    ids[0] ?? '',
+    'entidad'
+  )
+  // En celular el detalle se abre encima de la lista
+  const [detalleMovil, setDetalleMovil] = useState(false)
 
   if (isLoading) return <EstadoCargando />
-  if (isError)
-    return <EstadoError mensaje={error.message} onReintentar={refetch} />
+  if (error)
+    return <EstadoError mensaje={error.message} onReintentar={onReintentar} />
+  if (!data || entidades.length === 0) return <EstadoVacio />
 
-  if (!data || data.entidades.length === 0)
-    return <EstadoVacio onActualizar={refetch} actualizando={isFetching} />
+  const seleccionada = visibles.find(e => e.id === entidadId) ?? visibles[0]
 
-  const reporte = data
-  const totalDesembolsado = reporte.entidades.reduce(
-    (sum, e) => sum + e.totalDesembolsado,
-    0
-  )
+  const tabs: TabDetalle<CategoriaFinanciacion>[] = [
+    {
+      id: 'creditos',
+      label: 'Créditos',
+      icon: Landmark,
+      count: porCategoria('creditos').length,
+    },
+    {
+      id: 'subsidios',
+      label: 'Subsidios',
+      icon: HandCoins,
+      count: porCategoria('subsidios').length,
+    },
+  ]
+
+  const cambiarCategoria = (c: CategoriaFinanciacion) => {
+    setCategoria(c)
+    setEntidadId(porCategoria(c)[0]?.id ?? '')
+  }
+  const elegir = (id: string) => {
+    setEntidadId(id)
+    setDetalleMovil(true)
+  }
 
   return (
-    <div className='space-y-6'>
-      {/* KPIs resumen */}
-      <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
-        <KpiResumen
-          icono={Building2}
-          label='Entidades activas'
-          valor={reporte.entidades.length}
-          colorIcono='from-blue-600 to-indigo-600'
-        />
-        <KpiResumen
-          icono={Users}
-          label='Clientes activos'
-          valor={reporte.totalClientesFinanciados}
-          colorIcono='from-cyan-600 to-blue-600'
-        />
-        <KpiResumenFinanciero
-          aprobado={reporte.montoTotalAprobado}
-          desembolsado={totalDesembolsado}
-        />
-      </div>
+    <div className='space-y-4'>
+      <ResumenFinanciacion resumen={data.resumen} />
 
-      {/* Título sección con botón refrescar */}
-      <div className='flex items-center justify-between'>
-        <div>
-          <h2 className='text-base font-semibold text-gray-900 dark:text-white'>
-            Distribución por entidad financiera
-          </h2>
-          <p className='text-xs text-gray-500 dark:text-gray-400'>
-            Selecciona una entidad para ver el detalle de sus clientes
-          </p>
-        </div>
-        <button
-          type='button'
-          onClick={() => refetch()}
-          disabled={isFetching}
-          className='flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 disabled:opacity-50 dark:text-gray-400 dark:hover:bg-gray-700/50'
-        >
-          <RefreshCw
-            className={`h-3.5 w-3.5 ${isFetching ? 'animate-spin' : ''}`}
-          />
-          Actualizar
-        </button>
-      </div>
-
-      {/* Grilla de entidades */}
-      <EntidadesResumenGrid
-        entidades={reporte.entidades}
-        entidadSeleccionadaId={entidadSeleccionadaId}
-        onSeleccionar={handleSeleccionar}
+      <DetalleTabs
+        tabs={tabs}
+        activa={categoria}
+        onCambiar={cambiarCategoria}
+        tema='reportes'
+        etiqueta='Tipo de financiación'
       />
 
-      {/* Tabla de detalle (aparece al seleccionar una entidad) */}
-      {entidadSeleccionada && (
-        <ClientesEntidadTabla entidad={entidadSeleccionada} />
+      <div
+        id={`panel-${categoria}`}
+        role='tabpanel'
+        className='grid items-start gap-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,8fr)]'
+      >
+        {visibles.length === 0 ? (
+          <p className='rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500 dark:border-slate-600 dark:text-slate-400 lg:col-span-2'>
+            No hay {categoria === 'creditos' ? 'créditos' : 'subsidios'} con
+            entidad asignada.
+          </p>
+        ) : (
+          <>
+            <div className='lg:sticky lg:top-4'>
+              <ListaEntidades
+                entidades={visibles}
+                seleccionadaId={seleccionada?.id ?? ''}
+                onSeleccionar={elegir}
+              />
+            </div>
+            {seleccionada && (
+              <div className='hidden lg:block'>
+                <DetalleEntidad key={seleccionada.id} entidad={seleccionada} />
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {detalleMovil && seleccionada && (
+        <div className='fixed inset-0 z-50 overflow-y-auto bg-slate-50 p-4 dark:bg-slate-950 lg:hidden'>
+          <DetalleEntidad
+            key={seleccionada.id}
+            entidad={seleccionada}
+            onVolver={() => setDetalleMovil(false)}
+          />
+        </div>
       )}
     </div>
   )
 }
 
-// ── Empty State ──────────────────────────────────────────────────────────────
-
-function EstadoVacio({
-  onActualizar,
-  actualizando,
-}: {
-  onActualizar: () => void
-  actualizando: boolean
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className='space-y-5 rounded-xl border border-gray-200/50 bg-gradient-to-br from-white/90 via-indigo-50/90 to-violet-50/90 p-6 text-center shadow-xl backdrop-blur-xl dark:border-gray-700/50 dark:from-gray-800/90 dark:via-gray-800/80 dark:to-indigo-950/50'
-    >
-      {/* Icono con gradiente */}
-      <div className='flex justify-center'>
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: 'spring', stiffness: 200 }}
-          className='mx-auto flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 via-violet-600 to-purple-600 shadow-2xl shadow-indigo-500/30'
-        >
-          <BarChart3 className='h-8 w-8 text-white' />
-        </motion.div>
-      </div>
-
-      {/* Título y descripción */}
-      <div className='space-y-2'>
-        <h3 className='bg-gradient-to-br from-gray-900 via-gray-800 to-indigo-900 bg-clip-text text-xl font-bold text-transparent dark:from-white dark:via-gray-100 dark:to-indigo-100'>
-          Sin datos de financiación
-        </h3>
-        <p className='mx-auto max-w-lg text-sm leading-relaxed text-gray-600 dark:text-gray-400'>
-          Aún no hay negociaciones activas con financiación por entidad
-          asignada. Los datos aparecerán automáticamente cuando se registren.
-        </p>
-      </div>
-
-      {/* Checklist */}
-      <div className='rounded-xl border border-gray-200/80 bg-white/60 p-4 text-left shadow-lg backdrop-blur-sm dark:border-gray-700/50 dark:bg-gray-900/40'>
-        <div className='mb-3 flex items-center gap-2 border-b border-gray-200 pb-2 text-sm font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300'>
-          <ListChecks className='h-4 w-4' />
-          ¿Qué necesitas para ver datos?
-        </div>
-        <div className='space-y-2.5'>
-          <div className='flex items-start gap-3'>
-            <div className='mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/30'>
-              <Landmark className='h-3 w-3 text-indigo-600 dark:text-indigo-400' />
-            </div>
-            <div className='min-w-0 flex-1'>
-              <p className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                Tener entidades financieras registradas
-              </p>
-              <p className='mt-0.5 text-xs text-gray-500 dark:text-gray-400'>
-                Ve a Administración → Entidades Financieras para crearlas
-              </p>
-            </div>
-          </div>
-          <div className='flex items-start gap-3'>
-            <div className='mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/30'>
-              <Users className='h-3 w-3 text-indigo-600 dark:text-indigo-400' />
-            </div>
-            <div className='min-w-0 flex-1'>
-              <p className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                Asignar entidad en la fuente de pago de clientes
-              </p>
-              <p className='mt-0.5 text-xs text-gray-500 dark:text-gray-400'>
-                Al registrar o editar una negociación, vincula la fuente de
-                crédito con su entidad financiera
-              </p>
-            </div>
-          </div>
-          <div className='flex items-start gap-3'>
-            <div className='mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/30'>
-              <TrendingUp className='h-3 w-3 text-indigo-600 dark:text-indigo-400' />
-            </div>
-            <div className='min-w-0 flex-1'>
-              <p className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                Tener negociaciones activas o completadas
-              </p>
-              <p className='mt-0.5 text-xs text-gray-500 dark:text-gray-400'>
-                Solo se incluyen negociaciones en estado Activa o Completada
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Footer informativo + botón actualizar */}
-      <div className='flex items-start gap-3 border-t border-gray-200 pt-1 text-left dark:border-gray-700'>
-        <Info className='mt-0.5 h-5 w-5 flex-shrink-0 text-indigo-600 dark:text-indigo-400' />
-        <p className='flex-1 text-xs leading-relaxed text-gray-600 dark:text-gray-400'>
-          Este reporte agrupa las fuentes de financiación activas por entidad,
-          mostrando el monto total aprobado y los clientes vinculados a cada
-          banco o fondo.
-        </p>
-        <button
-          type='button'
-          onClick={onActualizar}
-          disabled={actualizando}
-          className='flex flex-shrink-0 items-center gap-1.5 rounded-lg border border-indigo-200 px-3 py-1.5 text-xs font-medium text-indigo-600 transition-colors hover:bg-indigo-50 disabled:opacity-50 dark:border-indigo-800 dark:text-indigo-400 dark:hover:bg-indigo-900/20'
-        >
-          <RefreshCw
-            className={`h-3 w-3 ${actualizando ? 'animate-spin' : ''}`}
-          />
-          Actualizar
-        </button>
-      </div>
-    </motion.div>
-  )
-}
-
-// ── Sub-componentes de estado ────────────────────────────────────────────────
+// ── Estados ──────────────────────────────────────────────────────────────────
 
 function EstadoCargando() {
   return (
-    <div className='space-y-4'>
-      <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
-        {[1, 2, 3].map(i => (
-          <div
-            key={i}
-            className='h-24 animate-pulse rounded-xl bg-gray-100 dark:bg-gray-800'
-          />
-        ))}
-      </div>
-      <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3'>
-        {[1, 2, 3, 4].map(i => (
-          <div
-            key={i}
-            className='h-40 animate-pulse rounded-xl bg-gray-100 dark:bg-gray-800'
-          />
-        ))}
+    <div className='space-y-4' aria-busy='true'>
+      <div className='h-44 animate-pulse rounded-2xl bg-slate-200/70 dark:bg-slate-800' />
+      <div className='h-11 w-64 animate-pulse rounded-2xl bg-slate-200/70 dark:bg-slate-800' />
+      <div className='grid gap-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,8fr)]'>
+        <div className='h-96 animate-pulse rounded-2xl bg-slate-200/70 dark:bg-slate-800' />
+        <div className='hidden h-96 animate-pulse rounded-2xl bg-slate-200/70 dark:bg-slate-800 lg:block' />
       </div>
     </div>
   )
@@ -255,16 +161,16 @@ function EstadoError({
   onReintentar: () => void
 }) {
   return (
-    <div className='flex flex-col items-center rounded-xl border border-red-200 bg-red-50 p-10 text-center dark:border-red-800 dark:bg-red-950/20'>
-      <AlertCircle className='mb-3 h-10 w-10 text-red-400' />
-      <p className='text-sm font-medium text-red-700 dark:text-red-400'>
-        Error al cargar el reporte
+    <div className='flex flex-col items-center rounded-2xl border border-rose-200 bg-rose-50 p-10 text-center dark:border-rose-500/30 dark:bg-rose-500/10'>
+      <AlertCircle className='mb-3 h-10 w-10 text-rose-500' />
+      <p className='text-sm font-semibold text-rose-700 dark:text-rose-300'>
+        No se pudo cargar el reporte
       </p>
-      <p className='mt-1 text-xs text-red-500 dark:text-red-500'>{mensaje}</p>
+      <p className='mt-1 text-xs text-rose-600 dark:text-rose-400'>{mensaje}</p>
       <button
         type='button'
         onClick={onReintentar}
-        className='mt-4 rounded-lg bg-red-600 px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-red-700'
+        className='mt-4 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-rose-700 active:scale-[0.98]'
       >
         Reintentar
       </button>
@@ -272,78 +178,19 @@ function EstadoError({
   )
 }
 
-// ── KPI card local ───────────────────────────────────────────────────────────
-
-interface KpiResumenProps {
-  icono: React.ElementType
-  label: string
-  valor: string | number
-  colorIcono: string
-}
-
-function KpiResumen({
-  icono: Icono,
-  label,
-  valor,
-  colorIcono,
-}: KpiResumenProps) {
+function EstadoVacio() {
   return (
-    <div className='flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800'>
-      <div
-        className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${colorIcono} shadow-sm`}
-      >
-        <Icono className='h-5 w-5 text-white' />
-      </div>
-      <div>
-        <p className='text-xs font-medium text-gray-500 dark:text-gray-400'>
-          {label}
-        </p>
-        <p className='text-base font-bold text-gray-900 dark:text-white'>
-          {valor}
-        </p>
-      </div>
+    <div className='flex flex-col items-center rounded-2xl border border-slate-200/80 bg-white px-6 py-12 text-center shadow-sm dark:border-slate-700/60 dark:bg-slate-800/60'>
+      <span className='flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/25'>
+        <BarChart3 className='h-7 w-7' />
+      </span>
+      <p className='mt-4 text-base font-semibold text-slate-900 dark:text-white'>
+        Aún no hay financiación para reportar
+      </p>
+      <p className='mt-1.5 max-w-md text-sm text-slate-500 dark:text-slate-400'>
+        Aquí aparecerán los créditos y subsidios de las negociaciones activas o
+        completadas, cuando su fuente de pago tenga la entidad asignada.
+      </p>
     </div>
   )
-}
-
-// ── KPI financiero: aprobado + desembolsado ──────────────────────────────────
-
-function KpiResumenFinanciero({
-  aprobado,
-  desembolsado,
-}: {
-  aprobado: number
-  desembolsado: number
-}) {
-  return (
-    <div className='flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800'>
-      <div className='flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-600 to-teal-600 shadow-sm'>
-        <DollarSign className='h-5 w-5 text-white' />
-      </div>
-      <div className='min-w-0 flex-1'>
-        <p className='text-xs font-medium text-gray-500 dark:text-gray-400'>
-          Total aprobado
-        </p>
-        <p className='text-base font-bold text-gray-900 dark:text-white'>
-          {formatCOP(aprobado)}
-        </p>
-        <div className='mt-1 flex items-center gap-1.5'>
-          <span className='h-1.5 w-1.5 rounded-full bg-emerald-500' />
-          <p className='text-[11px] font-semibold text-emerald-600 dark:text-emerald-400'>
-            {formatCOP(desembolsado)} desembolsado
-          </p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ── Utilidad local ───────────────────────────────────────────────────────────
-
-function formatCOP(valor: number): string {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    maximumFractionDigits: 0,
-  }).format(valor)
 }
