@@ -94,7 +94,7 @@ export function ReporteFinanciacion({
         activa={categoria}
         onCambiar={cambiarCategoria}
         tema='reportes'
-        etiqueta='Tipo de financiación'
+        etiqueta='Créditos o subsidios'
       />
 
       <div
@@ -185,7 +185,7 @@ function EstadoVacio() {
         <BarChart3 className='h-7 w-7' />
       </span>
       <p className='mt-4 text-base font-semibold text-slate-900 dark:text-white'>
-        Aún no hay financiación para reportar
+        Aún no hay créditos ni subsidios para reportar
       </p>
       <p className='mt-1.5 max-w-md text-sm text-slate-500 dark:text-slate-400'>
         Aquí aparecerán los créditos y subsidios de las negociaciones activas o

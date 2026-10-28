@@ -31,7 +31,7 @@ export function ReportesPageMain(_props: ReportesPageMainProps = {}) {
         <ListPageHeader
           icon={BarChart3}
           title='Reportes'
-          subtitle='Financiación por entidad: lo aprobado por bancos y subsidios, lo que ya giraron y lo que falta.'
+          subtitle='Créditos y subsidios por entidad: lo aprobado, lo que ya giraron y lo que falta.'
           breadcrumbs={[
             { label: 'Dashboard', href: '/' },
             { label: 'Reportes' },

@@ -12,20 +12,26 @@ import { avance } from '../utils/reportes.utils'
 import { BarraDesembolso } from './piezas'
 
 /**
- * Lo financiado por bancos y subsidios: cuánto se aprobó, cuánto ya giraron
- * las entidades y cuánto falta (lo que hay que perseguir).
+ * Lo aprobado por bancos y subsidios: cuánto se aprobó, cuánto ya giraron
+ * las entidades y cuánto falta (lo que hay que perseguir). No se dice
+ * "financiado": los subsidios no son préstamos.
  */
 export function ResumenFinanciacion({ resumen }: { resumen: Resumen }) {
   const pct = avance(resumen.montoAprobado, resumen.desembolsado)
+  // Hacia abajo: 99,96 % con algo pendiente no debe verse como 100,0 %
+  const pctTexto = (Math.floor(pct * 10) / 10).toLocaleString('es-CO', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  })
 
   return (
     <section
-      aria-label='Resumen de financiación'
+      aria-label='Resumen de créditos y subsidios'
       className='grid gap-5 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/60 sm:p-6 lg:grid-cols-[1.25fr_1fr] lg:items-center lg:gap-8'
     >
       <div className='min-w-0'>
         <p className='text-sm font-medium text-slate-500 dark:text-slate-400'>
-          Total financiado
+          Total aprobado por entidades
         </p>
         <p className='mt-0.5 text-3xl font-bold tabular-nums tracking-tight text-slate-900 dark:text-white'>
           {formatCurrency(resumen.montoAprobado)}
@@ -34,9 +40,8 @@ export function ResumenFinanciacion({ resumen }: { resumen: Resumen }) {
           <BarraDesembolso porcentaje={pct} grosor='h-3' />
           <p className='mt-2 text-sm text-slate-600 dark:text-slate-300'>
             <span className='font-semibold text-emerald-700 dark:text-emerald-400'>
-              {pct.toFixed(1)}% desembolsado
-            </span>{' '}
-            por bancos y subsidios
+              {pctTexto}% ya desembolsado
+            </span>
           </p>
         </div>
       </div>
@@ -62,7 +67,7 @@ export function ResumenFinanciacion({ resumen }: { resumen: Resumen }) {
         />
         <Cifra
           icon={Users}
-          label='Clientes con financiación'
+          label='Clientes con crédito o subsidio'
           valor={String(resumen.clientes)}
           tono='bg-gradient-to-br from-sky-500 to-blue-600'
         />
