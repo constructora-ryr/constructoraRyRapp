@@ -2,6 +2,8 @@
 
 import DOMPurify from 'dompurify'
 
+import { estilosRichText } from './rich-text.styles'
+
 interface RichTextContentProps {
   html: string
   className?: string
@@ -21,16 +23,33 @@ const ALLOWED_TAGS = [
   'mark',
   'blockquote',
   'br',
+  'a',
 ]
+
+// Los enlaces abren en otra pestaña y sin dar acceso a esta página.
+// DOMPurify ya descarta href peligrosos (javascript:, data:)
+if (typeof window !== 'undefined') {
+  DOMPurify.addHook('afterSanitizeAttributes', nodo => {
+    if (nodo.tagName === 'A') {
+      nodo.setAttribute('target', '_blank')
+      nodo.setAttribute('rel', 'noopener noreferrer nofollow')
+    }
+  })
+}
 
 // Detecta si el contenido es HTML enriquecido o texto plano
 function isRichHtml(content: string): boolean {
-  return /<(p|h[1-6]|ul|ol|li|strong|em|u|s|mark|blockquote|br)\b/.test(content)
+  return /<(p|h[1-6]|ul|ol|li|strong|em|u|s|mark|blockquote|br|a)\b/.test(
+    content
+  )
 }
 
 function sanitize(html: string): string {
   if (typeof window === 'undefined') return html
-  return DOMPurify.sanitize(html, { ALLOWED_TAGS, ALLOWED_ATTR: [] })
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS,
+    ALLOWED_ATTR: ['href', 'target', 'rel'],
+  })
 }
 
 export function RichTextContent({
@@ -50,27 +69,8 @@ export function RichTextContent({
   return (
     <>
       <style>{`
-        .rich-nota-content h2 { font-size: 15px; font-weight: 700; margin: 10px 0 5px; }
-        .rich-nota-content h3 { font-size: 14px; font-weight: 700; margin: 8px 0 4px; }
-        .rich-nota-content p { margin: 0 0 7px; line-height: 1.6; }
-        .rich-nota-content p:last-child { margin-bottom: 0; }
-        .rich-nota-content strong { font-weight: 700; }
-        .rich-nota-content em { font-style: italic; }
-        .rich-nota-content u { text-decoration: underline; }
-        .rich-nota-content s { text-decoration: line-through; }
-        .rich-nota-content mark { background: #fde68a; border-radius: 2px; padding: 0 2px; }
-        .dark .rich-nota-content mark { background: #78350f; color: #fde68a; }
-        .rich-nota-content ul { list-style: disc; padding-left: 18px; margin: 5px 0; }
-        .rich-nota-content ol { list-style: decimal; padding-left: 18px; margin: 5px 0; }
-        .rich-nota-content li { margin: 2px 0; }
-        .rich-nota-content blockquote {
-          border-left: 3px solid #a78bfa;
-          padding-left: 10px;
-          margin: 6px 0;
-          color: #6b7280;
-          font-style: italic;
-        }
-        .dark .rich-nota-content blockquote { color: #9ca3af; }
+        ${estilosRichText('.rich-nota-content')}
+        .rich-nota-content p { line-height: 1.6; }
       `}</style>
       <div
         className={`rich-nota-content text-sm leading-relaxed ${className}`}

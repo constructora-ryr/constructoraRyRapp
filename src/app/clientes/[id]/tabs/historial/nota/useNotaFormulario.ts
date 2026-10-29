@@ -19,8 +19,16 @@ export const MIN_TITULO = 3
 export const MAX_TITULO = 200
 export const MIN_CONTENIDO = 10
 
-/** Texto sin etiquetas HTML (el editor guarda HTML) */
-const textoPlano = (html: string) => html.replace(/<[^>]*>/g, '').trim()
+/**
+ * Texto visible del HTML del editor. Con DOMParser "&amp;" cuenta como un
+ * carácter y no como cinco (quitar etiquetas con regex no decodifica)
+ */
+function textoPlano(html: string): string {
+  if (!html) return ''
+  if (typeof window === 'undefined') return html.replace(/<[^>]*>/g, '').trim()
+  const doc = new DOMParser().parseFromString(html, 'text/html')
+  return (doc.body.textContent ?? '').trim()
+}
 
 export function useNotaFormulario({
   clienteId,
@@ -78,6 +86,15 @@ export function useNotaFormulario({
 
   const guardando = isCreando || isActualizando
 
+  // Hay algo que se perdería al cerrar: distinto de la nota cargada (editar)
+  // o con algo escrito (nueva)
+  const hayCambios = nota
+    ? titulo !== nota.titulo ||
+      contenido !== nota.contenido ||
+      esImportante !== nota.es_importante ||
+      (documento?.id ?? null) !== (nota.documento_vinculado?.id ?? null)
+    : titulo.trim() !== '' || largoContenido > 0 || documento !== null
+
   const guardar = async () => {
     if (faltantes.length > 0 || guardando) return
     const datos = {
@@ -112,6 +129,7 @@ export function useNotaFormulario({
     setDocumento,
     documentos,
     faltantes,
+    hayCambios,
     guardando,
     guardar,
   }

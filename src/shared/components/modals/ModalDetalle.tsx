@@ -56,7 +56,8 @@ export function ModalDetalle({
         el?.tagName === 'INPUT' ||
         el?.tagName === 'TEXTAREA' ||
         el?.isContentEditable
-      if (e.key === 'Escape' && !bloqueado) onClose()
+      // defaultPrevented: Esc ya lo usó algo de adentro (un menú del editor)
+      if (e.key === 'Escape' && !bloqueado && !e.defaultPrevented) onClose()
       else if (escribiendo) return
       else if (e.key === 'ArrowLeft' && onAnterior) onAnterior()
       else if (e.key === 'ArrowRight' && onSiguiente) onSiguiente()

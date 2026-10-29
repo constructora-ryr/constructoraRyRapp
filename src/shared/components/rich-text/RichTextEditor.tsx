@@ -1,10 +1,15 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 
 import HighlightExt from '@tiptap/extension-highlight'
 import PlaceholderExt from '@tiptap/extension-placeholder'
-import { useEditor, EditorContent } from '@tiptap/react'
+import {
+  EditorContent,
+  useEditor,
+  useEditorState,
+  type Editor,
+} from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import {
   Bold,
@@ -15,49 +20,62 @@ import {
   List,
   ListOrdered,
   Quote,
+  Redo2,
   Strikethrough,
   Underline,
+  Undo2,
 } from 'lucide-react'
+
+import { BarraFlotante } from './BarraFlotante'
+import { BotonFormato } from './BotonFormato'
+import { MenuComandos, type ManejadorTeclas } from './MenuComandos'
+import {
+  limpiarHtmlPegado,
+  tieneFormatoWhatsapp,
+  whatsappAHtml,
+} from './pegado'
+import { estilosRichText } from './rich-text.styles'
 
 interface RichTextEditorProps {
   value: string
   onChange: (html: string) => void
   placeholder?: string
   minHeight?: string
+  /** Ctrl/Cmd + Enter dentro del editor (p.ej. guardar) */
+  onAtajoGuardar?: () => void
 }
 
-type ToolbarButtonProps = {
-  onClick: () => void
-  active?: boolean
-  title: string
-  children: React.ReactNode
+const ESTADO_INICIAL = {
+  bold: false,
+  italic: false,
+  underline: false,
+  strike: false,
+  highlight: false,
+  h2: false,
+  h3: false,
+  bulletList: false,
+  orderedList: false,
+  blockquote: false,
+  puedeDeshacer: false,
+  puedeRehacer: false,
 }
 
-function ToolbarButton({
-  onClick,
-  active,
-  title,
-  children,
-}: ToolbarButtonProps) {
-  return (
-    <button
-      type='button'
-      title={title}
-      onClick={onClick}
-      className={`flex h-7 w-7 items-center justify-center rounded transition-colors ${
-        active
-          ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300'
-          : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200'
-      }`}
-    >
-      {children}
-    </button>
-  )
+/** Atajos de escritura que ya entiende el editor (se muestran al pie) */
+const ATAJOS = [
+  { teclas: '##', accion: 'título' },
+  { teclas: '-', accion: 'viñetas' },
+  { teclas: '1.', accion: 'numerada' },
+  { teclas: '>', accion: 'cita' },
+  { teclas: '/', accion: 'más opciones' },
+]
+
+function Grupo({ children }: { children: ReactNode }) {
+  return <div className='flex items-center gap-0.5'>{children}</div>
 }
 
 function Divider() {
   return (
-    <span className='mx-0.5 h-5 w-px self-center bg-gray-200 dark:bg-gray-600' />
+    <span className='mx-1 h-5 w-px self-center bg-slate-200 dark:bg-slate-700' />
   )
 }
 
@@ -66,20 +84,40 @@ export function RichTextEditor({
   onChange,
   placeholder = 'Escribe aquí...',
   minHeight = '180px',
+  onAtajoGuardar,
 }: RichTextEditorProps) {
-  // Rastrea el último HTML emitido por el editor para distinguir
-  // cambios externos (carga de notaData) de cambios internos (el usuario escribe)
+  // Último HTML emitido por el editor: distingue los cambios externos (carga
+  // de la nota al editar) de lo que el usuario escribe
   const lastEmitted = useRef<string>(value || '')
+  const atajoGuardar = useRef(onAtajoGuardar)
+  atajoGuardar.current = onAtajoGuardar
+  // El menú "/" toma las flechas, Enter y Esc mientras está abierto
+  const teclasMenu = useRef<ManejadorTeclas | null>(null)
+  const editorRef = useRef<Editor | null>(null)
 
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
         heading: { levels: [2, 3] },
+        // Sin botón ni forma de mostrarlos: los atajos de markdown (`, ```, ---)
+        // creaban formatos que el visor de notas descartaba
+        code: false,
+        codeBlock: false,
+        horizontalRule: false,
+        // Las URL escritas o pegadas quedan como enlace
+        link: {
+          openOnClick: false,
+          autolink: true,
+          defaultProtocol: 'https',
+        },
       }),
       HighlightExt.configure({ multicolor: false }),
       PlaceholderExt.configure({ placeholder }),
     ],
     content: value || '',
+    onCreate: ({ editor }) => {
+      editorRef.current = editor
+    },
     onUpdate: ({ editor }) => {
       const html = editor.getHTML()
       const result = html === '<p></p>' ? '' : html
@@ -87,14 +125,56 @@ export function RichTextEditor({
       onChange(result)
     },
     editorProps: {
-      attributes: {
-        class: 'outline-none',
+      attributes: { class: 'outline-none' },
+      handleKeyDown: (_view, event) => {
+        if (teclasMenu.current?.(event)) return true
+        if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+          atajoGuardar.current?.()
+          return true
+        }
+        return false
+      },
+      transformPastedHTML: limpiarHtmlPegado,
+      // Texto plano con *negrita* / _cursiva_ / ~tachado~ (WhatsApp)
+      handlePaste: (_view, event) => {
+        const datos = event.clipboardData
+        if (!datos || datos.getData('text/html')) return false
+        const texto = datos.getData('text/plain')
+        if (!texto || !tieneFormatoWhatsapp(texto)) return false
+        editorRef.current?.commands.insertContent(whatsappAHtml(texto))
+        return true
       },
     },
     immediatelyRender: false,
   })
 
-  // Sincronizar cuando el valor cambia externamente (ej: carga de notaData en modo edición)
+  // Tiptap 3 no vuelve a renderizar en cada cambio: sin esto los botones no
+  // mostraban si el formato estaba activo. Puede llegar vacío mientras el
+  // editor se crea, así que la barra cae en "nada activo" en vez de ocultar
+  // el editor
+  const estado =
+    useEditorState({
+      editor,
+      selector: ({ editor: e }) =>
+        e
+          ? {
+              bold: e.isActive('bold'),
+              italic: e.isActive('italic'),
+              underline: e.isActive('underline'),
+              strike: e.isActive('strike'),
+              highlight: e.isActive('highlight'),
+              h2: e.isActive('heading', { level: 2 }),
+              h3: e.isActive('heading', { level: 3 }),
+              bulletList: e.isActive('bulletList'),
+              orderedList: e.isActive('orderedList'),
+              blockquote: e.isActive('blockquote'),
+              puedeDeshacer: e.can().undo(),
+              puedeRehacer: e.can().redo(),
+            }
+          : null,
+    }) ?? ESTADO_INICIAL
+
+  // Sincronizar cuando el valor cambia por fuera (carga de la nota al editar)
   useEffect(() => {
     if (editor && value !== lastEmitted.current) {
       editor.commands.setContent(value || '', { emitUpdate: false })
@@ -102,97 +182,116 @@ export function RichTextEditor({
     }
   }, [editor, value])
 
-  if (!editor) return null
-
-  const e = editor
+  if (!editor) {
+    return (
+      <div
+        className='rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900/60'
+        style={{ minHeight: `calc(${minHeight} + 42px)` }}
+      />
+    )
+  }
+  const cadena = () => editor.chain().focus()
 
   return (
-    <div className='overflow-hidden rounded-lg border-2 border-gray-200 bg-gray-50 transition-colors focus-within:border-purple-500 focus-within:ring-2 focus-within:ring-purple-500/20 dark:border-gray-700 dark:bg-gray-800'>
-      {/* Toolbar */}
-      <div className='flex flex-wrap items-center gap-0.5 border-b border-gray-200 bg-white px-2 py-1.5 dark:border-gray-700 dark:bg-gray-900'>
-        {/* Formato básico */}
-        <ToolbarButton
-          onClick={() => e.chain().focus().toggleBold().run()}
-          active={e.isActive('bold')}
-          title='Negrita (Ctrl+B)'
-        >
-          <Bold className='h-3.5 w-3.5' strokeWidth={2.5} />
-        </ToolbarButton>
-        <ToolbarButton
-          onClick={() => e.chain().focus().toggleItalic().run()}
-          active={e.isActive('italic')}
-          title='Cursiva (Ctrl+I)'
-        >
-          <Italic className='h-3.5 w-3.5' />
-        </ToolbarButton>
-        <ToolbarButton
-          onClick={() => e.chain().focus().toggleUnderline().run()}
-          active={e.isActive('underline')}
-          title='Subrayado (Ctrl+U)'
-        >
-          <Underline className='h-3.5 w-3.5' />
-        </ToolbarButton>
-        <ToolbarButton
-          onClick={() => e.chain().focus().toggleStrike().run()}
-          active={e.isActive('strike')}
-          title='Tachado'
-        >
-          <Strikethrough className='h-3.5 w-3.5' />
-        </ToolbarButton>
-        <ToolbarButton
-          onClick={() => e.chain().focus().toggleHighlight().run()}
-          active={e.isActive('highlight')}
-          title='Resaltar texto'
-        >
-          <Highlighter className='h-3.5 w-3.5' />
-        </ToolbarButton>
-
+    <div className='rounded-xl border border-slate-200 bg-white transition-colors focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-200 dark:border-slate-700 dark:bg-slate-900/60 dark:focus-within:ring-violet-900'>
+      <div
+        role='toolbar'
+        aria-label='Formato del texto'
+        className='flex flex-wrap items-center gap-y-1 rounded-t-xl border-b border-slate-100 bg-slate-50/80 px-1.5 py-1 dark:border-slate-700/70 dark:bg-slate-800/60'
+      >
+        <Grupo>
+          <BotonFormato
+            icon={Bold}
+            label='Negrita'
+            atajo='Ctrl+B'
+            active={estado.bold}
+            onClick={() => cadena().toggleBold().run()}
+          />
+          <BotonFormato
+            icon={Italic}
+            label='Cursiva'
+            atajo='Ctrl+I'
+            active={estado.italic}
+            onClick={() => cadena().toggleItalic().run()}
+          />
+          <BotonFormato
+            icon={Underline}
+            label='Subrayado'
+            atajo='Ctrl+U'
+            active={estado.underline}
+            onClick={() => cadena().toggleUnderline().run()}
+          />
+          <BotonFormato
+            icon={Strikethrough}
+            label='Tachado'
+            atajo='Ctrl+Shift+S'
+            active={estado.strike}
+            onClick={() => cadena().toggleStrike().run()}
+          />
+          <BotonFormato
+            icon={Highlighter}
+            label='Resaltar'
+            atajo='Ctrl+Shift+H'
+            active={estado.highlight}
+            onClick={() => cadena().toggleHighlight().run()}
+          />
+        </Grupo>
         <Divider />
-
-        {/* Encabezados */}
-        <ToolbarButton
-          onClick={() => e.chain().focus().toggleHeading({ level: 2 }).run()}
-          active={e.isActive('heading', { level: 2 })}
-          title='Título'
-        >
-          <Heading2 className='h-3.5 w-3.5' />
-        </ToolbarButton>
-        <ToolbarButton
-          onClick={() => e.chain().focus().toggleHeading({ level: 3 }).run()}
-          active={e.isActive('heading', { level: 3 })}
-          title='Subtítulo'
-        >
-          <Heading3 className='h-3.5 w-3.5' />
-        </ToolbarButton>
-
+        <Grupo>
+          <BotonFormato
+            icon={Heading2}
+            label='Título'
+            active={estado.h2}
+            onClick={() => cadena().toggleHeading({ level: 2 }).run()}
+          />
+          <BotonFormato
+            icon={Heading3}
+            label='Subtítulo'
+            active={estado.h3}
+            onClick={() => cadena().toggleHeading({ level: 3 }).run()}
+          />
+        </Grupo>
         <Divider />
-
-        {/* Listas */}
-        <ToolbarButton
-          onClick={() => e.chain().focus().toggleBulletList().run()}
-          active={e.isActive('bulletList')}
-          title='Lista de viñetas'
-        >
-          <List className='h-3.5 w-3.5' />
-        </ToolbarButton>
-        <ToolbarButton
-          onClick={() => e.chain().focus().toggleOrderedList().run()}
-          active={e.isActive('orderedList')}
-          title='Lista numerada'
-        >
-          <ListOrdered className='h-3.5 w-3.5' />
-        </ToolbarButton>
-        <ToolbarButton
-          onClick={() => e.chain().focus().toggleBlockquote().run()}
-          active={e.isActive('blockquote')}
-          title='Cita'
-        >
-          <Quote className='h-3.5 w-3.5' />
-        </ToolbarButton>
+        <Grupo>
+          <BotonFormato
+            icon={List}
+            label='Lista de viñetas'
+            active={estado.bulletList}
+            onClick={() => cadena().toggleBulletList().run()}
+          />
+          <BotonFormato
+            icon={ListOrdered}
+            label='Lista numerada'
+            active={estado.orderedList}
+            onClick={() => cadena().toggleOrderedList().run()}
+          />
+          <BotonFormato
+            icon={Quote}
+            label='Cita'
+            active={estado.blockquote}
+            onClick={() => cadena().toggleBlockquote().run()}
+          />
+        </Grupo>
+        <div className='ml-auto flex items-center gap-0.5'>
+          <BotonFormato
+            icon={Undo2}
+            label='Deshacer'
+            atajo='Ctrl+Z'
+            disabled={!estado.puedeDeshacer}
+            onClick={() => cadena().undo().run()}
+          />
+          <BotonFormato
+            icon={Redo2}
+            label='Rehacer'
+            atajo='Ctrl+Y'
+            disabled={!estado.puedeRehacer}
+            onClick={() => cadena().redo().run()}
+          />
+        </div>
       </div>
 
-      {/* Área de escritura */}
       <style>{`
+        ${estilosRichText('.tiptap-nota-editor .tiptap')}
         .tiptap-nota-editor .tiptap {
           min-height: ${minHeight};
           padding: 12px 16px;
@@ -200,38 +299,31 @@ export function RichTextEditor({
           line-height: 1.6;
           color: inherit;
         }
-        .tiptap-nota-editor .tiptap p { margin: 0 0 8px; }
-        .tiptap-nota-editor .tiptap p:last-child { margin-bottom: 0; }
-        .tiptap-nota-editor .tiptap h2 { font-size: 16px; font-weight: 700; margin: 12px 0 6px; }
-        .tiptap-nota-editor .tiptap h3 { font-size: 14px; font-weight: 700; margin: 10px 0 4px; }
-        .tiptap-nota-editor .tiptap strong { font-weight: 700; }
-        .tiptap-nota-editor .tiptap em { font-style: italic; }
-        .tiptap-nota-editor .tiptap u { text-decoration: underline; }
-        .tiptap-nota-editor .tiptap s { text-decoration: line-through; }
-        .tiptap-nota-editor .tiptap mark { background: #fde68a; border-radius: 2px; padding: 0 2px; }
-        .dark .tiptap-nota-editor .tiptap mark { background: #78350f; color: #fde68a; }
-        .tiptap-nota-editor .tiptap ul { list-style: disc; padding-left: 20px; margin: 6px 0; }
-        .tiptap-nota-editor .tiptap ol { list-style: decimal; padding-left: 20px; margin: 6px 0; }
-        .tiptap-nota-editor .tiptap li { margin: 2px 0; }
-        .tiptap-nota-editor .tiptap blockquote {
-          border-left: 3px solid #a78bfa;
-          padding-left: 12px;
-          margin: 8px 0;
-          color: #6b7280;
-          font-style: italic;
-        }
-        .dark .tiptap-nota-editor .tiptap blockquote { color: #9ca3af; }
         .tiptap-nota-editor .tiptap p.is-editor-empty:first-child::before {
           content: attr(data-placeholder);
           float: left;
-          color: #9ca3af;
+          color: #94a3b8;
           pointer-events: none;
           height: 0;
         }
       `}</style>
-      <div className='tiptap-nota-editor'>
+      <div className='tiptap-nota-editor relative'>
         <EditorContent editor={editor} />
+        <BarraFlotante editor={editor} />
+        <MenuComandos editor={editor} teclasRef={teclasMenu} />
       </div>
+
+      <p className='hidden flex-wrap items-center gap-x-3 gap-y-1 rounded-b-xl border-t border-slate-100 px-3 py-1.5 text-[11px] text-slate-500 dark:border-slate-700/70 dark:text-slate-400 sm:flex'>
+        <span className='font-medium'>Al empezar una línea:</span>
+        {ATAJOS.map(a => (
+          <span key={a.teclas} className='inline-flex items-center gap-1'>
+            <kbd className='rounded border border-slate-200 bg-slate-50 px-1 font-mono text-[10px] text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200'>
+              {a.teclas}
+            </kbd>
+            {a.accion}
+          </span>
+        ))}
+      </p>
     </div>
   )
 }
