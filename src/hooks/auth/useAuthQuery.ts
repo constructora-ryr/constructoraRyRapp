@@ -29,7 +29,11 @@ export interface Perfil {
   rol: 'Administrador' | 'Contabilidad' | 'Administrador de Obra' | 'Gerencia'
   estado: 'Activo' | 'Inactivo'
   debe_cambiar_password: boolean
+  telefono: string | null
+  /** Preferencias de la cuenta (tema…), ver Mi perfil */
+  preferencias: { tema?: 'light' | 'dark' | 'system' } | null
   ultimo_acceso: string | null
+  ultimo_login: string | null
   fecha_creacion: string
   fecha_actualizacion: string
 }

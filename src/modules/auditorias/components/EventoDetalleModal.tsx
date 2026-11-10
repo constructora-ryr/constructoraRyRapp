@@ -16,6 +16,7 @@ import Link from 'next/link'
 
 import { getShortId } from '@/lib/utils/slug.utils'
 import { ModalDetalle } from '@/shared/components/modals/ModalDetalle'
+import { AvatarUsuario } from '@/shared/components/usuario/AvatarUsuario'
 import type { VisorNavegacion } from '@/shared/components/visor-archivo'
 import { cn } from '@/shared/utils/helpers'
 
@@ -45,15 +46,6 @@ const CAMPOS_DEL_ARCHIVO = new Set([
 const chip =
   'inline-flex max-w-full items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold'
 
-const iniciales = (nombre: string) =>
-  nombre
-    .split(/[\s@.]+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map(p => p[0])
-    .join('')
-    .toUpperCase()
-
 /**
  * La etiqueta viene como "Principal · Mz. A Casa 2 · Cliente": la casa y el
  * cliente salen como chips; en el encabezado queda solo lo principal.
@@ -72,7 +64,7 @@ export function EventoDetalleModal({
   onClose,
 }: {
   evento: EventoAuditoria
-  usuarios: { id: string; nombre: string }[]
+  usuarios: { id: string; nombre: string; rol?: string | null }[]
   navegacion?: VisorNavegacion
   onClose: () => void
 }) {
@@ -81,6 +73,7 @@ export function EventoDetalleModal({
   const lectura = interpretar(evento)
   const { fila, nombreRef, cliente } = useContextoEvento(evento, usuarios)
   const actor = nombreActor(evento)
+  const rolActor = usuarios.find(u => u.id === evento.usuario_id)?.rol
 
   // Datos del evento; si faltan (ediciones o eventos antiguos), los de hoy
   const filaMostrada = evento.datos ?? fila
@@ -121,9 +114,7 @@ export function EventoDetalleModal({
       franja={
         <>
           <span className='inline-flex min-w-0 items-center gap-2'>
-            <span className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-xs font-bold text-white shadow-sm'>
-              {iniciales(actor)}
-            </span>
+            <AvatarUsuario nombre={actor} rol={rolActor} tamano='md' />
             <span className='min-w-0 leading-tight'>
               <span className='block truncate text-sm font-bold text-slate-800 dark:text-slate-100'>
                 {actor}

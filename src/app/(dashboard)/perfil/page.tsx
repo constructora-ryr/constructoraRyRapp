@@ -1,4 +1,4 @@
-import { PerfilPageMain } from '@/modules/auth/components/PerfilPageMain'
+import { PerfilPageMain } from '@/modules/perfil/components/PerfilPageMain'
 
 export const metadata = { title: 'Mi perfil' }
 

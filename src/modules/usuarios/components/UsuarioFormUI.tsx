@@ -10,6 +10,7 @@ import type { ReactNode } from 'react'
 
 import { Check, Mail, Phone, type LucideIcon } from 'lucide-react'
 
+import { AvatarUsuario } from '@/shared/components/usuario/AvatarUsuario'
 import { cn } from '@/shared/utils/helpers'
 
 import {
@@ -310,14 +311,13 @@ export function UsuarioPreview({
         </div>
         {/* relative: sin él, la banda (posicionada) se pinta encima del avatar */}
         <div className='relative -mt-9 px-5 pb-5'>
-          <span
-            className={cn(
-              'flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-gradient-to-br text-xl font-black text-white shadow-lg ring-4 ring-white transition-colors duration-300 dark:ring-slate-800',
-              v.gradient
-            )}
-          >
-            {iniciales}
-          </span>
+          <AvatarUsuario
+            nombre={nombre}
+            rol={rol}
+            iniciales={iniciales}
+            tamano='xl'
+            className='ring-4 ring-white transition-colors duration-300 dark:ring-slate-800'
+          />
           <p className='mt-3 truncate text-base font-bold text-slate-900 dark:text-white'>
             {nombre || (
               <span className='text-slate-300 dark:text-slate-600'>

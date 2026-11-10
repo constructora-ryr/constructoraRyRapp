@@ -122,7 +122,7 @@ export class DocumentosPapeleraService {
       .from(tabla)
       .select(
         `*,
-        usuario:usuarios!${fk} (nombres, apellidos, email)${joinEntidad}`
+        usuario:usuarios!${fk} (nombres, apellidos, email, rol)${joinEntidad}`
       )
       .eq('estado', 'eliminado')
       .eq('es_version_actual', true)
@@ -160,7 +160,8 @@ export class DocumentosPapeleraService {
         usuario:usuarios!${config.fkSubidoPor} (
           nombres,
           apellidos,
-          email
+          email,
+          rol
         )
       `
       )

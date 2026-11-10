@@ -25,6 +25,7 @@ import { createPortal } from 'react-dom'
 
 import { formatDateCompact } from '@/lib/utils/date.utils'
 import { ConfirmacionModal } from '@/shared/components/modals'
+import { AvatarUsuario } from '@/shared/components/usuario/AvatarUsuario'
 import { type ModuleName } from '@/shared/config/module-themes'
 
 import { useDocumentoCard } from '../../hooks'
@@ -37,11 +38,7 @@ import {
 } from '../../types/documento.types'
 import type { TipoEntidad } from '../../types/entidad.types'
 import { colorCategoria } from '../../utils/categoria-color'
-import {
-  getAvatarColor,
-  getFileTypeColor,
-  getInitials,
-} from '../../utils/documento-card.utils'
+import { getFileTypeColor, getInitials } from '../../utils/documento-card.utils'
 import { BadgeEstadoProceso } from '../badge-estado-proceso'
 import {
   DocumentoEditarMetadatosModal,
@@ -336,20 +333,14 @@ export function DocumentoCardHorizontal({
       <div className='hidden w-[160px] flex-shrink-0 items-center gap-2 lg:flex'>
         {documento.usuario ? (
           <>
-            <div
-              className='flex h-7 w-7 flex-shrink-0 cursor-default items-center justify-center rounded-full text-[10px] font-bold text-white shadow-sm'
-              style={{
-                backgroundColor: getAvatarColor(
-                  `${documento.usuario.nombres}${documento.usuario.apellidos}`
-                ),
-              }}
-              title={`${documento.usuario.nombres} ${documento.usuario.apellidos}`}
-            >
-              {getInitials(
+            <AvatarUsuario
+              nombre={`${documento.usuario.nombres} ${documento.usuario.apellidos}`}
+              rol={documento.usuario.rol}
+              iniciales={getInitials(
                 documento.usuario.nombres,
                 documento.usuario.apellidos
               )}
-            </div>
+            />
             <span
               className='truncate text-xs text-slate-600 dark:text-slate-300'
               title={`${documento.usuario.nombres} ${documento.usuario.apellidos}`}

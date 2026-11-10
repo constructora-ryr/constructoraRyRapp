@@ -37,6 +37,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu'
+import { AvatarUsuario } from '@/shared/components/usuario/AvatarUsuario'
 import { cn } from '@/shared/utils/helpers'
 
 import {
@@ -69,8 +70,6 @@ type Accion =
 
 // ── Estilos del módulo ───────────────────────────────────────────────────────
 const styles = {
-  avatar:
-    'relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-sm font-bold text-white shadow-sm',
   enLinea:
     'absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-800',
   nombre: 'block truncate text-sm font-semibold text-slate-900 dark:text-white',
@@ -84,22 +83,19 @@ const styles = {
 
 // ── Celdas (compartidas por la tabla y las tarjetas móviles) ─────────────────
 function CeldaUsuario({ u, esYo }: { u: UsuarioCompleto; esYo: boolean }) {
-  const rol = rolVisual(u.rol)
   const nombre = getNombreCompleto(u)
   const enLinea = estaEnLinea(u.ultimo_acceso)
   return (
     <div className='flex min-w-0 items-center gap-3'>
-      <span
-        aria-hidden
-        className={cn(
-          styles.avatar,
-          rol.gradient,
-          u.estado !== 'Activo' && 'opacity-50 grayscale'
-        )}
+      <AvatarUsuario
+        nombre={nombre}
+        rol={u.rol}
+        iniciales={getIniciales(u)}
+        tamano='lg'
+        className={cn(u.estado !== 'Activo' && 'opacity-50 grayscale')}
       >
-        {getIniciales(u)}
         {enLinea && <span className={styles.enLinea} />}
-      </span>
+      </AvatarUsuario>
       <span className='min-w-0'>
         <span className='flex items-center gap-1.5'>
           <span className={styles.nombre} title={nombre}>

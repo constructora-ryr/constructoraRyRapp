@@ -6,7 +6,7 @@ import { createRouteClient } from '@/lib/supabase/server-route'
 import { logger } from '@/lib/utils/logger'
 import type { EstadoUsuario } from '@/modules/usuarios/types'
 
-// sesiones_activas no está en el schema de tipos generado del cliente
+// El canal de Realtime no está tipado en el cliente admin
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const adminRaw = supabaseAdmin as any
 
@@ -100,13 +100,13 @@ export async function PATCH(
       return NextResponse.json({ error: updateError.message }, { status: 500 })
     }
 
-    // 7. Si inactivando: revocar sesiones + broadcast inmediato al cliente
+    // 7. Si inactivando: cerrar sus sesiones (auth.sessions; sus refresh
+    // tokens dejan de servir) + broadcast inmediato al cliente
     if (nuevoEstado === 'Inactivo') {
-      const { error: revokeError } = await adminRaw
-        .from('sesiones_activas')
-        .update({ revocada: true })
-        .eq('user_id', id)
-        .eq('revocada', false)
+      const { error: revokeError } = await adminRaw.rpc(
+        'cerrar_sesiones_de_usuario',
+        { p_user_id: id }
+      )
 
       if (revokeError) {
         logger.warn(

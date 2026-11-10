@@ -58,16 +58,17 @@ export async function listarEventos(
 
 /** Usuarios que aparecen en la auditoría (para el filtro "Quién") */
 export async function listarUsuarios(): Promise<
-  { id: string; nombre: string }[]
+  { id: string; nombre: string; rol: string | null }[]
 > {
   const { data, error } = await supabase
     .from('usuarios')
-    .select('id, nombres, apellidos, email')
+    .select('id, nombres, apellidos, email, rol')
     .order('nombres')
   if (error) throw error
   return (data ?? []).map(u => ({
     id: u.id,
     nombre: `${u.nombres ?? ''} ${u.apellidos ?? ''}`.trim() || u.email,
+    rol: u.rol ?? null,
   }))
 }
 

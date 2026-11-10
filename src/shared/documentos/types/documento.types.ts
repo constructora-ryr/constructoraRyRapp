@@ -228,6 +228,8 @@ export interface DocumentoProyecto {
     nombres: string
     apellidos: string
     email: string
+    /** Da el color del avatar (el mismo de Usuarios) */
+    rol?: string | null
   }
 }
 

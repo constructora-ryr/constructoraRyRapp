@@ -1,10 +1,10 @@
 ﻿'use client'
 
 import { ChevronsUpDown, LogOut, Moon, Sun, UserRound } from 'lucide-react'
-import { useTheme } from 'next-themes'
 
 import Link from 'next/link'
 
+import { useTemaCuenta } from '@/modules/perfil/hooks/useTemaCuenta'
 import { ROL_VISUAL } from '@/modules/usuarios/config/usuarios-visual'
 import type { Rol } from '@/modules/usuarios/types'
 import {
@@ -15,6 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu'
+import { AvatarUsuario } from '@/shared/components/usuario/AvatarUsuario'
 
 import { AdminCrown } from './AdminCrown'
 
@@ -43,21 +44,20 @@ export function SidebarFooter({
   isLoggingOut,
   onLogout,
 }: SidebarFooterProps) {
-  const { resolvedTheme, setTheme } = useTheme()
-  const oscuro = resolvedTheme === 'dark'
+  // El tema se guarda en la cuenta (Mi perfil → Preferencias)
+  const { oscuro, cambiarTema } = useTemaCuenta()
   const rv = rol ? ROL_VISUAL[rol as Rol] : undefined
   const RolIcono = rv?.icon
 
   const avatar = (
     <span className='relative flex-shrink-0'>
       {isAdmin && <AdminCrown />}
-      <span
-        className={`flex items-center justify-center rounded-xl bg-gradient-to-br font-bold text-white shadow-md ${
-          rv?.gradient ?? 'from-slate-500 to-slate-700'
-        } ${isExpanded ? 'h-9 w-9 text-sm' : 'h-10 w-10 text-sm'}`}
-      >
-        {initials}
-      </span>
+      <AvatarUsuario
+        nombre={displayName}
+        rol={rol}
+        iniciales={initials}
+        tamano={isExpanded ? 'md' : 'lg'}
+      />
     </span>
   )
 
@@ -101,13 +101,12 @@ export function SidebarFooter({
           className='w-60 rounded-xl p-1.5'
         >
           <DropdownMenuLabel className='flex items-center gap-2.5 px-2 py-2 font-normal'>
-            <span
-              className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-sm font-bold text-white ${
-                rv?.gradient ?? 'from-slate-500 to-slate-700'
-              }`}
-            >
-              {initials}
-            </span>
+            <AvatarUsuario
+              nombre={displayName}
+              rol={rol}
+              iniciales={initials}
+              tamano='md'
+            />
             <span className='min-w-0'>
               <span className='block truncate text-sm font-semibold text-slate-900 dark:text-white'>
                 {displayName}
@@ -130,7 +129,7 @@ export function SidebarFooter({
             onSelect={e => {
               // Mantener el menú abierto para ver el cambio
               e.preventDefault()
-              setTheme(oscuro ? 'light' : 'dark')
+              cambiarTema(oscuro ? 'light' : 'dark')
             }}
           >
             {oscuro ? (

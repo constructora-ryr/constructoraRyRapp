@@ -46,6 +46,15 @@ const TEMA = {
       'text-slate-500 hover:bg-sky-50 hover:text-sky-700 dark:text-slate-400 dark:hover:bg-sky-500/10 dark:hover:text-sky-300',
     contador: 'bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300',
   },
+  // Mi perfil: neutro, porque el encabezado ya lleva el color del rol
+  perfil: {
+    activa:
+      'bg-gradient-to-r from-slate-800 to-slate-900 text-white shadow-md shadow-slate-900/20 dark:from-white dark:to-slate-200 dark:text-slate-900',
+    inactiva:
+      'text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-700/60 dark:hover:text-white',
+    contador:
+      'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200',
+  },
 } as const
 
 interface DetalleTabsProps<T extends string> {

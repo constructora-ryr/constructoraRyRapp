@@ -1,109 +1,10 @@
-import { createClient as createSupabaseAdmin } from '@supabase/supabase-js'
-
 import type { NextFetchEvent, NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 
 import { createMiddlewareClient } from '@/lib/supabase/middleware'
 import { debugLog, errorLog } from '@/lib/utils/logger'
 
-// ============================================================
-// HELPERS: Sesiones activas
-// ============================================================
-
-/** Parsea el User-Agent en strings legibles para humanos */
-function parsearUserAgent(ua: string): {
-  dispositivo: string
-  navegador: string
-} {
-  // Navegador
-  let navegador = 'Navegador desconocido'
-  if (/Edg\//.test(ua)) navegador = 'Edge'
-  else if (/OPR\//.test(ua)) navegador = 'Opera'
-  else if (/Chrome\//.test(ua)) {
-    const v = ua.match(/Chrome\/([\d]+)/)?.[1]
-    navegador = `Chrome${v ? ' ' + v : ''}`
-  } else if (/Firefox\//.test(ua)) {
-    const v = ua.match(/Firefox\/([\d]+)/)?.[1]
-    navegador = `Firefox${v ? ' ' + v : ''}`
-  } else if (/Safari\//.test(ua)) {
-    navegador = 'Safari'
-  }
-
-  // Dispositivo / OS
-  let dispositivo = 'Dispositivo desconocido'
-  if (/iPhone/.test(ua)) dispositivo = 'iPhone'
-  else if (/iPad/.test(ua)) dispositivo = 'iPad'
-  else if (/Android/.test(ua)) dispositivo = 'Android'
-  else if (/Windows NT 10/.test(ua)) dispositivo = 'Windows 11/10'
-  else if (/Windows NT/.test(ua)) dispositivo = 'Windows'
-  else if (/Macintosh/.test(ua)) dispositivo = 'macOS'
-  else if (/Linux/.test(ua)) dispositivo = 'Linux'
-
-  return { dispositivo, navegador }
-}
-
-/** Genera un hash SHA-256 del refresh token para identificar la sesión */
-async function hashToken(token: string): Promise<string> {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(token)
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
-}
-
-/** Cliente Supabase con service_role para escrituras en sesiones_activas */
-function createAdminClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !key) throw new Error('Missing Supabase env vars in middleware')
-  return createSupabaseAdmin(url, key, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  })
-}
-
-/** Como createAdminClient, pero sin lanzar: sin service_role no se rastrean sesiones */
-function crearAdminSeguro() {
-  try {
-    return createAdminClient()
-  } catch (err) {
-    errorLog('middleware-sesiones-activas', err as Error, {})
-    return null
-  }
-}
-
 type ClienteMiddleware = ReturnType<typeof createMiddlewareClient>
-type ClienteAdmin = ReturnType<typeof createAdminClient>
-
-/** Registra la sesión nueva o actualiza su última actividad */
-async function registrarSesion(
-  admin: ClienteAdmin,
-  req: NextRequest,
-  userId: string,
-  tokenHash: string,
-  existe: boolean
-) {
-  if (existe) {
-    await admin
-      .from('sesiones_activas')
-      .update({ last_seen_at: new Date().toISOString() })
-      .eq('session_token', tokenHash)
-    return
-  }
-  const ip =
-    req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
-    req.headers.get('x-real-ip') ||
-    'desconocida'
-  const { dispositivo, navegador } = parsearUserAgent(
-    req.headers.get('user-agent') || ''
-  )
-  await admin
-    .from('sesiones_activas')
-    .upsert(
-      { user_id: userId, session_token: tokenHash, dispositivo, navegador, ip },
-      { onConflict: 'session_token' }
-    )
-  await admin.rpc('limpiar_sesiones_antiguas', { p_user_id: userId })
-}
 
 /** Permisos permitidos del rol como 'modulo.accion'; null si la consulta falla */
 async function consultarPermisos(
@@ -456,14 +357,10 @@ export async function middleware(req: NextRequest, event: NextFetchEvent) {
     // ============================================
     // - Estado de la cuenta: el JWT puede seguir vigente aunque el usuario
     //   esté Bloqueado/Inactivo; la BD es la fuente de verdad.
-    // - Sesión revocada remotamente (sesiones_activas, con service_role).
+    // - Sesión cerrada desde otro dispositivo (Mi perfil): ya no existe en
+    //   auth.sessions aunque este JWT aún no haya vencido.
     // - Permisos del rol: si no es Admin, la BD manda sobre el JWT para que
     //   los cambios de permisos apliquen de inmediato.
-
-    const tokenHash = session?.refresh_token
-      ? await hashToken(session.refresh_token)
-      : null
-    const adminSesiones = tokenHash ? crearAdminSeguro() : null
 
     const [cuentaRes, sesionRes, permisosRes] = await Promise.all([
       supabase
@@ -471,13 +368,7 @@ export async function middleware(req: NextRequest, event: NextFetchEvent) {
         .select('estado')
         .eq('id', user.id)
         .maybeSingle(),
-      adminSesiones && tokenHash
-        ? adminSesiones
-            .from('sesiones_activas')
-            .select('id, revocada')
-            .eq('session_token', tokenHash)
-            .maybeSingle()
-        : null,
+      supabase.rpc('sesion_vigente'),
       rol && rol !== 'Administrador' ? consultarPermisos(supabase, rol) : null,
     ])
 
@@ -497,19 +388,18 @@ export async function middleware(req: NextRequest, event: NextFetchEvent) {
       return cerrarSesionYRedirigir(req, res, supabase)
     }
 
-    if (sesionRes?.error) {
+    if (sesionRes.error) {
+      // Si la consulta falla no se saca a nadie: un corte momentáneo de
+      // Supabase no debe cerrar sesiones
       errorLog(
-        'middleware-sesiones-activas',
+        'middleware-sesion-vigente',
         new Error(sesionRes.error.message),
         {
           pathname,
         }
       )
-    }
-    const sesionData = sesionRes?.data ?? null
-
-    if (sesionData?.revocada) {
-      debugLog('🚫 Sesión revocada remotamente', { pathname })
+    } else if (sesionRes.data === false) {
+      debugLog('🚫 Sesión cerrada desde otro dispositivo', { pathname })
       return cerrarSesionYRedirigir(req, res, supabase, { revocada: '1' })
     }
 
@@ -519,11 +409,6 @@ export async function middleware(req: NextRequest, event: NextFetchEvent) {
     // Las precargas de enlaces (prefetch) no son visitas reales: no se anotan.
 
     if (!esPrefetch(req)) {
-      if (adminSesiones && tokenHash) {
-        event.waitUntil(
-          registrarSesion(adminSesiones, req, user.id, tokenHash, !!sesionData)
-        )
-      }
       // Throttle en la BD: máx. 1 escritura por hora
       event.waitUntil(
         Promise.resolve(

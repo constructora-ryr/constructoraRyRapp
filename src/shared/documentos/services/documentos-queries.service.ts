@@ -36,7 +36,7 @@ export class DocumentosQueriesService {
       .select(
         `
         *,
-        usuarios!subido_por(id, nombres, apellidos, email)
+        usuarios!subido_por(id, nombres, apellidos, email, rol)
       `
       )
       .eq(config.campoEntidad, entidadId)
@@ -80,7 +80,7 @@ export class DocumentosQueriesService {
       .select(
         `
         *,
-        usuarios!subido_por(id, nombres, apellidos, email)
+        usuarios!subido_por(id, nombres, apellidos, email, rol)
       `
       )
       .eq(config.campoEntidad, entidadId)
@@ -109,7 +109,7 @@ export class DocumentosQueriesService {
         .select(
           `
           *,
-          usuarios!subido_por(id, nombres, apellidos, email)
+          usuarios!subido_por(id, nombres, apellidos, email, rol)
         `
         )
         .eq('estado', 'activo')
@@ -127,7 +127,7 @@ export class DocumentosQueriesService {
       .select(
         `
         *,
-        usuarios!subido_por(id, nombres, apellidos, email)
+        usuarios!subido_por(id, nombres, apellidos, email, rol)
       `
       )
       .eq('estado', 'activo')

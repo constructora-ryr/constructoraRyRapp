@@ -155,7 +155,8 @@ export class DocumentosArchivadoService {
         usuario:usuarios!${config.fkSubidoPor} (
           nombres,
           apellidos,
-          email
+          email,
+          rol
         )
       `
       )
