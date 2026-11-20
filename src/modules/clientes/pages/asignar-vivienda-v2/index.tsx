@@ -17,6 +17,7 @@ import {
   SeccionRevision,
   SeccionViviendaValores,
 } from './components'
+import { AvisoPaso } from './components/AvisoPaso'
 import { PASOS_ASIGNACION, useAsignarViviendaV2 } from './hooks'
 
 interface AsignarViviendaV2PageProps {
@@ -79,6 +80,8 @@ export function AsignarViviendaV2Page({
     creando,
     errorApi,
     clearErrorApi,
+    avisoPaso1,
+    avisoPaso2,
   } = useAsignarViviendaV2({ clienteId, clienteSlug })
 
   const proyectoNombre = useMemo(
@@ -149,6 +152,7 @@ export function AsignarViviendaV2Page({
           valorTotal={valorTotal}
           onClearErrorApi={clearErrorApi}
         />
+        <AvisoPaso mensajes={avisoPaso1} />
         <AccordionWizardNavigation
           currentStep={1}
           totalSteps={PASOS_ASIGNACION.length}
@@ -188,6 +192,7 @@ export function AsignarViviendaV2Page({
           handleFuenteEnabledChange={handleFuenteEnabledChange}
           handleFuenteConfigChange={handleFuenteConfigChange}
         />
+        <AvisoPaso mensajes={avisoPaso2} />
         <AccordionWizardNavigation
           currentStep={2}
           totalSteps={PASOS_ASIGNACION.length}
@@ -227,9 +232,12 @@ export function AsignarViviendaV2Page({
           notas={notas}
           fuentes={fuentes}
           tiposConCampos={tiposConCampos}
-          errorApi={errorApi}
           onEditarSeccion1={() => irAPaso(1)}
           onEditarSeccion2={() => irAPaso(2)}
+        />
+        <AvisoPaso
+          titulo='No se pudo asignar la vivienda'
+          mensajes={errorApi ? [errorApi] : []}
         />
         <AccordionWizardNavigation
           currentStep={3}

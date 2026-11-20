@@ -8,7 +8,6 @@
 import { useCallback, useMemo, useState } from 'react'
 
 import {
-  AlertCircle,
   AlertTriangle,
   Banknote,
   Building2,
@@ -53,7 +52,6 @@ interface SeccionRevisionProps {
   notas: string
   fuentes: FuentePagoConfiguracion[]
   tiposConCampos: TipoFuentePagoConCampos[]
-  errorApi: string | null
   onEditarSeccion1: () => void
   onEditarSeccion2: () => void
 }
@@ -151,7 +149,6 @@ export function SeccionRevision({
   notas,
   fuentes,
   tiposConCampos,
-  errorApi,
   onEditarSeccion1,
   onEditarSeccion2,
 }: SeccionRevisionProps) {
@@ -232,16 +229,6 @@ export function SeccionRevision({
 
   return (
     <div className='space-y-4'>
-      {errorApi ? (
-        <div
-          role='alert'
-          className='flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300'
-        >
-          <AlertCircle className='mt-0.5 h-4 w-4 flex-shrink-0' />
-          {errorApi}
-        </div>
-      ) : null}
-
       {/* Lo que se va a confirmar */}
       <div className='relative overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-600 via-blue-600 to-indigo-600 p-5 text-white shadow-lg shadow-blue-900/15 dark:from-cyan-700 dark:via-blue-700 dark:to-indigo-800'>
         <span className='pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-white/10 blur-2xl' />

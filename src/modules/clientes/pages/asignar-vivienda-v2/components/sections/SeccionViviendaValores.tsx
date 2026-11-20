@@ -284,6 +284,12 @@ export function SeccionViviendaValores({
                 max={getTodayDateString()}
                 {...register('fecha_negociacion')}
               />
+              {errors.fecha_negociacion ? (
+                <p className={s.field.error}>
+                  <AlertCircle className='h-3 w-3' />
+                  {String(errors.fecha_negociacion.message)}
+                </p>
+              ) : null}
               <p className={s.field.hint}>
                 Si el cliente ya firmó la promesa de compraventa, pon la fecha
                 de la firma. Si aún no la firma, déjala vacía y se usará la

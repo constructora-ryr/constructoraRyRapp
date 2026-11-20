@@ -41,6 +41,8 @@ export function useAsignarViviendaForm({
     watch,
     trigger,
     reset,
+    setError,
+    clearErrors,
   } = useForm<AsignarViviendaFormData>({
     resolver: zodResolver(asignarViviendaSchema),
     mode: 'onChange', // Validar mientras escribe
@@ -237,6 +239,8 @@ export function useAsignarViviendaForm({
     watch,
     trigger,
     reset,
+    setError,
+    clearErrors,
 
     // Valores observados
     proyecto_id,

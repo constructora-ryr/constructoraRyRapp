@@ -16,7 +16,11 @@ import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 
 import { createClient } from '@/lib/supabase/client'
-import { formatDateForDB, formatDateShort } from '@/lib/utils/date.utils'
+import {
+  formatDateForDB,
+  formatDateShort,
+  getTodayDateString,
+} from '@/lib/utils/date.utils'
 import { formatCurrency } from '@/lib/utils/format.utils'
 import { getShortId } from '@/lib/utils/slug.utils'
 import { useAsignarViviendaForm } from '@/modules/clientes/components/asignar-vivienda/hooks/useAsignarViviendaForm'
@@ -29,7 +33,10 @@ import type {
 import { useCrearNegociacion } from '@/modules/clientes/hooks/useCrearNegociacion'
 import type { CrearFuentePagoDTO } from '@/modules/clientes/types'
 import {
+  erroresDeFuentes,
   type EstadoVivienda,
+  problemasPaso1,
+  problemasPasoFuentes,
   validarSinNegociacionActiva,
   validarViviendaDisponible,
 } from '@/modules/clientes/utils/asignar-vivienda-validaciones'
@@ -87,8 +94,15 @@ export function useAsignarViviendaV2({
   const [showSuccess, setShowSuccess] = useState(false)
 
   // ─── Sub-hooks existentes ──────────────────────────────
-  const { register, errors, touchedFields, setValue, watch, trigger } =
-    useAsignarViviendaForm({ currentStep: pasoActual })
+  const {
+    register,
+    errors,
+    touchedFields,
+    setValue,
+    watch,
+    setError,
+    clearErrors,
+  } = useAsignarViviendaForm({ currentStep: pasoActual })
 
   const {
     proyectos,
@@ -215,44 +229,27 @@ export function useAsignarViviendaV2({
   const handleFuenteEnabledChange = _handleFuenteEnabledChange
   const handleFuenteConfigChange = _handleFuenteConfigChange
 
-  // ─── Validación manual de fuentes ────────────────────
-  const [erroresFuentes, setErroresFuentes] = useState<Record<string, string>>(
-    {}
-  )
+  // ─── Validación de fuentes ───────────────────────────
+  // Se calcula en vivo: al corregir una fuente su error desaparece. Se
+  // muestra después del primer intento de avanzar.
   const [mostrarErroresFuentes, setMostrarErroresFuentes] = useState(false)
   const [errorApi, setErrorApi] = useState<string | null>(null)
 
-  const validarFuentesManual = useCallback((): boolean => {
-    const errores: Record<string, string> = {}
-    fuentes
-      .filter(f => f.enabled)
-      .forEach(f => {
-        const tipoConCampos = tiposConCampos.find(t => t.nombre === f.tipo)
-        const camposConfig = tipoConCampos?.configuracion_campos?.campos ?? []
-        // Respetar el flag requerido del campo — si requerido:false no bloquear
-        const requiereEntidad = camposConfig.some(
-          c => c.rol === 'entidad' && c.requerido
-        )
-        const requiereReferencia = camposConfig.some(
-          c => c.rol === 'referencia' && c.requerido
-        )
-
-        if (
-          requiereEntidad &&
-          (!f.config?.entidad || f.config.entidad.trim() === '')
-        ) {
-          errores[f.tipo] = 'Entidad requerida'
-        } else if (
-          requiereReferencia &&
-          (!f.config?.numero_referencia ||
-            f.config.numero_referencia.trim() === '')
-        ) {
-          errores[f.tipo] = 'Número de referencia requerido'
-        }
-      })
-    setErroresFuentes(errores)
-    return Object.keys(errores).length === 0
-  }, [fuentes, tiposConCampos])
+  const erroresFuentes = useMemo(
+    () => erroresDeFuentes(fuentes, tiposConCampos),
+    [fuentes, tiposConCampos]
+  )
+  const problemasFuentes = useMemo(
+    () =>
+      problemasPasoFuentes({
+        fuentesEnUso: fuentes.filter(f => f.enabled).length,
+        diferencia,
+        valorTotal,
+        errores: erroresFuentes,
+        formatear: formatCurrency,
+      }),
+    [fuentes, diferencia, valorTotal, erroresFuentes]
+  )
 
   // ─── Estado de cada sección (wizard pattern) ──────────
   const getEstadoPaso = useCallback(
@@ -303,64 +300,59 @@ export function useAsignarViviendaV2({
   }, [fuentes, totalFuentes])
 
   // ─── Validación por paso ──────────────────────────────
-  const paso1Valido = useMemo(() => {
-    const baseValido = !!viviendaId
-    if (!aplicarDescuento) return baseValido
-    return (
-      baseValido &&
-      descuentoAplicado > 0 &&
-      !!tipoDescuento &&
-      (motivoDescuento?.length ?? 0) >= 10
-    )
-  }, [
-    viviendaId,
-    aplicarDescuento,
-    descuentoAplicado,
-    tipoDescuento,
-    motivoDescuento,
-  ])
+  const [intentoPaso1, setIntentoPaso1] = useState(false)
+  const problemasVivienda = useMemo(
+    () =>
+      problemasPaso1({
+        viviendaId,
+        valorBase,
+        valorEscritura: valorEscrituraPublica,
+        aplicarDescuento: !!aplicarDescuento,
+        descuento: descuentoAplicado,
+        tipoDescuento,
+        motivoDescuento,
+        fechaNegociacion,
+        hoy: getTodayDateString(),
+      }),
+    [
+      viviendaId,
+      valorBase,
+      valorEscrituraPublica,
+      aplicarDescuento,
+      descuentoAplicado,
+      tipoDescuento,
+      motivoDescuento,
+      fechaNegociacion,
+    ]
+  )
 
-  const paso2Valido = sumaCierra && fuentes.some(f => f.enabled)
+  const paso1Valido = problemasVivienda.length === 0
+  const paso2Valido = problemasFuentes.length === 0
 
   // ─── Navegación (wizard pattern) ─────────────────────
   const irSiguiente = useCallback(async () => {
-    setIsValidating(true)
-    try {
-      if (pasoActual === 1) {
-        const valido = await trigger([
-          'proyecto_id',
-          'vivienda_id',
-          'valor_negociado',
-          'aplicar_descuento',
-          'descuento_aplicado',
-          'tipo_descuento',
-          'motivo_descuento',
-          'valor_escritura_publica',
-        ])
-        if (!valido || !paso1Valido) return
-        setPasosCompletados(prev => new Set(prev).add(1))
-        setPasoActual(prev => Math.min(prev + 1, PASOS_ASIGNACION.length))
+    if (pasoActual === 1) {
+      setIntentoPaso1(true)
+      if (problemasVivienda.length > 0) {
+        // Cada error también se marca en su campo
+        for (const p of problemasVivienda) {
+          setError(p.campo, { type: 'manual', message: p.mensaje })
+        }
         return
       }
-
-      if (pasoActual === 2) {
-        if (!sumaCierra) {
-          setMostrarErroresFuentes(true)
-          return
-        }
-        const fuentesOk = validarFuentesManual()
-        if (!fuentesOk) {
-          setMostrarErroresFuentes(true)
-          return
-        }
-        setPasosCompletados(prev => new Set(prev).add(2))
-        setPasoActual(prev => Math.min(prev + 1, PASOS_ASIGNACION.length))
-        return
-      }
-    } finally {
-      setIsValidating(false)
+      clearErrors()
+      setPasosCompletados(prev => new Set(prev).add(1))
+      setPasoActual(prev => Math.min(prev + 1, PASOS_ASIGNACION.length))
+      return
     }
-  }, [pasoActual, paso1Valido, sumaCierra, validarFuentesManual, trigger])
+
+    if (pasoActual === 2) {
+      setMostrarErroresFuentes(true)
+      if (problemasFuentes.length > 0) return
+      setPasosCompletados(prev => new Set(prev).add(2))
+      setPasoActual(prev => Math.min(prev + 1, PASOS_ASIGNACION.length))
+    }
+  }, [pasoActual, problemasVivienda, problemasFuentes, setError, clearErrors])
 
   const irAtras = useCallback(() => {
     setPasoActual(prev => Math.max(prev - 1, 1))
@@ -391,13 +383,15 @@ export function useAsignarViviendaV2({
     setIsValidating(true)
 
     try {
-      // Guardia: las fuentes deben seguir cerrando. El usuario puede haber
-      // modificado el descuento (paso 1) después de configurar fuentes (paso 2)
-      // sin pasar por irSiguiente, dejando un desbalance silencioso.
-      if (!sumaCierra) {
-        setErrorApi(
-          'Las fuentes de pago no alcanzan el total a financiar. Regresa al paso 2 y ajusta los montos.'
-        )
+      // Guardia: los pasos anteriores deben seguir válidos. El usuario puede
+      // haber vuelto al paso 1 (descuento, casa) después de configurar las
+      // fuentes sin pasar por "Siguiente".
+      if (problemasVivienda.length > 0) {
+        setErrorApi(`Revisa el paso 1: ${problemasVivienda[0].mensaje}`)
+        return
+      }
+      if (problemasFuentes.length > 0) {
+        setErrorApi(`Revisa el paso 2: ${problemasFuentes[0]}`)
         return
       }
 
@@ -523,7 +517,8 @@ export function useAsignarViviendaV2({
       router.push(`/clientes/${clienteSlug ?? getShortId(clienteId)}`)
     }, 1800)
   }, [
-    sumaCierra,
+    problemasVivienda,
+    problemasFuentes,
     fuentes,
     tiposConCampos,
     entidades,
@@ -601,9 +596,11 @@ export function useAsignarViviendaV2({
     handleFuenteEnabledChange,
     handleFuenteConfigChange,
 
-    // Validación
+    // Validación: por qué no se puede avanzar (tras el primer intento)
     paso1Valido,
     paso2Valido,
+    avisoPaso1: intentoPaso1 ? problemasVivienda.map(p => p.mensaje) : [],
+    avisoPaso2: mostrarErroresFuentes ? problemasFuentes : [],
 
     // Guardado
     handleSubmitFinal,
