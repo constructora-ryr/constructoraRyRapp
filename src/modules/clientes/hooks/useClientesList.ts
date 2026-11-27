@@ -23,6 +23,9 @@ import {
   useEstadisticasClientesQuery,
 } from './useClientesQuery'
 
+/** Sin filtros de servidor: misma clave de caché para todas las pestañas */
+const LISTA_COMPLETA: FiltrosClientes = { estado: [], busqueda: '' }
+
 export function useClientesList() {
   // =====================================================
   // ESTADO LOCAL (UI)
@@ -40,13 +43,17 @@ export function useClientesList() {
   // REACT QUERY
   // =====================================================
 
+  // Lista completa, una sola consulta: estado y búsqueda se filtran abajo en
+  // memoria. Antes cada pestaña volvía a pedir al servidor y, mientras
+  // llegaba, la lista anterior filtrada quedaba vacía ("No hay resultados"
+  // por un instante). Igual que Viviendas, Abonos y Usuarios.
   const {
     data: clientes = [],
     isLoading,
     isFetching,
     error,
     refetch,
-  } = useClientesQuery(filtros)
+  } = useClientesQuery(LISTA_COMPLETA)
 
   const { data: estadisticas } = useEstadisticasClientesQuery()
 
@@ -59,9 +66,7 @@ export function useClientesList() {
   const clientesFiltrados = useMemo(() => {
     let resultado = [...clientes]
 
-    // Filtro client-side por estado para evitar flash durante placeholderData:
-    // mientras llega la nueva query, React Query muestra datos del query anterior
-    // que pueden tener estados incorrectos respecto al filtro actual
+    // Filtro por estado (la consulta trae todos los clientes)
     if ((filtros.estado?.length ?? 0) > 0) {
       resultado = resultado.filter(c =>
         (filtros.estado as string[]).includes(c.estado)
