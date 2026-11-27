@@ -51,6 +51,9 @@ export interface UseModalRegistroPagoProps {
 
 const soloDigitos = (v: string) => parseFloat(v.replace(/[^0-9]/g, '')) || 0
 
+/** Saldo final: si falta el 5 % o menos de la fuente, se sugiere el saldo exacto */
+const UMBRAL_SALDO_FINAL = 0.05
+
 export function useModalRegistroPago({
   open,
   negociacionId,
@@ -91,7 +94,19 @@ export function useModalRegistroPago({
     const justOpened = open && !prevOpenRef.current
     prevOpenRef.current = open
     if (!justOpened) return
-    setMonto(esDesembolso ? String(montoAprobado) : '')
+    // Si falta poco (un ajuste final), el monto arranca con el saldo exacto:
+    // evita calcularlo a mano y pagos que no cierran. Se puede cambiar.
+    const casiPagado =
+      saldoPendiente > 0 &&
+      montoAprobado > 0 &&
+      saldoPendiente <= montoAprobado * UMBRAL_SALDO_FINAL
+    setMonto(
+      esDesembolso
+        ? String(montoAprobado)
+        : casiPagado
+          ? String(saldoPendiente)
+          : ''
+    )
     setFechaAbono(getTodayDateString())
     setMetodoPago('Transferencia')
     setReferencia('')
@@ -102,7 +117,7 @@ export function useModalRegistroPago({
     setAbonoRegistrado(null)
     cancelledRef.current = false
     submittingRef.current = false
-  }, [open, esDesembolso, montoAprobado])
+  }, [open, esDesembolso, montoAprobado, saldoPendiente])
 
   // Crédito con la constructora: valor de la cuota como atajo del monto
   useEffect(() => {

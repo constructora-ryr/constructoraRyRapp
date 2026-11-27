@@ -49,8 +49,6 @@ interface FuentePagoCardProps {
   cuotasRefreshKey?: number
   index: number
   canCreate?: boolean
-  /** Completada dentro del grupo "Completadas": sin borde propio */
-  enGrupo?: boolean
   validacion?: {
     puedeRegistrarAbono: boolean
     estaCompletamentePagada: boolean
@@ -73,7 +71,6 @@ export function FuentePagoCard({
   canCreate,
   validacion,
   clienteSlug,
-  enGrupo = false,
 }: FuentePagoCardProps) {
   const { icon: Icono, gradient, solid, text } = fuenteVisual(fuente.tipo)
   const [cuotasAbiertas, setCuotasAbiertas] = useState(false)
@@ -184,18 +181,21 @@ export function FuentePagoCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
       className={cn(
-        'relative overflow-hidden',
-        enGrupo
-          ? ''
-          : 'rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-800/60'
+        'relative overflow-hidden rounded-2xl border',
+        completada
+          ? // Ya cobrada: sin sombra y sobre el fondo de la página, para que
+            // se lea como cerrada y no compita con lo pendiente
+            'border-slate-200/60 bg-white/40 dark:border-slate-700/40 dark:bg-slate-800/20'
+          : 'border-slate-200/80 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-800/60'
       )}
     >
       {completada ? (
-        /* ── Completada: fila compacta ── */
-        <div className='flex flex-wrap items-center gap-3 px-4 py-3 sm:px-5'>
+        /* ── Completada: la misma fila compacta, desvanecida. Al pasar el
+            cursor recupera el color para leerla cómoda ── */
+        <div className='flex flex-wrap items-center gap-3 px-4 py-3 opacity-75 saturate-50 transition duration-200 hover:opacity-100 hover:saturate-100 sm:px-5'>
           <span
             className={cn(
-              'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-sm',
+              'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white',
               gradient
             )}
           >
@@ -214,7 +214,7 @@ export function FuentePagoCard({
           {botonCuotas}
           <span className='inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'>
             <BadgeCheck className='h-4 w-4' />
-            {esDesembolsoUnico ? 'Desembolsado' : 'Completada'} ·{' '}
+            {esDesembolsoUnico ? 'Desembolsado' : 'Pagada'} ·{' '}
             <span className='tabular-nums'>
               {formatCOP(fuente.monto_recibido)}
             </span>

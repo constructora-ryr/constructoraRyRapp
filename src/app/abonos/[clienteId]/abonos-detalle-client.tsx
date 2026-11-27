@@ -293,26 +293,16 @@ export default function AbonosDetalleClient({
             />
           ))}
 
-          {completadas.length > 0 ? (
-            <div>
-              <p className='mb-1.5 flex items-center gap-1.5 px-1 text-xs font-semibold text-slate-500 dark:text-slate-400'>
-                <CheckCircle2 className='h-3.5 w-3.5 text-emerald-500' />
-                {completadas.length === 1 ? 'Completada' : 'Completadas'}
-              </p>
-              <div className='divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200/80 bg-white dark:divide-slate-700/60 dark:border-slate-700/60 dark:bg-slate-800/60'>
-                {completadas.map((fuente, index) => (
-                  <FuentePagoCard
-                    key={fuente.id}
-                    {...propsCard}
-                    fuente={fuente}
-                    index={pendientes.length + index}
-                    validacion={validarFuentePago[fuente.id]}
-                    enGrupo
-                  />
-                ))}
-              </div>
-            </div>
-          ) : null}
+          {/* Las ya cobradas van al final, desvanecidas (ver FuentePagoCard) */}
+          {completadas.map((fuente, index) => (
+            <FuentePagoCard
+              key={fuente.id}
+              {...propsCard}
+              fuente={fuente}
+              index={pendientes.length + index}
+              validacion={validarFuentePago[fuente.id]}
+            />
+          ))}
         </section>
 
         {/* Historial */}

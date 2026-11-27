@@ -36,7 +36,7 @@ const VISIBLES = 8
 
 interface TimelineAbonosProps {
   abonos: AbonoHistorial[]
-  fuentesPago?: Pick<FuentePago, 'id' | 'tipo'>[]
+  fuentesPago?: Pick<FuentePago, 'id' | 'tipo' | 'entidad'>[]
   loading: boolean
   onVerDetalle: (abono: AbonoHistorial) => void
 }
@@ -51,6 +51,11 @@ export function TimelineAbonos({
     const mapa = new Map(fuentesPago.map(f => [f.id, f.tipo]))
     return (a: AbonoHistorial) =>
       mapa.get(a.fuente_pago_id) ?? a.fuente_tipo ?? null
+  }, [fuentesPago])
+  // Banco o caja de la fuente: el extracto se entiende sin mirar arriba
+  const entidadDe = useMemo(() => {
+    const mapa = new Map(fuentesPago.map(f => [f.id, f.entidad]))
+    return (a: AbonoHistorial) => mapa.get(a.fuente_pago_id) || null
   }, [fuentesPago])
 
   // N° de cuota de los pagos del crédito con la constructora: por fuente y
@@ -186,6 +191,7 @@ export function TimelineAbonos({
                   key={abono.id}
                   abono={abono}
                   tipo={tipoDe(abono)}
+                  entidad={entidadDe(abono)}
                   cuota={numeroCuota.get(abono.id)}
                   onVerDetalle={onVerDetalle}
                 />
@@ -234,11 +240,13 @@ export function TimelineAbonos({
 function FilaPago({
   abono,
   tipo,
+  entidad,
   cuota,
   onVerDetalle,
 }: {
   abono: AbonoHistorial
   tipo: string | null
+  entidad: string | null
   cuota?: number
   onVerDetalle: (abono: AbonoHistorial) => void
 }) {
@@ -248,6 +256,7 @@ function FilaPago({
   const meta = [
     abono.numero_recibo ? formatearNumeroRecibo(abono.numero_recibo) : null,
     abono.metodo_pago,
+    entidad,
     abono.numero_referencia ? `Ref. ${abono.numero_referencia}` : null,
   ].filter(Boolean)
 
