@@ -1,7 +1,7 @@
 /**
  * ViviendasTabla - Vista de tabla para viviendas
  * ✅ COMPONENTE PRESENTACIONAL PURO
- * ✅ DataTable variant='clean' con encabezado en degradado del módulo (fijo)
+ * ✅ DataTable variant='clean' con encabezado neutro y fijo
  * ✅ Colores de estado desde @/shared/config/estados.colors
  *
  * Columnas: Vivienda ("A1" + manzana/casa + proyecto) · Cliente · Estado ·
@@ -377,7 +377,6 @@ export function ViviendasTabla({
           initialSorting={[{ id: 'identificador', desc: false }]}
           onRowClick={onView}
           variant='clean'
-          headerGradient='from-orange-600 via-amber-600 to-yellow-600 dark:from-orange-700 dark:via-amber-700 dark:to-amber-800'
         />
       </div>
     </>

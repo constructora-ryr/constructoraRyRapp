@@ -14,7 +14,9 @@ import { useInteresesTab } from '@/modules/clientes/hooks'
 import type { Cliente } from '@/modules/clientes/types'
 import { usePermisosQuery } from '@/modules/usuarios/hooks'
 import {
-  EstadoFiltroCards,
+  BotonPrincipal,
+  EstadoFiltroTabs,
+  PanelFiltros,
   type EstadoFiltroOpcion,
 } from '@/shared/components/list-page'
 
@@ -132,34 +134,36 @@ export function InteresesTab({
   return (
     <>
       <div className='space-y-4'>
-        <EstadoFiltroCards
-          ariaLabel='Filtrar intereses por estado'
-          total={stats.total}
-          opciones={opciones}
-          seleccionado={(estadoFiltro as FiltroInteres | null) ?? 'Todos'}
-          onSeleccionar={v => filtrarPorEstado(v === 'Todos' ? null : v)}
-        />
-
-        <div className='flex flex-wrap items-center justify-between gap-3'>
-          <p className='text-sm text-slate-500 dark:text-slate-400'>
-            <span className='font-bold text-emerald-600 dark:text-emerald-400'>
-              {conversion}% de conversión
-            </span>{' '}
-            · {stats.convertidos} de {stats.total}{' '}
-            {stats.total === 1 ? 'interés pasó' : 'intereses pasaron'} a
-            negociación
-          </p>
-          {registrar && (
-            <button
-              type='button'
-              onClick={registrar}
-              className='inline-flex h-10 items-center gap-1.5 rounded-xl bg-gradient-to-r from-pink-500 to-rose-600 px-4 text-sm font-semibold text-white shadow-md shadow-pink-500/25 transition-all hover:-translate-y-0.5 hover:shadow-lg'
-            >
-              <Plus className='h-4 w-4' />
-              Registrar interés
-            </button>
-          )}
-        </div>
+        <PanelFiltros
+          pestanas={
+            <EstadoFiltroTabs
+              ariaLabel='Filtrar intereses por estado'
+              opciones={opciones}
+              seleccionado={(estadoFiltro as FiltroInteres | null) ?? 'Todos'}
+              onSeleccionar={v => filtrarPorEstado(v === 'Todos' ? null : v)}
+            />
+          }
+        >
+          <div className='flex flex-wrap items-center justify-between gap-3'>
+            <p className='text-sm text-slate-500 dark:text-slate-400'>
+              <span className='font-bold text-emerald-600 dark:text-emerald-400'>
+                {conversion}% de conversión
+              </span>{' '}
+              · {stats.convertidos} de {stats.total}{' '}
+              {stats.total === 1 ? 'interés pasó' : 'intereses pasaron'} a
+              negociación
+            </p>
+            {registrar && (
+              <BotonPrincipal
+                modulo='/clientes'
+                icon={Plus}
+                onClick={registrar}
+              >
+                Registrar interés
+              </BotonPrincipal>
+            )}
+          </div>
+        </PanelFiltros>
 
         {intereses.length === 0 ? (
           <div className='rounded-2xl border-2 border-dashed border-slate-200 p-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400'>

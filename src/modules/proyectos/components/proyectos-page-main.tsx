@@ -9,9 +9,11 @@ import { useRouter } from 'next/navigation'
 
 import { construirURLProyecto } from '@/lib/utils/slug.utils'
 import {
-  EstadoFiltroCards,
+  BotonPrincipal,
+  EstadoFiltroTabs,
   ListPageHeader,
   ListSearchToolbar,
+  PanelFiltros,
   type EstadoFiltroOpcion,
 } from '@/shared/components/list-page'
 import { Modal } from '@/shared/components/ui/Modal'
@@ -250,41 +252,41 @@ export function ProyectosPage({
       >
         <ListPageHeader
           icon={Building2}
-          heroGradient='from-green-600 via-emerald-600 to-teal-600 dark:from-green-700 dark:via-emerald-700 dark:to-teal-800'
+          modulo='/proyectos'
           title='Proyectos'
+          count={cargando ? null : estadisticas.total}
           subtitle='Desarrollos inmobiliarios y obras en ejecución'
-          breadcrumbs={[
-            { label: 'Dashboard', href: '/' },
-            { label: 'Proyectos' },
-          ]}
           actions={
             canCreate ? (
-              <button
-                type='button'
+              <BotonPrincipal
+                modulo='/proyectos'
+                icon={Plus}
                 onClick={handleAbrirModal}
-                className='inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-green-700 shadow-lg shadow-green-900/20 transition-all hover:-translate-y-0.5 hover:bg-green-50 hover:shadow-xl'
               >
-                <Plus className='h-4 w-4' />
                 Nuevo proyecto
-              </button>
+              </BotonPrincipal>
             ) : undefined
           }
         />
 
-        <EstadoFiltroCards
-          ariaLabel='Filtrar proyectos por estado'
-          opciones={opcionesEstado}
-          seleccionado={seleccion}
-          onSeleccionar={seleccionarEstado}
-        />
-
-        <ListSearchToolbar
-          value={filtros.busqueda || ''}
-          onChange={v => actualizarFiltros({ busqueda: v })}
-          placeholder='Buscar por nombre o ubicación…'
-          resultado={resultado}
-          onLimpiar={hayFiltrosActivos ? limpiarFiltros : undefined}
-        />
+        <PanelFiltros
+          pestanas={
+            <EstadoFiltroTabs
+              ariaLabel='Filtrar proyectos por estado'
+              opciones={opcionesEstado}
+              seleccionado={seleccion}
+              onSeleccionar={seleccionarEstado}
+            />
+          }
+        >
+          <ListSearchToolbar
+            value={filtros.busqueda || ''}
+            onChange={v => actualizarFiltros({ busqueda: v })}
+            placeholder='Buscar por nombre o ubicación…'
+            resultado={resultado}
+            onLimpiar={hayFiltrosActivos ? limpiarFiltros : undefined}
+          />
+        </PanelFiltros>
 
         {/* Contenido Principal */}
         {cargando ? (

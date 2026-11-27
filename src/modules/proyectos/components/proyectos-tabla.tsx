@@ -1,7 +1,7 @@
 /**
  * ProyectosTabla - Vista de tabla para proyectos
  * ✅ COMPONENTE PRESENTACIONAL PURO
- * ✅ DataTable variant='clean' con encabezado en degradado del módulo (fijo)
+ * ✅ DataTable variant='clean' con encabezado neutro y fijo
  *
  * Columnas: Proyecto (+ ubicación) · Estado · Manzanas · Inventario
  * (vendidas / disponibles / por crear) · Acciones (menú ⋯)
@@ -424,7 +424,6 @@ export function ProyectosTabla({
           pageSize={20}
           onRowClick={onView}
           variant='clean'
-          headerGradient='from-green-600 via-emerald-600 to-teal-600 dark:from-green-700 dark:via-emerald-700 dark:to-teal-800'
         />
       </div>
     </>

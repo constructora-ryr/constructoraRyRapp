@@ -1,7 +1,7 @@
 /**
  * ClientesTabla - Vista de tabla para clientes
  * ✅ COMPONENTE PRESENTACIONAL PURO
- * ✅ DataTable variant='clean' con encabezado en degradado del módulo (fijo)
+ * ✅ DataTable variant='clean' con encabezado neutro y fijo
  * ✅ Colores de estado desde @/shared/config/estados.colors
  *
  * Columnas: Cliente (con documento) · Estado · Vivienda (con proyecto) ·
@@ -388,7 +388,6 @@ export function ClientesTabla({
           initialSorting={initialSorting}
           onRowClick={onView}
           variant='clean'
-          headerGradient='from-cyan-600 via-indigo-600 to-violet-600 dark:from-cyan-700 dark:via-indigo-700 dark:to-violet-800'
         />
       </div>
     </>

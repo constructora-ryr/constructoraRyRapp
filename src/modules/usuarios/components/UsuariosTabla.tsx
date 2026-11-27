@@ -1,6 +1,6 @@
 /**
  * UsuariosTabla - Vista de tabla para usuarios del sistema
- * ✅ DataTable variant='clean' con encabezado en degradado del módulo (fijo)
+ * ✅ DataTable variant='clean' con encabezado neutro y fijo
  * ✅ Colores de rol y estado desde ../config/usuarios-visual
  *
  * Columnas: Usuario (avatar del rol + email) · Rol · Estado · Último acceso ·
@@ -481,7 +481,6 @@ export function UsuariosTabla({
           initialSorting={ORDEN_INICIAL}
           onRowClick={canEdit ? onEditar : undefined}
           variant='clean'
-          headerGradient='from-indigo-700 via-indigo-600 to-sky-500 dark:from-indigo-800 dark:via-indigo-700 dark:to-sky-700'
         />
       </div>
 

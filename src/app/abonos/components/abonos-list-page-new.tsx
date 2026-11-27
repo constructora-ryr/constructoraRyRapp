@@ -3,14 +3,7 @@
 import { useCallback, useMemo, useState } from 'react'
 
 import { motion } from 'framer-motion'
-import {
-  CalendarClock,
-  CreditCard,
-  Plus,
-  Receipt,
-  TrendingUp,
-  Wallet,
-} from 'lucide-react'
+import { CreditCard, Plus, Receipt } from 'lucide-react'
 
 import { useRouter, useSearchParams } from 'next/navigation'
 
@@ -29,14 +22,14 @@ import {
   type RangoFecha,
 } from '@/modules/abonos/hooks/useAbonosList'
 import type { AbonoConInfo } from '@/modules/abonos/hooks/useAbonosQuery'
-import { TEMA_ABONOS } from '@/modules/abonos/styles/tema-abonos'
 import type { AbonoParaEditar } from '@/modules/abonos/types/editar-abono.types'
 import {
-  EstadoFiltroCards,
+  BotonPrincipal,
+  EstadoFiltroTabs,
   formatCOP,
-  HeroDato,
   ListPageHeader,
   ListSearchToolbar,
+  PanelFiltros,
   type EstadoFiltroOpcion,
 } from '@/shared/components/list-page'
 import { EmptyState } from '@/shared/components/ui/EmptyState'
@@ -225,58 +218,46 @@ export function AbonosListPage({
         >
           <ListPageHeader
             icon={CreditCard}
-            heroGradient={TEMA_ABONOS.degradado}
+            modulo='/abonos'
             title='Abonos'
+            count={isLoading ? null : conteos.Todos}
             subtitle='Recibos de pago de los clientes'
-            breadcrumbs={[
-              { label: 'Dashboard', href: '/' },
-              { label: 'Abonos' },
-            ]}
+            metricas={
+              isLoading
+                ? undefined
+                : [
+                    {
+                      label: 'Total recaudado',
+                      valor: formatCOP(estadisticas.totalRecaudado),
+                    },
+                    {
+                      label: `Recaudado ${new Date().getFullYear()}`,
+                      valor: formatCOP(estadisticas.recaudadoEsteAnio),
+                    },
+                    ...(estadisticas.ultimoAbono
+                      ? [
+                          {
+                            label: 'Último abono',
+                            valor: formatDateCompact(estadisticas.ultimoAbono),
+                          },
+                        ]
+                      : []),
+                  ]
+            }
             actions={
-              <>
-                {!isLoading && (
-                  <div className='flex flex-wrap gap-2'>
-                    <HeroDato
-                      icon={Wallet}
-                      label='Total recaudado'
-                      valor={formatCOP(estadisticas.totalRecaudado)}
-                    />
-                    <HeroDato
-                      icon={TrendingUp}
-                      label={`Recaudado ${new Date().getFullYear()}`}
-                      valor={formatCOP(estadisticas.recaudadoEsteAnio)}
-                    />
-                    {estadisticas.ultimoAbono && (
-                      <HeroDato
-                        icon={CalendarClock}
-                        label='Último abono'
-                        valor={formatDateCompact(estadisticas.ultimoAbono)}
-                      />
-                    )}
-                  </div>
-                )}
-                {canCreate && (
-                  <button
-                    type='button'
-                    onClick={irARegistrar}
-                    className='inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-violet-700 shadow-lg shadow-violet-900/20 transition-all hover:-translate-y-0.5 hover:bg-violet-50 hover:shadow-xl'
-                  >
-                    <Plus className='h-4 w-4' />
-                    Registrar abono
-                  </button>
-                )}
-              </>
+              canCreate ? (
+                <BotonPrincipal
+                  modulo='/abonos'
+                  icon={Plus}
+                  onClick={irARegistrar}
+                >
+                  Registrar abono
+                </BotonPrincipal>
+              ) : undefined
             }
           />
 
-          <EstadoFiltroCards
-            ariaLabel='Filtrar abonos por estado'
-            total={conteos.Todos}
-            opciones={opcionesEstado}
-            seleccionado={filtros.estado}
-            onSeleccionar={estado => actualizarFiltros({ estado })}
-          />
-
+          {/* Análisis: cuánto entró por cada fuente (también filtra) */}
           {!isLoading && (
             <RecaudoPorFuente
               porFuente={estadisticas.porFuente}
@@ -285,85 +266,96 @@ export function AbonosListPage({
             />
           )}
 
-          <div className='space-y-2'>
-            <ListSearchToolbar
-              value={filtros.busqueda}
-              onChange={busqueda => actualizarFiltros({ busqueda })}
-              placeholder='Buscar por cliente, cédula, recibo, vivienda (A17) o proyecto…'
-              resultado={resultado}
-              onLimpiar={hayFiltros ? limpiarFiltros : undefined}
-            >
-              <FilterDropdown
-                value={filtros.rango}
-                placeholder='Todo el tiempo'
-                allValue='todo'
-                activeClassName={FILTRO_ACTIVO}
-                options={RANGOS}
-                onChange={v =>
-                  actualizarFiltros({
-                    rango: v as RangoFecha,
-                    fechaDesde: '',
-                    fechaHasta: '',
-                  })
-                }
+          <PanelFiltros
+            pestanas={
+              <EstadoFiltroTabs
+                ariaLabel='Filtrar abonos por estado'
+                opciones={opcionesEstado}
+                seleccionado={filtros.estado}
+                onSeleccionar={estado => actualizarFiltros({ estado })}
               />
-              <FilterDropdown
-                value={filtros.fuente}
-                placeholder='Todas las fuentes'
-                allValue='todas'
-                activeClassName={FILTRO_ACTIVO}
-                options={[
-                  { value: 'todas', label: 'Todas las fuentes' },
-                  ...fuentesUnicas.map(f => ({ value: f, label: f })),
-                ]}
-                onChange={fuente => actualizarFiltros({ fuente })}
-              />
-              {entidadesUnicas.length > 0 && (
+            }
+          >
+            <div className='space-y-2'>
+              <ListSearchToolbar
+                value={filtros.busqueda}
+                onChange={busqueda => actualizarFiltros({ busqueda })}
+                placeholder='Buscar por cliente, cédula, recibo, vivienda (A17) o proyecto…'
+                resultado={resultado}
+                onLimpiar={hayFiltros ? limpiarFiltros : undefined}
+              >
                 <FilterDropdown
-                  value={filtros.entidad}
-                  placeholder='Todas las entidades'
+                  value={filtros.rango}
+                  placeholder='Todo el tiempo'
+                  allValue='todo'
+                  activeClassName={FILTRO_ACTIVO}
+                  options={RANGOS}
+                  onChange={v =>
+                    actualizarFiltros({
+                      rango: v as RangoFecha,
+                      fechaDesde: '',
+                      fechaHasta: '',
+                    })
+                  }
+                />
+                <FilterDropdown
+                  value={filtros.fuente}
+                  placeholder='Todas las fuentes'
                   allValue='todas'
                   activeClassName={FILTRO_ACTIVO}
                   options={[
-                    { value: 'todas', label: 'Todas las entidades' },
-                    ...entidadesUnicas.map(e => ({ value: e, label: e })),
+                    { value: 'todas', label: 'Todas las fuentes' },
+                    ...fuentesUnicas.map(f => ({ value: f, label: f })),
                   ]}
-                  onChange={entidad => actualizarFiltros({ entidad })}
+                  onChange={fuente => actualizarFiltros({ fuente })}
                 />
-              )}
-            </ListSearchToolbar>
+                {entidadesUnicas.length > 0 && (
+                  <FilterDropdown
+                    value={filtros.entidad}
+                    placeholder='Todas las entidades'
+                    allValue='todas'
+                    activeClassName={FILTRO_ACTIVO}
+                    options={[
+                      { value: 'todas', label: 'Todas las entidades' },
+                      ...entidadesUnicas.map(e => ({ value: e, label: e })),
+                    ]}
+                    onChange={entidad => actualizarFiltros({ entidad })}
+                  />
+                )}
+              </ListSearchToolbar>
 
-            {filtros.rango === 'personalizado' && (
-              <div className='flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400'>
-                <label htmlFor='abonos-desde'>Desde</label>
-                <input
-                  id='abonos-desde'
-                  type='date'
-                  value={filtros.fechaDesde}
-                  max={filtros.fechaHasta || undefined}
-                  onChange={e =>
-                    actualizarFiltros({ fechaDesde: e.target.value })
-                  }
-                  className={inputFecha}
-                />
-                <label htmlFor='abonos-hasta'>hasta</label>
-                <input
-                  id='abonos-hasta'
-                  type='date'
-                  value={filtros.fechaHasta}
-                  min={filtros.fechaDesde || undefined}
-                  onChange={e =>
-                    actualizarFiltros({ fechaHasta: e.target.value })
-                  }
-                  className={inputFecha}
-                />
-              </div>
-            )}
-          </div>
+              {filtros.rango === 'personalizado' && (
+                <div className='flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400'>
+                  <label htmlFor='abonos-desde'>Desde</label>
+                  <input
+                    id='abonos-desde'
+                    type='date'
+                    value={filtros.fechaDesde}
+                    max={filtros.fechaHasta || undefined}
+                    onChange={e =>
+                      actualizarFiltros({ fechaDesde: e.target.value })
+                    }
+                    className={inputFecha}
+                  />
+                  <label htmlFor='abonos-hasta'>hasta</label>
+                  <input
+                    id='abonos-hasta'
+                    type='date'
+                    value={filtros.fechaHasta}
+                    min={filtros.fechaDesde || undefined}
+                    onChange={e =>
+                      actualizarFiltros({ fechaHasta: e.target.value })
+                    }
+                    className={inputFecha}
+                  />
+                </div>
+              )}
+            </div>
+          </PanelFiltros>
 
           {isLoading ? (
             <div className='overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-800/60'>
-              <div className='h-11 animate-pulse bg-gradient-to-r from-violet-200 to-fuchsia-200 dark:from-violet-900/40 dark:to-fuchsia-900/40' />
+              <div className='h-11 animate-pulse border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800' />
               <div className='space-y-3 p-4'>
                 {[...Array(6)].map((_, i) => (
                   <div

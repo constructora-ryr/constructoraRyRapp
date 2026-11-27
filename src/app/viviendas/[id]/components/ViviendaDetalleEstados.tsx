@@ -20,7 +20,7 @@ export function ViviendaDetalleCargando() {
   return (
     <div className={FONDO_DETALLE}>
       <div className='mx-auto max-w-7xl space-y-5 px-4 py-6 sm:px-6 lg:py-8'>
-        <div className='h-36 animate-pulse rounded-2xl bg-gradient-to-r from-orange-200 via-amber-200 to-yellow-200 dark:from-orange-900/40 dark:via-amber-900/40 dark:to-yellow-900/30' />
+        <div className='h-36 animate-pulse rounded-2xl bg-slate-200/70 dark:bg-slate-800' />
         <Hueso className='h-12 w-80 max-w-full rounded-2xl' />
         <InfoEsqueleto />
       </div>

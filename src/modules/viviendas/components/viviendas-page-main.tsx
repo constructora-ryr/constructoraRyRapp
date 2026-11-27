@@ -8,9 +8,11 @@ import { useRouter } from 'next/navigation'
 
 import { construirURLVivienda, getShortId } from '@/lib/utils/slug.utils'
 import {
-  EstadoFiltroCards,
+  BotonPrincipal,
+  EstadoFiltroTabs,
   ListPageHeader,
   ListSearchToolbar,
+  PanelFiltros,
   type EstadoFiltroOpcion,
 } from '@/shared/components/list-page'
 import {
@@ -186,53 +188,52 @@ export function ViviendasPageMain({
       >
         <ListPageHeader
           icon={Home}
-          heroGradient='from-orange-600 via-amber-600 to-yellow-600 dark:from-orange-700 dark:via-amber-700 dark:to-amber-800'
+          modulo='/viviendas'
           title='Viviendas'
+          count={cargando ? null : estadisticas.total}
           subtitle='Inventario de casas y estado de cada unidad'
-          breadcrumbs={[
-            { label: 'Dashboard', href: '/' },
-            { label: 'Viviendas' },
-          ]}
           actions={
             canCreate ? (
-              <button
-                type='button'
+              <BotonPrincipal
+                modulo='/viviendas'
+                icon={Plus}
                 onClick={() => router.push('/viviendas/nueva')}
-                className='inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-orange-700 shadow-lg shadow-orange-900/20 transition-all hover:-translate-y-0.5 hover:bg-orange-50 hover:shadow-xl'
               >
-                <Plus className='h-4 w-4' />
                 Nueva vivienda
-              </button>
+              </BotonPrincipal>
             ) : undefined
           }
         />
 
-        <EstadoFiltroCards
-          ariaLabel='Filtrar viviendas por estado'
-          opciones={opcionesEstado}
-          seleccionado={filtros.estado || 'Todos'}
-          onSeleccionar={v =>
-            actualizarFiltros({ estado: v === 'Todos' ? '' : v })
-          }
-          total={estadisticas.total}
-        />
-
-        <ListSearchToolbar
-          value={filtros.search}
-          onChange={v => actualizarFiltros({ search: v })}
-          placeholder='Buscar por casa (A1), cliente, matrícula o dirección…'
-          resultado={resultado}
-          onLimpiar={hayFiltros ? limpiarFiltros : undefined}
-        >
-          {proyectos.length > 1 && (
-            <FilterDropdown
-              value={filtros.proyecto_id}
-              placeholder='Todos los proyectos'
-              options={proyectoOptions}
-              onChange={v => actualizarFiltros({ proyecto_id: v })}
+        <PanelFiltros
+          pestanas={
+            <EstadoFiltroTabs
+              ariaLabel='Filtrar viviendas por estado'
+              opciones={opcionesEstado}
+              seleccionado={filtros.estado || 'Todos'}
+              onSeleccionar={v =>
+                actualizarFiltros({ estado: v === 'Todos' ? '' : v })
+              }
             />
-          )}
-        </ListSearchToolbar>
+          }
+        >
+          <ListSearchToolbar
+            value={filtros.search}
+            onChange={v => actualizarFiltros({ search: v })}
+            placeholder='Buscar por casa (A1), cliente, matrícula o dirección…'
+            resultado={resultado}
+            onLimpiar={hayFiltros ? limpiarFiltros : undefined}
+          >
+            {proyectos.length > 1 && (
+              <FilterDropdown
+                value={filtros.proyecto_id}
+                placeholder='Todos los proyectos'
+                options={proyectoOptions}
+                onChange={v => actualizarFiltros({ proyecto_id: v })}
+              />
+            )}
+          </ListSearchToolbar>
+        </PanelFiltros>
 
         {/* Contenido Principal */}
         {cargando ? (

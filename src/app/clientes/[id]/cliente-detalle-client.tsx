@@ -40,6 +40,7 @@ import {
   DetalleTabs,
   type TabDetalle,
 } from '@/shared/components/detalle/DetalleTabs'
+import { BotonPrincipal } from '@/shared/components/list-page'
 import { useModal } from '@/shared/components/modals'
 import { Tooltip } from '@/shared/components/ui'
 import { DocumentosListaEsqueleto } from '@/shared/documentos/components/lista/DocumentosListaEsqueleto'
@@ -92,9 +93,6 @@ type TabId =
   | 'negociacion'
   | 'documentos'
   | 'historial'
-
-const btnHero =
-  'inline-flex h-10 items-center gap-2 rounded-xl bg-white px-4 text-sm font-semibold text-blue-700 shadow-lg shadow-blue-900/20 transition-all hover:-translate-y-0.5 hover:bg-blue-50 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60'
 
 /** Negociación vigente: activa/suspendida primero, si no la completada */
 function negociacionVigente(c: Cliente) {
@@ -246,35 +244,27 @@ export default function ClienteDetalleClient({
       {puedeAsignarVivienda && (
         <Tooltip content={mensajeValidacion} side='bottom'>
           <span className='inline-flex'>
-            <button
-              type='button'
+            <BotonPrincipal
+              modulo='/clientes'
+              icon={puedeAsignar && !cargandoAsignacion ? Home : Lock}
               onClick={handleIniciarAsignacion}
               disabled={!puedeAsignar || cargandoAsignacion}
-              className={btnHero}
             >
-              {puedeAsignar && !cargandoAsignacion ? (
-                <Home className='h-4 w-4' />
-              ) : (
-                <Lock className='h-4 w-4' />
-              )}
               Asignar vivienda
-            </button>
+            </BotonPrincipal>
           </span>
         </Tooltip>
       )}
 
       {cliente.estado === 'Renunció' && (
-        <button
-          type='button'
+        <BotonPrincipal
+          modulo='/clientes'
+          icon={RefreshCw}
           onClick={handleReactivarCliente}
-          disabled={verificandoRenuncia}
-          className={btnHero}
+          cargando={verificandoRenuncia}
         >
-          <RefreshCw
-            className={`h-4 w-4 ${verificandoRenuncia ? 'animate-spin' : ''}`}
-          />
           {verificandoRenuncia ? 'Verificando…' : 'Reactivar cliente'}
-        </button>
+        </BotonPrincipal>
       )}
     </>
   )

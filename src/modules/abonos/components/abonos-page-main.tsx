@@ -13,10 +13,8 @@ import {
   CircleDashed,
   CreditCard,
   Hourglass,
-  PiggyBank,
   Receipt,
   Rocket,
-  TrendingUp,
   Users,
   Wallet,
 } from 'lucide-react'
@@ -24,13 +22,13 @@ import {
 import { useRouter } from 'next/navigation'
 
 import { getShortId } from '@/lib/utils/slug.utils'
-import { TEMA_ABONOS } from '@/modules/abonos/styles/tema-abonos'
 import {
-  EstadoFiltroCards,
+  BotonSecundario,
+  EstadoFiltroTabs,
   formatCOP,
-  HeroDato,
   ListPageHeader,
   ListSearchToolbar,
+  PanelFiltros,
   type EstadoFiltroOpcion,
 } from '@/shared/components/list-page'
 import { EmptyState } from '@/shared/components/ui/EmptyState'
@@ -52,7 +50,7 @@ const FILTRO_ACTIVO =
 function Esqueleto() {
   return (
     <div className='overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-800/60'>
-      <div className='h-11 animate-pulse bg-gradient-to-r from-violet-200 to-fuchsia-200 dark:from-violet-900/40 dark:to-fuchsia-900/40' />
+      <div className='h-11 animate-pulse border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800' />
       <div className='space-y-3 p-4'>
         {[...Array(6)].map((_, i) => (
           <div
@@ -148,76 +146,70 @@ export function AbonosPageMain() {
       >
         <ListPageHeader
           icon={Wallet}
-          heroGradient={TEMA_ABONOS.degradado}
+          modulo='/abonos'
           title='Registrar abono'
           subtitle='Elige el cliente que va a pagar'
           breadcrumbs={[
-            { label: 'Dashboard', href: '/' },
             { label: 'Abonos', href: '/abonos' },
             { label: 'Registrar' },
           ]}
+          metricas={
+            !isLoading && negociaciones.length > 0
+              ? [
+                  {
+                    label: 'Total a pagar',
+                    valor: formatCOP(estadisticas.totalVentas),
+                  },
+                  {
+                    label: `Recaudado · ${porcentajeCartera}%`,
+                    valor: formatCOP(estadisticas.totalAbonado),
+                  },
+                  {
+                    label: 'Por cobrar',
+                    valor: formatCOP(estadisticas.saldoPendiente),
+                  },
+                ]
+              : undefined
+          }
           actions={
-            <>
-              {!isLoading && negociaciones.length > 0 && (
-                <div className='flex flex-wrap gap-2'>
-                  <HeroDato
-                    icon={TrendingUp}
-                    label='Total a pagar'
-                    valor={formatCOP(estadisticas.totalVentas)}
-                  />
-                  <HeroDato
-                    icon={PiggyBank}
-                    label={`Recaudado · ${porcentajeCartera}%`}
-                    valor={formatCOP(estadisticas.totalAbonado)}
-                  />
-                  <HeroDato
-                    icon={Hourglass}
-                    label='Por cobrar'
-                    valor={formatCOP(estadisticas.saldoPendiente)}
-                  />
-                </div>
-              )}
-              <button
-                type='button'
-                onClick={() => router.push('/abonos')}
-                className='inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-violet-700 shadow-lg shadow-violet-900/20 transition-all hover:-translate-y-0.5 hover:bg-violet-50 hover:shadow-xl'
-              >
-                <Receipt className='h-4 w-4' />
-                Ver recibos
-              </button>
-            </>
+            <BotonSecundario icon={Receipt} href='/abonos'>
+              Ver recibos
+            </BotonSecundario>
           }
         />
 
-        <EstadoFiltroCards
-          ariaLabel='Filtrar clientes por etapa del pago'
-          total={conteos.todos}
-          opciones={opcionesEtapa}
-          seleccionado={etapa}
-          onSeleccionar={setEtapa}
-        />
-
-        <ListSearchToolbar
-          value={busqueda}
-          onChange={setBusqueda}
-          placeholder='Buscar por nombre, cédula o vivienda (A1, Mz. B 6)…'
-          resultado={resultado}
-          onLimpiar={hayFiltros ? limpiarFiltros : undefined}
-        >
-          {proyectosDisponibles.length > 1 && (
-            <FilterDropdown
-              value={proyectoFiltro}
-              placeholder='Todos los proyectos'
-              allValue='todos'
-              activeClassName={FILTRO_ACTIVO}
-              options={[
-                { value: 'todos', label: 'Todos los proyectos' },
-                ...proyectosDisponibles.map(p => ({ value: p, label: p })),
-              ]}
-              onChange={setProyectoFiltro}
+        <PanelFiltros
+          pestanas={
+            <EstadoFiltroTabs
+              ariaLabel='Filtrar clientes por etapa del pago'
+              opciones={opcionesEtapa}
+              seleccionado={etapa}
+              onSeleccionar={setEtapa}
             />
-          )}
-        </ListSearchToolbar>
+          }
+        >
+          <ListSearchToolbar
+            value={busqueda}
+            onChange={setBusqueda}
+            placeholder='Buscar por nombre, cédula o vivienda (A1, Mz. B 6)…'
+            resultado={resultado}
+            onLimpiar={hayFiltros ? limpiarFiltros : undefined}
+          >
+            {proyectosDisponibles.length > 1 && (
+              <FilterDropdown
+                value={proyectoFiltro}
+                placeholder='Todos los proyectos'
+                allValue='todos'
+                activeClassName={FILTRO_ACTIVO}
+                options={[
+                  { value: 'todos', label: 'Todos los proyectos' },
+                  ...proyectosDisponibles.map(p => ({ value: p, label: p })),
+                ]}
+                onChange={setProyectoFiltro}
+              />
+            )}
+          </ListSearchToolbar>
+        </PanelFiltros>
 
         {isLoading ? (
           <Esqueleto />

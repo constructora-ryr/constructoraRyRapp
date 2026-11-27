@@ -101,7 +101,7 @@ export function EditarUsuarioView({ id }: EditarUsuarioViewProps) {
     return (
       <div className={s.page}>
         <div className={s.content}>
-          <div className='h-28 animate-pulse rounded-2xl bg-gradient-to-r from-indigo-200 to-sky-200 dark:from-indigo-900/40 dark:to-sky-900/40' />
+          <div className='h-14 animate-pulse rounded-2xl bg-slate-200/70 dark:bg-slate-800' />
           <div className={s.layout}>
             <div className='h-96 animate-pulse rounded-2xl bg-white dark:bg-slate-800/60' />
             <div className='h-72 animate-pulse rounded-2xl bg-white dark:bg-slate-800/60' />
@@ -118,7 +118,7 @@ export function EditarUsuarioView({ id }: EditarUsuarioViewProps) {
         <div className={s.content}>
           <ListPageHeader
             icon={UserCog}
-            heroGradient='from-indigo-700 via-indigo-600 to-sky-500 dark:from-indigo-800 dark:via-indigo-700 dark:to-sky-700'
+            modulo='/usuarios'
             title='Editar usuario'
             breadcrumbs={migas}
           />
@@ -156,7 +156,7 @@ export function EditarUsuarioView({ id }: EditarUsuarioViewProps) {
       <div className={s.content}>
         <ListPageHeader
           icon={UserCog}
-          heroGradient='from-indigo-700 via-indigo-600 to-sky-500 dark:from-indigo-800 dark:via-indigo-700 dark:to-sky-700'
+          modulo='/usuarios'
           title='Editar usuario'
           subtitle={usuario.email}
           breadcrumbs={migas}

@@ -40,11 +40,7 @@ export function AuditoriasView() {
           icon={ShieldCheck}
           title='Auditoría'
           subtitle='Quién hizo qué y cuándo: cada creación, edición y eliminación queda registrada y no se puede alterar.'
-          breadcrumbs={[
-            { label: 'Dashboard', href: '/' },
-            { label: 'Auditoría' },
-          ]}
-          heroGradient='from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-700 dark:via-indigo-700 dark:to-purple-800'
+          modulo='/auditorias'
         />
 
         <DetalleTabs

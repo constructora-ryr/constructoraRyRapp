@@ -1,7 +1,7 @@
 /**
  * UsuariosPageMain — Orquestador principal del módulo de usuarios
  * ✅ Mismo patrón que Clientes / Viviendas / Proyectos / Abonos:
- *    encabezado con degradado → tarjetas de estado (filtro) → buscador → tabla
+ *    encabezado → pestañas de estado + buscador (PanelFiltros) → tabla
  * ✅ Admin ve además la pestaña "Permisos" (matriz RBAC)
  */
 
@@ -10,14 +10,16 @@
 import { useCallback } from 'react'
 
 import { motion } from 'framer-motion'
-import { Activity, Plus, ShieldCheck, Users } from 'lucide-react'
+import { Plus, Users } from 'lucide-react'
 
 import { useRouter } from 'next/navigation'
 
 import {
-  EstadoFiltroCards,
+  BotonPrincipal,
+  EstadoFiltroTabs,
   ListPageHeader,
   ListSearchToolbar,
+  PanelFiltros,
   type EstadoFiltroOpcion,
 } from '@/shared/components/list-page'
 import { FilterDropdown } from '@/shared/components/ui/filter-dropdown'
@@ -41,29 +43,6 @@ interface UsuariosPageMainProps {
 
 const FILTRO_ACTIVO =
   'border-indigo-400 bg-indigo-50 text-indigo-700 dark:border-indigo-500/70 dark:bg-indigo-900/20 dark:text-indigo-300'
-
-/** Cifra en vidrio dentro del encabezado */
-function DatoHero({
-  icon: Icon,
-  label,
-  valor,
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  valor: string | number
-}) {
-  return (
-    <div className='flex items-center gap-2.5 rounded-xl bg-white/15 px-3 py-2 ring-1 ring-white/25 backdrop-blur-sm'>
-      <Icon className='h-4 w-4 shrink-0 text-white/80' />
-      <div className='leading-tight'>
-        <p className='text-[10px] font-medium uppercase tracking-wider text-white/70'>
-          {label}
-        </p>
-        <p className='text-sm font-bold tabular-nums text-white'>{valor}</p>
-      </div>
-    </div>
-  )
-}
 
 export function UsuariosPageMain({
   canCreate = false,
@@ -152,40 +131,43 @@ export function UsuariosPageMain({
   /** Contenido de la pestaña "Usuarios" */
   const listaContent = (
     <div className='space-y-5'>
-      <EstadoFiltroCards
-        ariaLabel='Filtrar usuarios por estado'
-        total={conteos.Todos}
-        opciones={opcionesEstado}
-        seleccionado={estadoFiltro}
-        onSeleccionar={setEstadoFiltro}
-      />
-
-      <ListSearchToolbar
-        value={busqueda}
-        onChange={setBusqueda}
-        placeholder='Buscar por nombre, correo o teléfono…'
-        resultado={resultado}
-        onLimpiar={hayFiltrosActivos ? limpiarFiltros : undefined}
+      <PanelFiltros
+        pestanas={
+          <EstadoFiltroTabs
+            ariaLabel='Filtrar usuarios por estado'
+            opciones={opcionesEstado}
+            seleccionado={estadoFiltro}
+            onSeleccionar={setEstadoFiltro}
+          />
+        }
       >
-        <FilterDropdown
-          value={rolFiltro}
-          placeholder='Todos los roles'
-          allValue=''
-          activeClassName={FILTRO_ACTIVO}
-          options={[
-            { value: '', label: 'Todos los roles' },
-            ...(Object.keys(ROL_VISUAL) as Rol[]).map(r => ({
-              value: r,
-              label: ROL_VISUAL[r].label,
-            })),
-          ]}
-          onChange={v => setRolFiltro(v as Rol | '')}
-        />
-      </ListSearchToolbar>
+        <ListSearchToolbar
+          value={busqueda}
+          onChange={setBusqueda}
+          placeholder='Buscar por nombre, correo o teléfono…'
+          resultado={resultado}
+          onLimpiar={hayFiltrosActivos ? limpiarFiltros : undefined}
+        >
+          <FilterDropdown
+            value={rolFiltro}
+            placeholder='Todos los roles'
+            allValue=''
+            activeClassName={FILTRO_ACTIVO}
+            options={[
+              { value: '', label: 'Todos los roles' },
+              ...(Object.keys(ROL_VISUAL) as Rol[]).map(r => ({
+                value: r,
+                label: ROL_VISUAL[r].label,
+              })),
+            ]}
+            onChange={v => setRolFiltro(v as Rol | '')}
+          />
+        </ListSearchToolbar>
+      </PanelFiltros>
 
       {cargandoUsuarios ? (
         <div className='overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-800/60'>
-          <div className='h-11 animate-pulse bg-gradient-to-r from-indigo-200 to-sky-200 dark:from-indigo-900/40 dark:to-sky-900/40' />
+          <div className='h-11 animate-pulse border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800' />
           <div className='space-y-3 p-4'>
             {[...Array(4)].map((_, i) => (
               <div
@@ -225,40 +207,31 @@ export function UsuariosPageMain({
       >
         <ListPageHeader
           icon={Users}
-          heroGradient='from-indigo-700 via-indigo-600 to-sky-500 dark:from-indigo-800 dark:via-indigo-700 dark:to-sky-700'
+          modulo='/usuarios'
           title='Usuarios'
+          count={cargandoUsuarios ? null : totalUsuarios}
           subtitle='Accesos, roles y permisos del sistema'
-          breadcrumbs={[
-            { label: 'Dashboard', href: '/' },
-            { label: 'Usuarios' },
-          ]}
+          metricas={
+            cargandoUsuarios
+              ? undefined
+              : [
+                  {
+                    label: 'Con acceso',
+                    valor: `${conAcceso} de ${totalUsuarios}`,
+                  },
+                  { label: 'Entraron hoy', valor: activosHoy },
+                ]
+          }
           actions={
-            <>
-              {!cargandoUsuarios && (
-                <div className='flex flex-wrap gap-2'>
-                  <DatoHero
-                    icon={ShieldCheck}
-                    label='Con acceso'
-                    valor={`${conAcceso} de ${totalUsuarios}`}
-                  />
-                  <DatoHero
-                    icon={Activity}
-                    label='Entraron hoy'
-                    valor={activosHoy}
-                  />
-                </div>
-              )}
-              {puedeCrear && (
-                <button
-                  type='button'
-                  onClick={() => router.push('/usuarios/nueva')}
-                  className='inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-indigo-700 shadow-lg shadow-indigo-900/20 transition-all hover:-translate-y-0.5 hover:bg-indigo-50 hover:shadow-xl'
-                >
-                  <Plus className='h-4 w-4' />
-                  Nuevo usuario
-                </button>
-              )}
-            </>
+            puedeCrear ? (
+              <BotonPrincipal
+                modulo='/usuarios'
+                icon={Plus}
+                href='/usuarios/nueva'
+              >
+                Nuevo usuario
+              </BotonPrincipal>
+            ) : undefined
           }
         />
 

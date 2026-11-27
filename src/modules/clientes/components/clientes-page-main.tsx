@@ -25,9 +25,11 @@ import { useRouter } from 'next/navigation'
 import { construirURLCliente, getShortId } from '@/lib/utils/slug.utils'
 import { ModalConfirmacion } from '@/shared'
 import {
-  EstadoFiltroCards,
+  BotonPrincipal,
+  EstadoFiltroTabs,
   ListPageHeader,
   ListSearchToolbar,
+  PanelFiltros,
   type EstadoFiltroOpcion,
 } from '@/shared/components/list-page'
 import { NoResults } from '@/shared/components/ui/NoResults'
@@ -205,42 +207,41 @@ export function ClientesPageMain({
       >
         <ListPageHeader
           icon={Users}
-          heroGradient='from-cyan-600 via-blue-600 to-indigo-600 dark:from-cyan-700 dark:via-blue-700 dark:to-indigo-800'
+          modulo='/clientes'
           title='Clientes'
+          count={isLoading ? null : estadisticas.total}
           subtitle='Compradores, interesados y propietarios'
-          breadcrumbs={[
-            { label: 'Dashboard', href: '/' },
-            { label: 'Clientes' },
-          ]}
           actions={
             canCreate ? (
-              <button
-                type='button'
+              <BotonPrincipal
+                modulo='/clientes'
+                icon={Plus}
                 onClick={handleNuevoCliente}
-                className='inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-blue-700 shadow-lg shadow-blue-900/20 transition-all hover:-translate-y-0.5 hover:bg-blue-50 hover:shadow-xl'
               >
-                <Plus className='h-4 w-4' />
                 Nuevo cliente
-              </button>
+              </BotonPrincipal>
             ) : undefined
           }
         />
 
-        <EstadoFiltroCards
-          ariaLabel='Filtrar clientes por estado'
-          total={estadisticas.total}
-          opciones={opcionesEstado}
-          seleccionado={estadoFiltro}
-          onSeleccionar={setEstadoFiltro}
-        />
-
-        <ListSearchToolbar
-          value={busqueda}
-          onChange={setBusqueda}
-          placeholder='Buscar por nombre, cédula o teléfono…'
-          resultado={resultado}
-          onLimpiar={hayFiltros ? limpiarFiltros : undefined}
-        />
+        <PanelFiltros
+          pestanas={
+            <EstadoFiltroTabs
+              ariaLabel='Filtrar clientes por estado'
+              opciones={opcionesEstado}
+              seleccionado={estadoFiltro}
+              onSeleccionar={setEstadoFiltro}
+            />
+          }
+        >
+          <ListSearchToolbar
+            value={busqueda}
+            onChange={setBusqueda}
+            placeholder='Buscar por nombre, cédula o teléfono…'
+            resultado={resultado}
+            onLimpiar={hayFiltros ? limpiarFiltros : undefined}
+          />
+        </PanelFiltros>
 
         {isLoading ? (
           <ClientesSkeleton />

@@ -284,7 +284,6 @@ export function ClientesPorAbonarTabla({
           onRowClick={onAbrir}
           pageSize={25}
           variant='clean'
-          headerGradient={TEMA_ABONOS.degradado}
         />
       </div>
     </>

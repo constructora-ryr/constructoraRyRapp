@@ -13,7 +13,7 @@ export function ClienteDetalleCargando() {
   return (
     <div className={fondo}>
       <div className='mx-auto max-w-[1400px] space-y-5 px-4 py-6 sm:px-6 lg:py-8'>
-        <div className='h-36 animate-pulse rounded-2xl bg-gradient-to-r from-cyan-200 via-blue-200 to-indigo-200 dark:from-cyan-900/40 dark:via-blue-900/40 dark:to-indigo-900/40' />
+        <div className='h-36 animate-pulse rounded-2xl bg-slate-200/70 dark:bg-slate-800' />
         <div className='h-12 w-2/3 animate-pulse rounded-2xl bg-white dark:bg-slate-800/60' />
         <div className='h-40 animate-pulse rounded-2xl bg-white dark:bg-slate-800/60' />
         <div className='grid gap-4 md:grid-cols-2'>

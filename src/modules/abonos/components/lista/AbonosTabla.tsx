@@ -1,7 +1,7 @@
 /**
  * AbonosTabla - Vista de tabla para el listado global de abonos
  * ✅ COMPONENTE PRESENTACIONAL PURO
- * ✅ DataTable variant='clean' con encabezado en degradado del módulo (fijo)
+ * ✅ DataTable variant='clean' con encabezado neutro y fijo
  * ✅ Colores de estado desde @/shared/config/estados.colors y de fuente
  *    desde el esquema del modal de registro (mismo color en toda la app)
  *
@@ -30,7 +30,6 @@ import {
   type AbonoConInfo,
   type EstadisticasAbonos,
 } from '@/modules/abonos/hooks/useAbonosList'
-import { TEMA_ABONOS } from '@/modules/abonos/styles/tema-abonos'
 import type { MetodoPago } from '@/modules/abonos/types'
 import type { AbonoParaEditar } from '@/modules/abonos/types/editar-abono.types'
 import { formatearNumeroRecibo } from '@/modules/abonos/utils/formato-recibo'
@@ -518,7 +517,6 @@ export function AbonosTabla({
           initialSorting={ORDEN_INICIAL}
           onRowClick={onAbonoClick}
           variant='clean'
-          headerGradient={TEMA_ABONOS.degradado}
           rowGroups={{
             columnas: ['fecha'],
             clave: claveMes,
