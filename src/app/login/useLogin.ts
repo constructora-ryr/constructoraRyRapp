@@ -12,7 +12,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { showLoginSuccessToast } from '@/components/toasts/custom-toasts'
 import { useAuth } from '@/contexts/auth-context'
 import { supabase } from '@/lib/supabase/client'
-import { errorLog } from '@/lib/utils/logger'
+import { errorLog, warnLog } from '@/lib/utils/logger'
 import { traducirErrorSupabase } from '@/lib/utils/traducir-errores'
 import { auditLogService } from '@/services/audit-log.service'
 
@@ -20,6 +20,10 @@ import { rutaDespuesDeLogin } from './redireccion'
 import { MINUTOS_BLOQUEO, useBloqueoLocal } from './useBloqueoLocal'
 
 const CLAVE_RECORDAR = 'ryr_remember_email'
+
+/** Rechazos normales del login: datos equivocados o cuenta sin acceso */
+const ERROR_ESPERADO =
+  /invalid login credentials|invalid_credentials|email not confirmed|cuenta está desactivada/i
 
 export type EstadoLogin = 'idle' | 'enviando' | 'exito'
 
@@ -98,7 +102,11 @@ export function useLogin() {
         // Se queda en "exito" (botón deshabilitado) hasta que cambia la página
       } catch (err) {
         const mensaje = err instanceof Error ? err.message : String(err)
-        errorLog('login-submit', new Error(mensaje), { email })
+        // Contraseña o correo equivocados (o cuenta desactivada) es lo
+        // esperado: aviso, no error. Lo demás (red, servidor) sí es error.
+        if (ERROR_ESPERADO.test(mensaje))
+          warnLog('Inicio de sesión rechazado', { email, motivo: mensaje })
+        else errorLog('login-submit', new Error(mensaje), { email })
 
         const { restantes, bloqueado } = bloqueo.registrarFallo()
         void auditLogService.logLoginFallido(email, restantes)

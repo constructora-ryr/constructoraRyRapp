@@ -52,10 +52,9 @@ export function useLoginMutation() {
         hasSession: !!authData?.session,
       })
 
-      if (authError) {
-        errorLog('login-mutation-auth', authError, { email })
-        throw authError
-      }
+      // Credenciales inválidas es algo esperado: lo registra una sola vez el
+      // formulario (useLogin), no cada capa por la que pasa el error
+      if (authError) throw authError
       if (!authData.user) {
         const error = new Error('No se pudo obtener el usuario')
         errorLog('login-mutation-no-user', error, { email })
@@ -124,9 +123,6 @@ export function useLoginMutation() {
       queryClient.setQueryData(authKeys.perfil(data.user.id), data.perfil)
 
       successLog(`Login exitoso: ${data.user.email}`)
-    },
-    onError: (error: Error) => {
-      errorLog('login-mutation-general', error)
     },
   })
 }

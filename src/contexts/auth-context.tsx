@@ -106,14 +106,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     debugLog('?? AuthContext.signIn() invocado', { email })
 
-    try {
-      const result = await loginMutation.mutateAsync({ email, password })
-      successLog('Login mutation completado')
-      return result
-    } catch (error) {
-      errorLog('auth-context-signin', error, { email })
-      throw error
-    }
+    // Si falla, el error sube tal cual: lo registra el formulario de login
+    const result = await loginMutation.mutateAsync({ email, password })
+    successLog('Login mutation completado')
+    return result
   }
 
   // ============================================
