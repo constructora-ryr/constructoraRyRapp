@@ -49,6 +49,8 @@ interface FuentePagoCardProps {
   cuotasRefreshKey?: number
   index: number
   canCreate?: boolean
+  /** Completada dentro del grupo "Completadas": sin borde propio */
+  enGrupo?: boolean
   validacion?: {
     puedeRegistrarAbono: boolean
     estaCompletamentePagada: boolean
@@ -71,6 +73,7 @@ export function FuentePagoCard({
   canCreate,
   validacion,
   clienteSlug,
+  enGrupo = false,
 }: FuentePagoCardProps) {
   const { icon: Icono, gradient, solid, text } = fuenteVisual(fuente.tipo)
   const [cuotasAbiertas, setCuotasAbiertas] = useState(false)
@@ -181,10 +184,10 @@ export function FuentePagoCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
       className={cn(
-        'relative overflow-hidden rounded-2xl border bg-white shadow-sm dark:bg-slate-800/60',
-        completada
-          ? 'border-slate-200/70 dark:border-slate-700/50'
-          : 'border-slate-200/80 dark:border-slate-700/60'
+        'relative overflow-hidden',
+        enGrupo
+          ? ''
+          : 'rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-800/60'
       )}
     >
       {completada ? (

@@ -7,6 +7,7 @@ import {
   AlertTriangle,
   ArrowDownToLine,
   CheckCircle2,
+  Hourglass,
   Wallet,
 } from 'lucide-react'
 
@@ -30,6 +31,7 @@ import {
   HeaderCliente,
   TimelineAbonos,
 } from './components'
+import { TituloSeccion } from './components/titulo-seccion'
 import { useAbonosDetalle } from './hooks/useAbonosDetalle'
 
 interface AbonosDetalleClientProps {
@@ -191,12 +193,20 @@ export default function AbonosDetalleClient({
   if (!negociacion || !metricas) return null
 
   const fuentes = negociacion.fuentes_pago ?? []
-  // Primero lo que falta por recibir; las completadas van al final
-  const fuentesOrdenadas = [...fuentes].sort(
-    (a, b) =>
-      Number((a.saldo_pendiente || 0) <= 0) -
-      Number((b.saldo_pendiente || 0) <= 0)
-  )
+  // Lo que falta cobrar va arriba y grande; lo ya pagado, agrupado y discreto
+  const completa = (f: (typeof fuentes)[number]) =>
+    validarFuentePago[f.id]?.estaCompletamentePagada ??
+    (f.saldo_pendiente || 0) <= 0
+  const pendientes = fuentes.filter(f => !completa(f))
+  const completadas = fuentes.filter(completa)
+  const propsCard = {
+    negociacionId: negociacion.id,
+    clienteSlug,
+    onRegistrarAbono: handleRegistrarAbono,
+    onAbonoRegistrado: handleAbonoConRefresh,
+    cuotasRefreshKey,
+    canCreate: canRegistrar,
+  }
 
   return (
     <div className='min-h-screen bg-gradient-to-br from-slate-50 via-violet-50/60 to-purple-50/60 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950'>
@@ -250,41 +260,59 @@ export default function AbonosDetalleClient({
           )
         ) : null}
 
-        {/* Fuentes de pago */}
+        {/* Por cobrar: lo pendiente con su acción; lo completado, agrupado */}
         <section className='space-y-3'>
-          <div className='flex items-center gap-2 px-1'>
-            <Wallet className='h-4 w-4 text-violet-600 dark:text-violet-400' />
-            <h2 className='text-sm font-bold text-slate-800 dark:text-slate-100'>
-              Fuentes de pago
-            </h2>
-            <span className='ml-auto text-xs text-slate-500 dark:text-slate-400'>
-              {fuentes.length} fuente{fuentes.length !== 1 ? 's' : ''}
-            </span>
-          </div>
+          <TituloSeccion
+            icon={Hourglass}
+            titulo='Por cobrar'
+            detalle={
+              fuentes.length === 0
+                ? null
+                : pendientes.length === 0
+                  ? 'Todo cobrado'
+                  : `${pendientes.length} ${pendientes.length === 1 ? 'fuente pendiente' : 'fuentes pendientes'}`
+            }
+          />
 
-          {fuentes.length > 0 ? (
-            fuentesOrdenadas.map((fuente, index) => (
-              <FuentePagoCard
-                key={fuente.id}
-                fuente={fuente}
-                negociacionId={negociacion.id}
-                clienteSlug={clienteSlug}
-                onRegistrarAbono={handleRegistrarAbono}
-                onAbonoRegistrado={handleAbonoConRefresh}
-                cuotasRefreshKey={cuotasRefreshKey}
-                index={index}
-                canCreate={canRegistrar}
-                validacion={validarFuentePago[fuente.id]}
-              />
-            ))
-          ) : (
+          {fuentes.length === 0 ? (
             <div className='rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center dark:border-slate-700 dark:bg-slate-800/40'>
               <Wallet className='mx-auto mb-3 h-8 w-8 text-slate-300 dark:text-slate-600' />
               <p className='text-sm text-slate-500 dark:text-slate-400'>
                 Esta negociación no tiene fuentes de pago configuradas
               </p>
             </div>
-          )}
+          ) : null}
+
+          {pendientes.map((fuente, index) => (
+            <FuentePagoCard
+              key={fuente.id}
+              {...propsCard}
+              fuente={fuente}
+              index={index}
+              validacion={validarFuentePago[fuente.id]}
+            />
+          ))}
+
+          {completadas.length > 0 ? (
+            <div>
+              <p className='mb-1.5 flex items-center gap-1.5 px-1 text-xs font-semibold text-slate-500 dark:text-slate-400'>
+                <CheckCircle2 className='h-3.5 w-3.5 text-emerald-500' />
+                {completadas.length === 1 ? 'Completada' : 'Completadas'}
+              </p>
+              <div className='divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200/80 bg-white dark:divide-slate-700/60 dark:border-slate-700/60 dark:bg-slate-800/60'>
+                {completadas.map((fuente, index) => (
+                  <FuentePagoCard
+                    key={fuente.id}
+                    {...propsCard}
+                    fuente={fuente}
+                    index={pendientes.length + index}
+                    validacion={validarFuentePago[fuente.id]}
+                    enGrupo
+                  />
+                ))}
+              </div>
+            </div>
+          ) : null}
         </section>
 
         {/* Historial */}
