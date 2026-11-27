@@ -34,6 +34,23 @@ const NEUTRO: ColorModulo = {
   boton: 'bg-slate-800 hover:bg-slate-900',
 }
 
+/** Nombre del módulo (module-themes) → su ruta en el menú */
+const RUTA_DE_MODULO: Record<string, string> = {
+  proyectos: '/proyectos',
+  viviendas: '/viviendas',
+  clientes: '/clientes',
+  negociaciones: '/clientes',
+  abonos: '/abonos',
+  auditorias: '/auditorias',
+  usuarios: '/usuarios',
+  renuncias: '/renuncias',
+}
+
+/** Igual que colorModulo, pero por nombre ('clientes'), para los asistentes */
+export function colorDeModulo(nombre: string): ColorModulo {
+  return colorModulo(RUTA_DE_MODULO[nombre])
+}
+
 /** Color del módulo según su ruta en el menú ('/clientes', '/abonos'…) */
 export function colorModulo(ruta: string | undefined): ColorModulo {
   if (!ruta) return NEUTRO

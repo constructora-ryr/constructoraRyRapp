@@ -4,6 +4,7 @@
  * Colores del módulo vienen de moduleThemes.classes (pre-built)
  */
 
+import { colorDeModulo } from '@/shared/config/color-modulo'
 import { moduleThemes, type ModuleName } from '@/shared/config/module-themes'
 
 // ============================================================
@@ -156,9 +157,11 @@ export const getAccordionWizardStyles = (moduleName: ModuleName) => {
         'flex items-center justify-between mt-6 pt-4 border-t border-gray-100 dark:border-gray-800',
       backButton:
         'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors',
-      nextButton: `flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r ${theme.classes.gradient.primary} shadow-md ${theme.classes.shadow} hover:shadow-lg transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed`,
+      // Color plano del módulo (el mismo BotonPrincipal de los listados)
+      nextButton: `flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white ${colorDeModulo(moduleName).boton} shadow-sm hover:shadow-md transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed`,
+      // Confirmar: verde plano (emerald-700, 5.5:1 con texto blanco)
       submitButton:
-        'flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-md shadow-green-500/20 hover:shadow-lg transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed',
+        'flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-emerald-700 hover:bg-emerald-800 shadow-sm hover:shadow-md transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed',
       dot: 'h-2 rounded-full transition-all duration-300',
       dotCompleted: 'w-2 bg-green-500',
       dotActive: DOT_ACTIVE[moduleName] ?? DOT_ACTIVE[fallback],
